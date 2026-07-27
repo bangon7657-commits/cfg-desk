@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="googlebot" content="noindex,nofollow">
-<meta name="theme-color" content="#1F3A5F">
+<meta name="theme-color" content="#100e0c">
 <title>Конфигуратор и смета</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon-180.png">
@@ -16,19 +16,22 @@
 
 <header>
   <div class="head">
-    <div class="brand">Конфигуратор и смета<small>внутренний инструмент · волокно и фрезерные</small></div>
+    <div class="brand">Конфигуратор и смета<small>волокно и фрезерные · внутренний инструмент</small></div>
     <div class="head-right">
-      <label class="toggle internal"><input type="checkbox" id="demoMode"> Режим демонстрации клиенту</label>
+      <label class="toggle"><input type="checkbox" id="demoMode"> Режим демонстрации</label>
       <span class="savedot" id="saveDot"></span>
     </div>
   </div>
 </header>
-<div class="demo-banner">Режим демонстрации: наценка за наличие, лестница скидок и служебные пометки скрыты</div>
+<div class="demo-banner">
+  <span>Режим демонстрации: наценка, лестница скидок и служебные пометки скрыты</span>
+  <button type="button" id="demoOff">Вернуть внутренний режим</button>
+</div>
 
 <nav aria-label="Разделы">
   <div class="navinner" id="tabs">
     <button data-t="cfg" aria-selected="true">Конфигуратор</button>
-    <button data-t="smeta" aria-selected="false">Смета и ТКП</button>
+    <button data-t="smeta" aria-selected="false">Смета и ТКП <span class="badge" id="smetaBadge"></span></button>
     <button data-t="match" aria-selected="false">Подбор по задаче</button>
     <button data-t="shop" aria-selected="false">Готовность цеха</button>
     <button data-t="gas" aria-selected="false">Газ и владение</button>
@@ -45,191 +48,298 @@
     Фрезерные — прайс __DATE_MILLING__, __N_MILLING__ конфигураций.
     НДС включён. Доставка, ПНР, обучение и чиллер — сверху.</p>
 
-  <div class="card">
-    <div class="row">
-      <div>
-        <label class="f">Категория</label>
-        <select id="cat">
-          <option value="fiber">Волоконный по металлу</option>
-          <option value="milling">Фрезерный с ЧПУ</option>
-        </select>
-      </div>
+  <div class="step">
+    <div class="step-h"><div class="step-n">1</div>
+      <div class="step-t">Категория оборудования<small>дальше поля меняются под выбранную категорию</small></div></div>
+    <div class="step-b">
+      <select id="cat">
+        <option value="fiber">Волоконный станок по металлу</option>
+        <option value="milling">Фрезерный станок с ЧПУ</option>
+      </select>
     </div>
   </div>
 
   <!-- волокно -->
-  <div class="card" id="blkFiber">
-    <h3>Волоконный станок по металлу</h3>
-    <div class="row">
-      <div><label class="f">Серия</label><select id="fSeries"></select></div>
-      <div><label class="f">Формат</label><select id="fFormat"></select></div>
-      <div><label class="f">Мощность</label><select id="fPower"></select></div>
+  <div id="blkFiber">
+    <div class="step">
+      <div class="step-h"><div class="step-n">2</div>
+        <div class="step-t">Конфигурация волоконного станка<small>серия, формат, мощность, модули</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div><label class="f">Серия</label><select id="fSeries"></select></div>
+          <div><label class="f">Формат поля</label><select id="fFormat"></select></div>
+          <div><label class="f">Мощность источника</label><select id="fPower"></select></div>
+        </div>
+        <div class="row">
+          <div><label class="f">Сменный стол</label><select id="fTable">
+            <option value="0">нет</option><option value="1">да</option></select></div>
+          <div><label class="f">RD-модуль (труборез)</label><select id="fRot">
+            <option value="">нет</option><option value="6-160">rotary 6-160</option>
+            <option value="6-240">rotary 6-240</option><option value="6-360">rotary 6-360</option>
+          </select></div>
+        </div>
+      </div>
     </div>
-    <div class="row">
-      <div><label class="f">Сменный стол</label><select id="fTable">
-        <option value="0">нет</option><option value="1">да</option></select></div>
-      <div><label class="f">RD-модуль (труборез)</label><select id="fRot">
-        <option value="">нет</option><option value="6-160">rotary 6-160</option>
-        <option value="6-240">rotary 6-240</option><option value="6-360">rotary 6-360</option>
-      </select></div>
+
+    <div class="step">
+      <div class="step-h"><div class="step-n">3</div>
+        <div class="step-t">Цена и что входит<small>НДС включён, подготовка цеха — сверху</small></div></div>
+      <div class="step-b">
+        <div id="fOut"></div>
+        <div class="btns noprint"><button class="btn" id="fAdd">Добавить в смету</button></div>
+        <div class="note">В цену волоконного станка входят контроллер FSCUT, лазерная голова BLT
+          и чиллер CWFL, подобранные под мощность источника. __FIBER_A_NOTE__</div>
+        <div class="note alert"><b>Чего в прайсе нет — только к менеджеру:</b>
+          <ul>__FIBER_MISSING__</ul></div>
+      </div>
     </div>
-    <div id="fOut"></div>
-    <div class="btns noprint"><button class="btn" id="fAdd">Добавить в смету</button></div>
-    <div class="note">В цену волоконного станка входят контроллер FSCUT, лазерная голова BLT
-      и чиллер CWFL, подобранные под мощность источника. __FIBER_A_NOTE__</div>
-    <div class="note alert"><b>Чего в прайсе нет — только к менеджеру:</b>
-      <ul>__FIBER_MISSING__</ul></div>
   </div>
 
   <!-- фрезерный -->
-  <div class="card" id="blkMill">
-    <h3>Фрезерный станок с ЧПУ</h3>
-    <div class="row">
-      <div><label class="f">Формат</label><select id="mFormat"></select></div>
-      <div style="flex:2"><label class="f">Конфигурация</label><select id="mConfig"></select></div>
+  <div id="blkMill">
+    <div class="step">
+      <div class="step-h"><div class="step-n">2</div>
+        <div class="step-t">Конфигурация фрезерного станка<small>формат поля, затем конкретная сборка</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div><label class="f">Формат поля</label><select id="mFormat"></select></div>
+          <div style="flex:2 1 320px"><label class="f">Сборка</label><select id="mConfig"></select></div>
+        </div>
+        <div class="row internal">
+          <div><label class="f">Какой ценник берём</label><select id="priceMode">
+            <option value="order">Под заказ — завод, около 60 дней</option>
+            <option value="stock">Из наличия — склад</option></select></div>
+        </div>
+      </div>
     </div>
-    <div class="row internal">
-      <div><label class="f">Ценник</label><select id="priceMode">
-        <option value="order">Под заказ (завод, ~60 дней)</option>
-        <option value="stock">Из наличия (склад)</option></select></div>
-    </div>
-    <div id="mOut"></div>
-    <div class="btns noprint"><button class="btn" id="mAdd">Добавить в смету</button></div>
 
-    <h3>Опции и доп. оборудование <span class="muted">(прайс __DATE_OPTIONS__)</span></h3>
-    <div id="mOptions"></div>
-    <p class="muted">__VIBRO_NOTE__</p>
-
-    <h3>ПНР и обучение</h3>
-    <p class="muted">Это платные услуги — не обещать как бесплатное преимущество.</p>
-    <div class="row">
-      <div style="flex:2"><label class="f">Станок</label><select id="pnrModel"></select></div>
-      <div><label class="f">Что включить</label><select id="pnrKind">
-        <option value="pnr">ПНР</option>
-        <option value="plus1">ПНР +1 день</option>
-        <option value="plus2">ПНР +2 дня</option>
-        <option value="training">Обучение</option>
-        <option value="package">ПНР + обучение (пакет)</option>
-      </select></div>
+    <div class="step">
+      <div class="step-h"><div class="step-n">3</div>
+        <div class="step-t">Цена<small>две цены рядом: под заказ и из наличия</small></div></div>
+      <div class="step-b">
+        <div id="mOut"></div>
+        <div class="btns noprint"><button class="btn" id="mAdd">Добавить в смету</button></div>
+      </div>
     </div>
-    <label class="chk"><input type="checkbox" id="thirdParty"> Сторонний станок — коэффициент ×1,2</label>
-    <div id="pnrOut"></div>
-    <div class="btns noprint"><button class="btn sec" id="pnrAdd">Добавить в смету</button></div>
-    <div class="note"><b>Общие условия:</b><ul>__PNR_TERMS__</ul></div>
+
+    <div class="step">
+      <div class="step-h"><div class="step-n">4</div>
+        <div class="step-t">Опции и доп. оборудование<small>прайс __DATE_OPTIONS__ · по CO₂ и маркерам аналога нет</small></div></div>
+      <div class="step-b">
+        <div id="mOptions"></div>
+        <p class="muted">__VIBRO_NOTE__</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="step-n">5</div>
+        <div class="step-t">ПНР и обучение<small>платные услуги — не обещать как бесплатное преимущество</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div style="flex:2 1 300px"><label class="f">Станок</label><select id="pnrModel"></select></div>
+          <div><label class="f">Что включить</label><select id="pnrKind">
+            <option value="pnr">ПНР</option>
+            <option value="plus1">ПНР +1 день</option>
+            <option value="plus2">ПНР +2 дня</option>
+            <option value="training">Обучение</option>
+            <option value="package">ПНР + обучение (пакет)</option>
+          </select></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="thirdParty"> Сторонний станок — коэффициент ×1,2</label>
+        <div id="pnrOut"></div>
+        <div class="btns noprint"><button class="btn sec" id="pnrAdd">Добавить в смету</button></div>
+        <div class="note"><b>Общие условия:</b><ul>__PNR_TERMS__</ul></div>
+      </div>
+    </div>
   </div>
 
-  <h2>Полный прайс: волокно</h2>
-  <p class="muted">Прайс «Металлорезы для ОП» от __DATE_FIBER__. По волокну в прайсе одна цена —
-    второго ценника «из наличия» нет.</p>
-  <div class="scroll">__FIBER_TABLE__</div>
+  <h2>Справочно: полные прайсы</h2>
+  <p class="muted">Свёрнуты, чтобы не мешать работе. Разворачивайте, когда нужно посмотреть весь ряд.</p>
 
-  <h2>Полный прайс: фрезерные</h2>
-  <p class="muted">Прайс __DATE_MILLING__.</p>
-  <div class="scroll">__MILLING_TABLE__</div>
+  <details>
+    <summary>Полный прайс: волокно по металлу <span class="cnt">__N_FIBER__ конфигураций · прайс __DATE_FIBER__</span></summary>
+    <div class="det-b">
+      <p class="muted">По волокну в прайсе одна цена — второго ценника «из наличия» нет.</p>
+      <div class="scroll">__FIBER_TABLE__</div>
+    </div>
+  </details>
 
-  <h2>Опции</h2>
-  __OPTIONS_TABLE__
+  <details>
+    <summary>Полный прайс: фрезерные с ЧПУ <span class="cnt">__N_MILLING__ конфигураций · прайс __DATE_MILLING__</span></summary>
+    <div class="det-b"><div class="scroll">__MILLING_TABLE__</div></div>
+  </details>
 
-  <h2>ПНР и обучение</h2>
-  <div class="scroll">__PNR_TABLE__</div>
+  <details>
+    <summary>ПНР и обучение — полная таблица <span class="cnt">прайс __DATE_OPTIONS__</span></summary>
+    <div class="det-b"><div class="scroll">__PNR_TABLE__</div></div>
+  </details>
 
-  <h2>Сервис — раздел «Удалённые работы»</h2>
-  <div class="note stop">Цены этого раздела расходятся с разделом ПНР вдвое.
-    Прежде чем называть цену клиенту — уточнить, о чём речь: выезд или дистанционная услуга.</div>
-  __SERVICE_TABLE__
+  <details>
+    <summary>Сервис — раздел «Удалённые работы» <span class="cnt">цены спорят с ПНР</span></summary>
+    <div class="det-b">
+      <div class="note stop">Цены этого раздела расходятся с разделом ПНР вдвое.
+        Прежде чем называть цену клиенту — уточнить, о чём речь: выезд или дистанционная услуга.</div>
+      __SERVICE_TABLE__
+    </div>
+  </details>
 </section>
 
 <!-- ================= СМЕТА И ТКП ================= -->
 <span class="nojs-title">Смета и ТКП</span>
 <section class="panel" id="p-smeta">
-  <p class="lead">Скидка применяется к каждой позиции. НДС выделяется изнутри:
-    НДС = сумма × ставка ÷ (100 + ставка). Расчёт показан пошагово, сходимость проверяется.</p>
+  <p class="lead">Скидка применяется к каждой позиции и может быть переопределена построчно.
+    НДС выделяется изнутри: НДС = сумма × ставка ÷ (100 + ставка). Расчёт показан пошагово,
+    сходимость перепроверяется тремя независимыми способами.</p>
 
-  <div class="card noprint">
-    <h3>Шапка ТКП</h3>
-    <div class="row">
-      <div style="flex:2"><label class="f">Клиент</label><input type="text" id="kpClient" placeholder="ООО «Ромашка»"></div>
-      <div><label class="f">ИНН</label><input type="text" id="kpInn" placeholder="7801234567"></div>
-      <div><label class="f">Исх. номер</label><input type="text" id="kpNum" placeholder="1207"></div>
+  <div class="step noprint">
+    <div class="step-h"><div class="step-n">1</div>
+      <div class="step-t">Скидка и НДС<small>скидка по умолчанию для новых позиций</small></div></div>
+    <div class="step-b">
+      <div class="row">
+        <div><label class="f">Скидка по умолчанию, %</label><select id="discount"></select></div>
+        <div><label class="f">Ставка НДС, %</label>
+          <select id="ndsRate">
+            <option value="220">22</option><option value="200">20</option>
+            <option value="100">10</option><option value="50">5</option><option value="0">0</option>
+          </select></div>
+        <div class="internal"><label class="f">Лестница уступок</label>
+          <div class="muted" style="padding-top:10px">5 % → 2 % → 1 %. Не начинать с максимума.</div></div>
+      </div>
+      <div class="note internal">Счёт фиксирует цену и наличие на __INVOICE_DAYS__ дней.
+        Срок действия ТКП — __KP_DAYS__ дней. Оплата: 100 % со склада, 50 % + остаток под заказ.</div>
     </div>
-    <div class="row">
-      <div><label class="f">Контакт</label><input type="text" id="kpContact" placeholder="Иван Петров"></div>
-      <div><label class="f">Телефон</label><input type="text" id="kpPhone" placeholder="+7 900 000-00-00"></div>
-      <div><label class="f">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
-      <div><label class="f">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
-    </div>
-    <div class="row">
-      <div><label class="f">Скидка, %</label>
-        <select id="discount"></select></div>
-      <div><label class="f">Ставка НДС, %</label>
-        <select id="ndsRate">
-          <option value="220">22</option><option value="200">20</option>
-          <option value="100">10</option><option value="50">5</option><option value="0">0</option>
-        </select></div>
-      <div class="internal"><label class="f">Лестница уступок</label>
-        <div class="muted" style="padding-top:8px">5 % → 2 % → 1 %. Не начинать с максимума.</div></div>
-    </div>
-    <div class="note internal">Счёт фиксирует цену и наличие на __INVOICE_DAYS__ дней.
-      Срок действия ТКП — __KP_DAYS__ дней. Оплата: 100 % со склада, 50 % + остаток под заказ.</div>
   </div>
 
-  <h2>Позиции</h2>
-  <div class="scroll"><table id="smetaTable"><thead><tr>
-    <th style="width:44%">Наименование</th><th>Кол-во</th><th>Цена</th>
-    <th>Со скидкой</th><th>Сумма</th><th class="noprint"></th>
-  </tr></thead><tbody id="smetaBody"></tbody></table></div>
-  <div id="smetaEmpty" class="empty">Смета пуста. Добавьте позиции на вкладке «Конфигуратор».</div>
-
-  <div id="totals" class="totals"></div>
-  <div id="propis" class="propis"></div>
-  <div id="checkBlock"></div>
-
-  <div class="btns noprint">
-    <button class="btn" id="btnPrint">Печать в PDF</button>
-    <button class="btn sec" id="btnJson">Скопировать JSON для скилла</button>
-    <button class="btn sec" id="btnClear">Очистить смету</button>
+  <div class="step noprint">
+    <div class="step-h"><div class="step-n">2</div>
+      <div class="step-t">Позиции сметы<small>оборудование, опции и услуги идут группами</small></div></div>
+    <div class="step-b">
+      <div class="scroll" id="smetaWrap"><table id="smetaTable"><thead><tr>
+        <th style="width:40%">Наименование</th><th>Кол-во</th><th>Цена прайса</th>
+        <th>Скидка</th><th>Со скидкой</th><th>Сумма</th><th class="noprint"></th>
+      </tr></thead><tbody id="smetaBody"></tbody></table></div>
+      <div id="smetaEmpty" class="empty">Смета пуста. Добавьте позиции на вкладке «Конфигуратор».</div>
+      <div id="totals" class="totals"></div>
+      <div id="propis" class="propis"></div>
+      <div id="checkBlock"></div>
+      <div class="btns noprint">
+        <button class="btn" id="btnPrint">Печать в PDF</button>
+        <button class="btn sec" id="btnJson">Скопировать JSON для скилла</button>
+        <button class="btn danger" id="btnClear">Очистить смету</button>
+      </div>
+      <textarea id="jsonOut" class="noprint" rows="8" style="margin-top:12px;display:none;
+        font-family:ui-monospace,Consolas,monospace;font-size:12.5px"></textarea>
+    </div>
   </div>
-  <textarea id="jsonOut" class="noprint" rows="7" style="margin-top:10px;display:none;
-    font-family:ui-monospace,Consolas,monospace;font-size:12px"></textarea>
 
-  <h2>Предпросмотр ТКП</h2>
-  <div id="kpPreview" class="kp"></div>
+  <div class="step">
+    <div class="step-h"><div class="step-n">3</div>
+      <div class="step-t">Шапка ТКП и предпросмотр<small>печать берёт только этот блок</small></div></div>
+    <div class="step-b">
+      <div class="row noprint">
+        <div style="flex:2 1 260px"><label class="f">Клиент</label><input type="text" id="kpClient" placeholder="ООО «Ромашка»"></div>
+        <div><label class="f">ИНН</label><input type="text" id="kpInn" placeholder="7801234567"></div>
+        <div><label class="f">Исх. номер</label><input type="text" id="kpNum" placeholder="1207"></div>
+      </div>
+      <div class="row noprint">
+        <div><label class="f">Контакт</label><input type="text" id="kpContact" placeholder="Иван Петров"></div>
+        <div><label class="f">Телефон клиента</label><input type="text" id="kpPhone" placeholder="+7 900 000-00-00"></div>
+        <div><label class="f">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
+        <div><label class="f">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
+      </div>
+      <div id="kpPreview" class="kp"></div>
+    </div>
+  </div>
 </section>
 
 <!-- ================= ПОДБОР ================= -->
 <span class="nojs-title">Подбор по задаче</span>
 <section class="panel" id="p-match">
-  <p class="lead">Правило скилла: предлагать не больше двух моделей. Мощность считается
-    с обязательным запасом __RESERVE__ % — требование завода.</p>
+  <p class="lead">Правило скилла: предлагать не больше двух моделей.
+    Подбор доводит до конкретной сборки из прайса, дальше — «Добавить в смету».</p>
 
-  <div class="card">
-    <h3>Подбор мощности по толщине</h3>
-    <div class="row">
-      <div><label class="f">Материал</label><select id="mtMaterial"></select></div>
-      <div><label class="f">Толщина, мм</label><input type="number" id="mtThick" min="0.5" max="80" step="0.5" value="6"></div>
+  <div class="step">
+    <div class="step-h"><div class="step-n">1</div>
+      <div class="step-t">Что подбираем<small>дальше шаги меняются под выбор</small></div></div>
+    <div class="step-b">
+      <select id="mtCat">
+        <option value="fiber">Резка металла — волоконный станок</option>
+        <option value="mill">Фрезеровка — станок с ЧПУ</option>
+      </select>
     </div>
-    <div id="matchOut"></div>
   </div>
 
-  <h2>Толщина реза — максимум по заводским таблицам Raycus</h2>
-  <div class="note alert">__CUT_WARNING__</div>
-  <div class="scroll">__CUT_TABLE__</div>
+  <!-- подбор волокна -->
+  <div id="mtFiber">
+    <div class="step">
+      <div class="step-h"><div class="step-n">2</div>
+        <div class="step-t">Что режем<small>мощность считается с обязательным запасом __RESERVE__ % — требование завода</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div><label class="f">Материал</label><select id="mtMaterial"></select></div>
+          <div><label class="f">Рабочая толщина, мм</label>
+            <input type="number" id="mtThick" min="0.5" max="80" step="0.5" value="6"></div>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-h"><div class="step-n">3</div>
+        <div class="step-t">Что предложить<small>не больше двух вариантов</small></div></div>
+      <div class="step-b"><div id="matchOut"></div></div>
+    </div>
+  </div>
 
-  <h2>Ориентиры с сайта по конкретным моделям</h2>
-  <p class="muted">__CUT_SITE_NOTE__</p>
-  __CUT_SITE_TABLE__
+  <!-- подбор фрезерного -->
+  <div id="mtMill">
+    <div class="step">
+      <div class="step-h"><div class="step-n">2</div>
+        <div class="step-t">Задача клиента<small>формулировки взяты из матрицы подбора скилла</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div style="flex:2 1 320px"><label class="f">Что делает клиент</label><select id="mkTask"></select></div>
+          <div><label class="f">Размер заготовки</label><select id="mkSize"></select></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="mkVac"> Нужен вакуумный стол — листовые заготовки</label>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-h"><div class="step-n">3</div>
+        <div class="step-t">Что предложить<small>серия и конкретные сборки из прайса</small></div></div>
+      <div class="step-b"><div id="matchMillOut"></div></div>
+    </div>
+  </div>
 
-  <h2>Задача → решение</h2>
-  <div class="scroll">__MATCH_TABLE__</div>
+  <h2>Справочно</h2>
 
-  <h2>Чего в этой версии нет</h2>
-  __OUT_OF_SCOPE__
+  <details>
+    <summary>Толщина реза — заводские таблицы Raycus <span class="cnt">3 / 6 / 12 кВт</span></summary>
+    <div class="det-b">
+      <div class="note alert">__CUT_WARNING__</div>
+      <div class="scroll">__CUT_TABLE__</div>
+      <h3>Ориентиры с сайта по конкретным моделям</h3>
+      <p class="muted">__CUT_SITE_NOTE__</p>
+      __CUT_SITE_TABLE__
+    </div>
+  </details>
 
-  <h2>Серии фрезерных</h2>
-  __SERIES_TABLE__
+  <details>
+    <summary>Матрица «задача → решение» <span class="cnt">все правила скилла</span></summary>
+    <div class="det-b"><div class="scroll">__MATCH_TABLE__</div></div>
+  </details>
 
-  <h2>Материалы по сериям</h2>
-  __MATERIALS_TABLE__
+  <details>
+    <summary>Серии фрезерных и материалы</summary>
+    <div class="det-b">
+      __SERIES_TABLE__
+      <h3>Материалы по сериям</h3>
+      __MATERIALS_TABLE__
+    </div>
+  </details>
+
+  <details>
+    <summary>Чего в этой версии нет</summary>
+    <div class="det-b">__OUT_OF_SCOPE__</div>
+  </details>
 </section>
 
 <!-- ================= ГОТОВНОСТЬ ЦЕХА ================= -->
@@ -238,56 +348,85 @@
   <p class="lead">Технические условия на пуско-наладку. Это деньги и сроки клиента сверх цены
     станка — молчать нельзя, всплывёт на монтаже.</p>
 
-  <div class="card">
-    <div class="row">
-      <div><label class="f">Конфигурация</label><select id="readyKind">
+  <div class="step">
+    <div class="step-h"><div class="step-n">1</div>
+      <div class="step-t">Какая конфигурация<small>требования у A и у S-HP разные</small></div></div>
+    <div class="step-b">
+      <select id="readyKind">
         <option value="a">A 1313 / 1530, 1,5–3 кВт</option>
         <option value="s">S-HP (RD) 1530, 6–6,6 кВт</option>
-      </select></div>
+      </select>
     </div>
-    <div id="readyList"></div>
-    <div id="readyOut"></div>
   </div>
 
-  <h2>Требования полностью</h2>
-  <div class="scroll">__READINESS_TABLE__</div>
-  <div class="note">__READINESS_PREP__</div>
+  <div class="step">
+    <div class="step-h"><div class="step-n">2</div>
+      <div class="step-t">Отметить, что уже есть<small>незакрытый блокер останавливает выпуск ТКП</small></div></div>
+    <div class="step-b">
+      <div id="readyList"></div>
+      <div id="readyOut"></div>
+    </div>
+  </div>
 
-  <h2>Массы для логистики</h2>
-  <p class="muted">Из файла «Массы и габариты» — подтверждённый источник. Габариты из карточки
-    товара расходятся с ним по всему ряду, карточку не использовать. Тарифов доставки в данных нет.</p>
-  <div class="scroll">__MASS_TABLE__</div>
+  <details>
+    <summary>Требования полностью, обе конфигурации</summary>
+    <div class="det-b">
+      <div class="scroll">__READINESS_TABLE__</div>
+      <div class="note">__READINESS_PREP__</div>
+    </div>
+  </details>
+
+  <details>
+    <summary>Массы фрезерных для логистики</summary>
+    <div class="det-b">
+      <p class="muted">Из файла «Массы и габариты» — подтверждённый источник. Габариты из карточки
+        товара расходятся с ним по всему ряду, карточку не использовать.
+        Тарифов доставки в данных нет.</p>
+      <div class="scroll">__MASS_TABLE__</div>
+    </div>
+  </details>
 </section>
 
 <!-- ================= ГАЗ ================= -->
 <span class="nojs-title">Газ и владение</span>
 <section class="panel" id="p-gas">
   <p class="lead">Азот дороже кислорода не в цене за баллон, а в потоке. Это разговор
-    про полную стоимость владения — и он же объясняет, почему сравнивать станки
+    про полную стоимость владения — и он объясняет, почему сравнивать станки
     только по цене бессмысленно.</p>
 
-  <div class="card">
-    <h3>Расход и стоимость газа</h3>
-    <div class="row">
-      <div><label class="f">Сопло</label><select id="gNozzle"></select></div>
-      <div><label class="f">Газ</label><select id="gGas">
-        <option value="o2">Кислород — углеродистая сталь</option>
-        <option value="n2">Азот — нержавейка, алюминий</option></select></div>
-      <div><label class="f">Часов резки в месяц</label>
-        <input type="number" id="gHours" min="1" max="700" value="80"></div>
-      <div><label class="f">Цена баллона 40 л, ₽</label>
-        <input type="number" id="gPrice" min="0" step="50" placeholder="ввести"></div>
+  <div class="step">
+    <div class="step-h"><div class="step-n">1</div>
+      <div class="step-t">Режим резки<small>сопло и газ определяют расход</small></div></div>
+    <div class="step-b">
+      <div class="row">
+        <div><label class="f">Сопло</label><select id="gNozzle"></select></div>
+        <div><label class="f">Газ</label><select id="gGas">
+          <option value="o2">Кислород — углеродистая сталь</option>
+          <option value="n2">Азот — нержавейка, алюминий</option></select></div>
+        <div><label class="f">Часов резки в месяц</label>
+          <input type="number" id="gHours" min="1" max="700" value="80"></div>
+        <div><label class="f">Цена баллона 40 л, ₽</label>
+          <input type="number" id="gPrice" min="0" step="50" placeholder="ввести вручную"></div>
+      </div>
+      <div class="note alert">__GAS_PRICE_MISSING__</div>
     </div>
-    <div class="note alert">__GAS_PRICE_MISSING__</div>
-    <div id="gasOut"></div>
   </div>
 
-  <h2>Заводская таблица расхода</h2>
-  <div class="scroll">__GAS_TABLE__</div>
-  <div class="note"><ul>__GAS_FACTS__</ul></div>
+  <div class="step">
+    <div class="step-h"><div class="step-n">2</div>
+      <div class="step-t">Расход и деньги<small>расход из заводской таблицы, цена — ваша</small></div></div>
+    <div class="step-b"><div id="gasOut"></div></div>
+  </div>
 
-  <h2>Как это использовать в разговоре</h2>
-  __GAS_ADVICE__
+  <details>
+    <summary>Заводская таблица расхода и требования к газу</summary>
+    <div class="det-b">
+      <div class="scroll">__GAS_TABLE__</div>
+      <div class="note"><ul>__GAS_FACTS__</ul></div>
+      <h3>Как это использовать в разговоре</h3>
+      __GAS_ADVICE__
+    </div>
+  </details>
 </section>
 
 <!-- ================= ДАННЫЕ ================= -->
@@ -297,7 +436,7 @@
     а не решает их самостоятельно.</p>
 
   <h2>Статус полей</h2>
-  __DATA_RULES__
+  <div class="card">__DATA_RULES__</div>
 
   <h2>Фактическая проверка наценки «из наличия»</h2>
   <div class="card">
@@ -324,17 +463,19 @@
   __MISSING__
 
   <h2>Откуда цены</h2>
-  <table><thead><tr><th>Категория</th><th>Источник</th><th>Дата</th></tr></thead><tbody>
+  <div class="scroll"><table><thead><tr><th>Категория</th><th>Источник</th><th>Дата</th></tr></thead><tbody>
     <tr><td>Волокно по металлу</td><td>Прайс «Металлорезы для ОП»</td><td>__DATE_FIBER__</td></tr>
     <tr><td>Фрезерные ЧПУ</td><td>Прайс «Цены фрезерные станки»</td><td>__DATE_MILLING__</td></tr>
     <tr><td>Опции, ПНР, сервис</td><td>«Фрезерное оборудование: номенклатура и цены»</td><td>__DATE_OPTIONS__</td></tr>
-  </tbody></table>
+  </tbody></table></div>
   <div class="note alert">Цена ≠ актуальность. Прайсы датированы, наличие меняется ежедневно.
     Перед счётом — сверка с менеджером. Наличие на складе в приложение принципиально
     не заводится.</div>
 </section>
 
 </div>
+
+<div class="toast" id="toast"><span id="toastText"></span><button type="button" id="toastGo">Открыть смету</button></div>
 
 <script>__MONEY_JS__</script>
 <script>var APP = __DATA__;</script>
