@@ -1,0 +1,157 @@
+# -*- coding: utf-8 -*-
+"""Сверка money.js с dengi.py. Показывает фактические отклонения, не «примерно».
+
+Прогоняет одни и те же значения через Python (Decimal, эталон из скилла)
+и через Node (money.js, то, что реально считает приложение).
+Любое расхождение хотя бы на копейку — это ошибка, а не погрешность.
+"""
+import json
+import os
+import subprocess
+import sys
+from decimal import Decimal
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from dengi import propisyu, nds_iznutri, so_skidkoy, fmt  # noqa: E402
+import data  # noqa: E402
+
+
+def all_prices():
+    """Все цены из прайса — на них и проверяем, а не на выдуманных числах."""
+    out = []
+    for price in data.FIBER_A.values():
+        out.append(price)
+    for cfg in data.FIBER_S.values():
+        out.append(cfg['base'])
+        out.append(cfg['table'])
+        out.extend(cfg['rot'].values())
+        out.extend(cfg['table_rot'].values())
+    for row in data.MILLING:
+        out.append(row[6])
+        out.append(row[7])
+    for _, _, price in data.OPTIONS:
+        out.append(price)
+    return out
+
+
+RATES = [220, 200, 205]          # ставка НДС × 10
+DISCOUNTS = [0, 25, 50, 75, 100, 125, 150, 200, 300]   # скидка × 10
+MARKUPS = [110, 75, 80, 55, 0]   # наценка × 10
+
+prices = all_prices()
+print(f'Позиций прайса в проверке: {len(prices)}')
+
+cases = []
+for p in prices:
+    cases.append({'cents': p * 100})
+
+# Эталон Python
+ref = []
+for p in prices:
+    cents = p * 100
+    row = {'cents': cents, 'propisyu': [], 'nds': [], 'skidka': [], 'nacenka': []}
+    for r in RATES:
+        bez, nds = nds_iznutri(Decimal(p), Decimal(r) / 10)
+        row['nds'].append([int((bez * 100).to_integral_value()), int((nds * 100).to_integral_value())])
+    for dsc in DISCOUNTS:
+        v = so_skidkoy(Decimal(p), Decimal(dsc) / 10)
+        row['skidka'].append(int((v * 100).to_integral_value()))
+    for m in MARKUPS:
+        v = (Decimal(p) * (1000 + m) / 1000).quantize(Decimal('0.01'))
+        row['nacenka'].append(int((v * 100).to_integral_value()))
+    row['propisyu'] = propisyu(p)
+    ref.append(row)
+
+# То же через money.js
+js = r'''
+var m = require('%s/money.js');
+var input = JSON.parse(require('fs').readFileSync('%s/cases.json','utf8'));
+var RATES = %s, DISCOUNTS = %s, MARKUPS = %s;
+var out = input.map(function(c){
+  var cents = c.cents;
+  return {
+    cents: cents,
+    nds: RATES.map(function(r){ var x = m.ndsIznutri(cents, r); return [x.bez, x.nds]; }),
+    skidka: DISCOUNTS.map(function(d){ return m.soSkidkoy(cents, d); }),
+    nacenka: MARKUPS.map(function(k){ return m.sNacenkoy(cents, k); }),
+    propisyu: m.propisyu(cents)
+  };
+});
+console.log(JSON.stringify(out));
+''' % (HERE, HERE, json.dumps(RATES), json.dumps(DISCOUNTS), json.dumps(MARKUPS))
+
+with open(os.path.join(HERE, 'cases.json'), 'w') as f:
+    json.dump(cases, f)
+with open(os.path.join(HERE, 'run.js'), 'w') as f:
+    f.write(js)
+
+got = json.loads(subprocess.check_output(['node', os.path.join(HERE, 'run.js')]).decode())
+
+errors = []
+for r, g in zip(ref, got):
+    if r['nds'] != g['nds']:
+        errors.append(('НДС', r['cents'], r['nds'], g['nds']))
+    if r['skidka'] != g['skidka']:
+        errors.append(('скидка', r['cents'], r['skidka'], g['skidka']))
+    if r['nacenka'] != g['nacenka']:
+        errors.append(('наценка', r['cents'], r['nacenka'], g['nacenka']))
+    if r['propisyu'] != g['propisyu']:
+        errors.append(('прописью', r['cents'], r['propisyu'], g['propisyu']))
+
+os.remove(os.path.join(HERE, 'cases.json'))
+os.remove(os.path.join(HERE, 'run.js'))
+
+checks = len(ref) * (len(RATES) + len(DISCOUNTS) + len(MARKUPS) + 1)
+print(f'Сверок выполнено: {checks}')
+if errors:
+    print(f'РАСХОЖДЕНИЙ: {len(errors)}')
+    for e in errors[:20]:
+        print('  ', e)
+    sys.exit(1)
+print('Расхождений: 0 — money.js считает копейка в копейку как dengi.py')
+
+# ---- Проверка самих данных на внутреннюю согласованность ----
+print()
+print('--- Проверка самих данных ---')
+
+# Наценка на фрезерных: гипотеза «+11 % с округлением до 100 ₽»
+from decimal import ROUND_HALF_UP  # noqa: E402
+bad = []
+for fmt_, name, kw, cool, ctrl, vac, order, stock in data.MILLING:
+    r100 = int((Decimal(order) * Decimal('1.11') / 100).quantize(Decimal('1'), ROUND_HALF_UP)) * 100
+    if r100 != stock:
+        bad.append((name, order, stock, r100))
+print(f'Фрезерных позиций: {len(data.MILLING)}')
+if bad:
+    print(f'Отклонений от правила «+11 %, округление до 100 ₽»: {len(bad)}')
+    for b in bad[:10]:
+        print(f'  {b[0]}: прайс {b[2]} ₽, расчёт {b[3]} ₽')
+    sys.exit(1)
+else:
+    print('Правило «+11 % с округлением до 100 ₽» подтверждается на всех позициях')
+
+# Количество конфигураций
+n_fiber = len(data.FIBER_A) + sum(2 + len(c['rot']) + len(c['table_rot'])
+                                 for c in data.FIBER_S.values())
+print(f'Конфигураций волокна: {n_fiber} (в источнике заявлено 122)')
+print(f'Конфигураций фрезерных: {len(data.MILLING)} (в источнике заявлено 85)')
+assert n_fiber == 122, n_fiber
+assert len(data.MILLING) == 85, len(data.MILLING)
+
+# Пакетная скидка: стол+ось против стола и оси по отдельности
+print()
+print('--- Пакетная скидка на стол + ось ---')
+mismatch = 0
+for (fmt_, power), cfg in sorted(data.FIBER_S.items()):
+    exp = data.BUNDLE_DISCOUNT.get(fmt_)
+    for rot, price in sorted(cfg['table_rot'].items()):
+        sep = cfg['table'] + (cfg['rot'][rot] - cfg['base'])
+        diff = sep - price
+        if exp is not None and diff != exp:
+            mismatch += 1
+            print(f'  S {fmt_} {power}W + стол + {rot}: выгода {diff} ₽, заявлено {exp} ₽')
+print(f'Несовпадений с заявленной пакетной скидкой: {mismatch}')
+
+print()
+print('Проверка завершена.')
