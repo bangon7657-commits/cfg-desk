@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<meta name="googlebot" content="noindex,nofollow">
+<meta name="theme-color" content="#1F3A5F">
+<title>Конфигуратор и смета</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon-180.png">
+<link rel="icon" href="icon-192.png" type="image/png">
+<style>:root{
+  --navy:#1F3A5F; --blue:#2E5B94; --f1:#DCE8F4; --f2:#EAF1F8; --f3:#F4F7FB;
+  --grey:#5A6572; --line:#C6D6E6; --bg:#fff; --ok:#1d7a4c; --warn:#a35a00; --bad:#b4231c;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.5 Calibri,"Segoe UI",system-ui,-apple-system,sans-serif;
+  color:#222;background:var(--f3)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 14px 60px}
+
+/* ---------- шапка ---------- */
+header{background:var(--navy);color:#fff;padding:12px 0;position:sticky;top:0;z-index:20;
+  box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.head{max-width:1180px;margin:0 auto;padding:0 14px;display:flex;gap:14px;
+  align-items:center;flex-wrap:wrap}
+.brand{font-size:17px;font-weight:700;letter-spacing:.2px}
+.brand small{display:block;font-size:11px;font-weight:400;opacity:.72;letter-spacing:.3px}
+.head-right{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toggle{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);
+  padding:5px 11px;border-radius:20px;font-size:13px;cursor:pointer;user-select:none}
+.toggle input{margin:0;cursor:pointer}
+.savedot{font-size:12px;opacity:.7}
+
+/* ---------- вкладки ---------- */
+nav{display:flex;gap:4px;overflow-x:auto;background:#fff;border-bottom:2px solid var(--navy);
+  position:sticky;top:53px;z-index:19;padding:0 14px;scrollbar-width:thin}
+nav .navinner{max-width:1180px;margin:0 auto;display:flex;gap:4px;width:100%}
+nav button{border:0;background:none;font:inherit;font-size:14px;padding:11px 14px;
+  cursor:pointer;color:var(--grey);border-bottom:3px solid transparent;white-space:nowrap}
+nav button:hover{color:var(--navy);background:var(--f3)}
+nav button[aria-selected="true"]{color:var(--navy);font-weight:700;border-bottom-color:var(--blue)}
+body.js nav{display:flex}
+nav{display:none}
+body.js nav{display:block}
+
+/* без JS все панели подряд и видны */
+.panel{padding-top:18px}
+body.js .panel{display:none}
+body.js .panel.active{display:block}
+.nojs-title{display:block;margin:26px 0 0;padding:8px 12px;background:var(--navy);
+  color:#fff;font-size:17px;font-weight:700;border-radius:4px}
+body.js .nojs-title{display:none}
+
+h2{font-size:20px;color:var(--navy);margin:22px 0 10px;padding-bottom:6px;
+  border-bottom:2px solid var(--blue)}
+h3{font-size:16px;color:var(--blue);margin:18px 0 8px}
+p{margin:8px 0}
+.muted{color:var(--grey);font-size:13px}
+.lead{font-size:14px;color:var(--grey);margin-bottom:14px}
+
+/* ---------- карточки и сетка ---------- */
+.card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:14px 16px;
+  margin:12px 0}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:820px){.g2,.g3{grid-template-columns:1fr}}
+
+label.f{display:block;font-size:12px;color:var(--grey);margin:9px 0 3px;
+  text-transform:uppercase;letter-spacing:.4px}
+select,input[type=text],input[type=number],textarea{width:100%;font:inherit;padding:8px 9px;
+  border:1px solid var(--line);border-radius:4px;background:#fff;color:#222}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--blue);outline-offset:-1px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row>div{flex:1;min-width:130px}
+.chk{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:14px;cursor:pointer}
+.chk input{width:17px;height:17px;margin:0;flex:0 0 auto;cursor:pointer}
+
+button.btn{font:inherit;font-size:14px;padding:9px 15px;border-radius:4px;cursor:pointer;
+  border:1px solid var(--navy);background:var(--navy);color:#fff}
+button.btn:hover{background:var(--blue)}
+button.btn.sec{background:#fff;color:var(--navy)}
+button.btn.sec:hover{background:var(--f2)}
+button.btn.mini{padding:4px 9px;font-size:13px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* ---------- цена ---------- */
+.pricebox{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+@media(max-width:640px){.pricebox{grid-template-columns:1fr}}
+.pb{border:1px solid var(--line);border-radius:6px;padding:12px 14px;background:var(--f3)}
+.pb.stock{background:var(--f1);border-color:var(--blue)}
+.pb .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--grey)}
+.pb .val{font-size:26px;font-weight:700;color:var(--navy);margin-top:2px}
+.pb .sub{font-size:12px;color:var(--grey);margin-top:3px}
+.calcsteps{margin-top:10px;font-size:13px;background:var(--f3);border-left:4px solid var(--blue);
+  padding:9px 12px;border-radius:0 4px 4px 0}
+.calcsteps div{padding:2px 0}
+.calcsteps b{color:var(--navy)}
+
+/* ---------- таблицы ---------- */
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:10px 0;background:#fff}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--f1);color:var(--navy);font-weight:700;font-size:12.5px}
+tbody tr:nth-child(even){background:var(--f3)}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.wide{min-width:720px}
+
+/* ---------- смета ---------- */
+#smetaBody td{vertical-align:middle}
+#smetaBody input[type=number]{width:78px;padding:5px 6px}
+.empty{padding:18px;text-align:center;color:var(--grey);font-size:14px;
+  border:1px dashed var(--line);border-radius:6px;background:#fff}
+.totals{margin-top:12px;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.totals div{display:flex;justify-content:space-between;padding:8px 13px;font-size:14px;
+  border-bottom:1px solid var(--f1)}
+.totals div:last-child{border-bottom:0}
+.totals .big{background:var(--f1);font-size:17px;font-weight:700;color:var(--navy)}
+.totals .gain{color:var(--ok);font-weight:700}
+.propis{margin-top:10px;padding:10px 13px;background:var(--f2);border-radius:4px;
+  font-size:14px;font-style:italic}
+
+.check{margin-top:12px;padding:10px 13px;border-radius:4px;font-size:13.5px}
+.check.good{background:#e8f5ee;border-left:4px solid var(--ok);color:#14532d}
+.check.fail{background:#fdeaea;border-left:4px solid var(--bad);color:#7f1d1d}
+.check ul{margin:6px 0 0 18px;padding:0}
+
+/* ---------- флаги и статусы ---------- */
+.flag-block{display:inline-block;background:var(--bad);color:#fff;font-size:11px;
+  padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.4px}
+.ok{color:var(--ok);font-weight:700}
+.warn{color:var(--warn);font-weight:700}
+.bad{color:var(--bad);font-weight:700}
+.note{background:var(--f2);border-left:4px solid var(--blue);padding:10px 13px;
+  border-radius:0 4px 4px 0;margin:10px 0;font-size:13.5px}
+.note.alert{background:#fdf3e7;border-left-color:var(--warn)}
+.note.stop{background:#fdeaea;border-left-color:var(--bad)}
+
+.conflict{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:0 4px 4px 0;
+  padding:10px 13px;margin:9px 0;background:#fff}
+.conflict-t{font-weight:700;color:var(--navy)}
+.conflict-b{font-size:13.5px;margin-top:3px}
+.conflict-a{font-size:13px;color:var(--warn);margin-top:5px}
+.miss{border:1px solid var(--line);border-radius:4px;padding:9px 12px;margin:7px 0;background:#fff}
+.miss b{color:var(--navy);display:block}
+.miss span{font-size:13px;color:var(--grey)}
+.advice{background:var(--f3);border:1px solid var(--line);border-radius:4px;padding:9px 12px;
+  margin:7px 0}
+.advice b{display:block;color:var(--navy);font-size:13.5px}
+.advice span{font-size:13px}
+.rule{display:flex;gap:11px;align-items:baseline;padding:6px 0;font-size:13.5px}
+.st{flex:0 0 auto;font-size:11px;padding:2px 8px;border-radius:3px;text-transform:uppercase;
+  letter-spacing:.4px;color:#fff}
+.st-0{background:var(--ok)} .st-1{background:var(--warn)} .st-2{background:var(--bad)}
+
+/* внутреннее — скрывается в режиме демонстрации */
+body.demo .internal{display:none !important}
+.internal-mark{font-size:10px;background:var(--navy);color:#fff;padding:1px 5px;
+  border-radius:2px;margin-left:6px;vertical-align:1px;letter-spacing:.3px}
+.demo-banner{display:none;background:var(--warn);color:#fff;padding:7px 14px;font-size:13px;
+  text-align:center}
+body.demo .demo-banner{display:block}
+
+/* ---------- предпросмотр ТКП ---------- */
+.kp{background:#fff;border:1px solid var(--line);padding:22px 26px;margin-top:14px}
+.kp-head{display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:2px solid var(--navy);padding-bottom:9px}
+.kp-logo{font-size:19px;font-weight:700;color:var(--navy);letter-spacing:1px}
+.kp-logo small{display:block;font-size:10px;font-weight:400;letter-spacing:.4px;color:var(--grey)}
+.kp-meta{font-size:12px;color:var(--grey);text-align:right}
+.kp h1{font-size:19px;color:var(--navy);margin:14px 0 6px}
+.kp-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  margin:14px 0;border:1px solid var(--line)}
+.kp-sum div{background:var(--f2);padding:9px 11px}
+.kp-sum .k{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--grey)}
+.kp-sum .v{font-size:14px;font-weight:700;color:var(--navy);margin-top:2px}
+@media(max-width:700px){.kp-sum{grid-template-columns:1fr 1fr}}
+.kp-mgr{margin-top:16px;padding-top:11px;border-top:1px solid var(--line);font-size:13px}
+.kp-mgr b{color:var(--navy)}
+.kp-foot{margin-top:12px;font-size:11px;color:var(--grey);border-top:1px solid var(--f1);
+  padding-top:8px}
+
+@media print{
+  header,nav,.demo-banner,.noprint,.btns{display:none !important}
+  body{background:#fff;font-size:11pt}
+  .wrap{max-width:none;padding:0}
+  body.js .panel{display:none !important}
+  body.js .panel.printme{display:block !important}
+  .card,.kp{border:0;padding:0;margin:0}
+  .kp{padding:0}
+  h2{page-break-after:avoid}
+  table{page-break-inside:avoid;font-size:9.5pt}
+  @page{size:A4;margin:12mm}
+}
+</style>
+</head>
+<body class="">
+
+<header>
+  <div class="head">
+    <div class="brand">Конфигуратор и смета<small>внутренний инструмент · волокно и фрезерные</small></div>
+    <div class="head-right">
+      <label class="toggle internal"><input type="checkbox" id="demoMode"> Режим демонстрации клиенту</label>
+      <span class="savedot" id="saveDot">сохранено</span>
+    </div>
+  </div>
+</header>
+<div class="demo-banner">Режим демонстрации: наценка за наличие, лестница скидок и служебные пометки скрыты</div>
+
+<nav aria-label="Разделы">
+  <div class="navinner" id="tabs">
+    <button data-t="cfg" aria-selected="false">Конфигуратор</button>
+    <button data-t="smeta" aria-selected="true">Смета и ТКП</button>
+    <button data-t="match" aria-selected="false">Подбор по задаче</button>
+    <button data-t="shop" aria-selected="false">Готовность цеха</button>
+    <button data-t="gas" aria-selected="false">Газ и владение</button>
+    <button data-t="data" aria-selected="false">Данные</button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- ================= КОНФИГУРАТОР ================= -->
+<span class="nojs-title">Конфигуратор</span>
+<section class="panel" id="p-cfg">
+  <p class="lead">Волокно — прайс от 05.06.2026, 122 конфигураций.
+    Фрезерные — прайс май 2026, 85 конфигураций.
+    НДС включён. Доставка, ПНР, обучение и чиллер — сверху.</p>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label class="f">Категория</label>
+        <select id="cat">
+          <option value="fiber">Волоконный по металлу</option>
+          <option value="milling">Фрезерный с ЧПУ</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- волокно -->
+  <div class="card" id="blkFiber">
+    <h3>Волоконный станок по металлу</h3>
+    <div class="row">
+      <div><label class="f">Серия</label><select id="fSeries"><option value="S">S — лист и трубы</option><option value="A">A — компактная, 3–4 мм в 24/7</option></select></div>
+      <div><label class="f">Формат</label><select id="fFormat"><option value="1530">1530 — 1500×3000 мм</option><option value="1560">1560 — 1500×6000 мм</option><option value="2030">2030 — 2000×3000 мм</option><option value="2040">2040 — 2000×4000 мм</option><option value="2060">2060 — 2000×6000 мм</option></select></div>
+      <div><label class="f">Мощность</label><select id="fPower"><option value="3000">3 кВт</option><option value="6000">6 кВт</option><option value="12000">12 кВт</option></select></div>
+    </div>
+    <div class="row">
+      <div><label class="f">Сменный стол</label><select id="fTable">
+        <option value="0">нет</option><option value="1">да</option></select></div>
+      <div><label class="f">RD-модуль (труборез)</label><select id="fRot">
+        <option value="">нет</option><option value="6-160">rotary 6-160</option>
+        <option value="6-240">rotary 6-240</option><option value="6-360">rotary 6-360</option>
+      </select></div>
+    </div>
+    <div id="fOut"><div class="pricebox"><div class="pb"><div class="lbl">Цена, НДС включён</div><div class="val">2 867 000 ₽</div><div class="sub">Wattsan S 1530 3000W</div></div><div class="pb stock"><div class="lbl">Второй ценник</div><div class="val" style="font-size:17px">нет в прайсе</div><div class="sub">По волокну в прайсе одна цена. Наценку за наличие не выдумываем.</div></div></div><div class="calcsteps"><div>База 1530 3000W: <b>2 867 000 ₽</b></div><div>Итого по прайсу: <b>2 867 000 ₽</b></div></div><div class="note">Сверх цены станка: доставка, ПНР, обучение и подготовка цеха. Стабилизатор 30 000 или 50 000 Вт — отдельная статья и условие гарантии.</div></div>
+    <div class="btns noprint"><button class="btn" id="fAdd">Добавить в смету</button></div>
+    <div class="note">В цену волоконного станка входят контроллер FSCUT, лазерная голова BLT
+      и чиллер CWFL, подобранные под мощность источника. Серия A — компактная, режет 3–4 мм в режиме 24/7. В прайсе заведена только в 3000 Вт: паспорт знает 1500 и 2000 Вт, но цен на них нет. 1530A — 2000 кг, 4770×2270×1380 мм, источник Raycus S-CE (ремонтируется в Москве).</div>
+    <div class="note alert"><b>Чего в прайсе нет — только к менеджеру:</b>
+      <ul><li>Серия E — целиком, ни одной цены</li><li>Серия HARD — целиком, ни одной цены</li><li>Формат 1325 у всех серий</li><li>Wattsan 1309 mini — отдельный станок, не серия</li><li>Серия A в мощностях 1500 и 2000 Вт — паспорт знает, прайс нет</li></ul></div>
+  </div>
+
+  <!-- фрезерный -->
+  <div class="card" id="blkMill" style="display: none;">
+    <h3>Фрезерный станок с ЧПУ</h3>
+    <div class="row">
+      <div><label class="f">Формат</label><select id="mFormat"><option value="0404">0404 — 400×400 мм</option><option value="0609">0609 — 600×900 мм</option><option value="6090">6090 — 600×900 мм</option><option value="1313">1313 — 1300×1300 мм</option><option value="1325">1325 — 1300×2500 мм</option><option value="1616">1616 — 1600×1600 мм</option><option value="1625">1625 — 1600×2500 мм</option><option value="1630">1630 — 1600×3000 мм</option><option value="2030">2030 — 2000×3000 мм</option><option value="2040">2040 — 2000×4000 мм</option><option value="2060">2060 — 2000×6000 мм</option></select></div>
+      <div style="flex:2"><label class="f">Конфигурация</label><select id="mConfig"><option value="0404 mini, 1.5wc, NC">0404 mini, 1.5wc, NC</option><option value="0404 mini, 1.5wc, A11">0404 mini, 1.5wc, A11</option><option value="0404 mini Cabine, 1.5wc, A11">0404 mini Cabine, 1.5wc, A11</option></select></div>
+    </div>
+    <div class="row internal">
+      <div><label class="f">Ценник</label><select id="priceMode">
+        <option value="order">Под заказ (завод, ~60 дней)</option>
+        <option value="stock">Из наличия (склад)</option></select></div>
+    </div>
+    <div id="mOut"><div class="pricebox"><div class="pb stock"><div class="lbl">Под заказ — завод, ~60 дней</div><div class="val">225 000 ₽</div><div class="sub">Оплата 50 % + остаток</div></div><div class="pb"><div class="lbl">Из наличия — склад</div><div class="val">249 800 ₽</div><div class="sub">Оплата 100 %</div></div></div><div class="calcsteps internal"><div>Разница: <b>24 800 ₽</b>, это <b>+11,02 %</b> к цене под заказ</div><div>Правило прайса: +11 % с округлением до 100 ₽. Цена берётся из таблицы, а не считается.</div></div><div class="muted">Шпиндель 1 кВт · охлаждение водяное · стойка NC · вакуумный стол: нет · поле 400×400 мм · питание 220 В</div><div class="note">Что клиент платит сверх: доставка, ПНР, обучение, чиллер. В цену фрезерного они не входят.</div></div>
+    <div class="btns noprint"><button class="btn" id="mAdd">Добавить в смету</button></div>
+
+    <h3>Опции и доп. оборудование <span class="muted">(прайс 25.03.2026)</span></h3>
+    <div id="mOptions"><div class="muted"><b>Стабилизаторы напряжения</b></div><div class="chk"><input type="checkbox"><span style="flex:1">Ресанта-3000/1-Ц — <b>8 490 ₽</b></span><input type="number" min="1" max="20" value="1" id="q__3000_1_" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="chk"><input type="checkbox"><span style="flex:1">Ресанта-5000/1-Ц — <b>10 190 ₽</b></span><input type="number" min="1" max="20" value="1" id="q__5000_1_" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="chk"><input type="checkbox"><span style="flex:1">Ресанта-8000/1-Ц — <b>13 490 ₽</b></span><input type="number" min="1" max="20" value="1" id="q__8000_1_" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="muted"><b>Чиллеры</b></div><div class="chk"><input type="checkbox"><span style="flex:1">S&amp;A CW-3000TG — <b>20 100 ₽</b></span><input type="number" min="1" max="20" value="1" id="q_S_A_CW_3000TG" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="chk"><input type="checkbox"><span style="flex:1">S&amp;A CW-5000TG — <b>53 625 ₽</b></span><input type="number" min="1" max="20" value="1" id="q_S_A_CW_5000TG" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="chk"><input type="checkbox"><span style="flex:1">S&amp;A CW-5200TH — <b>57 280 ₽</b></span><input type="number" min="1" max="20" value="1" id="q_S_A_CW_5200TH" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="muted"><b>DSP-контроллеры</b></div><div class="chk"><input type="checkbox"><span style="flex:1">RichAuto A11 — <b>50 538 ₽</b></span><input type="number" min="1" max="20" value="1" id="q_RichAuto_A11" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="chk"><input type="checkbox"><span style="flex:1">RichAuto A18 — <b>75 380 ₽</b></span><input type="number" min="1" max="20" value="1" id="q_RichAuto_A18" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="muted"><b>Датчики высоты инструмента</b></div><div class="chk"><input type="checkbox"><span style="flex:1">Магнитный — для станков 0404…0609 — <b>3 369 ₽</b></span><input type="number" min="1" max="20" value="1" id="q__0404_0609" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="chk"><input type="checkbox"><span style="flex:1">Нажимной — для A1 6090 и крупнее — <b>9 180 ₽</b></span><input type="number" min="1" max="20" value="1" id="q__A1_6090_" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="muted"><b>Виброопоры</b></div><div class="chk"><input type="checkbox"><span style="flex:1">Wattsan S-78-7d185 (за 1 шт.) — <b>1 400 ₽</b></span><input type="number" min="1" max="20" value="1" id="q_Wattsan_S_78_7d185_1_" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="muted"><b>Аспирация</b></div><div class="chk"><input type="checkbox"><span style="flex:1">Щётка аспирации для шпинделя — <b>5 220 ₽</b></span><input type="number" min="1" max="20" value="1" id="q__" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="chk"><input type="checkbox"><span style="flex:1">BELMASH DC850 — <b>26 690 ₽</b></span><input type="number" min="1" max="20" value="1" id="q_BELMASH_DC850" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="chk"><input type="checkbox"><span style="flex:1">BELMASH DC2500 — <b>40 490 ₽</b></span><input type="number" min="1" max="20" value="1" id="q_BELMASH_DC2500" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div><div class="chk"><input type="checkbox"><span style="flex:1">BELMASH DC3900 — <b>53 990 ₽</b></span><input type="number" min="1" max="20" value="1" id="q_BELMASH_DC3900" style="width:62px;padding:3px 5px"><button class="btn mini sec" type="button">В смету</button></div></div>
+    <p class="muted">Для 0404 и 0609 mini количество виброопор в прайсе не указано — уточнять.</p>
+
+    <h3>ПНР и обучение</h3>
+    <p class="muted">Это платные услуги — не обещать как бесплатное преимущество.</p>
+    <div class="row">
+      <div style="flex:2"><label class="f">Станок</label><select id="pnrModel"><option value="0">Wattsan 0404/0609 mini</option><option value="1">Wattsan 0404/0609 mini Cabine</option><option value="2">Wattsan A1/M1 6090</option><option value="3">Wattsan A1/M1 1313</option><option value="4">Wattsan A1/M1 1616</option><option value="5">Wattsan A1/M1 1325</option><option value="6">Wattsan M1 2030/2040</option><option value="7">Wattsan M1 1313 S4</option><option value="8">Wattsan M1 1313 RD / 1325 RD</option><option value="9">Wattsan M3 1313-2060</option></select></div>
+      <div><label class="f">Что включить</label><select id="pnrKind">
+        <option value="pnr">ПНР</option>
+        <option value="plus1">ПНР +1 день</option>
+        <option value="plus2">ПНР +2 дня</option>
+        <option value="training">Обучение</option>
+        <option value="package">ПНР + обучение (пакет)</option>
+      </select></div>
+    </div>
+    <label class="chk"><input type="checkbox" id="thirdParty"> Сторонний станок — коэффициент ×1,2</label>
+    <div id="pnrOut"><div class="calcsteps"><div>По прайсу: <b>23 000 ₽</b> · выезд 1 дн.</div><div>Минимальный выезд за день — 22 000 ₽, штраф за ложный выезд 19 000 ₽</div></div></div>
+    <div class="btns noprint"><button class="btn sec" id="pnrAdd">Добавить в смету</button></div>
+    <div class="note"><b>Общие условия:</b><ul><li>На сторонние станки коэффициент ×1,2</li><li>Штраф за ложный выезд 19 000 ₽ или по договору</li><li>Минимальный выезд за день — 22 000 ₽</li><li>У M3 обучение входит в ПНР — единственный случай в прайсе</li></ul></div>
+  </div>
+
+  <h2>Полный прайс: волокно</h2>
+  <p class="muted">Прайс «Металлорезы для ОП» от 05.06.2026. По волокну в прайсе одна цена —
+    второго ценника «из наличия» нет.</p>
+  <div class="scroll"><table class="wide"><thead><tr><th>Конфигурация</th><th>Поле, мм</th><th>Мощность</th><th>Доплата к базе</th><th>Цена</th></tr></thead><tbody><tr><td>Wattsan A 1313 3000W</td><td>1300×1300</td><td>3000 Вт</td><td>база</td><td><b>1 750 000 ₽</b></td></tr><tr><td>Wattsan A 1530 3000W</td><td>1500×3000</td><td>3000 Вт</td><td>база</td><td><b>1 881 000 ₽</b></td></tr><tr><td>Wattsan S 1530 3000W</td><td>1500×3000</td><td>3000 Вт</td><td>база</td><td><b>2 867 000 ₽</b></td></tr><tr><td>Wattsan S 1530 3000W + сменный стол</td><td>1500×3000</td><td>3000 Вт</td><td>+790 000 ₽</td><td><b>3 657 000 ₽</b></td></tr><tr><td>Wattsan S 1530 3000W + rotary 6-160</td><td>1500×3000</td><td>3000 Вт</td><td>+1 770 000 ₽</td><td><b>4 637 000 ₽</b></td></tr><tr><td>Wattsan S 1530 3000W + rotary 6-240</td><td>1500×3000</td><td>3000 Вт</td><td>+2 000 000 ₽</td><td><b>4 867 000 ₽</b></td></tr><tr><td>Wattsan S 1530 3000W + rotary 6-360</td><td>1500×3000</td><td>3000 Вт</td><td>+2 463 000 ₽</td><td><b>5 330 000 ₽</b></td></tr><tr><td>Wattsan S 1530 3000W + стол + rotary 6-160</td><td>1500×3000</td><td>3000 Вт</td><td>+2 560 000 ₽</td><td><b>5 427 000 ₽</b></td></tr><tr><td>Wattsan S 1530 3000W + стол + rotary 6-240</td><td>1500×3000</td><td>3000 Вт</td><td>+2 790 000 ₽</td><td><b>5 657 000 ₽</b></td></tr><tr><td>Wattsan S 1530 3000W + стол + rotary 6-360</td><td>1500×3000</td><td>3000 Вт</td><td>+3 253 000 ₽</td><td><b>6 120 000 ₽</b></td></tr><tr><td>Wattsan S 1530 6000W</td><td>1500×3000</td><td>6000 Вт</td><td>база</td><td><b>3 825 000 ₽</b></td></tr><tr><td>Wattsan S 1530 6000W + сменный стол</td><td>1500×3000</td><td>6000 Вт</td><td>+790 000 ₽</td><td><b>4 615 000 ₽</b></td></tr><tr><td>Wattsan S 1530 6000W + rotary 6-160</td><td>1500×3000</td><td>6000 Вт</td><td>+1 769 000 ₽</td><td><b>5 594 000 ₽</b></td></tr><tr><td>Wattsan S 1530 6000W + rotary 6-240</td><td>1500×3000</td><td>6000 Вт</td><td>+2 000 000 ₽</td><td><b>5 825 000 ₽</b></td></tr><tr><td>Wattsan S 1530 6000W + rotary 6-360</td><td>1500×3000</td><td>6000 Вт</td><td>+2 462 000 ₽</td><td><b>6 287 000 ₽</b></td></tr><tr><td>Wattsan S 1530 6000W + стол + rotary 6-160</td><td>1500×3000</td><td>6000 Вт</td><td>+2 559 000 ₽</td><td><b>6 384 000 ₽</b></td></tr><tr><td>Wattsan S 1530 6000W + стол + rotary 6-240</td><td>1500×3000</td><td>6000 Вт</td><td>+2 790 000 ₽</td><td><b>6 615 000 ₽</b></td></tr><tr><td>Wattsan S 1530 6000W + стол + rotary 6-360</td><td>1500×3000</td><td>6000 Вт</td><td>+3 252 000 ₽</td><td><b>7 077 000 ₽</b></td></tr><tr><td>Wattsan S 1530 12000W</td><td>1500×3000</td><td>12000 Вт</td><td>база</td><td><b>5 280 000 ₽</b></td></tr><tr><td>Wattsan S 1530 12000W + сменный стол</td><td>1500×3000</td><td>12000 Вт</td><td>+790 000 ₽</td><td><b>6 070 000 ₽</b></td></tr><tr><td>Wattsan S 1530 12000W + rotary 6-160</td><td>1500×3000</td><td>12000 Вт</td><td>+1 769 000 ₽</td><td><b>7 049 000 ₽</b></td></tr><tr><td>Wattsan S 1530 12000W + rotary 6-240</td><td>1500×3000</td><td>12000 Вт</td><td>+2 000 000 ₽</td><td><b>7 280 000 ₽</b></td></tr><tr><td>Wattsan S 1530 12000W + rotary 6-360</td><td>1500×3000</td><td>12000 Вт</td><td>+2 462 000 ₽</td><td><b>7 742 000 ₽</b></td></tr><tr><td>Wattsan S 1530 12000W + стол + rotary 6-160</td><td>1500×3000</td><td>12000 Вт</td><td>+2 559 000 ₽</td><td><b>7 839 000 ₽</b></td></tr><tr><td>Wattsan S 1530 12000W + стол + rotary 6-240</td><td>1500×3000</td><td>12000 Вт</td><td>+2 790 000 ₽</td><td><b>8 070 000 ₽</b></td></tr><tr><td>Wattsan S 1530 12000W + стол + rotary 6-360</td><td>1500×3000</td><td>12000 Вт</td><td>+3 252 000 ₽</td><td><b>8 532 000 ₽</b></td></tr><tr><td>Wattsan S 1560 3000W</td><td>1500×6000</td><td>3000 Вт</td><td>база</td><td><b>3 300 000 ₽</b></td></tr><tr><td>Wattsan S 1560 3000W + сменный стол</td><td>1500×6000</td><td>3000 Вт</td><td>+1 262 000 ₽</td><td><b>4 562 000 ₽</b></td></tr><tr><td>Wattsan S 1560 3000W + rotary 6-160</td><td>1500×6000</td><td>3000 Вт</td><td>+1 812 000 ₽</td><td><b>5 112 000 ₽</b></td></tr><tr><td>Wattsan S 1560 3000W + rotary 6-240</td><td>1500×6000</td><td>3000 Вт</td><td>+2 042 000 ₽</td><td><b>5 342 000 ₽</b></td></tr><tr><td>Wattsan S 1560 3000W + rotary 6-360</td><td>1500×6000</td><td>3000 Вт</td><td>+2 505 000 ₽</td><td><b>5 805 000 ₽</b></td></tr><tr><td>Wattsan S 1560 3000W + стол + rotary 6-160</td><td>1500×6000</td><td>3000 Вт</td><td>+3 054 000 ₽</td><td><b>6 354 000 ₽</b></td></tr><tr><td>Wattsan S 1560 3000W + стол + rotary 6-240</td><td>1500×6000</td><td>3000 Вт</td><td>+3 284 000 ₽</td><td><b>6 584 000 ₽</b></td></tr><tr><td>Wattsan S 1560 3000W + стол + rotary 6-360</td><td>1500×6000</td><td>3000 Вт</td><td>+3 747 000 ₽</td><td><b>7 047 000 ₽</b></td></tr><tr><td>Wattsan S 1560 6000W</td><td>1500×6000</td><td>6000 Вт</td><td>база</td><td><b>4 257 000 ₽</b></td></tr><tr><td>Wattsan S 1560 6000W + сменный стол</td><td>1500×6000</td><td>6000 Вт</td><td>+1 263 000 ₽</td><td><b>5 520 000 ₽</b></td></tr><tr><td>Wattsan S 1560 6000W + rotary 6-160</td><td>1500×6000</td><td>6000 Вт</td><td>+1 813 000 ₽</td><td><b>6 070 000 ₽</b></td></tr><tr><td>Wattsan S 1560 6000W + rotary 6-240</td><td>1500×6000</td><td>6000 Вт</td><td>+2 043 000 ₽</td><td><b>6 300 000 ₽</b></td></tr><tr><td>Wattsan S 1560 6000W + rotary 6-360</td><td>1500×6000</td><td>6000 Вт</td><td>+2 506 000 ₽</td><td><b>6 763 000 ₽</b></td></tr><tr><td>Wattsan S 1560 6000W + стол + rotary 6-160</td><td>1500×6000</td><td>6000 Вт</td><td>+3 054 000 ₽</td><td><b>7 311 000 ₽</b></td></tr><tr><td>Wattsan S 1560 6000W + стол + rotary 6-240</td><td>1500×6000</td><td>6000 Вт</td><td>+3 285 000 ₽</td><td><b>7 542 000 ₽</b></td></tr><tr><td>Wattsan S 1560 6000W + стол + rotary 6-360</td><td>1500×6000</td><td>6000 Вт</td><td>+3 747 000 ₽</td><td><b>8 004 000 ₽</b></td></tr><tr><td>Wattsan S 1560 12000W</td><td>1500×6000</td><td>12000 Вт</td><td>база</td><td><b>5 806 000 ₽</b></td></tr><tr><td>Wattsan S 1560 12000W + сменный стол</td><td>1500×6000</td><td>12000 Вт</td><td>+1 262 000 ₽</td><td><b>7 068 000 ₽</b></td></tr><tr><td>Wattsan S 1560 12000W + rotary 6-160</td><td>1500×6000</td><td>12000 Вт</td><td>+1 812 000 ₽</td><td><b>7 618 000 ₽</b></td></tr><tr><td>Wattsan S 1560 12000W + rotary 6-240</td><td>1500×6000</td><td>12000 Вт</td><td>+2 042 000 ₽</td><td><b>7 848 000 ₽</b></td></tr><tr><td>Wattsan S 1560 12000W + rotary 6-360</td><td>1500×6000</td><td>12000 Вт</td><td>+2 505 000 ₽</td><td><b>8 311 000 ₽</b></td></tr><tr><td>Wattsan S 1560 12000W + стол + rotary 6-160</td><td>1500×6000</td><td>12000 Вт</td><td>+3 054 000 ₽</td><td><b>8 860 000 ₽</b></td></tr><tr><td>Wattsan S 1560 12000W + стол + rotary 6-240</td><td>1500×6000</td><td>12000 Вт</td><td>+3 284 000 ₽</td><td><b>9 090 000 ₽</b></td></tr><tr><td>Wattsan S 1560 12000W + стол + rotary 6-360</td><td>1500×6000</td><td>12000 Вт</td><td>+3 747 000 ₽</td><td><b>9 553 000 ₽</b></td></tr><tr><td>Wattsan S 2030 3000W</td><td>2000×3000</td><td>3000 Вт</td><td>база</td><td><b>3 148 000 ₽</b></td></tr><tr><td>Wattsan S 2030 3000W + сменный стол</td><td>2000×3000</td><td>3000 Вт</td><td>+972 000 ₽</td><td><b>4 120 000 ₽</b></td></tr><tr><td>Wattsan S 2030 3000W + rotary 6-160</td><td>2000×3000</td><td>3000 Вт</td><td>+1 816 000 ₽</td><td><b>4 964 000 ₽</b></td></tr><tr><td>Wattsan S 2030 3000W + rotary 6-240</td><td>2000×3000</td><td>3000 Вт</td><td>+2 047 000 ₽</td><td><b>5 195 000 ₽</b></td></tr><tr><td>Wattsan S 2030 3000W + rotary 6-360</td><td>2000×3000</td><td>3000 Вт</td><td>+2 509 000 ₽</td><td><b>5 657 000 ₽</b></td></tr><tr><td>Wattsan S 2030 3000W + стол + rotary 6-160</td><td>2000×3000</td><td>3000 Вт</td><td>+2 764 000 ₽</td><td><b>5 912 000 ₽</b></td></tr><tr><td>Wattsan S 2030 3000W + стол + rotary 6-240</td><td>2000×3000</td><td>3000 Вт</td><td>+2 994 000 ₽</td><td><b>6 142 000 ₽</b></td></tr><tr><td>Wattsan S 2030 3000W + стол + rotary 6-360</td><td>2000×3000</td><td>3000 Вт</td><td>+3 457 000 ₽</td><td><b>6 605 000 ₽</b></td></tr><tr><td>Wattsan S 2030 6000W</td><td>2000×3000</td><td>6000 Вт</td><td>база</td><td><b>4 105 000 ₽</b></td></tr><tr><td>Wattsan S 2030 6000W + сменный стол</td><td>2000×3000</td><td>6000 Вт</td><td>+973 000 ₽</td><td><b>5 078 000 ₽</b></td></tr><tr><td>Wattsan S 2030 6000W + rotary 6-160</td><td>2000×3000</td><td>6000 Вт</td><td>+1 817 000 ₽</td><td><b>5 922 000 ₽</b></td></tr><tr><td>Wattsan S 2030 6000W + rotary 6-240</td><td>2000×3000</td><td>6000 Вт</td><td>+2 047 000 ₽</td><td><b>6 152 000 ₽</b></td></tr><tr><td>Wattsan S 2030 6000W + rotary 6-360</td><td>2000×3000</td><td>6000 Вт</td><td>+2 510 000 ₽</td><td><b>6 615 000 ₽</b></td></tr><tr><td>Wattsan S 2030 6000W + стол + rotary 6-160</td><td>2000×3000</td><td>6000 Вт</td><td>+2 765 000 ₽</td><td><b>6 870 000 ₽</b></td></tr><tr><td>Wattsan S 2030 6000W + стол + rotary 6-240</td><td>2000×3000</td><td>6000 Вт</td><td>+2 995 000 ₽</td><td><b>7 100 000 ₽</b></td></tr><tr><td>Wattsan S 2030 6000W + стол + rotary 6-360</td><td>2000×3000</td><td>6000 Вт</td><td>+3 458 000 ₽</td><td><b>7 563 000 ₽</b></td></tr><tr><td>Wattsan S 2030 12000W</td><td>2000×3000</td><td>12000 Вт</td><td>база</td><td><b>5 606 000 ₽</b></td></tr><tr><td>Wattsan S 2030 12000W + сменный стол</td><td>2000×3000</td><td>12000 Вт</td><td>+973 000 ₽</td><td><b>6 579 000 ₽</b></td></tr><tr><td>Wattsan S 2030 12000W + rotary 6-160</td><td>2000×3000</td><td>12000 Вт</td><td>+1 817 000 ₽</td><td><b>7 423 000 ₽</b></td></tr><tr><td>Wattsan S 2030 12000W + rotary 6-240</td><td>2000×3000</td><td>12000 Вт</td><td>+2 047 000 ₽</td><td><b>7 653 000 ₽</b></td></tr><tr><td>Wattsan S 2030 12000W + rotary 6-360</td><td>2000×3000</td><td>12000 Вт</td><td>+2 510 000 ₽</td><td><b>8 116 000 ₽</b></td></tr><tr><td>Wattsan S 2030 12000W + стол + rotary 6-160</td><td>2000×3000</td><td>12000 Вт</td><td>+2 764 000 ₽</td><td><b>8 370 000 ₽</b></td></tr><tr><td>Wattsan S 2030 12000W + стол + rotary 6-240</td><td>2000×3000</td><td>12000 Вт</td><td>+2 995 000 ₽</td><td><b>8 601 000 ₽</b></td></tr><tr><td>Wattsan S 2030 12000W + стол + rotary 6-360</td><td>2000×3000</td><td>12000 Вт</td><td>+3 457 000 ₽</td><td><b>9 063 000 ₽</b></td></tr><tr><td>Wattsan S 2040 3000W</td><td>2000×4000</td><td>3000 Вт</td><td>база</td><td><b>3 369 000 ₽</b></td></tr><tr><td>Wattsan S 2040 3000W + сменный стол</td><td>2000×4000</td><td>3000 Вт</td><td>+1 134 000 ₽</td><td><b>4 503 000 ₽</b></td></tr><tr><td>Wattsan S 2040 3000W + rotary 6-160</td><td>2000×4000</td><td>3000 Вт</td><td>+1 822 000 ₽</td><td><b>5 191 000 ₽</b></td></tr><tr><td>Wattsan S 2040 3000W + rotary 6-240</td><td>2000×4000</td><td>3000 Вт</td><td>+2 053 000 ₽</td><td><b>5 422 000 ₽</b></td></tr><tr><td>Wattsan S 2040 3000W + rotary 6-360</td><td>2000×4000</td><td>3000 Вт</td><td>+2 515 000 ₽</td><td><b>5 884 000 ₽</b></td></tr><tr><td>Wattsan S 2040 3000W + стол + rotary 6-160</td><td>2000×4000</td><td>3000 Вт</td><td>+2 925 000 ₽</td><td><b>6 294 000 ₽</b></td></tr><tr><td>Wattsan S 2040 3000W + стол + rotary 6-240</td><td>2000×4000</td><td>3000 Вт</td><td>+3 155 000 ₽</td><td><b>6 524 000 ₽</b></td></tr><tr><td>Wattsan S 2040 3000W + стол + rotary 6-360</td><td>2000×4000</td><td>3000 Вт</td><td>+3 618 000 ₽</td><td><b>6 987 000 ₽</b></td></tr><tr><td>Wattsan S 2040 6000W</td><td>2000×4000</td><td>6000 Вт</td><td>база</td><td><b>4 327 000 ₽</b></td></tr><tr><td>Wattsan S 2040 6000W + сменный стол</td><td>2000×4000</td><td>6000 Вт</td><td>+1 133 000 ₽</td><td><b>5 460 000 ₽</b></td></tr><tr><td>Wattsan S 2040 6000W + rotary 6-160</td><td>2000×4000</td><td>6000 Вт</td><td>+1 822 000 ₽</td><td><b>6 149 000 ₽</b></td></tr><tr><td>Wattsan S 2040 6000W + rotary 6-240</td><td>2000×4000</td><td>6000 Вт</td><td>+2 052 000 ₽</td><td><b>6 379 000 ₽</b></td></tr><tr><td>Wattsan S 2040 6000W + rotary 6-360</td><td>2000×4000</td><td>6000 Вт</td><td>+2 515 000 ₽</td><td><b>6 842 000 ₽</b></td></tr><tr><td>Wattsan S 2040 6000W + стол + rotary 6-160</td><td>2000×4000</td><td>6000 Вт</td><td>+2 925 000 ₽</td><td><b>7 252 000 ₽</b></td></tr><tr><td>Wattsan S 2040 6000W + стол + rotary 6-240</td><td>2000×4000</td><td>6000 Вт</td><td>+3 155 000 ₽</td><td><b>7 482 000 ₽</b></td></tr><tr><td>Wattsan S 2040 6000W + стол + rotary 6-360</td><td>2000×4000</td><td>6000 Вт</td><td>+3 618 000 ₽</td><td><b>7 945 000 ₽</b></td></tr><tr><td>Wattsan S 2040 12000W</td><td>2000×4000</td><td>12000 Вт</td><td>база</td><td><b>5 876 000 ₽</b></td></tr><tr><td>Wattsan S 2040 12000W + сменный стол</td><td>2000×4000</td><td>12000 Вт</td><td>+1 133 000 ₽</td><td><b>7 009 000 ₽</b></td></tr><tr><td>Wattsan S 2040 12000W + rotary 6-160</td><td>2000×4000</td><td>12000 Вт</td><td>+1 821 000 ₽</td><td><b>7 697 000 ₽</b></td></tr><tr><td>Wattsan S 2040 12000W + rotary 6-240</td><td>2000×4000</td><td>12000 Вт</td><td>+2 052 000 ₽</td><td><b>7 928 000 ₽</b></td></tr><tr><td>Wattsan S 2040 12000W + rotary 6-360</td><td>2000×4000</td><td>12000 Вт</td><td>+2 514 000 ₽</td><td><b>8 390 000 ₽</b></td></tr><tr><td>Wattsan S 2040 12000W + стол + rotary 6-160</td><td>2000×4000</td><td>12000 Вт</td><td>+2 924 000 ₽</td><td><b>8 800 000 ₽</b></td></tr><tr><td>Wattsan S 2040 12000W + стол + rotary 6-240</td><td>2000×4000</td><td>12000 Вт</td><td>+3 155 000 ₽</td><td><b>9 031 000 ₽</b></td></tr><tr><td>Wattsan S 2040 12000W + стол + rotary 6-360</td><td>2000×4000</td><td>12000 Вт</td><td>+3 617 000 ₽</td><td><b>9 493 000 ₽</b></td></tr><tr><td>Wattsan S 2060 3000W</td><td>2000×6000</td><td>3000 Вт</td><td>база</td><td><b>3 675 000 ₽</b></td></tr><tr><td>Wattsan S 2060 3000W + сменный стол</td><td>2000×6000</td><td>3000 Вт</td><td>+1 571 000 ₽</td><td><b>5 246 000 ₽</b></td></tr><tr><td>Wattsan S 2060 3000W + rotary 6-160</td><td>2000×6000</td><td>3000 Вт</td><td>+1 832 000 ₽</td><td><b>5 507 000 ₽</b></td></tr><tr><td>Wattsan S 2060 3000W + rotary 6-240</td><td>2000×6000</td><td>3000 Вт</td><td>+2 062 000 ₽</td><td><b>5 737 000 ₽</b></td></tr><tr><td>Wattsan S 2060 3000W + rotary 6-360</td><td>2000×6000</td><td>3000 Вт</td><td>+2 525 000 ₽</td><td><b>6 200 000 ₽</b></td></tr><tr><td>Wattsan S 2060 3000W + стол + rotary 6-160</td><td>2000×6000</td><td>3000 Вт</td><td>+3 363 000 ₽</td><td><b>7 038 000 ₽</b></td></tr><tr><td>Wattsan S 2060 3000W + стол + rotary 6-240</td><td>2000×6000</td><td>3000 Вт</td><td>+3 593 000 ₽</td><td><b>7 268 000 ₽</b></td></tr><tr><td>Wattsan S 2060 3000W + стол + rotary 6-360</td><td>2000×6000</td><td>3000 Вт</td><td>+4 056 000 ₽</td><td><b>7 731 000 ₽</b></td></tr><tr><td>Wattsan S 2060 6000W</td><td>2000×6000</td><td>6000 Вт</td><td>база</td><td><b>4 634 000 ₽</b></td></tr><tr><td>Wattsan S 2060 6000W + сменный стол</td><td>2000×6000</td><td>6000 Вт</td><td>+1 572 000 ₽</td><td><b>6 206 000 ₽</b></td></tr><tr><td>Wattsan S 2060 6000W + rotary 6-160</td><td>2000×6000</td><td>6000 Вт</td><td>+1 832 000 ₽</td><td><b>6 466 000 ₽</b></td></tr><tr><td>Wattsan S 2060 6000W + rotary 6-240</td><td>2000×6000</td><td>6000 Вт</td><td>+2 063 000 ₽</td><td><b>6 697 000 ₽</b></td></tr><tr><td>Wattsan S 2060 6000W + rotary 6-360</td><td>2000×6000</td><td>6000 Вт</td><td>+2 525 000 ₽</td><td><b>7 159 000 ₽</b></td></tr><tr><td>Wattsan S 2060 6000W + стол + rotary 6-160</td><td>2000×6000</td><td>6000 Вт</td><td>+3 363 000 ₽</td><td><b>7 997 000 ₽</b></td></tr><tr><td>Wattsan S 2060 6000W + стол + rotary 6-240</td><td>2000×6000</td><td>6000 Вт</td><td>+3 594 000 ₽</td><td><b>8 228 000 ₽</b></td></tr><tr><td>Wattsan S 2060 6000W + стол + rotary 6-360</td><td>2000×6000</td><td>6000 Вт</td><td>+4 056 000 ₽</td><td><b>8 690 000 ₽</b></td></tr><tr><td>Wattsan S 2060 12000W</td><td>2000×6000</td><td>12000 Вт</td><td>база</td><td><b>6 181 000 ₽</b></td></tr><tr><td>Wattsan S 2060 12000W + сменный стол</td><td>2000×6000</td><td>12000 Вт</td><td>+1 572 000 ₽</td><td><b>7 753 000 ₽</b></td></tr><tr><td>Wattsan S 2060 12000W + rotary 6-160</td><td>2000×6000</td><td>12000 Вт</td><td>+1 832 000 ₽</td><td><b>8 013 000 ₽</b></td></tr><tr><td>Wattsan S 2060 12000W + rotary 6-240</td><td>2000×6000</td><td>12000 Вт</td><td>+2 063 000 ₽</td><td><b>8 244 000 ₽</b></td></tr><tr><td>Wattsan S 2060 12000W + rotary 6-360</td><td>2000×6000</td><td>12000 Вт</td><td>+2 525 000 ₽</td><td><b>8 706 000 ₽</b></td></tr><tr><td>Wattsan S 2060 12000W + стол + rotary 6-160</td><td>2000×6000</td><td>12000 Вт</td><td>+3 363 000 ₽</td><td><b>9 544 000 ₽</b></td></tr><tr><td>Wattsan S 2060 12000W + стол + rotary 6-240</td><td>2000×6000</td><td>12000 Вт</td><td>+3 594 000 ₽</td><td><b>9 775 000 ₽</b></td></tr><tr><td>Wattsan S 2060 12000W + стол + rotary 6-360</td><td>2000×6000</td><td>12000 Вт</td><td>+4 056 000 ₽</td><td><b>10 237 000 ₽</b></td></tr></tbody></table></div>
+
+  <h2>Полный прайс: фрезерные</h2>
+  <p class="muted">Прайс май 2026.</p>
+  <div class="scroll"><table class="wide"><thead><tr><th>Конфигурация</th><th>Поле, мм</th><th>Шпиндель</th><th>Охлажд.</th><th>Стойка</th><th>Вакуум</th><th>Под заказ</th><th>Из наличия</th></tr></thead><tbody><tr><td>0404 mini, 1.5wc, NC</td><td>400×400</td><td>1 кВт</td><td>водяное</td><td>NC</td><td>нет</td><td>225 000 ₽</td><td><b>249 800 ₽</b></td></tr><tr><td>0404 mini, 1.5wc, A11</td><td>400×400</td><td>1 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>269 000 ₽</td><td><b>298 600 ₽</b></td></tr><tr><td>0404 mini Cabine, 1.5wc, A11</td><td>400×400</td><td>1 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>341 800 ₽</td><td><b>379 400 ₽</b></td></tr><tr><td>0609 mini, 1.5wc, NC</td><td>600×900</td><td>1 кВт</td><td>водяное</td><td>NC</td><td>нет</td><td>250 700 ₽</td><td><b>278 300 ₽</b></td></tr><tr><td>0609 mini, 1.5wc, A11</td><td>600×900</td><td>1 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>294 900 ₽</td><td><b>327 300 ₽</b></td></tr><tr><td>0609 mini, 2.2wc, NC</td><td>600×900</td><td>2 кВт</td><td>водяное</td><td>NC</td><td>нет</td><td>255 900 ₽</td><td><b>284 000 ₽</b></td></tr><tr><td>0609 mini, 2.2wc, A11</td><td>600×900</td><td>2 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>294 900 ₽</td><td><b>327 300 ₽</b></td></tr><tr><td>0609 mini Cabine, 1.5wc, A11</td><td>600×900</td><td>1 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>405 000 ₽</td><td><b>449 600 ₽</b></td></tr><tr><td>A1 6090, 1.5wc, A11 + Leadshine</td><td>600×900</td><td>1 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>323 500 ₽</td><td><b>359 100 ₽</b></td></tr><tr><td>A1 6090, 2.2wc, A11 + Leadshine</td><td>600×900</td><td>2 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>328 700 ₽</td><td><b>364 900 ₽</b></td></tr><tr><td>A1 6090, 3.2wc, A11 + Leadshine</td><td>600×900</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>339 700 ₽</td><td><b>377 100 ₽</b></td></tr><tr><td>M1 6090, 2.2wc, A11 + Leadshine</td><td>600×900</td><td>2 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>417 800 ₽</td><td><b>463 800 ₽</b></td></tr><tr><td>M1 6090, 3.2wc, A11 + Leadshine</td><td>600×900</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>428 800 ₽</td><td><b>476 000 ₽</b></td></tr><tr><td>M1 6090, 4.5ac, A11 + Leadshine</td><td>600×900</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>435 200 ₽</td><td><b>483 100 ₽</b></td></tr><tr><td>M1 6090, 2.2wc, A11 + Leadshine, VAC</td><td>600×900</td><td>2 кВт</td><td>водяное</td><td>A11</td><td>да</td><td>519 800 ₽</td><td><b>577 000 ₽</b></td></tr><tr><td>M1 6090, 3.2wc, A11 + Leadshine, VAC</td><td>600×900</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>да</td><td>530 800 ₽</td><td><b>589 200 ₽</b></td></tr><tr><td>M1 6090, 4.5ac, A11 + Leadshine, VAC</td><td>600×900</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>537 200 ₽</td><td><b>596 300 ₽</b></td></tr><tr><td>M2 6090, 2.2wc, A11</td><td>600×900</td><td>2 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>742 800 ₽</td><td><b>824 500 ₽</b></td></tr><tr><td>M3 6090, 7.5wc, Syntec</td><td>600×900</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>нет</td><td>1 245 000 ₽</td><td><b>1 382 000 ₽</b></td></tr><tr><td>A1 1313, 2.2wc, A11 + Leadshine</td><td>1300×1300</td><td>2 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>443 300 ₽</td><td><b>492 100 ₽</b></td></tr><tr><td>A1 1313, 3.2wc, A11 + Leadshine</td><td>1300×1300</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>454 200 ₽</td><td><b>504 200 ₽</b></td></tr><tr><td>A1 1313, 4.5ac, A11 + Leadshine</td><td>1300×1300</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>460 600 ₽</td><td><b>511 300 ₽</b></td></tr><tr><td>A1 1313, 2.2wc, A11 + Leadshine, VAC</td><td>1300×1300</td><td>2 кВт</td><td>водяное</td><td>A11</td><td>да</td><td>540 600 ₽</td><td><b>600 100 ₽</b></td></tr><tr><td>A1 1313, 3.2wc, A11 + Leadshine, VAC</td><td>1300×1300</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>да</td><td>551 500 ₽</td><td><b>612 200 ₽</b></td></tr><tr><td>A1 1313, 4.5ac, A11 + Leadshine, VAC</td><td>1300×1300</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>557 900 ₽</td><td><b>619 300 ₽</b></td></tr><tr><td>M1 1313, 3.0wc, A11 + Leadshine</td><td>1300×1300</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>546 600 ₽</td><td><b>606 700 ₽</b></td></tr><tr><td>M1 1313, 4.5ac, A11 + Leadshine</td><td>1300×1300</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>553 000 ₽</td><td><b>613 800 ₽</b></td></tr><tr><td>M1 1313, 3.0wc, A11 + Leadshine, VAC</td><td>1300×1300</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>да</td><td>643 700 ₽</td><td><b>714 500 ₽</b></td></tr><tr><td>M1 1313, 4.5ac, A11 + Leadshine, VAC</td><td>1300×1300</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>650 100 ₽</td><td><b>721 600 ₽</b></td></tr><tr><td>M2 1313, 3.0wc, A11</td><td>1300×1300</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>805 800 ₽</td><td><b>894 400 ₽</b></td></tr><tr><td>M2 1313, 4.5ac, A11</td><td>1300×1300</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>810 100 ₽</td><td><b>899 200 ₽</b></td></tr><tr><td>M2 1313, 3.0wc, A11, VAC</td><td>1300×1300</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>да</td><td>884 600 ₽</td><td><b>981 900 ₽</b></td></tr><tr><td>M3 1313, 7.5wc, Syntec</td><td>1300×1300</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>нет</td><td>1 384 400 ₽</td><td><b>1 536 700 ₽</b></td></tr><tr><td>M3 1313, 7.5wc, Syntec, VAC</td><td>1300×1300</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>да</td><td>1 466 800 ₽</td><td><b>1 628 100 ₽</b></td></tr><tr><td>M3 1313, 7,5wc, NC8</td><td>1300×1300</td><td>7 кВт</td><td>водяное</td><td>NC8</td><td>нет</td><td>1 281 200 ₽</td><td><b>1 422 100 ₽</b></td></tr><tr><td>M3 1313, 4.5ac, NC8</td><td>1300×1300</td><td>4 кВт</td><td>воздушное</td><td>NC8</td><td>нет</td><td>1 113 300 ₽</td><td><b>1 235 800 ₽</b></td></tr><tr><td>M3 1313, 4.5ac, NC, VAC</td><td>1300×1300</td><td>4 кВт</td><td>воздушное</td><td>NC</td><td>да</td><td>1 126 900 ₽</td><td><b>1 250 900 ₽</b></td></tr><tr><td>A1 1325, 3.2wc, A11 + Leadshine</td><td>1300×2500</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>564 400 ₽</td><td><b>626 500 ₽</b></td></tr><tr><td>A1 1325, 4.5ac, A11 + Leadshine</td><td>1300×2500</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>570 800 ₽</td><td><b>633 600 ₽</b></td></tr><tr><td>A1 1325, 3.0wc, A11 + Leadshine, VAC</td><td>1300×2500</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>да</td><td>666 400 ₽</td><td><b>739 700 ₽</b></td></tr><tr><td>A1 1325, 4.5ac, A11 + Leadshine, VAC</td><td>1300×2500</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>672 800 ₽</td><td><b>746 800 ₽</b></td></tr><tr><td>M1 1325, 4.5ac, A11 + Leadshine</td><td>1300×2500</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>691 000 ₽</td><td><b>767 000 ₽</b></td></tr><tr><td>M1 1325 RD, 4.5ac, A18 + Leadshine</td><td>1300×2500</td><td>4 кВт</td><td>воздушное</td><td>A18</td><td>нет</td><td>1 016 800 ₽</td><td><b>1 128 600 ₽</b></td></tr><tr><td>M1 1325 S3, 3.0wc, A11 + Leadshine</td><td>1300×2500</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>770 700 ₽</td><td><b>855 500 ₽</b></td></tr><tr><td>M1 1325 S4, 3.0wc, A11 + Leadshine</td><td>1300×2500</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>810 100 ₽</td><td><b>899 200 ₽</b></td></tr><tr><td>M1 1325, 4.5ac, A11 + Leadshine, VAC</td><td>1300×2500</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>793 100 ₽</td><td><b>880 300 ₽</b></td></tr><tr><td>M2 1325, 4.5ac, A11</td><td>1300×2500</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>937 400 ₽</td><td><b>1 040 500 ₽</b></td></tr><tr><td>M2 1325, 4.5ac, A11, VAC</td><td>1300×2500</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>1 013 600 ₽</td><td><b>1 125 100 ₽</b></td></tr><tr><td>M3 1325, 7.5wc, Syntec</td><td>1300×2500</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>нет</td><td>1 502 900 ₽</td><td><b>1 668 200 ₽</b></td></tr><tr><td>M3 1325, 7.5wc, Syntec, VAC</td><td>1300×2500</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>да</td><td>1 588 300 ₽</td><td><b>1 763 000 ₽</b></td></tr><tr><td>M3 1325, 4.5ac, NC8</td><td>1300×2500</td><td>4 кВт</td><td>воздушное</td><td>NC8</td><td>нет</td><td>1 168 300 ₽</td><td><b>1 296 800 ₽</b></td></tr><tr><td>M3 1325, 4.5ac, NC, VAC</td><td>1300×2500</td><td>4 кВт</td><td>воздушное</td><td>NC</td><td>да</td><td>1 246 300 ₽</td><td><b>1 383 400 ₽</b></td></tr><tr><td>A1 1616, 3.2wc, A11 + Leadshine</td><td>1600×1600</td><td>3 кВт</td><td>водяное</td><td>A11</td><td>нет</td><td>522 100 ₽</td><td><b>579 500 ₽</b></td></tr><tr><td>A1 1616, 4.5ac, A11 + Leadshine</td><td>1600×1600</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>528 500 ₽</td><td><b>586 600 ₽</b></td></tr><tr><td>M1 1616, 4.5ac, A11 + Leadshine</td><td>1600×1600</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>631 200 ₽</td><td><b>700 600 ₽</b></td></tr><tr><td>M1 1616, 4.5ac, A11 + Leadshine, VAC</td><td>1600×1600</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>723 800 ₽</td><td><b>803 400 ₽</b></td></tr><tr><td>M2 1616, 4.5ac, A11</td><td>1600×1600</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>870 400 ₽</td><td><b>966 100 ₽</b></td></tr><tr><td>M2 1616, 4.5ac, A11, VAC</td><td>1600×1600</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>945 200 ₽</td><td><b>1 049 200 ₽</b></td></tr><tr><td>M3 1616, 7.5wc, Syntec</td><td>1600×1600</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>нет</td><td>1 552 200 ₽</td><td><b>1 722 900 ₽</b></td></tr><tr><td>M3 1616, 7.5wc, Syntec, VAC</td><td>1600×1600</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>да</td><td>1 630 900 ₽</td><td><b>1 810 300 ₽</b></td></tr><tr><td>M3 1616, 4.5ac, NC8</td><td>1600×1600</td><td>4 кВт</td><td>воздушное</td><td>NC8</td><td>нет</td><td>1 210 900 ₽</td><td><b>1 344 100 ₽</b></td></tr><tr><td>A1 1625, 4.5ac, A11 + Leadshine</td><td>1600×2500</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>573 100 ₽</td><td><b>636 100 ₽</b></td></tr><tr><td>A1 1625, 4.5ac, A11 + Leadshine, VAC</td><td>1600×2500</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>668 900 ₽</td><td><b>742 500 ₽</b></td></tr><tr><td>M1 1625, 4.5ac, A11 + Leadshine</td><td>1600×2500</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>647 000 ₽</td><td><b>718 200 ₽</b></td></tr><tr><td>M1 1625, 4.5ac, A11 + Leadshine, VAC</td><td>1600×2500</td><td>4 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>745 800 ₽</td><td><b>827 800 ₽</b></td></tr><tr><td>M1 1630, 6.0ac, A11 + Leadshine</td><td>1600×3000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>815 900 ₽</td><td><b>905 600 ₽</b></td></tr><tr><td>M1 1630, 6.0ac, A11 + Leadshine, VAC</td><td>1600×3000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>995 200 ₽</td><td><b>1 104 700 ₽</b></td></tr><tr><td>M1 2030, 6.0ac, A11 + Leadshine</td><td>2000×3000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>928 200 ₽</td><td><b>1 030 300 ₽</b></td></tr><tr><td>M1 2030, 6.0ac, A11 + Leadshine, VAC</td><td>2000×3000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>1 134 300 ₽</td><td><b>1 259 100 ₽</b></td></tr><tr><td>M2 2030, 6.0ac, A11</td><td>2000×3000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>1 068 900 ₽</td><td><b>1 186 500 ₽</b></td></tr><tr><td>M2 2030, 6.0ac, A11, VAC</td><td>2000×3000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>1 195 400 ₽</td><td><b>1 326 900 ₽</b></td></tr><tr><td>M3 2030, 7.5wc, Syntec</td><td>2000×3000</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>нет</td><td>1 683 000 ₽</td><td><b>1 868 100 ₽</b></td></tr><tr><td>M3 2030, 7.5wc, Syntec, VAC</td><td>2000×3000</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>да</td><td>1 865 800 ₽</td><td><b>2 071 000 ₽</b></td></tr><tr><td>M3 2030, 4.5ac, NC8</td><td>2000×3000</td><td>4 кВт</td><td>воздушное</td><td>NC8</td><td>нет</td><td>1 395 600 ₽</td><td><b>1 549 100 ₽</b></td></tr><tr><td>M3 2030, 4.5ac, NC, VAC</td><td>2000×3000</td><td>4 кВт</td><td>воздушное</td><td>NC</td><td>да</td><td>1 523 700 ₽</td><td><b>1 691 300 ₽</b></td></tr><tr><td>M1 2040, 6.0ac, A11 + Leadshine</td><td>2000×4000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>1 047 600 ₽</td><td><b>1 162 800 ₽</b></td></tr><tr><td>M1 2040, 6.0ac, A11 + Leadshine, VAC</td><td>2000×4000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>1 260 500 ₽</td><td><b>1 399 200 ₽</b></td></tr><tr><td>M2 2040, 6.0ac, A11</td><td>2000×4000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>1 138 300 ₽</td><td><b>1 263 500 ₽</b></td></tr><tr><td>M2 2040, 6.0ac, A11, VAC</td><td>2000×4000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>1 249 100 ₽</td><td><b>1 386 500 ₽</b></td></tr><tr><td>M3 2040, 7.5wc, Syntec</td><td>2000×4000</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>нет</td><td>1 810 500 ₽</td><td><b>2 009 700 ₽</b></td></tr><tr><td>M3 2040, 7.5wc, Syntec, VAC</td><td>2000×4000</td><td>7 кВт</td><td>водяное</td><td>Syntec</td><td>да</td><td>1 989 100 ₽</td><td><b>2 207 900 ₽</b></td></tr><tr><td>M3 2040, 4.5ac, NC8</td><td>2000×4000</td><td>4 кВт</td><td>воздушное</td><td>NC8</td><td>нет</td><td>1 537 500 ₽</td><td><b>1 706 600 ₽</b></td></tr><tr><td>M3 2040, 4.5ac, NC, VAC</td><td>2000×4000</td><td>4 кВт</td><td>воздушное</td><td>NC</td><td>да</td><td>1 647 100 ₽</td><td><b>1 828 300 ₽</b></td></tr><tr><td>M1 2060, 6.0ac, A11 + Leadshine</td><td>2000×6000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>нет</td><td>1 395 400 ₽</td><td><b>1 548 900 ₽</b></td></tr><tr><td>M1 2060, 6.0ac, A11 + Leadshine, VAC</td><td>2000×6000</td><td>6 кВт</td><td>воздушное</td><td>A11</td><td>да</td><td>1 593 700 ₽</td><td><b>1 769 000 ₽</b></td></tr></tbody></table></div>
+
+  <h2>Опции</h2>
+  <table class=""><thead><tr><th>Категория</th><th>Позиция</th><th>Цена</th></tr></thead><tbody><tr><td>Стабилизаторы напряжения</td><td>Ресанта-3000/1-Ц</td><td><b>8 490 ₽</b></td></tr><tr><td>Стабилизаторы напряжения</td><td>Ресанта-5000/1-Ц</td><td><b>10 190 ₽</b></td></tr><tr><td>Стабилизаторы напряжения</td><td>Ресанта-8000/1-Ц</td><td><b>13 490 ₽</b></td></tr><tr><td>Чиллеры</td><td>S&amp;A CW-3000TG</td><td><b>20 100 ₽</b></td></tr><tr><td>Чиллеры</td><td>S&amp;A CW-5000TG</td><td><b>53 625 ₽</b></td></tr><tr><td>Чиллеры</td><td>S&amp;A CW-5200TH</td><td><b>57 280 ₽</b></td></tr><tr><td>DSP-контроллеры</td><td>RichAuto A11</td><td><b>50 538 ₽</b></td></tr><tr><td>DSP-контроллеры</td><td>RichAuto A18</td><td><b>75 380 ₽</b></td></tr><tr><td>Датчики высоты инструмента</td><td>Магнитный — для станков 0404…0609</td><td><b>3 369 ₽</b></td></tr><tr><td>Датчики высоты инструмента</td><td>Нажимной — для A1 6090 и крупнее</td><td><b>9 180 ₽</b></td></tr><tr><td>Виброопоры</td><td>Wattsan S-78-7d185 (за 1 шт.)</td><td><b>1 400 ₽</b></td></tr><tr><td>Аспирация</td><td>Щётка аспирации для шпинделя</td><td><b>5 220 ₽</b></td></tr><tr><td>Аспирация</td><td>BELMASH DC850</td><td><b>26 690 ₽</b></td></tr><tr><td>Аспирация</td><td>BELMASH DC2500</td><td><b>40 490 ₽</b></td></tr><tr><td>Аспирация</td><td>BELMASH DC3900</td><td><b>53 990 ₽</b></td></tr></tbody></table>
+
+  <h2>ПНР и обучение</h2>
+  <div class="scroll"><table class=""><thead><tr><th>Станок</th><th>Дней</th><th>ПНР</th><th>+1 день</th><th>+2 дня</th><th>Обучение</th><th>ПНР+обучение</th></tr></thead><tbody><tr><td>Wattsan 0404/0609 mini</td><td>1</td><td>23 000 ₽</td><td>31 000 ₽</td><td>38 000 ₽</td><td>35 000</td><td>46 000 ₽</td></tr><tr><td>Wattsan 0404/0609 mini Cabine</td><td>1</td><td>30 000 ₽</td><td>38 000 ₽</td><td>45 000 ₽</td><td>35 000</td><td>52 000 ₽</td></tr><tr><td>Wattsan A1/M1 6090</td><td>1</td><td>30 000 ₽</td><td>38 000 ₽</td><td>45 000 ₽</td><td>35 000</td><td>52 000 ₽</td></tr><tr><td>Wattsan A1/M1 1313</td><td>1</td><td>42 000 ₽</td><td>50 000 ₽</td><td>57 000 ₽</td><td>35 000</td><td>62 000 ₽</td></tr><tr><td>Wattsan A1/M1 1616</td><td>1</td><td>42 000 ₽</td><td>50 000 ₽</td><td>57 000 ₽</td><td>35 000</td><td>62 000 ₽</td></tr><tr><td>Wattsan A1/M1 1325</td><td>1</td><td>45 000 ₽</td><td>53 000 ₽</td><td>60 000 ₽</td><td>35 000</td><td>64 000 ₽</td></tr><tr><td>Wattsan M1 2030/2040</td><td>2</td><td>63 000 ₽</td><td>71 000 ₽</td><td>78 000 ₽</td><td>35 000</td><td>78 000 ₽</td></tr><tr><td>Wattsan M1 1313 S4</td><td>2</td><td>105 000 ₽</td><td>—</td><td>—</td><td>45 000</td><td>—</td></tr><tr><td>Wattsan M1 1313 RD / 1325 RD</td><td>2</td><td>80 000 ₽</td><td>—</td><td>—</td><td>45 000</td><td>—</td></tr><tr><td>Wattsan M3 1313-2060</td><td>2</td><td>125 000 ₽</td><td>—</td><td>—</td><td>Включено в ПНР</td><td>—</td></tr></tbody></table></div>
+
+  <h2>Сервис — раздел «Удалённые работы»</h2>
+  <div class="note stop">Цены этого раздела расходятся с разделом ПНР вдвое.
+    Прежде чем называть цену клиенту — уточнить, о чём речь: выезд или дистанционная услуга.</div>
+  <table class=""><thead><tr><th>Тип работ</th><th>Наименование</th><th>Цена</th></tr></thead><tbody><tr><td>ПНР</td><td>Фрезерный станок (0404-0609, на шип по всем осям)</td><td><b>15 000 ₽</b></td></tr><tr><td>ПНР</td><td>Фрезерный станок 6090-2040 (M1, A1)</td><td><b>24 000 ₽</b></td></tr><tr><td>ПНР</td><td>Наличие поворотного устройства или автофокуса</td><td><b>5 000 ₽</b></td></tr><tr><td>Обучение</td><td>Фрезерный станок</td><td><b>16 000 ₽</b></td></tr><tr><td>Ремонт</td><td>Настройка без замены комплектующих — без ATC</td><td><b>4 000 ₽</b></td></tr><tr><td>Ремонт</td><td>Настройка без замены комплектующих — с ATC</td><td><b>5 000 ₽</b></td></tr><tr><td>Ремонт</td><td>Замена узлов малых станков (0404-6090)</td><td><b>5 000 ₽</b></td></tr><tr><td>Ремонт</td><td>Замена узлов крупных станков (от 1313 и ATC)</td><td><b>7 000 ₽</b></td></tr><tr><td>Диагностика</td><td>Фрезерный станок (0404-6090)</td><td><b>5 000 ₽</b></td></tr><tr><td>Диагностика</td><td>Фрезерный станок (1313-2040)</td><td><b>7 000 ₽</b></td></tr><tr><td>Диагностика</td><td>Фрезерный станок (M3-M4, ATC)</td><td><b>10 000 ₽</b></td></tr><tr><td>Другие работы</td><td>Написание управляющих программ</td><td><b>5 000 ₽</b></td></tr><tr><td>Минимальный выезд</td><td>Фрезерные станки, за день</td><td><b>22 000 ₽</b></td></tr></tbody></table>
+</section>
+
+<!-- ================= СМЕТА И ТКП ================= -->
+<span class="nojs-title">Смета и ТКП</span>
+<section class="panel" id="p-smeta">
+  <p class="lead">Скидка применяется к каждой позиции. НДС выделяется изнутри:
+    НДС = сумма × ставка ÷ (100 + ставка). Расчёт показан пошагово, сходимость проверяется.</p>
+
+  <div class="card noprint">
+    <h3>Шапка ТКП</h3>
+    <div class="row">
+      <div style="flex:2"><label class="f">Клиент</label><input type="text" id="kpClient" placeholder="ООО «Ромашка»"></div>
+      <div><label class="f">ИНН</label><input type="text" id="kpInn" placeholder="7801234567"></div>
+      <div><label class="f">Исх. номер</label><input type="text" id="kpNum" placeholder="1207"></div>
+    </div>
+    <div class="row">
+      <div><label class="f">Контакт</label><input type="text" id="kpContact" placeholder="Иван Петров"></div>
+      <div><label class="f">Телефон</label><input type="text" id="kpPhone" placeholder="+7 900 000-00-00"></div>
+      <div><label class="f">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
+      <div><label class="f">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
+    </div>
+    <div class="row">
+      <div><label class="f">Скидка, %</label>
+        <select id="discount"><option value="0">0 %</option><option value="5">0,5 %</option><option value="10">1 %</option><option value="15">1,5 %</option><option value="20">2 %</option><option value="25">2,5 %</option><option value="30">3 %</option><option value="35">3,5 %</option><option value="40">4 %</option><option value="45">4,5 %</option><option value="50">5 %</option><option value="55">5,5 %</option><option value="60">6 %</option><option value="65">6,5 %</option><option value="70">7 %</option><option value="75">7,5 %</option><option value="80">8 %</option><option value="85">8,5 %</option><option value="90">9 %</option><option value="95">9,5 %</option><option value="100">10 %</option><option value="120">12 %</option><option value="150">15 %</option><option value="200">20 %</option><option value="250">25 %</option><option value="300">30 %</option></select></div>
+      <div><label class="f">Ставка НДС, %</label>
+        <select id="ndsRate">
+          <option value="220">22</option><option value="200">20</option>
+          <option value="100">10</option><option value="50">5</option><option value="0">0</option>
+        </select></div>
+      <div class="internal"><label class="f">Лестница уступок</label>
+        <div class="muted" style="padding-top:8px">5 % → 2 % → 1 %. Не начинать с максимума.</div></div>
+    </div>
+    <div class="note internal">Счёт фиксирует цену и наличие на 5 дней.
+      Срок действия ТКП — 15 дней. Оплата: 100 % со склада, 50 % + остаток под заказ.</div>
+  </div>
+
+  <h2>Позиции</h2>
+  <div class="scroll"><table id="smetaTable" style=""><thead><tr>
+    <th style="width:44%">Наименование</th><th>Кол-во</th><th>Цена</th>
+    <th>Со скидкой</th><th>Сумма</th><th class="noprint"></th>
+  </tr></thead><tbody id="smetaBody"></tbody></table></div>
+  <div id="smetaEmpty" class="empty" style="display: none;">Смета пуста. Добавьте позиции на вкладке «Конфигуратор».</div>
+
+  <div id="totals" class="totals"></div>
+  <div id="propis" class="propis"></div>
+  <div id="checkBlock" class=""></div>
+
+  <div class="btns noprint">
+    <button class="btn" id="btnPrint">Печать в PDF</button>
+    <button class="btn sec" id="btnJson">Скопировать JSON для скилла</button>
+    <button class="btn sec" id="btnClear">Очистить смету</button>
+  </div>
+  <textarea id="jsonOut" class="noprint" rows="7" style="margin-top:10px;display:none;
+    font-family:ui-monospace,Consolas,monospace;font-size:12px"></textarea>
+
+  <h2>Предпросмотр ТКП</h2>
+  <div id="kpPreview" class="kp"><div class="kp-head"><div class="kp-logo">LASERCUT<small>оборудование с ЧПУ</small></div><div class="kp-meta">Технико-коммерческое предложение<br>Исх. № — от 27.07.2026<br>Действует 15 дней</div></div><h1>Wattsan S 1530 3000W</h1><p>Кому: <b>—</b></p><p class="muted">Оборудование соответствует ТР ТС 004/2011, 010/2011, 020/2011.</p><div class="kp-sum"><div><div class="k">Модель</div><div class="v">Wattsan S 1530 3000W</div></div><div><div class="k">Стоимость, с НДС 22 %</div><div class="v">2 723 650,00 ₽</div></div><div><div class="k">Ваша выгода (скидка 5 %)</div><div class="v">143 350,00 ₽</div></div><div><div class="k">Гарантия</div><div class="v">12 месяцев</div></div></div><table><thead><tr><th>№</th><th>Наименование</th><th>Кол-во</th><th>Цена со скидкой</th><th>Сумма</th></tr></thead><tbody><tr><td>1</td><td>Wattsan S 1530 3000W</td><td>1</td><td>2 723 650,00</td><td><b>2 723 650,00</b></td></tr><tr><td colspan="4">Ваша выгода</td><td><b>143 350,00 ₽</b></td></tr><tr><td colspan="4">Итого без НДС</td><td>2 232 500,00 ₽</td></tr><tr><td colspan="4">в т. ч. НДС 22 %</td><td>491 150,00 ₽</td></tr><tr><td colspan="4"><b>ИТОГО к оплате</b></td><td><b>2 723 650,00 ₽</b></td></tr></tbody></table><p><i>Два миллиона семьсот двадцать три тысячи шестьсот пятьдесят рублей 00 копеек</i></p><p class="muted">Условия поставки: под заказ — 50 % предоплата, остаток перед отгрузкой, срок с завода около 60 дней. Из наличия — 100 % оплата, отгрузка 1–3 рабочих дня. Доставка, пуско-наладка и обучение рассчитываются отдельно.</p><div class="kp-mgr">Ваш менеджер: <b>Вениамин Вараксин</b><br>+7 (921) 181-75-86 · 15@lasercut.ru</div><div class="kp-foot">Предложение действует 15 дней. Счёт фиксирует цену и наличие на 5 дней. Цены указаны с НДС.</div></div>
+</section>
+
+<!-- ================= ПОДБОР ================= -->
+<span class="nojs-title">Подбор по задаче</span>
+<section class="panel" id="p-match">
+  <p class="lead">Правило скилла: предлагать не больше двух моделей. Мощность считается
+    с обязательным запасом 30 % — требование завода.</p>
+
+  <div class="card">
+    <h3>Подбор мощности по толщине</h3>
+    <div class="row">
+      <div><label class="f">Материал</label><select id="mtMaterial"><option value="Углеродистая сталь">Углеродистая сталь</option><option value="Нержавейка">Нержавейка</option><option value="Алюминий">Алюминий</option><option value="Латунь">Латунь</option><option value="Медь">Медь</option></select></div>
+      <div><label class="f">Толщина, мм</label><input type="number" id="mtThick" min="0.5" max="80" step="0.5" value="6"></div>
+    </div>
+    <div id="matchOut"><div class="calcsteps"><div>Толщина: <b>6 мм</b> по углеродистая сталь</div><div>С запасом 30 % нужен предел не ниже <b>8,6 мм</b></div><div>Комфортный поток — вдвое ниже предела, то есть предел от <b>12 мм</b></div></div><div class="card"><div class="muted">Минимум с запасом 30 %</div><div style="font-size:17px;font-weight:700;color:var(--navy)">Серия S 3 кВт, либо серия A (только 3 кВт, компактная)</div><div class="muted">Предел по таблицам: 22 мм · газ: Кислород 99,99 %</div><div style="margin-top:6px">Самая доступная конфигурация этой мощности: S 1530 3000W — <b>2 867 000 ₽</b> (поле 1500×3000 мм)</div></div><div class="note alert">Формат подбирается по размеру заготовки, а не по толщине. Толщину без газа и режима клиенту не называть.</div></div>
+  </div>
+
+  <h2>Толщина реза — максимум по заводским таблицам Raycus</h2>
+  <div class="note alert">Это максимум из таблиц режимов, а не рабочий режим. Завод предупреждает: на максимальной мощности станок работает лишь короткое время — выбирать с запасом не менее 30 %. Комфортный поток — вдвое меньше максимума. Сталь на максимуме режется кислородом, нержавейка и алюминий — азотом. Толщину без газа и режима не называть.</div>
+  <div class="scroll"><table class=""><thead><tr><th>Мощность</th><th>Углеродистая сталь</th><th>Нержавейка</th><th>Алюминий</th><th>Латунь</th><th>Медь</th></tr></thead><tbody><tr><td><b>3000 Вт</b></td><td>22 мм</td><td>10 мм</td><td>8 мм</td><td>6 мм</td><td>—</td></tr><tr><td><b>6000 Вт</b></td><td>25 мм (30 с оптикой 75 µm)</td><td>20 мм</td><td>16 мм (20 с оптикой 75 µm)</td><td>12 мм</td><td>5–6 мм</td></tr><tr><td><b>12000 Вт</b></td><td>40 мм</td><td>40 мм</td><td>40 мм</td><td>16 мм</td><td>10 мм</td></tr></tbody></table></div>
+
+  <h2>Ориентиры с сайта по конкретным моделям</h2>
+  <p class="muted">В разговоре опираться на сайт (рабочий режим), в споре о пределе — на таблицы режимов.</p>
+  <table class=""><thead><tr><th>Модель</th><th>Чёрная сталь</th><th>Нержавейка</th><th>Алюминий</th><th>Латунь</th></tr></thead><tbody><tr><td><b>1309 mini (до 3 кВт)</b></td><td>до 16 мм</td><td>до 8 мм</td><td>—</td><td>—</td></tr><tr><td><b>1530E (до 3 кВт)</b></td><td>до 20 мм</td><td>до 8 мм</td><td>до 6 мм</td><td>до 5 мм</td></tr><tr><td><b>1325S (6 кВт)</b></td><td>до 22 мм</td><td>до 16 мм</td><td>—</td><td>—</td></tr><tr><td><b>HARD (до 20 кВт)</b></td><td>до 60 мм</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+
+  <h2>Задача → решение</h2>
+  <div class="scroll"><table class=""><thead><tr><th>Задача клиента</th><th>Решение</th><th>В этой версии</th></tr></thead><tbody><tr><td>Металл от 3 мм, компактно</td><td>Волокно серии A — режет 3–4 мм в 24/7</td><td><span class="ok">есть</span></td></tr><tr><td>Металл, базовая задача</td><td>Волокно серии E</td><td><span class="warn">к менеджеру</span></td></tr><tr><td>Металл, но мало места и нужна безопасность</td><td>Wattsan 1309 mini — закрытая кабина, нержавейка до 8 мм</td><td><span class="warn">к менеджеру</span></td></tr><tr><td>Нестандартный размер поля</td><td>Серия E — единственная, где поле делают под заказ</td><td><span class="warn">к менеджеру</span></td></tr><tr><td>Металл + трубы одним станком</td><td>Серия S с RD-модулем (труборез)</td><td><span class="ok">есть</span></td></tr><tr><td>Металл в потоке, загрузка без простоя</td><td>Серия S + сменный стол</td><td><span class="ok">есть</span></td></tr><tr><td>Толстый металл — 20, 40, 60 мм</td><td>Серия HARD</td><td><span class="warn">к менеджеру</span></td></tr><tr><td>Тонкий металл до 1,5 мм, бюджет ограничен</td><td>Wattsan NC-C1390 / NC-C1612 — это CO₂, не волокно</td><td><span class="warn">другая категория</span></td></tr><tr><td>Резать трубы и профиль</td><td>Труборез Wattsan Core / Nova / Heavy Duty</td><td><span class="warn">к менеджеру</span></td></tr><tr><td>Маленькая столярка</td><td>Wattsan 0609 MINI</td><td><span class="ok">есть</span></td></tr><tr><td>Пластик, акрил, мягкое дерево</td><td>Wattsan A1 нужного формата</td><td><span class="ok">есть</span></td></tr><tr><td>Мебельный цех, твёрдое дерево</td><td>Wattsan M1 нужного формата</td><td><span class="ok">есть</span></td></tr><tr><td>Двери и фасады</td><td>A1 1325 или M1 1325 — поле 1300×2500 = размер дверной заготовки</td><td><span class="ok">есть</span></td></tr><tr><td>Деревообработка с поворотом заготовки</td><td>M1 RD — 4 оси</td><td><span class="ok">есть</span></td></tr><tr><td>Серийное производство</td><td>M1 S3 или S4 — 3 и 4 шпинделя</td><td><span class="ok">есть</span></td></tr><tr><td>Фрезеровать металл и алюминий</td><td>Wattsan M3</td><td><span class="ok">есть</span></td></tr></tbody></table></div>
+
+  <h2>Чего в этой версии нет</h2>
+  <div class="miss"><b>CO₂ по неметаллу</b><span>Реклама, сувенирка, ткань, картон, оргстекло — вся линейка CO₂ в первую версию не заведена</span></div><div class="miss"><b>Маркеры</b><span>FL / UV / RF / MOPA — не в этой версии</span></div><div class="miss"><b>Сварка и очистка</b><span>G1 / G2 / CW / CL — не в этой версии</span></div><div class="miss"><b>Труборезы</b><span>Ни одной цены и характеристики в источнике</span></div><div class="miss"><b>Виниловая плёнка</b><span>Не наш профиль</span></div><div class="miss"><b>ПВХ-плёнка на CO₂</b><span>Запрещено — хлор</span></div>
+
+  <h2>Серии фрезерных</h2>
+  <table class=""><thead><tr><th>Серия</th><th>Что внутри</th><th>Кому</th></tr></thead><tbody><tr><td><b>A1</b></td><td>Ременной редуктор HTD 5M-550, 1:6</td><td>Пластик, акрил, алюминий, мягкое дерево</td></tr><tr><td><b>M1</b></td><td>Планетарный Newgear PFL-90-5-P2, 1:5</td><td>Твёрдые породы, глубокая 3D-фрезеровка</td></tr><tr><td><b>M2</b></td><td>3D и крупные заготовки</td><td>Крупная 3D-обработка</td></tr><tr><td><b>M3</b></td><td>Стойка Syntec, шпиндель до 7,5 кВт</td><td>Металл и алюминий</td></tr><tr><td><b>RD</b></td><td>Модуль 4-й оси</td><td>Деревообработка с поворотом</td></tr><tr><td><b>S3 / S4</b></td><td>3 и 4 шпинделя</td><td>Серийное производство</td></tr></tbody></table>
+
+  <h2>Материалы по сериям</h2>
+  <table class=""><thead><tr><th>Материал</th><th>A1</th><th>M1</th><th>M3</th></tr></thead><tbody><tr><td>МДФ, фанера, мягкое дерево</td><td>да</td><td>да</td><td>да</td></tr><tr><td>Твёрдые породы (дуб, бук, ясень)</td><td>медленно</td><td>да</td><td>да</td></tr><tr><td>Акрил, пластик, алюминий</td><td>да</td><td>да</td><td>да</td></tr><tr><td>Глубокая 3D-фрезеровка</td><td>с оговорками</td><td>да</td><td>да</td></tr><tr><td>Металл, толстый алюминий</td><td>нет</td><td>тонкий лист</td><td>да</td></tr></tbody></table>
+</section>
+
+<!-- ================= ГОТОВНОСТЬ ЦЕХА ================= -->
+<span class="nojs-title">Готовность цеха</span>
+<section class="panel" id="p-shop">
+  <p class="lead">Технические условия на пуско-наладку. Это деньги и сроки клиента сверх цены
+    станка — молчать нельзя, всплывёт на монтаже.</p>
+
+  <div class="card">
+    <div class="row">
+      <div><label class="f">Конфигурация</label><select id="readyKind">
+        <option value="a">A 1313 / 1530, 1,5–3 кВт</option>
+        <option value="s">S-HP (RD) 1530, 6–6,6 кВт</option>
+      </select></div>
+    </div>
+    <div id="readyList"><div class="chk"><input type="checkbox"><span style="flex:1"><b>Ввод питания</b> — 380 В, три фазы <span class="flag-block">блокер</span><br><span class="muted">Нет ввода — нет сделки. Проверять до КП, а не на монтаже.</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Кабель к щиту</b> — пятижильный медный, ≥ 8 мм² <span class="flag-block">блокер</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Автомат</b> — ≥ 40 А <span class="flag-block">блокер</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Стабилизатор</b> — ≥ 30 000 Вт <span class="flag-block">блокер</span><br><span class="muted">Условие гарантии: паспорт запрещает работу без стабилизатора. Генераторы как источник питания запрещены. Только электромеханический или инверторный, в нестабильных сетях с запасом ≥ 30 %. Это НЕ «Ресанта за 8 490 ₽» из прайса комплектующих — отдельная статья бюджета.</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Заземление</b> — TN-S, &lt; 4 Ω <span class="flag-block">блокер</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Фундамент</b> — цельный 300–500 мм, перепад ± 5 мм/м, нагрузка 4 т/м² <span class="flag-block">блокер</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Пневмолиния</b> — не нужна<br><span class="muted">Обязательна для S-HP и RD.</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Дистиллят на запуск</b> — 30 л</span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Место вокруг станка</b> — ≥ 800 мм (паспорт требует 1–1,2 м до стен)</span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Погрузка</b> — &gt; 1500 кг: погрузчик ≥ 2,5 т или кран-балка ≥ 10 т</span></div></div>
+    <div id="readyOut" class="check fail"><b>КП не выпускать: не закрыто блокеров — 6 из 6.</b><ul><li>Ввод питания</li><li>Кабель к щиту</li><li>Автомат</li><li>Стабилизатор</li><li>Заземление</li><li>Фундамент</li></ul>Нет ввода 380 В — нет сделки. Проверять до КП, а не на монтаже.</div>
+  </div>
+
+  <h2>Требования полностью</h2>
+  <div class="scroll"><table class=""><thead><tr><th>Требование</th><th>A 1313 / 1530, 1,5–3 кВт</th><th>S-HP (RD) 1530, 6–6,6 кВт</th><th></th></tr></thead><tbody><tr><td><b>Ввод питания</b></td><td>380 В, три фазы</td><td>380 В, три фазы</td><td><span class="flag-block">блокер</span></td></tr><tr><td><b>Кабель к щиту</b></td><td>пятижильный медный, ≥ 8 мм²</td><td>≥ 12 мм²</td><td><span class="flag-block">блокер</span></td></tr><tr><td><b>Автомат</b></td><td>≥ 40 А</td><td>≥ 50 А</td><td><span class="flag-block">блокер</span></td></tr><tr><td><b>Стабилизатор</b></td><td>≥ 30 000 Вт</td><td>≥ 50 000 Вт</td><td><span class="flag-block">блокер</span></td></tr><tr><td><b>Заземление</b></td><td>TN-S, &lt; 4 Ω</td><td>TN-S, &lt; 4 Ω (труборез тоже на контур)</td><td><span class="flag-block">блокер</span></td></tr><tr><td><b>Фундамент</b></td><td>цельный 300–500 мм, перепад ± 5 мм/м, нагрузка 4 т/м²</td><td>то же</td><td><span class="flag-block">блокер</span></td></tr><tr><td><b>Пневмолиния</b></td><td>не нужна</td><td>3–6 атм — обязательно</td><td></td></tr><tr><td><b>Дистиллят на запуск</b></td><td>30 л</td><td>30 л</td><td></td></tr><tr><td><b>Место вокруг станка</b></td><td>≥ 800 мм (паспорт требует 1–1,2 м до стен)</td><td>то же</td><td></td></tr><tr><td><b>Погрузка</b></td><td>&gt; 1500 кг: погрузчик ≥ 2,5 т или кран-балка ≥ 10 т</td><td>то же + персонал на сборку кабинетной защиты</td><td></td></tr></tbody></table></div>
+  <div class="note">Клиент готовит к приезду инженера: демонстрационный металл того типа и толщины, что будет резать, изопропиловый спирт, безворсовые салфетки и палочки, прозрачный скотч, сменные сопла, защитные стёкла.</div>
+
+  <h2>Массы для логистики</h2>
+  <p class="muted">Из файла «Массы и габариты» — подтверждённый источник. Габариты из карточки
+    товара расходятся с ним по всему ряду, карточку не использовать. Тарифов доставки в данных нет.</p>
+  <div class="scroll"><table class=""><thead><tr><th>Модель</th><th>Масса</th></tr></thead><tbody><tr><td>0404 mini</td><td><b>92 кг</b></td></tr><tr><td>0609 mini</td><td><b>135 кг</b></td></tr><tr><td>A1 6090</td><td><b>400 кг</b></td></tr><tr><td>M1 6090</td><td><b>500 кг</b></td></tr><tr><td>A1 1313</td><td><b>540 кг</b></td></tr><tr><td>M1 1313</td><td><b>650 кг</b></td></tr><tr><td>A1 1325</td><td><b>720 кг</b></td></tr><tr><td>M1 1325</td><td><b>880 кг</b></td></tr><tr><td>M1 1325 RD</td><td><b>1550 кг</b></td></tr><tr><td>A1 1616</td><td><b>620 кг</b></td></tr><tr><td>M1 1616</td><td><b>730 кг</b></td></tr><tr><td>M1 2030</td><td><b>1140 кг</b></td></tr><tr><td>M1 2040</td><td><b>1370 кг</b></td></tr><tr><td>M1 2060</td><td><b>1810 кг</b></td></tr><tr><td>M3 1313</td><td><b>980 кг</b></td></tr><tr><td>M3 1325</td><td><b>1260 кг</b></td></tr><tr><td>M3 1616</td><td><b>1100 кг</b></td></tr><tr><td>M3 2030</td><td><b>1580 кг</b></td></tr><tr><td>M3 2040</td><td><b>1850 кг</b></td></tr><tr><td>M3 2060</td><td><b>2300 кг</b></td></tr></tbody></table></div>
+</section>
+
+<!-- ================= ГАЗ ================= -->
+<span class="nojs-title">Газ и владение</span>
+<section class="panel" id="p-gas">
+  <p class="lead">Азот дороже кислорода не в цене за баллон, а в потоке. Это разговор
+    про полную стоимость владения — и он же объясняет, почему сравнивать станки
+    только по цене бессмысленно.</p>
+
+  <div class="card">
+    <h3>Расход и стоимость газа</h3>
+    <div class="row">
+      <div><label class="f">Сопло</label><select id="gNozzle"><option value="0">Сопло 1,0 мм</option><option value="1">Сопло 2,0 мм</option><option value="2">Сопло 3,0 мм</option><option value="3">Сопло 5,0 мм</option></select></div>
+      <div><label class="f">Газ</label><select id="gGas">
+        <option value="o2">Кислород — углеродистая сталь</option>
+        <option value="n2">Азот — нержавейка, алюминий</option></select></div>
+      <div><label class="f">Часов резки в месяц</label>
+        <input type="number" id="gHours" min="1" max="700" value="80"></div>
+      <div><label class="f">Цена баллона 40 л, ₽</label>
+        <input type="number" id="gPrice" min="0" step="50" placeholder="ввести"></div>
+    </div>
+    <div class="note alert">Цены баллона в данных нет — вводится вручную. Приложение считает только расход, не деньги за газ.</div>
+    <div id="gasOut"><div class="calcsteps"><div>Поток: <b>1101–1354 л/мин</b></div><div>Баллонов в час: <b>10,5–12,9</b></div><div>За 80 ч: <b>840–1032 баллонов</b></div><div>Цена баллона не введена — стоимость не считается. В источнике этой цены нет.</div></div><div class="note alert">Это 10,5–12,9 баллонов в час. Нужен криоцилиндр или газогенератор — иначе логистика баллонов съест экономику.</div></div>
+  </div>
+
+  <h2>Заводская таблица расхода</h2>
+  <div class="scroll"><table class=""><thead><tr><th>Сопло</th><th>Кислород (сталь)</th><th>Баллонов/ч</th><th>Азот (нержавейка, алюминий)</th><th>Баллонов/ч</th></tr></thead><tbody><tr><td><b>1,0 мм</b></td><td>13 л/мин</td><td>0,12–0,12</td><td>122–150 л/мин</td><td><b>1,2–1,4</b></td></tr><tr><td><b>2,0 мм</b></td><td>54–71 л/мин</td><td>0,5–0,7</td><td>489–602 л/мин</td><td><b>4,7–5,7</b></td></tr><tr><td><b>3,0 мм</b></td><td>121–160 л/мин</td><td>1,2–1,5</td><td>1101–1354 л/мин</td><td><b>10,5–12,9</b></td></tr><tr><td><b>5,0 мм</b></td><td>335–446 л/мин</td><td>3,2–4,2</td><td>2587–3762 л/мин</td><td><b>24,6–35,8</b></td></tr></tbody></table></div>
+  <div class="note"><ul><li>Баллон = 40 л / 6,3 м³</li><li>Давление: кислород 0,5–1 бар, азот 10–15 бар</li><li>Чистота: O₂ 99,99 % · N₂ 99,999 % · сжатый воздух 99,999 %</li><li>Вода &lt; 5 ppm, углеводороды &lt; 1 ppm</li><li>Ресивер ≥ 500 л при ≥ 1,2 МПа, фильтр 1 мкм на баллонах</li><li>Влаго- и маслоотделитель обязателен — без него оптика горит быстро</li></ul></div>
+
+  <h2>Как это использовать в разговоре</h2>
+  <div class="advice"><b>Нержавейка азотом, сопло 3 мм</b><span>Это 10–13 баллонов в час. Нужен криоцилиндр или газогенератор — иначе логистика баллонов съест экономику.</span></div><div class="advice"><b>Материал допускает воздух</b><span>Компрессор подбирается по столбцу «поток, л/мин» — тот же, что у азота. Ресивер ≥ 500 л.</span></div>
+</section>
+
+<!-- ================= ДАННЫЕ ================= -->
+<span class="nojs-title">Данные</span>
+<section class="panel" id="p-data">
+  <p class="lead">Служебная вкладка. Приложение показывает расхождения флагом,
+    а не решает их самостоятельно.</p>
+
+  <h2>Статус полей</h2>
+  <div class="rule"><span class="st st-0">подтверждено</span><span>Есть в прайсе с датой. Можно называть, упомянув дату прайса</span></div><div class="rule"><span class="st st-1">уточнить</span><span>Данных нет. Говорить «уточню у менеджера», не придумывать</span></div><div class="rule"><span class="st st-2">не показывать</span><span>Внутреннее: наценка за наличие, размер допустимой скидки, позиции с именами в названии</span></div>
+
+  <h2>Фактическая проверка наценки «из наличия»</h2>
+  <div class="card">
+    <p>Скилл утверждает: наценка на фрезерные — <b>ровно +11 %</b>.
+      Пересчитал все 85 позиций прайса и сверил с ценами «из наличия».</p>
+    <div class="calcsteps">
+      <div>Позиций проверено: <b>85</b></div>
+      <div>Совпало с точным расчётом ×1,11: <b>0</b></div>
+      <div>Отклонилось: <b>85</b>, максимальное отклонение <b>50 ₽</b></div>
+      <div>Отклонений при правиле «+11 % с округлением до 100 ₽»: <b>0</b></div>
+    </div>
+    <div class="note">Фактическое правило прайса — <b>+11 % с округлением до 100 ₽</b>,
+      а не ровно +11 %. Разница до 50 ₽ на позицию, для КП несущественна, но правило
+      в скилле сформулировано неточно. В смету приложение всегда берёт цену из таблицы,
+      а не считает её.</div>
+  </div>
+
+  <h2>Расхождения в источниках</h2>
+  <div class="conflict"><div class="conflict-t">Цены ПНР расходятся вдвое</div><div class="conflict-b">Раздел 8 прайса: ПНР 30 000–45 000 ₽, обучение 35 000 ₽. Раздел 9 «Удалённые работы»: ПНР 24 000 ₽, обучение 16 000 ₽. Похоже, второе — дистанционная услуга, но прямо это нигде не написано.</div><div class="conflict-a">Что делать: Уточнить у сервиса, какой раздел действующий, прежде чем называть цену</div></div><div class="conflict"><div class="conflict-t">Мощность M1 1325 RD</div><div class="conflict-b">Прайс — 4,5 кВт. wattsan.ru — 5,5 кВт.</div><div class="conflict-a">Что делать: Мощность из прайса относится к конкретной конфигурации. Уточнять</div></div><div class="conflict"><div class="conflict-t">Поле M3 2030 и 2040</div><div class="conflict-b">Прайс — 2000×3000 и 2000×4000. wattsan.ru — 2100×3100 и 2100×4100. M3 при том же названии формата имеет поле на 100 мм больше.</div><div class="conflict-a">Что делать: Для клиента, который кроит лист впритык, это решающая разница</div></div><div class="conflict"><div class="conflict-t">Поле M1 2030</div><div class="conflict-b">wattsan.ru даёт 2050×3000, прайс — 2000×3000.</div><div class="conflict-a">Что делать: Уточнять</div></div><div class="conflict"><div class="conflict-t">Мощность 7,5 кВт у M3</div><div class="conflict-b">Фильтр мощности на wattsan.ru вообще не знает варианта 7,5 кВт, хотя в прайсе он есть.</div><div class="conflict-a">Что делать: Возможно, сайт показывает базу, а прайс все варианты</div></div><div class="conflict"><div class="conflict-t">Стойка A1 6090</div><div class="conflict-b">Прайс и опции — A11. Карточка товара говорит NcStudio.</div><div class="conflict-a">Что делать: Карточка устарела, брать A11</div></div><div class="conflict"><div class="conflict-t">Ход Z у A1 1325</div><div class="conflict-b">Указано 200 или 240 мм в разных местах.</div><div class="conflict-a">Что делать: Уточнять</div></div><div class="conflict"><div class="conflict-t">Габариты фрезерных</div><div class="conflict-b">Файл «Массы и габариты» подтверждён как верный источник. Габариты из карточки товара расходятся с ним по всему ряду.</div><div class="conflict-a">Что делать: Карточку по габаритам не использовать</div></div><div class="conflict"><div class="conflict-t">Ставка НДС 22 %</div><div class="conflict-b">Значение из шаблона ТКП. В приложении это параметр, а не константа.</div><div class="conflict-a">Что делать: Подтвердить актуальность ставки перед выпуском КП</div></div><div class="conflict"><div class="conflict-t">Количество виброопор на 0404 и 0609 mini</div><div class="conflict-b">В прайсе не указано.</div><div class="conflict-a">Что делать: Уточнять</div></div>
+
+  <h2>Данных нет вообще</h2>
+  <p class="muted">Эти поля приложение показывает как «уточнить» и никогда не подставляет
+    значение по умолчанию.</p>
+  <div class="miss"><b>Скорость резки в мм/мин</b><span>Таблица режимов Raycus на 1739 строк в источник не заведена. Поэтому в приложении нет расчёта времени резки, себестоимости детали и производительности. Любая цифра здесь была бы выдумкой.</span></div><div class="miss"><b>Стоимость машино-часа</b><span>Ни потребления кВт·ч, ни тарифа, ни амортизации</span></div><div class="miss"><b>Цены расходников</b><span>Трубки, линзы, зеркала, защитные стёкла, сопла, фрезы</span></div><div class="miss"><b>Ресурс волоконного источника</b><span>Ни по Raycus, ни по IPG, ни по Maxphotonics</span></div><div class="miss"><b>Доставка</b><span>Тарифов и сроков по регионам нет. «Рассчитывается индивидуально»</span></div><div class="miss"><b>Рассрочка, кредит, лизинг</b><span>Ни ставок, ни сроков, ни формулы платежа</span></div><div class="miss"><b>Цена баллона газа</b><span>Расход посчитан, цена — нет</span></div><div class="miss"><b>Наличие на складе</b><span>Принципиально не заводится в базу: меняется ежедневно. В приложении это ручной выбор менеджера</span></div><div class="miss"><b>ПНР и обучение по CO₂, маркерам, сварке, очистке</b><span>Прайс услуг только по фрезерным</span></div><div class="miss"><b>Труборезы</b><span>Ни одной цены и характеристики</span></div>
+
+  <h2>Откуда цены</h2>
+  <table><thead><tr><th>Категория</th><th>Источник</th><th>Дата</th></tr></thead><tbody>
+    <tr><td>Волокно по металлу</td><td>Прайс «Металлорезы для ОП»</td><td>05.06.2026</td></tr>
+    <tr><td>Фрезерные ЧПУ</td><td>Прайс «Цены фрезерные станки»</td><td>май 2026</td></tr>
+    <tr><td>Опции, ПНР, сервис</td><td>«Фрезерное оборудование: номенклатура и цены»</td><td>25.03.2026</td></tr>
+  </tbody></table>
+  <div class="note alert">Цена ≠ актуальность. Прайсы датированы, наличие меняется ежедневно.
+    Перед счётом — сверка с менеджером. Наличие на складе в приложение принципиально
+    не заводится.</div>
+</section>
+
+</div>
+
+<script>/* Денежные расчёты — порт dengi.py из скилла lasercut-kp.
+   Вся арифметика в копейках целыми числами, округление ROUND_HALF_UP,
+   чтобы результат совпадал с Decimal в Python до копейки.
+   Проверяется скриптом verify.py на 200+ контрольных значениях. */
+
+var EDINICY = ['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
+var EDINICY_F = ['', 'одна', 'две', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
+var DESYAT_19 = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать',
+  'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
+var DESYATKI = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят',
+  'семьдесят', 'восемьдесят', 'девяносто'];
+var SOTNI = ['', 'сто', 'двести', 'триста', 'четыреста', 'пятьсот', 'шестьсот',
+  'семьсот', 'восемьсот', 'девятьсот'];
+
+function sklon(n, forms) {
+  var m = n % 100;
+  if (m >= 11 && m <= 19) return forms[2];
+  m = n % 10;
+  if (m === 1) return forms[0];
+  if (m >= 2 && m <= 4) return forms[1];
+  return forms[2];
+}
+
+function troyka(n, fem) {
+  var w = [];
+  if (n >= 100) { w.push(SOTNI[Math.floor(n / 100)]); n = n % 100; }
+  if (n >= 10 && n <= 19) { w.push(DESYAT_19[n - 10]); n = 0; }
+  else if (n >= 20) { w.push(DESYATKI[Math.floor(n / 10)]); n = n % 10; }
+  if (n) w.push((fem ? EDINICY_F : EDINICY)[n]);
+  return w;
+}
+
+function chisloPropisyu(n) {
+  if (n === 0) return 'ноль';
+  var parts = [];
+  var mlrd = Math.floor(n / 1e9); n = n % 1e9;
+  var mln = Math.floor(n / 1e6); n = n % 1e6;
+  var tys = Math.floor(n / 1000); var ost = n % 1000;
+  if (mlrd) parts = parts.concat(troyka(mlrd, false), [sklon(mlrd, ['миллиард', 'миллиарда', 'миллиардов'])]);
+  if (mln) parts = parts.concat(troyka(mln, false), [sklon(mln, ['миллион', 'миллиона', 'миллионов'])]);
+  if (tys) parts = parts.concat(troyka(tys, true), [sklon(tys, ['тысяча', 'тысячи', 'тысяч'])]);
+  if (ost) parts = parts.concat(troyka(ost, false));
+  return parts.join(' ');
+}
+
+/* ROUND_HALF_UP для положительного a/b на целых числах */
+function divHalfUp(a, b) { return Math.floor((2 * a + b) / (2 * b)); }
+
+/* рубли (число) -> копейки (целое) */
+function toCents(rub) { return divHalfUp(Math.round(rub * 1000), 10); }
+
+/* сумма прописью из копеек: 'Семьсот ... рублей 36 копеек' */
+function propisyu(cents) {
+  var rub = Math.floor(cents / 100);
+  var kop = cents - rub * 100;
+  var s = chisloPropisyu(rub);
+  s = s.charAt(0).toUpperCase() + s.slice(1);
+  var r = sklon(rub, ['рубль', 'рубля', 'рублей']);
+  var k = sklon(kop, ['копейка', 'копейки', 'копеек']);
+  return s + ' ' + r + ' ' + (kop < 10 ? '0' + kop : kop) + ' ' + k;
+}
+
+/* НДС изнутри: НДС = С × ставка / (100 + ставка). Возвращает копейки. */
+function ndsIznutri(cents, rate10) {
+  // rate10 — ставка × 10 (220 = 22 %), чтобы допускать 20,5 % без float
+  var nds = divHalfUp(cents * rate10, 1000 + rate10);
+  return { bez: cents - nds, nds: nds };
+}
+
+/* Цена со скидкой. pct10 — скидка × 10 (75 = 7,5 %). */
+function soSkidkoy(cents, pct10) {
+  return divHalfUp(cents * (1000 - pct10), 1000);
+}
+
+/* Наценка «из наличия». markup10 — наценка × 10 (110 = 11 %). */
+function sNacenkoy(cents, markup10) {
+  return divHalfUp(cents * (1000 + markup10), 1000);
+}
+
+/* Формат денег как в ТКП: '735 657,36' */
+function fmt(cents) {
+  var neg = cents < 0;
+  if (neg) cents = -cents;
+  var rub = Math.floor(cents / 100);
+  var kop = cents - rub * 100;
+  var s = String(rub).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return (neg ? '−' : '') + s + ',' + (kop < 10 ? '0' + kop : kop);
+}
+
+/* Целые рубли без копеек: '2 867 000 ₽' */
+function fmtRub(cents) {
+  var rub = Math.round(cents / 100);
+  return String(rub).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { toCents: toCents, propisyu: propisyu, ndsIznutri: ndsIznutri,
+    soSkidkoy: soSkidkoy, sNacenkoy: sNacenkoy, fmt: fmt, fmtRub: fmtRub,
+    chisloPropisyu: chisloPropisyu };
+}
+</script>
+<script>var APP = {"cacheVersion": 1, "priceDates": {"fiber": "05.06.2026", "milling": "май 2026", "options": "25.03.2026"}, "ndsDefault": 22, "kpValidDays": 15, "invoiceValidDays": 5, "manager": {"name": "Вениамин Вараксин", "phone": "+7 (921) 181-75-86", "email": "15@lasercut.ru"}, "fiberFormats": {"1313": "1300×1300", "1530": "1500×3000", "1560": "1500×6000", "2030": "2000×3000", "2040": "2000×4000", "2060": "2000×6000"}, "fiberA": [{"format": "1313", "power": 3000, "price": 1750000}, {"format": "1530", "power": 3000, "price": 1881000}], "fiberS": [{"format": "1530", "power": 3000, "base": 2867000, "table": 3657000, "rot": {"6-160": 4637000, "6-240": 4867000, "6-360": 5330000}, "tableRot": {"6-160": 5427000, "6-240": 5657000, "6-360": 6120000}}, {"format": "1530", "power": 6000, "base": 3825000, "table": 4615000, "rot": {"6-160": 5594000, "6-240": 5825000, "6-360": 6287000}, "tableRot": {"6-160": 6384000, "6-240": 6615000, "6-360": 7077000}}, {"format": "1530", "power": 12000, "base": 5280000, "table": 6070000, "rot": {"6-160": 7049000, "6-240": 7280000, "6-360": 7742000}, "tableRot": {"6-160": 7839000, "6-240": 8070000, "6-360": 8532000}}, {"format": "1560", "power": 3000, "base": 3300000, "table": 4562000, "rot": {"6-160": 5112000, "6-240": 5342000, "6-360": 5805000}, "tableRot": {"6-160": 6354000, "6-240": 6584000, "6-360": 7047000}}, {"format": "1560", "power": 6000, "base": 4257000, "table": 5520000, "rot": {"6-160": 6070000, "6-240": 6300000, "6-360": 6763000}, "tableRot": {"6-160": 7311000, "6-240": 7542000, "6-360": 8004000}}, {"format": "1560", "power": 12000, "base": 5806000, "table": 7068000, "rot": {"6-160": 7618000, "6-240": 7848000, "6-360": 8311000}, "tableRot": {"6-160": 8860000, "6-240": 9090000, "6-360": 9553000}}, {"format": "2030", "power": 3000, "base": 3148000, "table": 4120000, "rot": {"6-160": 4964000, "6-240": 5195000, "6-360": 5657000}, "tableRot": {"6-160": 5912000, "6-240": 6142000, "6-360": 6605000}}, {"format": "2030", "power": 6000, "base": 4105000, "table": 5078000, "rot": {"6-160": 5922000, "6-240": 6152000, "6-360": 6615000}, "tableRot": {"6-160": 6870000, "6-240": 7100000, "6-360": 7563000}}, {"format": "2030", "power": 12000, "base": 5606000, "table": 6579000, "rot": {"6-160": 7423000, "6-240": 7653000, "6-360": 8116000}, "tableRot": {"6-160": 8370000, "6-240": 8601000, "6-360": 9063000}}, {"format": "2040", "power": 3000, "base": 3369000, "table": 4503000, "rot": {"6-160": 5191000, "6-240": 5422000, "6-360": 5884000}, "tableRot": {"6-160": 6294000, "6-240": 6524000, "6-360": 6987000}}, {"format": "2040", "power": 6000, "base": 4327000, "table": 5460000, "rot": {"6-160": 6149000, "6-240": 6379000, "6-360": 6842000}, "tableRot": {"6-160": 7252000, "6-240": 7482000, "6-360": 7945000}}, {"format": "2040", "power": 12000, "base": 5876000, "table": 7009000, "rot": {"6-160": 7697000, "6-240": 7928000, "6-360": 8390000}, "tableRot": {"6-160": 8800000, "6-240": 9031000, "6-360": 9493000}}, {"format": "2060", "power": 3000, "base": 3675000, "table": 5246000, "rot": {"6-160": 5507000, "6-240": 5737000, "6-360": 6200000}, "tableRot": {"6-160": 7038000, "6-240": 7268000, "6-360": 7731000}}, {"format": "2060", "power": 6000, "base": 4634000, "table": 6206000, "rot": {"6-160": 6466000, "6-240": 6697000, "6-360": 7159000}, "tableRot": {"6-160": 7997000, "6-240": 8228000, "6-360": 8690000}}, {"format": "2060", "power": 12000, "base": 6181000, "table": 7753000, "rot": {"6-160": 8013000, "6-240": 8244000, "6-360": 8706000}, "tableRot": {"6-160": 9544000, "6-240": 9775000, "6-360": 10237000}}], "bundleDiscount": {"1530": 0, "1560": 20000, "2060": 40000}, "fiberMissing": ["Серия E — целиком, ни одной цены", "Серия HARD — целиком, ни одной цены", "Формат 1325 у всех серий", "Wattsan 1309 mini — отдельный станок, не серия", "Серия A в мощностях 1500 и 2000 Вт — паспорт знает, прайс нет"], "milling": [{"format": "0404", "name": "0404 mini, 1.5wc, NC", "kw": 1, "cool": "водяное", "ctrl": "NC", "vac": false, "order": 225000, "stock": 249800}, {"format": "0404", "name": "0404 mini, 1.5wc, A11", "kw": 1, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 269000, "stock": 298600}, {"format": "0404", "name": "0404 mini Cabine, 1.5wc, A11", "kw": 1, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 341800, "stock": 379400}, {"format": "0609", "name": "0609 mini, 1.5wc, NC", "kw": 1, "cool": "водяное", "ctrl": "NC", "vac": false, "order": 250700, "stock": 278300}, {"format": "0609", "name": "0609 mini, 1.5wc, A11", "kw": 1, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 294900, "stock": 327300}, {"format": "0609", "name": "0609 mini, 2.2wc, NC", "kw": 2, "cool": "водяное", "ctrl": "NC", "vac": false, "order": 255900, "stock": 284000}, {"format": "0609", "name": "0609 mini, 2.2wc, A11", "kw": 2, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 294900, "stock": 327300}, {"format": "0609", "name": "0609 mini Cabine, 1.5wc, A11", "kw": 1, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 405000, "stock": 449600}, {"format": "6090", "name": "A1 6090, 1.5wc, A11 + Leadshine", "kw": 1, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 323500, "stock": 359100}, {"format": "6090", "name": "A1 6090, 2.2wc, A11 + Leadshine", "kw": 2, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 328700, "stock": 364900}, {"format": "6090", "name": "A1 6090, 3.2wc, A11 + Leadshine", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 339700, "stock": 377100}, {"format": "6090", "name": "M1 6090, 2.2wc, A11 + Leadshine", "kw": 2, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 417800, "stock": 463800}, {"format": "6090", "name": "M1 6090, 3.2wc, A11 + Leadshine", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 428800, "stock": 476000}, {"format": "6090", "name": "M1 6090, 4.5ac, A11 + Leadshine", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 435200, "stock": 483100}, {"format": "6090", "name": "M1 6090, 2.2wc, A11 + Leadshine, VAC", "kw": 2, "cool": "водяное", "ctrl": "A11", "vac": true, "order": 519800, "stock": 577000}, {"format": "6090", "name": "M1 6090, 3.2wc, A11 + Leadshine, VAC", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": true, "order": 530800, "stock": 589200}, {"format": "6090", "name": "M1 6090, 4.5ac, A11 + Leadshine, VAC", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 537200, "stock": 596300}, {"format": "6090", "name": "M2 6090, 2.2wc, A11", "kw": 2, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 742800, "stock": 824500}, {"format": "6090", "name": "M3 6090, 7.5wc, Syntec", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": false, "order": 1245000, "stock": 1382000}, {"format": "1313", "name": "A1 1313, 2.2wc, A11 + Leadshine", "kw": 2, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 443300, "stock": 492100}, {"format": "1313", "name": "A1 1313, 3.2wc, A11 + Leadshine", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 454200, "stock": 504200}, {"format": "1313", "name": "A1 1313, 4.5ac, A11 + Leadshine", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 460600, "stock": 511300}, {"format": "1313", "name": "A1 1313, 2.2wc, A11 + Leadshine, VAC", "kw": 2, "cool": "водяное", "ctrl": "A11", "vac": true, "order": 540600, "stock": 600100}, {"format": "1313", "name": "A1 1313, 3.2wc, A11 + Leadshine, VAC", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": true, "order": 551500, "stock": 612200}, {"format": "1313", "name": "A1 1313, 4.5ac, A11 + Leadshine, VAC", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 557900, "stock": 619300}, {"format": "1313", "name": "M1 1313, 3.0wc, A11 + Leadshine", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 546600, "stock": 606700}, {"format": "1313", "name": "M1 1313, 4.5ac, A11 + Leadshine", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 553000, "stock": 613800}, {"format": "1313", "name": "M1 1313, 3.0wc, A11 + Leadshine, VAC", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": true, "order": 643700, "stock": 714500}, {"format": "1313", "name": "M1 1313, 4.5ac, A11 + Leadshine, VAC", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 650100, "stock": 721600}, {"format": "1313", "name": "M2 1313, 3.0wc, A11", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 805800, "stock": 894400}, {"format": "1313", "name": "M2 1313, 4.5ac, A11", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 810100, "stock": 899200}, {"format": "1313", "name": "M2 1313, 3.0wc, A11, VAC", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": true, "order": 884600, "stock": 981900}, {"format": "1313", "name": "M3 1313, 7.5wc, Syntec", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": false, "order": 1384400, "stock": 1536700}, {"format": "1313", "name": "M3 1313, 7.5wc, Syntec, VAC", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": true, "order": 1466800, "stock": 1628100}, {"format": "1313", "name": "M3 1313, 7,5wc, NC8", "kw": 7, "cool": "водяное", "ctrl": "NC8", "vac": false, "order": 1281200, "stock": 1422100}, {"format": "1313", "name": "M3 1313, 4.5ac, NC8", "kw": 4, "cool": "воздушное", "ctrl": "NC8", "vac": false, "order": 1113300, "stock": 1235800}, {"format": "1313", "name": "M3 1313, 4.5ac, NC, VAC", "kw": 4, "cool": "воздушное", "ctrl": "NC", "vac": true, "order": 1126900, "stock": 1250900}, {"format": "1325", "name": "A1 1325, 3.2wc, A11 + Leadshine", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 564400, "stock": 626500}, {"format": "1325", "name": "A1 1325, 4.5ac, A11 + Leadshine", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 570800, "stock": 633600}, {"format": "1325", "name": "A1 1325, 3.0wc, A11 + Leadshine, VAC", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": true, "order": 666400, "stock": 739700}, {"format": "1325", "name": "A1 1325, 4.5ac, A11 + Leadshine, VAC", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 672800, "stock": 746800}, {"format": "1325", "name": "M1 1325, 4.5ac, A11 + Leadshine", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 691000, "stock": 767000}, {"format": "1325", "name": "M1 1325 RD, 4.5ac, A18 + Leadshine", "kw": 4, "cool": "воздушное", "ctrl": "A18", "vac": false, "order": 1016800, "stock": 1128600}, {"format": "1325", "name": "M1 1325 S3, 3.0wc, A11 + Leadshine", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 770700, "stock": 855500}, {"format": "1325", "name": "M1 1325 S4, 3.0wc, A11 + Leadshine", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 810100, "stock": 899200}, {"format": "1325", "name": "M1 1325, 4.5ac, A11 + Leadshine, VAC", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 793100, "stock": 880300}, {"format": "1325", "name": "M2 1325, 4.5ac, A11", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 937400, "stock": 1040500}, {"format": "1325", "name": "M2 1325, 4.5ac, A11, VAC", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 1013600, "stock": 1125100}, {"format": "1325", "name": "M3 1325, 7.5wc, Syntec", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": false, "order": 1502900, "stock": 1668200}, {"format": "1325", "name": "M3 1325, 7.5wc, Syntec, VAC", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": true, "order": 1588300, "stock": 1763000}, {"format": "1325", "name": "M3 1325, 4.5ac, NC8", "kw": 4, "cool": "воздушное", "ctrl": "NC8", "vac": false, "order": 1168300, "stock": 1296800}, {"format": "1325", "name": "M3 1325, 4.5ac, NC, VAC", "kw": 4, "cool": "воздушное", "ctrl": "NC", "vac": true, "order": 1246300, "stock": 1383400}, {"format": "1616", "name": "A1 1616, 3.2wc, A11 + Leadshine", "kw": 3, "cool": "водяное", "ctrl": "A11", "vac": false, "order": 522100, "stock": 579500}, {"format": "1616", "name": "A1 1616, 4.5ac, A11 + Leadshine", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 528500, "stock": 586600}, {"format": "1616", "name": "M1 1616, 4.5ac, A11 + Leadshine", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 631200, "stock": 700600}, {"format": "1616", "name": "M1 1616, 4.5ac, A11 + Leadshine, VAC", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 723800, "stock": 803400}, {"format": "1616", "name": "M2 1616, 4.5ac, A11", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 870400, "stock": 966100}, {"format": "1616", "name": "M2 1616, 4.5ac, A11, VAC", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 945200, "stock": 1049200}, {"format": "1616", "name": "M3 1616, 7.5wc, Syntec", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": false, "order": 1552200, "stock": 1722900}, {"format": "1616", "name": "M3 1616, 7.5wc, Syntec, VAC", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": true, "order": 1630900, "stock": 1810300}, {"format": "1616", "name": "M3 1616, 4.5ac, NC8", "kw": 4, "cool": "воздушное", "ctrl": "NC8", "vac": false, "order": 1210900, "stock": 1344100}, {"format": "1625", "name": "A1 1625, 4.5ac, A11 + Leadshine", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 573100, "stock": 636100}, {"format": "1625", "name": "A1 1625, 4.5ac, A11 + Leadshine, VAC", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 668900, "stock": 742500}, {"format": "1625", "name": "M1 1625, 4.5ac, A11 + Leadshine", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 647000, "stock": 718200}, {"format": "1625", "name": "M1 1625, 4.5ac, A11 + Leadshine, VAC", "kw": 4, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 745800, "stock": 827800}, {"format": "1630", "name": "M1 1630, 6.0ac, A11 + Leadshine", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 815900, "stock": 905600}, {"format": "1630", "name": "M1 1630, 6.0ac, A11 + Leadshine, VAC", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 995200, "stock": 1104700}, {"format": "2030", "name": "M1 2030, 6.0ac, A11 + Leadshine", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 928200, "stock": 1030300}, {"format": "2030", "name": "M1 2030, 6.0ac, A11 + Leadshine, VAC", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 1134300, "stock": 1259100}, {"format": "2030", "name": "M2 2030, 6.0ac, A11", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 1068900, "stock": 1186500}, {"format": "2030", "name": "M2 2030, 6.0ac, A11, VAC", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 1195400, "stock": 1326900}, {"format": "2030", "name": "M3 2030, 7.5wc, Syntec", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": false, "order": 1683000, "stock": 1868100}, {"format": "2030", "name": "M3 2030, 7.5wc, Syntec, VAC", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": true, "order": 1865800, "stock": 2071000}, {"format": "2030", "name": "M3 2030, 4.5ac, NC8", "kw": 4, "cool": "воздушное", "ctrl": "NC8", "vac": false, "order": 1395600, "stock": 1549100}, {"format": "2030", "name": "M3 2030, 4.5ac, NC, VAC", "kw": 4, "cool": "воздушное", "ctrl": "NC", "vac": true, "order": 1523700, "stock": 1691300}, {"format": "2040", "name": "M1 2040, 6.0ac, A11 + Leadshine", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 1047600, "stock": 1162800}, {"format": "2040", "name": "M1 2040, 6.0ac, A11 + Leadshine, VAC", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 1260500, "stock": 1399200}, {"format": "2040", "name": "M2 2040, 6.0ac, A11", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 1138300, "stock": 1263500}, {"format": "2040", "name": "M2 2040, 6.0ac, A11, VAC", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 1249100, "stock": 1386500}, {"format": "2040", "name": "M3 2040, 7.5wc, Syntec", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": false, "order": 1810500, "stock": 2009700}, {"format": "2040", "name": "M3 2040, 7.5wc, Syntec, VAC", "kw": 7, "cool": "водяное", "ctrl": "Syntec", "vac": true, "order": 1989100, "stock": 2207900}, {"format": "2040", "name": "M3 2040, 4.5ac, NC8", "kw": 4, "cool": "воздушное", "ctrl": "NC8", "vac": false, "order": 1537500, "stock": 1706600}, {"format": "2040", "name": "M3 2040, 4.5ac, NC, VAC", "kw": 4, "cool": "воздушное", "ctrl": "NC", "vac": true, "order": 1647100, "stock": 1828300}, {"format": "2060", "name": "M1 2060, 6.0ac, A11 + Leadshine", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": false, "order": 1395400, "stock": 1548900}, {"format": "2060", "name": "M1 2060, 6.0ac, A11 + Leadshine, VAC", "kw": 6, "cool": "воздушное", "ctrl": "A11", "vac": true, "order": 1593700, "stock": 1769000}], "millingFields": {"0404": "400×400", "0609": "600×900", "6090": "600×900", "1313": "1300×1300", "1325": "1300×2500", "1616": "1600×1600", "1625": "1600×2500", "1630": "1600×3000", "2030": "2000×3000", "2040": "2000×4000", "2060": "2000×6000"}, "millingOrder": ["0404", "0609", "6090", "1313", "1325", "1616", "1625", "1630", "2030", "2040", "2060"], "fiberOrder": ["1313", "1530", "1560", "2030", "2040", "2060"], "millingMass": {"0404 mini": 92, "0609 mini": 135, "A1 6090": 400, "M1 6090": 500, "A1 1313": 540, "M1 1313": 650, "A1 1325": 720, "M1 1325": 880, "M1 1325 RD": 1550, "A1 1616": 620, "M1 1616": 730, "M1 2030": 1140, "M1 2040": 1370, "M1 2060": 1810, "M3 1313": 980, "M3 1325": 1260, "M3 1616": 1100, "M3 2030": 1580, "M3 2040": 1850, "M3 2060": 2300}, "options": [{"cat": "Стабилизаторы напряжения", "name": "Ресанта-3000/1-Ц", "price": 8490}, {"cat": "Стабилизаторы напряжения", "name": "Ресанта-5000/1-Ц", "price": 10190}, {"cat": "Стабилизаторы напряжения", "name": "Ресанта-8000/1-Ц", "price": 13490}, {"cat": "Чиллеры", "name": "S&A CW-3000TG", "price": 20100}, {"cat": "Чиллеры", "name": "S&A CW-5000TG", "price": 53625}, {"cat": "Чиллеры", "name": "S&A CW-5200TH", "price": 57280}, {"cat": "DSP-контроллеры", "name": "RichAuto A11", "price": 50538}, {"cat": "DSP-контроллеры", "name": "RichAuto A18", "price": 75380}, {"cat": "Датчики высоты инструмента", "name": "Магнитный — для станков 0404…0609", "price": 3369}, {"cat": "Датчики высоты инструмента", "name": "Нажимной — для A1 6090 и крупнее", "price": 9180}, {"cat": "Виброопоры", "name": "Wattsan S-78-7d185 (за 1 шт.)", "price": 1400}, {"cat": "Аспирация", "name": "Щётка аспирации для шпинделя", "price": 5220}, {"cat": "Аспирация", "name": "BELMASH DC850", "price": 26690}, {"cat": "Аспирация", "name": "BELMASH DC2500", "price": 40490}, {"cat": "Аспирация", "name": "BELMASH DC3900", "price": 53990}], "vibroQty": {"6090": 4, "1313": 4, "1616": 4, "1325": 6, "2030": 8, "2040": 8}, "vibroUnit": 1400, "a11ToA18": 24842, "pnr": [{"model": "Wattsan 0404/0609 mini", "days": 1, "pnr": 23000, "plus1": 31000, "plus2": 38000, "training": "35 000", "package": 46000}, {"model": "Wattsan 0404/0609 mini Cabine", "days": 1, "pnr": 30000, "plus1": 38000, "plus2": 45000, "training": "35 000", "package": 52000}, {"model": "Wattsan A1/M1 6090", "days": 1, "pnr": 30000, "plus1": 38000, "plus2": 45000, "training": "35 000", "package": 52000}, {"model": "Wattsan A1/M1 1313", "days": 1, "pnr": 42000, "plus1": 50000, "plus2": 57000, "training": "35 000", "package": 62000}, {"model": "Wattsan A1/M1 1616", "days": 1, "pnr": 42000, "plus1": 50000, "plus2": 57000, "training": "35 000", "package": 62000}, {"model": "Wattsan A1/M1 1325", "days": 1, "pnr": 45000, "plus1": 53000, "plus2": 60000, "training": "35 000", "package": 64000}, {"model": "Wattsan M1 2030/2040", "days": 2, "pnr": 63000, "plus1": 71000, "plus2": 78000, "training": "35 000", "package": 78000}, {"model": "Wattsan M1 1313 S4", "days": 2, "pnr": 105000, "plus1": null, "plus2": null, "training": "45 000", "package": null}, {"model": "Wattsan M1 1313 RD / 1325 RD", "days": 2, "pnr": 80000, "plus1": null, "plus2": null, "training": "45 000", "package": null}, {"model": "Wattsan M3 1313-2060", "days": 2, "pnr": 125000, "plus1": null, "plus2": null, "training": "Включено в ПНР", "package": null}], "service": [{"kind": "ПНР", "name": "Фрезерный станок (0404-0609, на шип по всем осям)", "price": 15000}, {"kind": "ПНР", "name": "Фрезерный станок 6090-2040 (M1, A1)", "price": 24000}, {"kind": "ПНР", "name": "Наличие поворотного устройства или автофокуса", "price": 5000}, {"kind": "Обучение", "name": "Фрезерный станок", "price": 16000}, {"kind": "Ремонт", "name": "Настройка без замены комплектующих — без ATC", "price": 4000}, {"kind": "Ремонт", "name": "Настройка без замены комплектующих — с ATC", "price": 5000}, {"kind": "Ремонт", "name": "Замена узлов малых станков (0404-6090)", "price": 5000}, {"kind": "Ремонт", "name": "Замена узлов крупных станков (от 1313 и ATC)", "price": 7000}, {"kind": "Диагностика", "name": "Фрезерный станок (0404-6090)", "price": 5000}, {"kind": "Диагностика", "name": "Фрезерный станок (1313-2040)", "price": 7000}, {"kind": "Диагностика", "name": "Фрезерный станок (M3-M4, ATC)", "price": 10000}, {"kind": "Другие работы", "name": "Написание управляющих программ", "price": 5000}, {"kind": "Минимальный выезд", "name": "Фрезерные станки, за день", "price": 22000}], "cutLimits": {"Углеродистая сталь": [[3000, 22], [6000, 25], [12000, 40]], "Нержавейка": [[3000, 10], [6000, 20], [12000, 40]], "Алюминий": [[3000, 8], [6000, 16], [12000, 40]], "Латунь": [[3000, 6], [6000, 12], [12000, 16]], "Медь": [[6000, 5], [12000, 10]]}, "gasByMaterial": {"Углеродистая сталь": "Кислород 99,99 %", "Нержавейка": "Азот 99,999 %", "Алюминий": "Азот 99,999 %", "Латунь": "Азот 99,999 %", "Медь": "Азот 99,999 %"}, "reservePct": 30, "gas": [{"nozzle": "1,0 мм", "o2": "13", "o2b": [0.12, 0.12], "n2": "122–150", "n2b": [1.2, 1.4]}, {"nozzle": "2,0 мм", "o2": "54–71", "o2b": [0.5, 0.7], "n2": "489–602", "n2b": [4.7, 5.7]}, {"nozzle": "3,0 мм", "o2": "121–160", "o2b": [1.2, 1.5], "n2": "1101–1354", "n2b": [10.5, 12.9]}, {"nozzle": "5,0 мм", "o2": "335–446", "o2b": [3.2, 4.2], "n2": "2587–3762", "n2b": [24.6, 35.8]}], "readiness": [{"name": "Ввод питания", "a": "380 В, три фазы", "s": "380 В, три фазы", "blocker": true, "note": "Нет ввода — нет сделки. Проверять до КП, а не на монтаже."}, {"name": "Кабель к щиту", "a": "пятижильный медный, ≥ 8 мм²", "s": "≥ 12 мм²", "blocker": true, "note": ""}, {"name": "Автомат", "a": "≥ 40 А", "s": "≥ 50 А", "blocker": true, "note": ""}, {"name": "Стабилизатор", "a": "≥ 30 000 Вт", "s": "≥ 50 000 Вт", "blocker": true, "note": "Условие гарантии: паспорт запрещает работу без стабилизатора. Генераторы как источник питания запрещены. Только электромеханический или инверторный, в нестабильных сетях с запасом ≥ 30 %. Это НЕ «Ресанта за 8 490 ₽» из прайса комплектующих — отдельная статья бюджета."}, {"name": "Заземление", "a": "TN-S, < 4 Ω", "s": "TN-S, < 4 Ω (труборез тоже на контур)", "blocker": true, "note": ""}, {"name": "Фундамент", "a": "цельный 300–500 мм, перепад ± 5 мм/м, нагрузка 4 т/м²", "s": "то же", "blocker": true, "note": ""}, {"name": "Пневмолиния", "a": "не нужна", "s": "3–6 атм — обязательно", "blocker": false, "note": "Обязательна для S-HP и RD."}, {"name": "Дистиллят на запуск", "a": "30 л", "s": "30 л", "blocker": false, "note": ""}, {"name": "Место вокруг станка", "a": "≥ 800 мм (паспорт требует 1–1,2 м до стен)", "s": "то же", "blocker": false, "note": ""}, {"name": "Погрузка", "a": "> 1500 кг: погрузчик ≥ 2,5 т или кран-балка ≥ 10 т", "s": "то же + персонал на сборку кабинетной защиты", "blocker": false, "note": ""}], "matchRules": [{"kind": "металл", "task": "Металл от 3 мм, компактно", "answer": "Волокно серии A — режет 3–4 мм в 24/7", "scope": "in"}, {"kind": "металл", "task": "Металл, базовая задача", "answer": "Волокно серии E", "scope": "ask"}, {"kind": "металл", "task": "Металл, но мало места и нужна безопасность", "answer": "Wattsan 1309 mini — закрытая кабина, нержавейка до 8 мм", "scope": "ask"}, {"kind": "металл", "task": "Нестандартный размер поля", "answer": "Серия E — единственная, где поле делают под заказ", "scope": "ask"}, {"kind": "металл", "task": "Металл + трубы одним станком", "answer": "Серия S с RD-модулем (труборез)", "scope": "in"}, {"kind": "металл", "task": "Металл в потоке, загрузка без простоя", "answer": "Серия S + сменный стол", "scope": "in"}, {"kind": "металл", "task": "Толстый металл — 20, 40, 60 мм", "answer": "Серия HARD", "scope": "ask"}, {"kind": "металл", "task": "Тонкий металл до 1,5 мм, бюджет ограничен", "answer": "Wattsan NC-C1390 / NC-C1612 — это CO₂, не волокно", "scope": "other"}, {"kind": "металл", "task": "Резать трубы и профиль", "answer": "Труборез Wattsan Core / Nova / Heavy Duty", "scope": "ask"}, {"kind": "дерево", "task": "Маленькая столярка", "answer": "Wattsan 0609 MINI", "scope": "in"}, {"kind": "дерево", "task": "Пластик, акрил, мягкое дерево", "answer": "Wattsan A1 нужного формата", "scope": "in"}, {"kind": "дерево", "task": "Мебельный цех, твёрдое дерево", "answer": "Wattsan M1 нужного формата", "scope": "in"}, {"kind": "дерево", "task": "Двери и фасады", "answer": "A1 1325 или M1 1325 — поле 1300×2500 = размер дверной заготовки", "scope": "in"}, {"kind": "дерево", "task": "Деревообработка с поворотом заготовки", "answer": "M1 RD — 4 оси", "scope": "in"}, {"kind": "дерево", "task": "Серийное производство", "answer": "M1 S3 или S4 — 3 и 4 шпинделя", "scope": "in"}, {"kind": "металл", "task": "Фрезеровать металл и алюминий", "answer": "Wattsan M3", "scope": "in"}], "markupFinding": {"total": 85, "dev_exact": 85, "max_dev": 50, "dev_r100": 0}, "counts": {"fiber": 122, "milling": 85}};</script>
+<script>/* Интерфейс. Все деньги — через money.js, в копейках. Ни одного числа «на глаз». */
+(function () {
+  'use strict';
+  var LS = 'cfg-state-v1';
+  var d = document;
+  function $(id) { return d.getElementById(id); }
+  function el(tag, cls, html) {
+    var n = d.createElement(tag);
+    if (cls) n.className = cls;
+    if (html !== undefined) n.innerHTML = html;
+    return n;
+  }
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function opt(sel, value, text) {
+    var o = d.createElement('option');
+    o.value = value; o.textContent = text; sel.appendChild(o);
+  }
+  function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+
+  d.body.classList.add('js');
+
+  // ------------------------------------------------------------------ состояние
+  var state = {
+    items: [],
+    kp: {}, disc: 0, nds: 220, demo: false,
+    ready: {}, gas: { nozzle: 2, gas: 'n2', hours: 80, price: '' },
+    mode: 'order'
+  };
+  try {
+    var raw = localStorage.getItem(LS);
+    if (raw) {
+      var s = JSON.parse(raw);
+      for (var k in s) if (s.hasOwnProperty(k)) state[k] = s[k];
+    }
+  } catch (e) { /* приватный режим — работаем без сохранения */ }
+
+  var saveTimer = null;
+  function save() {
+    try {
+      localStorage.setItem(LS, JSON.stringify(state));
+      $('saveDot').textContent = 'сохранено';
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function () { $('saveDot').textContent = ''; }, 1600);
+    } catch (e) { $('saveDot').textContent = 'без сохранения'; }
+  }
+
+  // ------------------------------------------------------------------ вкладки
+  var tabs = $('tabs').querySelectorAll('button');
+  function showTab(name) {
+    for (var i = 0; i < tabs.length; i++) {
+      var on = tabs[i].getAttribute('data-t') === name;
+      tabs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+    var panels = d.querySelectorAll('.panel');
+    for (var j = 0; j < panels.length; j++) {
+      panels[j].classList.toggle('active', panels[j].id === 'p-' + name);
+    }
+    if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+  }
+  for (var t = 0; t < tabs.length; t++) {
+    tabs[t].addEventListener('click', function () { showTab(this.getAttribute('data-t')); });
+  }
+
+  // ------------------------------------------------------------------ демо-режим
+  $('demoMode').checked = !!state.demo;
+  d.body.classList.toggle('demo', !!state.demo);
+  $('demoMode').addEventListener('change', function () {
+    state.demo = this.checked;
+    d.body.classList.toggle('demo', this.checked);
+    save(); renderMill();
+  });
+
+  // ------------------------------------------------------------------ волокно
+  var fiberIdx = {};
+  APP.fiberS.forEach(function (r) {
+    fiberIdx[r.format] = fiberIdx[r.format] || {};
+    fiberIdx[r.format][r.power] = r;
+  });
+  var fiberAIdx = {};
+  APP.fiberA.forEach(function (r) {
+    fiberAIdx[r.format] = fiberAIdx[r.format] || {};
+    fiberAIdx[r.format][r.power] = r.price;
+  });
+
+  opt($('fSeries'), 'S', 'S — лист и трубы');
+  opt($('fSeries'), 'A', 'A — компактная, 3–4 мм в 24/7');
+
+  function fillFiberFormats() {
+    var series = $('fSeries').value;
+    var sel = $('fFormat'); var prev = sel.value; clear(sel);
+    var src = series === 'A' ? fiberAIdx : fiberIdx;
+    APP.fiberOrder.forEach(function (f) {
+      if (src[f]) opt(sel, f, f + ' — ' + APP.fiberFormats[f] + ' мм');
+    });
+    if (prev && src[prev]) sel.value = prev;
+    fillFiberPowers();
+  }
+  function fillFiberPowers() {
+    var series = $('fSeries').value, f = $('fFormat').value;
+    var sel = $('fPower'); var prev = sel.value; clear(sel);
+    var src = series === 'A' ? fiberAIdx : fiberIdx;
+    Object.keys(src[f] || {}).map(Number).sort(function (a, b) { return a - b; })
+      .forEach(function (p) { opt(sel, p, (p / 1000) + ' кВт'); });
+    if (prev && src[f] && src[f][prev]) sel.value = prev;
+    renderFiber();
+  }
+
+  function fiberPick() {
+    var series = $('fSeries').value, f = $('fFormat').value, p = $('fPower').value;
+    var tbl = $('fTable').value === '1', rot = $('fRot').value;
+    if (series === 'A') {
+      if (tbl || rot) return { err: 'По серии A сменного стола и RD-модуля в прайсе нет — только серия S.' };
+      var price = fiberAIdx[f] && fiberAIdx[f][p];
+      if (!price) return { err: 'Цены на эту конфигурацию в прайсе нет.' };
+      return { name: 'Wattsan A ' + f + ' ' + p + 'W', price: price, base: price, steps: [] };
+    }
+    var r = fiberIdx[f] && fiberIdx[f][p];
+    if (!r) return { err: 'Цены на эту конфигурацию в прайсе нет.' };
+    var name = 'Wattsan S ' + f + ' ' + p + 'W', price, steps = [];
+    if (!tbl && !rot) { price = r.base; }
+    else if (tbl && !rot) { price = r.table; name += ' + сменный стол'; }
+    else if (!tbl && rot) { price = r.rot[rot]; name += ' + rotary ' + rot; }
+    else { price = r.tableRot[rot]; name += ' + сменный стол + rotary ' + rot; }
+    steps.push(['База ' + f + ' ' + p + 'W', r.base]);
+    if (tbl && !rot) steps.push(['Доплата за сменный стол', r.table - r.base]);
+    if (!tbl && rot) steps.push(['Доплата за rotary ' + rot, r.rot[rot] - r.base]);
+    if (tbl && rot) {
+      steps.push(['Доплата за сменный стол', r.table - r.base]);
+      steps.push(['Доплата за rotary ' + rot, r.rot[rot] - r.base]);
+      var sep = r.table + (r.rot[rot] - r.base);
+      var gain = sep - price;
+      steps.push(['По отдельности вышло бы', sep]);
+      steps.push(['Пакетная выгода (стол и ось вместе)', -gain]);
+    }
+    return { name: name, price: price, base: r.base, steps: steps };
+  }
+
+  function renderFiber() {
+    var out = $('fOut'); clear(out);
+    var pick = fiberPick();
+    if (pick.err) {
+      out.appendChild(el('div', 'note stop', esc(pick.err)));
+      return;
+    }
+    var box = el('div', 'pricebox');
+    var a = el('div', 'pb');
+    a.innerHTML = '<div class="lbl">Цена, НДС включён</div><div class="val">' +
+      fmtRub(toCents(pick.price)) + ' ₽</div>' +
+      '<div class="sub">' + esc(pick.name) + '</div>';
+    box.appendChild(a);
+    var b = el('div', 'pb stock');
+    b.innerHTML = '<div class="lbl">Второй ценник</div>' +
+      '<div class="val" style="font-size:17px">нет в прайсе</div>' +
+      '<div class="sub">По волокну в прайсе одна цена. Наценку за наличие не выдумываем.</div>';
+    box.appendChild(b);
+    out.appendChild(box);
+    if (pick.steps.length) {
+      var st = el('div', 'calcsteps');
+      pick.steps.forEach(function (s) {
+        st.appendChild(el('div', '', esc(s[0]) + ': <b>' +
+          (s[1] < 0 ? '−' : '') + fmtRub(toCents(Math.abs(s[1]))) + ' ₽</b>'));
+      });
+      st.appendChild(el('div', '', 'Итого по прайсу: <b>' + fmtRub(toCents(pick.price)) + ' ₽</b>'));
+      out.appendChild(st);
+    }
+    out.appendChild(el('div', 'note',
+      'Сверх цены станка: доставка, ПНР, обучение и подготовка цеха. ' +
+      'Стабилизатор 30 000 или 50 000 Вт — отдельная статья и условие гарантии.'));
+  }
+
+  ['fSeries'].forEach(function (id) { $(id).addEventListener('change', fillFiberFormats); });
+  $('fFormat').addEventListener('change', fillFiberPowers);
+  ['fPower', 'fTable', 'fRot'].forEach(function (id) {
+    $(id).addEventListener('change', renderFiber);
+  });
+  $('fAdd').addEventListener('click', function () {
+    var p = fiberPick();
+    if (p.err) return;
+    addItem(p.name, p.price, 1);
+  });
+
+  // ------------------------------------------------------------------ фрезерные
+  APP.millingOrder.forEach(function (f) {
+    opt($('mFormat'), f, f + ' — ' + APP.millingFields[f] + ' мм');
+  });
+  function fillMillConfigs() {
+    var f = $('mFormat').value, sel = $('mConfig'); clear(sel);
+    APP.milling.filter(function (r) { return r.format === f; })
+      .forEach(function (r, i) { opt(sel, r.name, r.name); });
+    renderMill();
+  }
+  function millPick() {
+    var name = $('mConfig').value;
+    for (var i = 0; i < APP.milling.length; i++) {
+      if (APP.milling[i].name === name) return APP.milling[i];
+    }
+    return null;
+  }
+  function renderMill() {
+    var out = $('mOut'); clear(out);
+    var r = millPick();
+    if (!r) return;
+    var mode = $('priceMode').value;
+    state.mode = mode;
+    var box = el('div', 'pricebox');
+    var a = el('div', 'pb' + (mode === 'order' ? ' stock' : ''));
+    a.innerHTML = '<div class="lbl">Под заказ — завод, ~60 дней</div><div class="val">' +
+      fmtRub(toCents(r.order)) + ' ₽</div><div class="sub">Оплата 50 % + остаток</div>';
+    box.appendChild(a);
+    var b = el('div', 'pb' + (mode === 'stock' ? ' stock' : ''));
+    b.innerHTML = '<div class="lbl">Из наличия — склад</div><div class="val">' +
+      fmtRub(toCents(r.stock)) + ' ₽</div><div class="sub">Оплата 100 %</div>';
+    box.appendChild(b);
+    out.appendChild(box);
+
+    var st = el('div', 'calcsteps internal');
+    var diff = r.stock - r.order;
+    var pct = Math.round(diff / r.order * 10000) / 100;
+    st.appendChild(el('div', '', 'Разница: <b>' + fmtRub(toCents(diff)) + ' ₽</b>, это <b>+' +
+      String(pct).replace('.', ',') + ' %</b> к цене под заказ'));
+    st.appendChild(el('div', '', 'Правило прайса: +11 % с округлением до 100 ₽. ' +
+      'Цена берётся из таблицы, а не считается.'));
+    out.appendChild(st);
+
+    var facts = el('div', 'muted');
+    facts.innerHTML = 'Шпиндель ' + r.kw + ' кВт · охлаждение ' + esc(r.cool) +
+      ' · стойка ' + esc(r.ctrl) + ' · вакуумный стол: ' + (r.vac ? 'да' : 'нет') +
+      ' · поле ' + APP.millingFields[r.format] + ' мм' +
+      (r.vac ? ' · питание 380 В (вакуумная версия)' : ' · питание 220 В');
+    out.appendChild(facts);
+    out.appendChild(el('div', 'note',
+      'Что клиент платит сверх: доставка, ПНР, обучение, чиллер. ' +
+      'В цену фрезерного они не входят.'));
+  }
+  $('mFormat').addEventListener('change', fillMillConfigs);
+  $('mConfig').addEventListener('change', renderMill);
+  $('priceMode').addEventListener('change', function () { renderMill(); save(); });
+  $('mAdd').addEventListener('click', function () {
+    var r = millPick(); if (!r) return;
+    var mode = $('priceMode').value;
+    addItem(r.name + (mode === 'stock' ? ' (из наличия)' : ' (под заказ)'),
+      mode === 'stock' ? r.stock : r.order, 1);
+  });
+
+  // опции
+  (function () {
+    var box = $('mOptions'), cats = {};
+    APP.options.forEach(function (o) { (cats[o.cat] = cats[o.cat] || []).push(o); });
+    Object.keys(cats).forEach(function (c) {
+      box.appendChild(el('div', 'muted', '<b>' + esc(c) + '</b>'));
+      cats[c].forEach(function (o) {
+        var row = el('div', 'chk');
+        var qtyId = 'q_' + o.name.replace(/\W+/g, '_');
+        row.innerHTML = '<input type="checkbox">' +
+          '<span style="flex:1">' + esc(o.name) + ' — <b>' + fmtRub(toCents(o.price)) + ' ₽</b></span>' +
+          '<input type="number" min="1" max="20" value="1" id="' + qtyId +
+          '" style="width:62px;padding:3px 5px">' +
+          '<button class="btn mini sec" type="button">В смету</button>';
+        var qty = row.querySelector('#' + qtyId);
+        if (/Виброопор/i.test(o.cat)) {
+          var f = $('mFormat').value;
+          if (APP.vibroQty[f]) qty.value = APP.vibroQty[f];
+        }
+        row.querySelector('button').addEventListener('click', function () {
+          addItem(o.name, o.price, Math.max(1, parseInt(qty.value, 10) || 1));
+        });
+        box.appendChild(row);
+      });
+    });
+  }());
+
+  // ПНР
+  APP.pnr.forEach(function (p, i) { opt($('pnrModel'), String(i), p.model); });
+  function pnrPick() {
+    var p = APP.pnr[parseInt($('pnrModel').value, 10)];
+    var kind = $('pnrKind').value;
+    var labels = { pnr: 'ПНР', plus1: 'ПНР +1 день', plus2: 'ПНР +2 дня',
+      training: 'Обучение', package: 'ПНР + обучение' };
+    var v = p[kind];
+    if (kind === 'training' && typeof v === 'string' && !/^\d/.test(v.replace(/\s/g, ''))) {
+      return { text: v, price: null, name: labels[kind] + ' — ' + p.model };
+    }
+    if (typeof v === 'string') v = parseInt(v.replace(/\s/g, ''), 10);
+    if (!v) return { text: 'В прайсе для этой комбинации цены нет — уточнить у сервиса.',
+      price: null, name: labels[kind] + ' — ' + p.model };
+    var third = $('thirdParty').checked;
+    var base = v;
+    var final = third ? Math.round(v * 1.2) : v;
+    return { price: final, base: base, third: third, days: p.days,
+      name: labels[kind] + ' — ' + p.model + (third ? ' (сторонний, ×1,2)' : '') };
+  }
+  function renderPnr() {
+    var out = $('pnrOut'); clear(out);
+    var p = pnrPick();
+    if (p.price === null) { out.appendChild(el('div', 'note alert', esc(p.text))); return; }
+    var st = el('div', 'calcsteps');
+    st.appendChild(el('div', '', 'По прайсу: <b>' + fmtRub(toCents(p.base)) + ' ₽</b>' +
+      (p.days ? ' · выезд ' + p.days + ' дн.' : '')));
+    if (p.third) st.appendChild(el('div', '', 'Коэффициент ×1,2 на сторонний станок: <b>' +
+      fmtRub(toCents(p.price)) + ' ₽</b>'));
+    st.appendChild(el('div', '', 'Минимальный выезд за день — 22 000 ₽, ' +
+      'штраф за ложный выезд 19 000 ₽'));
+    out.appendChild(st);
+  }
+  ['pnrModel', 'pnrKind', 'thirdParty'].forEach(function (id) {
+    $(id).addEventListener('change', renderPnr);
+  });
+  $('pnrAdd').addEventListener('click', function () {
+    var p = pnrPick(); if (p.price === null) return;
+    addItem(p.name, p.price, 1);
+  });
+
+  // категория
+  function switchCat() {
+    var c = $('cat').value;
+    $('blkFiber').style.display = c === 'fiber' ? '' : 'none';
+    $('blkMill').style.display = c === 'milling' ? '' : 'none';
+  }
+  $('cat').addEventListener('change', switchCat);
+
+  // ------------------------------------------------------------------ смета
+  for (var dd = 0; dd <= 100; dd += 5) opt($('discount'), String(dd), (dd / 10).toString().replace('.', ',') + ' %');
+  [120, 150, 200, 250, 300].forEach(function (v) {
+    opt($('discount'), String(v), (v / 10).toString().replace('.', ',') + ' %');
+  });
+  $('discount').value = String(state.disc || 0);
+  $('ndsRate').value = String(state.nds || APP.ndsDefault * 10);
+
+  var KPF = ['kpClient', 'kpInn', 'kpNum', 'kpContact', 'kpPhone', 'kpNote', 'kpDate'];
+  KPF.forEach(function (id) {
+    if (state.kp[id]) $(id).value = state.kp[id];
+    $(id).addEventListener('input', function () {
+      state.kp[id] = this.value; save(); renderKP();
+    });
+  });
+  if (!state.kp.kpDate) {
+    var now = new Date();
+    var dt = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) +
+      '.' + now.getFullYear();
+    $('kpDate').value = dt; state.kp.kpDate = dt;
+  }
+
+  function addItem(name, priceRub, qty) {
+    state.items.push({ name: name, price: toCents(priceRub), qty: qty });
+    save(); renderSmeta();
+    showTab('smeta');
+  }
+
+  function totals() {
+    var disc = parseInt($('discount').value, 10) || 0;
+    var rate = parseInt($('ndsRate').value, 10) || 0;
+    var listSum = 0, discSum = 0, lines = [];
+    state.items.forEach(function (it) {
+      var unit = soSkidkoy(it.price, disc);
+      var line = unit * it.qty;
+      listSum += it.price * it.qty;
+      discSum += line;
+      lines.push({ item: it, unit: unit, line: line });
+    });
+    var nds = ndsIznutri(discSum, rate);
+    return { disc: disc, rate: rate, listSum: listSum, total: discSum,
+      gain: listSum - discSum, bez: nds.bez, nds: nds.nds, lines: lines };
+  }
+
+  function renderSmeta() {
+    var body = $('smetaBody'); clear(body);
+    var T = totals();
+    $('smetaEmpty').style.display = state.items.length ? 'none' : '';
+    $('smetaTable').style.display = state.items.length ? '' : 'none';
+
+    T.lines.forEach(function (L, i) {
+      var tr = d.createElement('tr');
+      tr.innerHTML = '<td>' + esc(L.item.name) + '</td>' +
+        '<td><input type="number" min="1" max="99" value="' + L.item.qty + '"></td>' +
+        '<td>' + fmt(L.item.price) + '</td>' +
+        '<td>' + fmt(L.unit) + '</td>' +
+        '<td><b>' + fmt(L.line) + '</b></td>' +
+        '<td class="noprint"><button class="btn mini sec" type="button">Удалить</button></td>';
+      tr.querySelector('input').addEventListener('change', function () {
+        L.item.qty = Math.max(1, Math.min(99, parseInt(this.value, 10) || 1));
+        save(); renderSmeta();
+      });
+      tr.querySelector('button').addEventListener('click', function () {
+        state.items.splice(i, 1); save(); renderSmeta();
+      });
+      body.appendChild(tr);
+    });
+
+    var tot = $('totals'); clear(tot);
+    if (!state.items.length) { clear($('propis')); clear($('checkBlock')); renderKP(); return; }
+    function row(k, v, cls) {
+      var n = el('div', cls || '');
+      n.innerHTML = '<span>' + k + '</span><span>' + v + '</span>';
+      tot.appendChild(n);
+    }
+    row('Сумма по прайсу', fmt(T.listSum) + ' ₽');
+    row('Ваша выгода — скидка ' + (T.disc / 10).toString().replace('.', ',') + ' %',
+      '−' + fmt(T.gain) + ' ₽', 'gain');
+    row('Итого без НДС', fmt(T.bez) + ' ₽');
+    row('в т. ч. НДС ' + (T.rate / 10).toString().replace('.', ',') + ' %', fmt(T.nds) + ' ₽');
+    row('ИТОГО к оплате', fmt(T.total) + ' ₽', 'big');
+
+    $('propis').innerHTML = 'Сумма прописью: ' + esc(propisyu(T.total)) +
+      ', в том числе НДС ' + (T.rate / 10).toString().replace('.', ',') + ' % — ' +
+      esc(propisyu(T.nds)) + '.';
+
+    // сходимость — независимая перепроверка, не повторное чтение тех же чисел
+    var cb = $('checkBlock'); clear(cb);
+    var problems = [];
+    var reBez = T.bez + T.nds;
+    if (reBez !== T.total) {
+      problems.push('Без НДС + НДС = ' + fmt(reBez) + ' ₽, а ИТОГО = ' + fmt(T.total) +
+        ' ₽. Расхождение ' + fmt(Math.abs(reBez - T.total)) + ' ₽');
+    }
+    var reSum = 0;
+    T.lines.forEach(function (L) { reSum += soSkidkoy(L.item.price, T.disc) * L.item.qty; });
+    if (reSum !== T.total) {
+      problems.push('Пересчёт построчно даёт ' + fmt(reSum) + ' ₽ против ' + fmt(T.total) + ' ₽');
+    }
+    if (T.listSum - T.gain !== T.total) {
+      problems.push('Прайс − выгода = ' + fmt(T.listSum - T.gain) + ' ₽ против ИТОГО ' +
+        fmt(T.total) + ' ₽');
+    }
+    if (problems.length) {
+      cb.className = 'check fail';
+      cb.innerHTML = '<b>Сходимость нарушена — КП не выпускать.</b><ul>' +
+        problems.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>';
+    } else {
+      cb.className = 'check good';
+      cb.innerHTML = '<b>Сходимость проверена.</b> Плашка-резюме, смета и сумма прописью ' +
+        'считаются от одного числа: ' + fmt(T.total) + ' ₽. Без НДС + НДС = ИТОГО, ' +
+        'построчный пересчёт совпадает, прайс минус выгода совпадает.';
+    }
+    renderKP();
+  }
+
+  $('discount').addEventListener('change', function () {
+    state.disc = parseInt(this.value, 10); save(); renderSmeta();
+  });
+  $('ndsRate').addEventListener('change', function () {
+    state.nds = parseInt(this.value, 10); save(); renderSmeta();
+  });
+  $('btnClear').addEventListener('click', function () {
+    if (state.items.length && !confirm('Очистить смету?')) return;
+    state.items = []; save(); renderSmeta();
+  });
+
+  // ------------------------------------------------------------------ ТКП
+  function renderKP() {
+    var box = $('kpPreview'); clear(box);
+    var T = totals();
+    var k = state.kp;
+    var head = el('div', 'kp-head');
+    head.innerHTML = '<div class="kp-logo">LASERCUT<small>оборудование с ЧПУ</small></div>' +
+      '<div class="kp-meta">Технико-коммерческое предложение<br>' +
+      'Исх. № ' + esc(k.kpNum || '—') + ' от ' + esc(k.kpDate || '—') + '<br>' +
+      'Действует ' + APP.kpValidDays + ' дней</div>';
+    box.appendChild(head);
+
+    var first = state.items.length ? state.items[0].name : '—';
+    box.appendChild(el('h1', '', esc(first)));
+    box.appendChild(el('p', '', 'Кому: <b>' + esc(k.kpClient || '—') + '</b>' +
+      (k.kpInn ? ', ИНН ' + esc(k.kpInn) : '') +
+      (k.kpNote ? ' - ' + esc(k.kpNote) : '')));
+    box.appendChild(el('p', 'muted',
+      'Оборудование соответствует ТР ТС 004/2011, 010/2011, 020/2011.'));
+
+    var sum = el('div', 'kp-sum');
+    sum.innerHTML =
+      '<div><div class="k">Модель</div><div class="v">' + esc(first) + '</div></div>' +
+      '<div><div class="k">Стоимость, с НДС ' + (T.rate / 10).toString().replace('.', ',') +
+      ' %</div><div class="v">' + fmt(T.total) + ' ₽</div></div>' +
+      '<div><div class="k">Ваша выгода (скидка ' + (T.disc / 10).toString().replace('.', ',') +
+      ' %)</div><div class="v">' + fmt(T.gain) + ' ₽</div></div>' +
+      '<div><div class="k">Гарантия</div><div class="v">12 месяцев</div></div>';
+    box.appendChild(sum);
+
+    if (state.items.length) {
+      var tb = el('table');
+      var rows = T.lines.map(function (L, i) {
+        return '<tr><td>' + (i + 1) + '</td><td>' + esc(L.item.name) + '</td><td>' +
+          L.item.qty + '</td><td>' + fmt(L.unit) + '</td><td><b>' + fmt(L.line) + '</b></td></tr>';
+      }).join('');
+      tb.innerHTML = '<thead><tr><th>№</th><th>Наименование</th><th>Кол-во</th>' +
+        '<th>Цена со скидкой</th><th>Сумма</th></tr></thead><tbody>' + rows +
+        '<tr><td colspan="4">Ваша выгода</td><td><b>' + fmt(T.gain) + ' ₽</b></td></tr>' +
+        '<tr><td colspan="4">Итого без НДС</td><td>' + fmt(T.bez) + ' ₽</td></tr>' +
+        '<tr><td colspan="4">в т. ч. НДС ' + (T.rate / 10).toString().replace('.', ',') +
+        ' %</td><td>' + fmt(T.nds) + ' ₽</td></tr>' +
+        '<tr><td colspan="4"><b>ИТОГО к оплате</b></td><td><b>' + fmt(T.total) +
+        ' ₽</b></td></tr></tbody>';
+      box.appendChild(tb);
+      box.appendChild(el('p', '', '<i>' + esc(propisyu(T.total)) + '</i>'));
+    }
+
+    box.appendChild(el('p', 'muted',
+      'Условия поставки: под заказ — 50 % предоплата, остаток перед отгрузкой, срок с завода ' +
+      'около 60 дней. Из наличия — 100 % оплата, отгрузка 1–3 рабочих дня. ' +
+      'Доставка, пуско-наладка и обучение рассчитываются отдельно.'));
+
+    var mgr = el('div', 'kp-mgr');
+    mgr.innerHTML = 'Ваш менеджер: <b>' + esc(k.kpContact || APP.manager.name) + '</b><br>' +
+      esc(APP.manager.phone) + ' · ' + esc(APP.manager.email) +
+      (k.kpPhone ? '<br>Контакт клиента: ' + esc(k.kpPhone) : '');
+    box.appendChild(mgr);
+    box.appendChild(el('div', 'kp-foot',
+      'Предложение действует ' + APP.kpValidDays + ' дней. Счёт фиксирует цену и наличие на ' +
+      APP.invoiceValidDays + ' дней. Цены указаны с НДС.'));
+  }
+
+  $('btnPrint').addEventListener('click', function () {
+    var p = $('p-smeta');
+    p.classList.add('printme');
+    window.print();
+    setTimeout(function () { p.classList.remove('printme'); }, 400);
+  });
+
+  $('btnJson').addEventListener('click', function () {
+    var T = totals(), k = state.kp;
+    var dparts = (k.kpDate || '').split('.');
+    var MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля',
+      'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    var payload = {
+      'КЛИЕНТ': k.kpClient || '', 'ИНН': k.kpInn || '',
+      'ПРИМЕЧАНИЕ': k.kpNote ? ' - ' + k.kpNote : '',
+      'ИСХ_НОМЕР': k.kpNum || '',
+      'КОНТАКТ_ИМЯ': k.kpContact || APP.manager.name,
+      'КОНТАКТ_ТЕЛЕФОН': k.kpPhone || APP.manager.phone,
+      'ДД': dparts[0] || '', 'МЕСЯЦА': MONTHS[(parseInt(dparts[1], 10) || 1) - 1],
+      'ГГГГ': dparts[2] || '',
+      'менеджер': APP.manager,
+      'ставка_НДС': T.rate / 10,
+      'скидка_процент': T.disc / 10,
+      'позиции': T.lines.map(function (L) {
+        return { наименование: L.item.name, количество: L.item.qty,
+          цена_прайс: L.item.price / 100, цена_со_скидкой: L.unit / 100,
+          сумма: L.line / 100 };
+      }),
+      'итоги': {
+        сумма_по_прайсу: T.listSum / 100, ваша_выгода: T.gain / 100,
+        итого_без_НДС: T.bez / 100, НДС: T.nds / 100, итого_к_оплате: T.total / 100
+      },
+      'сумма_прописью': propisyu(T.total),
+      'НДС_прописью': propisyu(T.nds),
+      'срок_действия_дней': APP.kpValidDays
+    };
+    var text = JSON.stringify(payload, null, 2);
+    var ta = $('jsonOut');
+    ta.style.display = ''; ta.value = text; ta.select();
+    var ok = false;
+    try { ok = d.execCommand('copy'); } catch (e) { ok = false; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        $('saveDot').textContent = 'JSON скопирован';
+      }, function () {});
+    } else if (ok) { $('saveDot').textContent = 'JSON скопирован'; }
+  });
+
+  // ------------------------------------------------------------------ подбор
+  Object.keys(APP.cutLimits).forEach(function (m) { opt($('mtMaterial'), m, m); });
+  function renderMatch() {
+    var out = $('matchOut'); clear(out);
+    var m = $('mtMaterial').value;
+    var th = parseFloat($('mtThick').value.replace(',', '.'));
+    if (!(th > 0)) { out.appendChild(el('div', 'note', 'Введите толщину.')); return; }
+    var lim = APP.cutLimits[m];
+    var needReserve = th / (1 - APP.reservePct / 100);   // запас не менее 30 %
+    var needComfort = th * 2;                            // комфортный поток
+    var absMax = lim[lim.length - 1][1];
+    var st = el('div', 'calcsteps');
+    st.appendChild(el('div', '', 'Толщина: <b>' + String(th).replace('.', ',') + ' мм</b> по ' +
+      esc(m.toLowerCase())));
+    st.appendChild(el('div', '', 'С запасом ' + APP.reservePct + ' % нужен предел не ниже <b>' +
+      (Math.round(needReserve * 10) / 10).toString().replace('.', ',') + ' мм</b>'));
+    st.appendChild(el('div', '', 'Комфортный поток — вдвое ниже предела, то есть предел от <b>' +
+      String(needComfort).replace('.', ',') + ' мм</b>'));
+    out.appendChild(st);
+
+    if (th > absMax) {
+      out.appendChild(el('div', 'note stop',
+        'Максимум по таблицам режимов для этого материала — ' + absMax +
+        ' мм. Толщина ' + String(th).replace('.', ',') +
+        ' мм за пределами линейки: это серия HARD, цен на неё в прайсе нет. К менеджеру.'));
+      return;
+    }
+    function findPower(need) {
+      for (var i = 0; i < lim.length; i++) if (lim[i][1] >= need) return lim[i];
+      return null;
+    }
+    var pr = findPower(needReserve), pc = findPower(needComfort);
+    var recs = [];
+    if (pr) recs.push({ label: 'Минимум с запасом ' + APP.reservePct + ' %',
+      power: pr[0], max: pr[1] });
+    if (pc && (!pr || pc[0] !== pr[0])) recs.push({ label: 'Комфортный режим',
+      power: pc[0], max: pc[1] });
+    if (!recs.length) {
+      out.appendChild(el('div', 'note stop',
+        'Под эту толщину с обязательным запасом 30 % в заведённых мощностях решения нет. ' +
+        'Это серия HARD — к менеджеру.'));
+      return;
+    }
+    recs.slice(0, 2).forEach(function (r) {
+      var c = el('div', 'card');
+      var series = r.power === 3000 ?
+        'Серия S ' + (r.power / 1000) + ' кВт, либо серия A (только 3 кВт, компактная)' :
+        'Серия S ' + (r.power / 1000) + ' кВт';
+      var cheapest = null;
+      APP.fiberS.forEach(function (x) {
+        if (x.power === r.power && (!cheapest || x.base < cheapest.base)) cheapest = x;
+      });
+      c.innerHTML = '<div class="muted">' + esc(r.label) + '</div>' +
+        '<div style="font-size:17px;font-weight:700;color:var(--navy)">' + esc(series) + '</div>' +
+        '<div class="muted">Предел по таблицам: ' + r.max + ' мм · газ: ' +
+        esc(APP.gasByMaterial[m]) + '</div>' +
+        (cheapest ? '<div style="margin-top:6px">Самая доступная конфигурация этой мощности: ' +
+          'S ' + cheapest.format + ' ' + cheapest.power + 'W — <b>' +
+          fmtRub(toCents(cheapest.base)) + ' ₽</b> (поле ' +
+          APP.fiberFormats[cheapest.format] + ' мм)</div>' : '');
+      out.appendChild(c);
+    });
+    out.appendChild(el('div', 'note alert',
+      'Формат подбирается по размеру заготовки, а не по толщине. ' +
+      'Толщину без газа и режима клиенту не называть.'));
+  }
+  ['mtMaterial', 'mtThick'].forEach(function (id) {
+    $(id).addEventListener('input', renderMatch);
+    $(id).addEventListener('change', renderMatch);
+  });
+
+  // ------------------------------------------------------------------ готовность цеха
+  function renderReady() {
+    var kind = $('readyKind').value;
+    var list = $('readyList'); clear(list);
+    APP.readiness.forEach(function (r, i) {
+      var key = kind + '_' + i;
+      var row = el('div', 'chk');
+      var req = kind === 'a' ? r.a : r.s;
+      row.innerHTML = '<input type="checkbox"' + (state.ready[key] ? ' checked' : '') + '>' +
+        '<span style="flex:1"><b>' + esc(r.name) + '</b> — ' + esc(req) +
+        (r.blocker ? ' <span class="flag-block">блокер</span>' : '') +
+        (r.note ? '<br><span class="muted">' + esc(r.note) + '</span>' : '') + '</span>';
+      row.querySelector('input').addEventListener('change', function () {
+        state.ready[key] = this.checked; save(); summary();
+      });
+      list.appendChild(row);
+    });
+    summary();
+    function summary() {
+      var out = $('readyOut'); clear(out);
+      var openBlockers = [], openOther = 0;
+      APP.readiness.forEach(function (r, i) {
+        if (!state.ready[kind + '_' + i]) {
+          if (r.blocker) openBlockers.push(r.name); else openOther++;
+        }
+      });
+      if (openBlockers.length) {
+        out.className = 'check fail';
+        out.innerHTML = '<b>КП не выпускать: не закрыто блокеров — ' + openBlockers.length +
+          ' из ' + APP.readiness.filter(function (r) { return r.blocker; }).length + '.</b><ul>' +
+          openBlockers.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') +
+          '</ul>Нет ввода 380 В — нет сделки. Проверять до КП, а не на монтаже.';
+      } else {
+        out.className = 'check good';
+        out.innerHTML = '<b>Блокеры закрыты.</b> Осталось непроверенных пунктов: ' + openOther +
+          '. Стабилизатор — условие гарантии, без него паспорт запрещает работу.';
+      }
+    }
+  }
+  $('readyKind').addEventListener('change', renderReady);
+
+  // ------------------------------------------------------------------ газ
+  APP.gas.forEach(function (g, i) { opt($('gNozzle'), String(i), 'Сопло ' + g.nozzle); });
+  $('gNozzle').value = String(state.gas.nozzle || 0);
+  $('gGas').value = state.gas.gas || 'n2';
+  $('gHours').value = state.gas.hours || 80;
+  if (state.gas.price) $('gPrice').value = state.gas.price;
+
+  function renderGas() {
+    var out = $('gasOut'); clear(out);
+    var g = APP.gas[parseInt($('gNozzle').value, 10)];
+    var kind = $('gGas').value;
+    var hours = parseFloat($('gHours').value) || 0;
+    var price = $('gPrice').value === '' ? null : parseFloat($('gPrice').value);
+    state.gas = { nozzle: $('gNozzle').value, gas: kind, hours: $('gHours').value,
+      price: $('gPrice').value };
+    save();
+    var flow = kind === 'o2' ? g.o2 : g.n2;
+    var bal = kind === 'o2' ? g.o2b : g.n2b;
+    var st = el('div', 'calcsteps');
+    st.appendChild(el('div', '', 'Поток: <b>' + esc(flow) + ' л/мин</b>'));
+    st.appendChild(el('div', '', 'Баллонов в час: <b>' +
+      String(bal[0]).replace('.', ',') + '–' + String(bal[1]).replace('.', ',') + '</b>'));
+    var lo = Math.round(bal[0] * hours * 10) / 10, hi = Math.round(bal[1] * hours * 10) / 10;
+    st.appendChild(el('div', '', 'За ' + hours + ' ч: <b>' +
+      String(lo).replace('.', ',') + '–' + String(hi).replace('.', ',') + ' баллонов</b>'));
+    if (price !== null && price > 0) {
+      st.appendChild(el('div', '', 'При цене ' + fmtRub(toCents(price)) +
+        ' ₽ за баллон: <b>' + fmtRub(toCents(lo * price)) + '–' +
+        fmtRub(toCents(hi * price)) + ' ₽ в месяц</b>'));
+    } else {
+      st.appendChild(el('div', '', 'Цена баллона не введена — стоимость не считается. ' +
+        'В источнике этой цены нет.'));
+    }
+    out.appendChild(st);
+    if (kind === 'n2' && bal[1] >= 10) {
+      out.appendChild(el('div', 'note alert',
+        'Это ' + String(bal[0]).replace('.', ',') + '–' + String(bal[1]).replace('.', ',') +
+        ' баллонов в час. Нужен криоцилиндр или газогенератор — иначе логистика ' +
+        'баллонов съест экономику.'));
+    }
+    if (kind === 'o2') {
+      out.appendChild(el('div', 'note',
+        'Кислород для углеродистой стали, чистота 99,99 %, давление 0,5–1 бар. ' +
+        'Если материал допускает воздух — компрессор подбирается по потоку азота, ресивер ≥ 500 л.'));
+    }
+  }
+  ['gNozzle', 'gGas', 'gHours', 'gPrice'].forEach(function (id) {
+    $(id).addEventListener('input', renderGas);
+    $(id).addEventListener('change', renderGas);
+  });
+
+  // ------------------------------------------------------------------ старт
+  fillFiberFormats();
+  fillMillConfigs();
+  $('priceMode').value = state.mode || 'order';
+  switchCat();
+  renderMill();
+  renderPnr();
+  renderSmeta();
+  renderMatch();
+  renderReady();
+  renderGas();
+  var hash = (location.hash || '').replace('#', '');
+  var valid = ['cfg', 'smeta', 'match', 'shop', 'gas', 'data'];
+  showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+}());
+</script>
+
+
+</body></html>
