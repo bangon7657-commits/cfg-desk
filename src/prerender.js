@@ -4,7 +4,8 @@
    3. Сериализует DOM обратно в index.html БЕЗ класса js на body — тогда файл
       читается во встроенном просмотрщике Telegram и в режиме чтения:
       все разделы идут подряд, потому что правило body.js .panel{display:none} не срабатывает.
-   4. Второй прогон проверяет, что пререндеренный файл всё ещё запускается без ошибок.
+   4. Второй прогон проверяет, что пререндеренный файл запускается без ошибок
+      и что скрипт не удвоил уже заполненные списки.
 */
 const fs = require('fs');
 const path = require('path');
@@ -50,8 +51,8 @@ check('панелей 6', doc.querySelectorAll('.panel').length === 6,
 // конфигуратор волокна посчитал цену
 const fOut = textOf(doc, '#fOut');
 check('волокно: цена отрисована', fOut && /\d/.test(fOut), (fOut || '').slice(0, 90));
-const fOutHasBase = fOut && fOut.indexOf('2 867 000') >= 0;
-check('волокно: S 1530 3000W = 2 867 000 ₽', fOutHasBase, (fOut || '').slice(0, 120));
+check('волокно: S 1530 3000W = 2 867 000 ₽',
+  fOut && fOut.indexOf('2 867 000') >= 0, (fOut || '').slice(0, 120));
 
 // порядок форматов не должен ломаться из-за числовых ключей объекта
 const mFmts = Array.from(doc.querySelectorAll('#mFormat option')).map(o => o.value);
@@ -67,11 +68,18 @@ const mOut = textOf(doc, '#mOut');
 check('фрезерный: две цены', mOut && /225 000/.test(mOut) && /249 800/.test(mOut),
   (mOut || '').slice(0, 120));
 
-// подбор мощности
+// подбор мощности и подбор фрезерного
 const matchOut = textOf(doc, '#matchOut');
-check('подбор: результат есть', matchOut && matchOut.length > 40, (matchOut || '').slice(0, 110));
+check('подбор волокна: результат есть', matchOut && matchOut.length > 40,
+  (matchOut || '').slice(0, 110));
+const mkTasks = doc.querySelectorAll('#mkTask option').length;
+check('подбор фрезерного: 8 задач', mkTasks === 8, 'найдено ' + mkTasks);
+const mmOut = textOf(doc, '#matchMillOut');
+check('подбор фрезерного: результат есть',
+  mmOut && doc.querySelectorAll('#matchMillOut .rec').length >= 1,
+  (mmOut || '').slice(0, 110));
 
-// готовность цеха: блокеры считаются
+// готовность цеха
 const readyOut = textOf(doc, '#readyOut');
 check('цех: блокеры посчитаны', readyOut && /блокеров/.test(readyOut),
   (readyOut || '').slice(0, 110));
@@ -94,6 +102,10 @@ check('нет незаменённых плейсхолдеров', !/__[A-Z_]+_
 check('нет внешних скриптов', !/<script[^>]+src=/i.test(src));
 check('нет ссылок на CDN', !/https?:\/\/(cdn|unpkg|ajax|fonts)/i.test(src));
 check('noindex на месте', /name="robots"[^>]+noindex/.test(src));
+// опечатки: в тексте не должно быть символов вне латиницы и кириллицы
+const alien = src.match(/[ᄀ-ᇿ぀-ヿ一-鿿가-힯]/g);
+check('нет случайных иероглифов и хангыля', !alien,
+  alien ? 'найдено: ' + alien.join(' ') : '');
 
 // ---- проверка расчёта сметы через реальный интерфейс ----
 const win = first.dom.window;
@@ -108,9 +120,15 @@ check('смета: позиция добавилась', doc.querySelectorAll('#
 check('смета: скидка 5 % от 2 867 000 = 2 723 650',
   totals && totals.indexOf('2 723 650,00') >= 0, (totals || '').slice(0, 200));
 check('смета: выгода 143 350', totals && totals.indexOf('143 350,00') >= 0);
-check('смета: сумма прописью есть', propis && /рубл/.test(propis), (propis || '').slice(0, 120));
-check('смета: сходимость подтверждена', checkBlock && /Сходимость проверена/.test(checkBlock),
-  (checkBlock || '').slice(0, 160));
+check('смета: сумма прописью есть', propis && /рубл/.test(propis),
+  (propis || '').slice(0, 120));
+check('смета: сходимость подтверждена',
+  checkBlock && /Сходимость проверена/.test(checkBlock), (checkBlock || '').slice(0, 160));
+// повторное добавление не должно плодить строки
+win.document.getElementById('fAdd').click();
+check('смета: дубль слился в одну строку',
+  doc.querySelectorAll('#smetaBody tr').length === 1,
+  'строк ' + doc.querySelectorAll('#smetaBody tr').length);
 const kp = textOf(doc, '#kpPreview');
 check('ТКП: предпросмотр собрался', kp && /ИТОГО к оплате/.test(kp), (kp || '').slice(0, 120));
 
@@ -124,8 +142,23 @@ doc.getElementById('totals').innerHTML = '';
 doc.getElementById('propis').innerHTML = '';
 doc.getElementById('checkBlock').innerHTML = '';
 doc.getElementById('checkBlock').className = '';
+doc.getElementById('smetaBadge').textContent = '';
+doc.getElementById('jsonOut').value = '';
 doc.getElementById('discount').value = '0';
 try { win.localStorage.clear(); } catch (e) {}
+
+// Сколько вариантов в каждом списке было после первого прогона.
+// Во втором прогоне должно быть столько же: если скрипт наполняет список,
+// не очистив его, пререндеренный файл покажет всё по два раза.
+const SELECTS = ['fSeries', 'fFormat', 'fPower', 'mFormat', 'mConfig', 'pnrModel',
+  'discount', 'ndsRate', 'mtMaterial', 'mkTask', 'mkSize', 'gNozzle', 'cat', 'mtCat',
+  'readyKind', 'gGas', 'fTable', 'fRot', 'pnrKind', 'priceMode'];
+const before = {};
+SELECTS.forEach(id => {
+  const n = doc.getElementById(id);
+  before[id] = n ? n.querySelectorAll('option').length : -1;
+});
+const beforeOptions = doc.querySelectorAll('#mOptions details').length;
 
 const out = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
 fs.writeFileSync(FILE, out, 'utf8');
@@ -144,6 +177,20 @@ check('пререндер: цены всё ещё в файле', out.indexOf('2
 check('пререндер: смета пуста при открытии',
   doc2.querySelectorAll('#smetaBody tr').length === 0,
   'строк ' + doc2.querySelectorAll('#smetaBody tr').length);
+check('пререндер: бейдж вкладки чистый',
+  (doc2.getElementById('smetaBadge').textContent || '') === '',
+  'бейдж "' + doc2.getElementById('smetaBadge').textContent + '"');
+
+const dup = [];
+SELECTS.forEach(id => {
+  const n = doc2.getElementById(id);
+  const now = n ? n.querySelectorAll('option').length : -1;
+  if (now !== before[id]) dup.push(id + ': было ' + before[id] + ', стало ' + now);
+});
+check('пререндер: списки не удвоились', dup.length === 0, dup.join(' | '));
+check('пререндер: блоки опций не удвоились',
+  doc2.querySelectorAll('#mOptions details').length === beforeOptions,
+  'было ' + beforeOptions + ', стало ' + doc2.querySelectorAll('#mOptions details').length);
 
 // ---- вывод ----
 let bad = 0;
