@@ -1,7 +1,7 @@
 /* Интерфейс. Все деньги — через money.js, в копейках. Ни одного числа «на глаз». */
 (function () {
   'use strict';
-  var LS = 'cfg-state-v1';
+  var LS = 'cfg-state-v2';
   var d = document;
   function $(id) { return d.getElementById(id); }
   function el(tag, cls, html) {
@@ -18,15 +18,19 @@
     o.value = value; o.textContent = text; sel.appendChild(o);
   }
   function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+  /* Файл пререндерится: в разметке уже лежат заполненные списки с прошлой сборки.
+     Поэтому любой контейнер, который наполняет скрипт, обязан сначала очиститься —
+     иначе на реальной странице все варианты удваиваются. */
+  function fresh(id) { var n = $(id); clear(n); return n; }
+  function pctText(p10) { return (p10 / 10).toString().replace('.', ',') + ' %'; }
 
   d.body.classList.add('js');
 
   // ------------------------------------------------------------------ состояние
   var state = {
-    items: [],
-    kp: {}, disc: 0, nds: 220, demo: false,
-    ready: {}, gas: { nozzle: 2, gas: 'n2', hours: 80, price: '' },
-    mode: 'order'
+    items: [], kp: {}, disc: 0, nds: 220, demo: false,
+    ready: {}, gas: { nozzle: '2', gas: 'n2', hours: '80', price: '' },
+    mode: 'order', cat: 'fiber', mtCat: 'fiber'
   };
   try {
     var raw = localStorage.getItem(LS);
@@ -50,46 +54,64 @@
   var tabs = $('tabs').querySelectorAll('button');
   function showTab(name) {
     for (var i = 0; i < tabs.length; i++) {
-      var on = tabs[i].getAttribute('data-t') === name;
-      tabs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+      tabs[i].setAttribute('aria-selected',
+        tabs[i].getAttribute('data-t') === name ? 'true' : 'false');
     }
     var panels = d.querySelectorAll('.panel');
     for (var j = 0; j < panels.length; j++) {
       panels[j].classList.toggle('active', panels[j].id === 'p-' + name);
     }
     if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+    // не window.scrollTo — в jsdom он не реализован и валит проверку сборки
+    d.documentElement.scrollTop = 0;
+    d.body.scrollTop = 0;
   }
   for (var t = 0; t < tabs.length; t++) {
     tabs[t].addEventListener('click', function () { showTab(this.getAttribute('data-t')); });
   }
 
   // ------------------------------------------------------------------ демо-режим
-  $('demoMode').checked = !!state.demo;
-  d.body.classList.toggle('demo', !!state.demo);
-  $('demoMode').addEventListener('change', function () {
-    state.demo = this.checked;
-    d.body.classList.toggle('demo', this.checked);
+  function applyDemo(on) {
+    state.demo = on;
+    $('demoMode').checked = on;
+    d.body.classList.toggle('demo', on);
     save(); renderMill();
+  }
+  $('demoMode').addEventListener('change', function () { applyDemo(this.checked); });
+  $('demoOff').addEventListener('click', function () { applyDemo(false); });
+  applyDemo(!!state.demo);
+
+  // ------------------------------------------------------------------ тост
+  var toastTimer = null;
+  function toast(text) {
+    $('toastText').textContent = text;
+    $('toast').classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { $('toast').classList.remove('show'); }, 4000);
+  }
+  $('toastGo').addEventListener('click', function () {
+    $('toast').classList.remove('show');
+    showTab('smeta');
   });
 
   // ------------------------------------------------------------------ волокно
-  var fiberIdx = {};
+  var fiberIdx = {}, fiberAIdx = {};
   APP.fiberS.forEach(function (r) {
     fiberIdx[r.format] = fiberIdx[r.format] || {};
     fiberIdx[r.format][r.power] = r;
   });
-  var fiberAIdx = {};
   APP.fiberA.forEach(function (r) {
     fiberAIdx[r.format] = fiberAIdx[r.format] || {};
     fiberAIdx[r.format][r.power] = r.price;
   });
 
-  opt($('fSeries'), 'S', 'S — лист и трубы');
-  opt($('fSeries'), 'A', 'A — компактная, 3–4 мм в 24/7');
+  var fSer = fresh('fSeries');
+  opt(fSer, 'S', 'S — лист и трубы');
+  opt(fSer, 'A', 'A — компактная, 3–4 мм в режиме 24/7');
 
   function fillFiberFormats() {
     var series = $('fSeries').value;
-    var sel = $('fFormat'); var prev = sel.value; clear(sel);
+    var sel = $('fFormat'), prev = sel.value; clear(sel);
     var src = series === 'A' ? fiberAIdx : fiberIdx;
     APP.fiberOrder.forEach(function (f) {
       if (src[f]) opt(sel, f, f + ' — ' + APP.fiberFormats[f] + ' мм');
@@ -99,7 +121,7 @@
   }
   function fillFiberPowers() {
     var series = $('fSeries').value, f = $('fFormat').value;
-    var sel = $('fPower'); var prev = sel.value; clear(sel);
+    var sel = $('fPower'), prev = sel.value; clear(sel);
     var src = series === 'A' ? fiberAIdx : fiberIdx;
     Object.keys(src[f] || {}).map(Number).sort(function (a, b) { return a - b; })
       .forEach(function (p) { opt(sel, p, (p / 1000) + ' кВт'); });
@@ -111,10 +133,12 @@
     var series = $('fSeries').value, f = $('fFormat').value, p = $('fPower').value;
     var tbl = $('fTable').value === '1', rot = $('fRot').value;
     if (series === 'A') {
-      if (tbl || rot) return { err: 'По серии A сменного стола и RD-модуля в прайсе нет — только серия S.' };
+      if (tbl || rot) {
+        return { err: 'По серии A сменного стола и RD-модуля в прайсе нет — только серия S.' };
+      }
       var price = fiberAIdx[f] && fiberAIdx[f][p];
       if (!price) return { err: 'Цены на эту конфигурацию в прайсе нет.' };
-      return { name: 'Wattsan A ' + f + ' ' + p + 'W', price: price, base: price, steps: [] };
+      return { name: 'Wattsan A ' + f + ' ' + p + 'W', price: price, steps: [] };
     }
     var r = fiberIdx[f] && fiberIdx[f][p];
     if (!r) return { err: 'Цены на эту конфигурацию в прайсе нет.' };
@@ -124,45 +148,37 @@
     else if (!tbl && rot) { price = r.rot[rot]; name += ' + rotary ' + rot; }
     else { price = r.tableRot[rot]; name += ' + сменный стол + rotary ' + rot; }
     steps.push(['База ' + f + ' ' + p + 'W', r.base]);
-    if (tbl && !rot) steps.push(['Доплата за сменный стол', r.table - r.base]);
-    if (!tbl && rot) steps.push(['Доплата за rotary ' + rot, r.rot[rot] - r.base]);
+    if (tbl) steps.push(['Доплата за сменный стол', r.table - r.base]);
+    if (rot) steps.push(['Доплата за rotary ' + rot, r.rot[rot] - r.base]);
     if (tbl && rot) {
-      steps.push(['Доплата за сменный стол', r.table - r.base]);
-      steps.push(['Доплата за rotary ' + rot, r.rot[rot] - r.base]);
       var sep = r.table + (r.rot[rot] - r.base);
-      var gain = sep - price;
       steps.push(['По отдельности вышло бы', sep]);
-      steps.push(['Пакетная выгода (стол и ось вместе)', -gain]);
+      steps.push(['Пакетная выгода — стол и ось вместе', -(sep - price)]);
     }
-    return { name: name, price: price, base: r.base, steps: steps };
+    return { name: name, price: price, steps: steps };
   }
 
   function renderFiber() {
     var out = $('fOut'); clear(out);
     var pick = fiberPick();
-    if (pick.err) {
-      out.appendChild(el('div', 'note stop', esc(pick.err)));
-      return;
-    }
+    if (pick.err) { out.appendChild(el('div', 'note stop', esc(pick.err))); return; }
     var box = el('div', 'pricebox');
-    var a = el('div', 'pb');
-    a.innerHTML = '<div class="lbl">Цена, НДС включён</div><div class="val">' +
-      fmtRub(toCents(pick.price)) + ' ₽</div>' +
-      '<div class="sub">' + esc(pick.name) + '</div>';
-    box.appendChild(a);
-    var b = el('div', 'pb stock');
-    b.innerHTML = '<div class="lbl">Второй ценник</div>' +
-      '<div class="val" style="font-size:17px">нет в прайсе</div>' +
-      '<div class="sub">По волокну в прайсе одна цена. Наценку за наличие не выдумываем.</div>';
-    box.appendChild(b);
+    box.appendChild(el('div', 'pb stock',
+      '<div class="lbl">Цена, НДС включён</div><div class="val">' +
+      fmtRub(toCents(pick.price)) + ' ₽</div><div class="sub">' + esc(pick.name) + '</div>'));
+    box.appendChild(el('div', 'pb',
+      '<div class="lbl">Второй ценник</div>' +
+      '<div class="val" style="font-size:19px">нет в прайсе</div>' +
+      '<div class="sub">По волокну одна цена. Наценку за наличие не выдумываем.</div>'));
     out.appendChild(box);
-    if (pick.steps.length) {
+    if (pick.steps.length > 1) {
       var st = el('div', 'calcsteps');
       pick.steps.forEach(function (s) {
-        st.appendChild(el('div', '', esc(s[0]) + ': <b>' +
-          (s[1] < 0 ? '−' : '') + fmtRub(toCents(Math.abs(s[1]))) + ' ₽</b>'));
+        st.appendChild(el('div', '', esc(s[0]) + ': <b>' + (s[1] < 0 ? '−' : '') +
+          fmtRub(toCents(Math.abs(s[1]))) + ' ₽</b>'));
       });
-      st.appendChild(el('div', '', 'Итого по прайсу: <b>' + fmtRub(toCents(pick.price)) + ' ₽</b>'));
+      st.appendChild(el('div', '', 'Итого по прайсу: <b>' +
+        fmtRub(toCents(pick.price)) + ' ₽</b>'));
       out.appendChild(st);
     }
     out.appendChild(el('div', 'note',
@@ -170,7 +186,7 @@
       'Стабилизатор 30 000 или 50 000 Вт — отдельная статья и условие гарантии.'));
   }
 
-  ['fSeries'].forEach(function (id) { $(id).addEventListener('change', fillFiberFormats); });
+  $('fSeries').addEventListener('change', fillFiberFormats);
   $('fFormat').addEventListener('change', fillFiberPowers);
   ['fPower', 'fTable', 'fRot'].forEach(function (id) {
     $(id).addEventListener('change', renderFiber);
@@ -178,17 +194,18 @@
   $('fAdd').addEventListener('click', function () {
     var p = fiberPick();
     if (p.err) return;
-    addItem(p.name, p.price, 1);
+    addItem(p.name, p.price, 1, 'eq');
   });
 
   // ------------------------------------------------------------------ фрезерные
+  var mFmt = fresh('mFormat');
   APP.millingOrder.forEach(function (f) {
-    opt($('mFormat'), f, f + ' — ' + APP.millingFields[f] + ' мм');
+    opt(mFmt, f, f + ' — ' + APP.millingFields[f] + ' мм');
   });
   function fillMillConfigs() {
     var f = $('mFormat').value, sel = $('mConfig'); clear(sel);
     APP.milling.filter(function (r) { return r.format === f; })
-      .forEach(function (r, i) { opt(sel, r.name, r.name); });
+      .forEach(function (r) { opt(sel, r.name, r.name); });
     renderMill();
   }
   function millPick() {
@@ -205,31 +222,32 @@
     var mode = $('priceMode').value;
     state.mode = mode;
     var box = el('div', 'pricebox');
-    var a = el('div', 'pb' + (mode === 'order' ? ' stock' : ''));
-    a.innerHTML = '<div class="lbl">Под заказ — завод, ~60 дней</div><div class="val">' +
-      fmtRub(toCents(r.order)) + ' ₽</div><div class="sub">Оплата 50 % + остаток</div>';
-    box.appendChild(a);
-    var b = el('div', 'pb' + (mode === 'stock' ? ' stock' : ''));
-    b.innerHTML = '<div class="lbl">Из наличия — склад</div><div class="val">' +
-      fmtRub(toCents(r.stock)) + ' ₽</div><div class="sub">Оплата 100 %</div>';
-    box.appendChild(b);
+    box.appendChild(el('div', 'pb' + (mode === 'order' ? ' stock' : ''),
+      '<div class="lbl">Под заказ — завод, около 60 дней</div><div class="val">' +
+      fmtRub(toCents(r.order)) + ' ₽</div><div class="sub">Оплата 50 % + остаток</div>'));
+    box.appendChild(el('div', 'pb' + (mode === 'stock' ? ' stock' : ''),
+      '<div class="lbl">Из наличия — склад</div><div class="val">' +
+      fmtRub(toCents(r.stock)) + ' ₽</div><div class="sub">Оплата 100 %</div>'));
     out.appendChild(box);
 
     var st = el('div', 'calcsteps internal');
     var diff = r.stock - r.order;
-    var pct = Math.round(diff / r.order * 10000) / 100;
     st.appendChild(el('div', '', 'Разница: <b>' + fmtRub(toCents(diff)) + ' ₽</b>, это <b>+' +
-      String(pct).replace('.', ',') + ' %</b> к цене под заказ'));
+      String(Math.round(diff / r.order * 10000) / 100).replace('.', ',') +
+      ' %</b> к цене под заказ'));
     st.appendChild(el('div', '', 'Правило прайса: +11 % с округлением до 100 ₽. ' +
       'Цена берётся из таблицы, а не считается.'));
     out.appendChild(st);
 
-    var facts = el('div', 'muted');
-    facts.innerHTML = 'Шпиндель ' + r.kw + ' кВт · охлаждение ' + esc(r.cool) +
-      ' · стойка ' + esc(r.ctrl) + ' · вакуумный стол: ' + (r.vac ? 'да' : 'нет') +
-      ' · поле ' + APP.millingFields[r.format] + ' мм' +
-      (r.vac ? ' · питание 380 В (вакуумная версия)' : ' · питание 220 В');
-    out.appendChild(facts);
+    out.appendChild(el('div', 'muted', 'Шпиндель ' + r.kw + ' кВт · охлаждение ' +
+      esc(r.cool) + ' · стойка ' + esc(r.ctrl) + ' · вакуумный стол: ' +
+      (r.vac ? 'да' : 'нет') + ' · поле ' + APP.millingFields[r.format] + ' мм' +
+      (r.vac ? ' · питание 380 В' : ' · питание 220 В')));
+    if (r.cool === 'водяное') {
+      out.appendChild(el('div', 'note alert',
+        'Водяное охлаждение шпинделя — нужен чиллер. В прайсе три модели S&A, ' +
+        'но привязки к мощности шпинделя в данных нет: подбор чиллера уточнять у сервиса.'));
+    }
     out.appendChild(el('div', 'note',
       'Что клиент платит сверх: доставка, ПНР, обучение, чиллер. ' +
       'В цену фрезерного они не входят.'));
@@ -241,54 +259,66 @@
     var r = millPick(); if (!r) return;
     var mode = $('priceMode').value;
     addItem(r.name + (mode === 'stock' ? ' (из наличия)' : ' (под заказ)'),
-      mode === 'stock' ? r.stock : r.order, 1);
+      mode === 'stock' ? r.stock : r.order, 1, 'eq');
   });
 
-  // опции
+  // опции — по одной группе, без повторов названия категории
   (function () {
-    var box = $('mOptions'), cats = {};
-    APP.options.forEach(function (o) { (cats[o.cat] = cats[o.cat] || []).push(o); });
-    Object.keys(cats).forEach(function (c) {
-      box.appendChild(el('div', 'muted', '<b>' + esc(c) + '</b>'));
+    var box = fresh('mOptions'), cats = {}, order = [];
+    APP.options.forEach(function (o) {
+      if (!cats[o.cat]) { cats[o.cat] = []; order.push(o.cat); }
+      cats[o.cat].push(o);
+    });
+    order.forEach(function (c) {
+      var det = el('details');
+      var sum = el('summary');
+      sum.innerHTML = esc(c) + '<span class="cnt">' + cats[c].length + ' поз.</span>';
+      det.appendChild(sum);
+      var body = el('div', 'det-b');
       cats[c].forEach(function (o) {
         var row = el('div', 'chk');
-        var qtyId = 'q_' + o.name.replace(/\W+/g, '_');
-        row.innerHTML = '<input type="checkbox">' +
-          '<span style="flex:1">' + esc(o.name) + ' — <b>' + fmtRub(toCents(o.price)) + ' ₽</b></span>' +
-          '<input type="number" min="1" max="20" value="1" id="' + qtyId +
-          '" style="width:62px;padding:3px 5px">' +
-          '<button class="btn mini sec" type="button">В смету</button>';
-        var qty = row.querySelector('#' + qtyId);
-        if (/Виброопор/i.test(o.cat)) {
+        row.innerHTML = '<span style="flex:1">' + esc(o.name) + ' — <b style="color:var(--or)">' +
+          fmtRub(toCents(o.price)) + ' ₽</b></span>';
+        var qty = el('input');
+        qty.type = 'number'; qty.min = '1'; qty.max = '20'; qty.value = '1';
+        qty.style.width = '68px'; qty.style.padding = '6px 8px';
+        if (/Виброопор/i.test(c)) {
           var f = $('mFormat').value;
           if (APP.vibroQty[f]) qty.value = APP.vibroQty[f];
         }
-        row.querySelector('button').addEventListener('click', function () {
-          addItem(o.name, o.price, Math.max(1, parseInt(qty.value, 10) || 1));
+        var btn = el('button', 'btn mini sec', 'В смету');
+        btn.type = 'button';
+        btn.addEventListener('click', function () {
+          addItem(o.name, o.price, Math.max(1, parseInt(qty.value, 10) || 1), 'opt');
         });
-        box.appendChild(row);
+        row.appendChild(qty); row.appendChild(btn);
+        body.appendChild(row);
       });
+      det.appendChild(body);
+      box.appendChild(det);
     });
   }());
 
   // ПНР
-  APP.pnr.forEach(function (p, i) { opt($('pnrModel'), String(i), p.model); });
+  var pnrSel = fresh('pnrModel');
+  APP.pnr.forEach(function (p, i) { opt(pnrSel, String(i), p.model); });
   function pnrPick() {
     var p = APP.pnr[parseInt($('pnrModel').value, 10)];
     var kind = $('pnrKind').value;
     var labels = { pnr: 'ПНР', plus1: 'ПНР +1 день', plus2: 'ПНР +2 дня',
       training: 'Обучение', package: 'ПНР + обучение' };
     var v = p[kind];
-    if (kind === 'training' && typeof v === 'string' && !/^\d/.test(v.replace(/\s/g, ''))) {
-      return { text: v, price: null, name: labels[kind] + ' — ' + p.model };
+    if (typeof v === 'string' && !/^\d/.test(v.replace(/\s/g, ''))) {
+      return { text: v + ' — отдельной строкой в смету не идёт.',
+        price: null, name: labels[kind] + ' — ' + p.model };
     }
     if (typeof v === 'string') v = parseInt(v.replace(/\s/g, ''), 10);
-    if (!v) return { text: 'В прайсе для этой комбинации цены нет — уточнить у сервиса.',
-      price: null, name: labels[kind] + ' — ' + p.model };
+    if (!v) {
+      return { text: 'В прайсе для этой комбинации цены нет — уточнить у сервиса.',
+        price: null, name: labels[kind] + ' — ' + p.model };
+    }
     var third = $('thirdParty').checked;
-    var base = v;
-    var final = third ? Math.round(v * 1.2) : v;
-    return { price: final, base: base, third: third, days: p.days,
+    return { price: third ? Math.round(v * 1.2) : v, base: v, third: third, days: p.days,
       name: labels[kind] + ' — ' + p.model + (third ? ' (сторонний, ×1,2)' : '') };
   }
   function renderPnr() {
@@ -298,8 +328,10 @@
     var st = el('div', 'calcsteps');
     st.appendChild(el('div', '', 'По прайсу: <b>' + fmtRub(toCents(p.base)) + ' ₽</b>' +
       (p.days ? ' · выезд ' + p.days + ' дн.' : '')));
-    if (p.third) st.appendChild(el('div', '', 'Коэффициент ×1,2 на сторонний станок: <b>' +
-      fmtRub(toCents(p.price)) + ' ₽</b>'));
+    if (p.third) {
+      st.appendChild(el('div', '', 'Коэффициент ×1,2 на сторонний станок: <b>' +
+        fmtRub(toCents(p.price)) + ' ₽</b>'));
+    }
     st.appendChild(el('div', '', 'Минимальный выезд за день — 22 000 ₽, ' +
       'штраф за ложный выезд 19 000 ₽'));
     out.appendChild(st);
@@ -309,22 +341,22 @@
   });
   $('pnrAdd').addEventListener('click', function () {
     var p = pnrPick(); if (p.price === null) return;
-    addItem(p.name, p.price, 1);
+    addItem(p.name, p.price, 1, 'srv');
   });
 
-  // категория
   function switchCat() {
     var c = $('cat').value;
+    state.cat = c;
     $('blkFiber').style.display = c === 'fiber' ? '' : 'none';
     $('blkMill').style.display = c === 'milling' ? '' : 'none';
+    save();
   }
   $('cat').addEventListener('change', switchCat);
 
   // ------------------------------------------------------------------ смета
-  for (var dd = 0; dd <= 100; dd += 5) opt($('discount'), String(dd), (dd / 10).toString().replace('.', ',') + ' %');
-  [120, 150, 200, 250, 300].forEach(function (v) {
-    opt($('discount'), String(v), (v / 10).toString().replace('.', ',') + ' %');
-  });
+  var dscSel = fresh('discount');
+  for (var dd = 0; dd <= 100; dd += 5) opt(dscSel, String(dd), pctText(dd));
+  [120, 150, 200, 250, 300].forEach(function (v) { opt(dscSel, String(v), pctText(v)); });
   $('discount').value = String(state.disc || 0);
   $('ndsRate').value = String(state.nds || APP.ndsDefault * 10);
 
@@ -342,80 +374,114 @@
     $('kpDate').value = dt; state.kp.kpDate = dt;
   }
 
-  function addItem(name, priceRub, qty) {
-    state.items.push({ name: name, price: toCents(priceRub), qty: qty });
-    save(); renderSmeta();
-    showTab('smeta');
+  var TYPES = { eq: 'Оборудование', opt: 'Опция', srv: 'Услуга' };
+  var TYPE_ORDER = { eq: 0, opt: 1, srv: 2 };
+
+  function addItem(name, priceRub, qty, type) {
+    var cents = toCents(priceRub);
+    var found = null;
+    state.items.forEach(function (it) {
+      if (it.name === name && it.price === cents) found = it;
+    });
+    if (found) {
+      found.qty = Math.min(99, found.qty + qty);
+      toast('Уже было в смете — количество стало ' + found.qty);
+    } else {
+      state.items.push({ name: name, price: cents, qty: qty, type: type || 'eq', disc: null });
+      toast('Добавлено: ' + (name.length > 42 ? name.slice(0, 42) + '…' : name));
+    }
+    sortItems(); save(); renderSmeta();
+  }
+  function sortItems() {
+    state.items.sort(function (a, b) {
+      return (TYPE_ORDER[a.type] || 0) - (TYPE_ORDER[b.type] || 0);
+    });
   }
 
   function totals() {
-    var disc = parseInt($('discount').value, 10) || 0;
+    var gDisc = parseInt($('discount').value, 10) || 0;
     var rate = parseInt($('ndsRate').value, 10) || 0;
     var listSum = 0, discSum = 0, lines = [];
     state.items.forEach(function (it) {
-      var unit = soSkidkoy(it.price, disc);
+      var dsc = (it.disc === null || it.disc === undefined) ? gDisc : it.disc;
+      var unit = soSkidkoy(it.price, dsc);
       var line = unit * it.qty;
       listSum += it.price * it.qty;
       discSum += line;
-      lines.push({ item: it, unit: unit, line: line });
+      lines.push({ item: it, dsc: dsc, unit: unit, line: line });
     });
     var nds = ndsIznutri(discSum, rate);
-    return { disc: disc, rate: rate, listSum: listSum, total: discSum,
+    return { gDisc: gDisc, rate: rate, listSum: listSum, total: discSum,
       gain: listSum - discSum, bez: nds.bez, nds: nds.nds, lines: lines };
   }
 
   function renderSmeta() {
     var body = $('smetaBody'); clear(body);
     var T = totals();
-    $('smetaEmpty').style.display = state.items.length ? 'none' : '';
-    $('smetaTable').style.display = state.items.length ? '' : 'none';
+    var has = state.items.length > 0;
+    $('smetaEmpty').style.display = has ? 'none' : '';
+    $('smetaWrap').style.display = has ? '' : 'none';
+    $('smetaBadge').textContent = has ? String(state.items.length) : '';
 
     T.lines.forEach(function (L, i) {
       var tr = d.createElement('tr');
-      tr.innerHTML = '<td>' + esc(L.item.name) + '</td>' +
-        '<td><input type="number" min="1" max="99" value="' + L.item.qty + '"></td>' +
+      tr.className = 'item';
+      var nameCell = '<b style="color:var(--tx);font-weight:600">' + esc(L.item.name) +
+        '</b><br><span class="muted">' + (TYPES[L.item.type] || '') +
+        (L.item.disc !== null && L.item.disc !== undefined ? ' · своя скидка' : '') + '</span>';
+      tr.innerHTML = '<td>' + nameCell + '</td>' +
+        '<td><input type="number" min="1" max="99" value="' + L.item.qty + '" aria-label="количество"></td>' +
         '<td>' + fmt(L.item.price) + '</td>' +
+        '<td><input type="number" min="0" max="40" step="0.5" value="' +
+        String(L.dsc / 10).replace('.', ',') + '" aria-label="скидка"></td>' +
         '<td>' + fmt(L.unit) + '</td>' +
         '<td><b>' + fmt(L.line) + '</b></td>' +
-        '<td class="noprint"><button class="btn mini sec" type="button">Удалить</button></td>';
-      tr.querySelector('input').addEventListener('change', function () {
+        '<td class="noprint"><button class="btn mini danger" type="button">Убрать</button></td>';
+      var inputs = tr.querySelectorAll('input');
+      inputs[0].addEventListener('change', function () {
         L.item.qty = Math.max(1, Math.min(99, parseInt(this.value, 10) || 1));
         save(); renderSmeta();
       });
+      inputs[1].addEventListener('change', function () {
+        var v = parseFloat(String(this.value).replace(',', '.'));
+        if (!(v >= 0)) v = 0;
+        if (v > 40) v = 40;
+        L.item.disc = Math.round(v * 10);
+        save(); renderSmeta();
+      });
       tr.querySelector('button').addEventListener('click', function () {
-        state.items.splice(i, 1); save(); renderSmeta();
+        var idx = state.items.indexOf(L.item);
+        if (idx >= 0) state.items.splice(idx, 1);
+        save(); renderSmeta();
       });
       body.appendChild(tr);
     });
 
     var tot = $('totals'); clear(tot);
-    if (!state.items.length) { clear($('propis')); clear($('checkBlock')); renderKP(); return; }
+    if (!has) { clear($('propis')); clear($('checkBlock')); $('checkBlock').className = ''; renderKP(); return; }
     function row(k, v, cls) {
       var n = el('div', cls || '');
       n.innerHTML = '<span>' + k + '</span><span>' + v + '</span>';
       tot.appendChild(n);
     }
     row('Сумма по прайсу', fmt(T.listSum) + ' ₽');
-    row('Ваша выгода — скидка ' + (T.disc / 10).toString().replace('.', ',') + ' %',
-      '−' + fmt(T.gain) + ' ₽', 'gain');
+    row('Ваша выгода — скидка ' + pctText(T.gDisc), '−' + fmt(T.gain) + ' ₽', 'gain');
     row('Итого без НДС', fmt(T.bez) + ' ₽');
-    row('в т. ч. НДС ' + (T.rate / 10).toString().replace('.', ',') + ' %', fmt(T.nds) + ' ₽');
+    row('в т. ч. НДС ' + pctText(T.rate), fmt(T.nds) + ' ₽');
     row('ИТОГО к оплате', fmt(T.total) + ' ₽', 'big');
 
     $('propis').innerHTML = 'Сумма прописью: ' + esc(propisyu(T.total)) +
-      ', в том числе НДС ' + (T.rate / 10).toString().replace('.', ',') + ' % — ' +
-      esc(propisyu(T.nds)) + '.';
+      ', в том числе НДС ' + pctText(T.rate) + ' — ' + esc(propisyu(T.nds)) + '.';
 
-    // сходимость — независимая перепроверка, не повторное чтение тех же чисел
+    // сходимость — независимая перепроверка
     var cb = $('checkBlock'); clear(cb);
     var problems = [];
-    var reBez = T.bez + T.nds;
-    if (reBez !== T.total) {
-      problems.push('Без НДС + НДС = ' + fmt(reBez) + ' ₽, а ИТОГО = ' + fmt(T.total) +
-        ' ₽. Расхождение ' + fmt(Math.abs(reBez - T.total)) + ' ₽');
+    if (T.bez + T.nds !== T.total) {
+      problems.push('Без НДС + НДС = ' + fmt(T.bez + T.nds) + ' ₽, а ИТОГО = ' +
+        fmt(T.total) + ' ₽. Расхождение ' + fmt(Math.abs(T.bez + T.nds - T.total)) + ' ₽');
     }
     var reSum = 0;
-    T.lines.forEach(function (L) { reSum += soSkidkoy(L.item.price, T.disc) * L.item.qty; });
+    T.lines.forEach(function (L) { reSum += soSkidkoy(L.item.price, L.dsc) * L.item.qty; });
     if (reSum !== T.total) {
       problems.push('Пересчёт построчно даёт ' + fmt(reSum) + ' ₽ против ' + fmt(T.total) + ' ₽');
     }
@@ -450,45 +516,40 @@
   // ------------------------------------------------------------------ ТКП
   function renderKP() {
     var box = $('kpPreview'); clear(box);
-    var T = totals();
-    var k = state.kp;
-    var head = el('div', 'kp-head');
-    head.innerHTML = '<div class="kp-logo">LASERCUT<small>оборудование с ЧПУ</small></div>' +
-      '<div class="kp-meta">Технико-коммерческое предложение<br>' +
-      'Исх. № ' + esc(k.kpNum || '—') + ' от ' + esc(k.kpDate || '—') + '<br>' +
-      'Действует ' + APP.kpValidDays + ' дней</div>';
-    box.appendChild(head);
+    var T = totals(), k = state.kp;
+    box.appendChild(el('div', 'kp-head',
+      '<div class="kp-logo">LASERCUT<small>оборудование с ЧПУ</small></div>' +
+      '<div class="kp-meta">Технико-коммерческое предложение<br>Исх. № ' +
+      esc(k.kpNum || '—') + ' от ' + esc(k.kpDate || '—') + '<br>Действует ' +
+      APP.kpValidDays + ' дней</div>'));
 
     var first = state.items.length ? state.items[0].name : '—';
     box.appendChild(el('h1', '', esc(first)));
     box.appendChild(el('p', '', 'Кому: <b>' + esc(k.kpClient || '—') + '</b>' +
-      (k.kpInn ? ', ИНН ' + esc(k.kpInn) : '') +
-      (k.kpNote ? ' - ' + esc(k.kpNote) : '')));
+      (k.kpInn ? ', ИНН ' + esc(k.kpInn) : '') + (k.kpNote ? ' - ' + esc(k.kpNote) : '')));
     box.appendChild(el('p', 'muted',
       'Оборудование соответствует ТР ТС 004/2011, 010/2011, 020/2011.'));
 
-    var sum = el('div', 'kp-sum');
-    sum.innerHTML =
+    box.appendChild(el('div', 'kp-sum',
       '<div><div class="k">Модель</div><div class="v">' + esc(first) + '</div></div>' +
-      '<div><div class="k">Стоимость, с НДС ' + (T.rate / 10).toString().replace('.', ',') +
-      ' %</div><div class="v">' + fmt(T.total) + ' ₽</div></div>' +
-      '<div><div class="k">Ваша выгода (скидка ' + (T.disc / 10).toString().replace('.', ',') +
-      ' %)</div><div class="v">' + fmt(T.gain) + ' ₽</div></div>' +
-      '<div><div class="k">Гарантия</div><div class="v">12 месяцев</div></div>';
-    box.appendChild(sum);
+      '<div><div class="k">Стоимость, с НДС ' + pctText(T.rate) +
+      '</div><div class="v">' + fmt(T.total) + ' ₽</div></div>' +
+      '<div><div class="k">Ваша выгода</div><div class="v">' + fmt(T.gain) + ' ₽</div></div>' +
+      '<div><div class="k">Гарантия</div><div class="v">12 месяцев</div></div>'));
 
     if (state.items.length) {
       var tb = el('table');
       var rows = T.lines.map(function (L, i) {
         return '<tr><td>' + (i + 1) + '</td><td>' + esc(L.item.name) + '</td><td>' +
-          L.item.qty + '</td><td>' + fmt(L.unit) + '</td><td><b>' + fmt(L.line) + '</b></td></tr>';
+          L.item.qty + '</td><td>' + fmt(L.unit) + '</td><td><b>' + fmt(L.line) +
+          '</b></td></tr>';
       }).join('');
       tb.innerHTML = '<thead><tr><th>№</th><th>Наименование</th><th>Кол-во</th>' +
         '<th>Цена со скидкой</th><th>Сумма</th></tr></thead><tbody>' + rows +
         '<tr><td colspan="4">Ваша выгода</td><td><b>' + fmt(T.gain) + ' ₽</b></td></tr>' +
         '<tr><td colspan="4">Итого без НДС</td><td>' + fmt(T.bez) + ' ₽</td></tr>' +
-        '<tr><td colspan="4">в т. ч. НДС ' + (T.rate / 10).toString().replace('.', ',') +
-        ' %</td><td>' + fmt(T.nds) + ' ₽</td></tr>' +
+        '<tr><td colspan="4">в т. ч. НДС ' + pctText(T.rate) + '</td><td>' +
+        fmt(T.nds) + ' ₽</td></tr>' +
         '<tr><td colspan="4"><b>ИТОГО к оплате</b></td><td><b>' + fmt(T.total) +
         ' ₽</b></td></tr></tbody>';
       box.appendChild(tb);
@@ -499,12 +560,10 @@
       'Условия поставки: под заказ — 50 % предоплата, остаток перед отгрузкой, срок с завода ' +
       'около 60 дней. Из наличия — 100 % оплата, отгрузка 1–3 рабочих дня. ' +
       'Доставка, пуско-наладка и обучение рассчитываются отдельно.'));
-
-    var mgr = el('div', 'kp-mgr');
-    mgr.innerHTML = 'Ваш менеджер: <b>' + esc(k.kpContact || APP.manager.name) + '</b><br>' +
+    box.appendChild(el('div', 'kp-mgr',
+      'Ваш менеджер: <b>' + esc(k.kpContact || APP.manager.name) + '</b><br>' +
       esc(APP.manager.phone) + ' · ' + esc(APP.manager.email) +
-      (k.kpPhone ? '<br>Контакт клиента: ' + esc(k.kpPhone) : '');
-    box.appendChild(mgr);
+      (k.kpPhone ? '<br>Контакт клиента: ' + esc(k.kpPhone) : '')));
     box.appendChild(el('div', 'kp-foot',
       'Предложение действует ' + APP.kpValidDays + ' дней. Счёт фиксирует цену и наличие на ' +
       APP.invoiceValidDays + ' дней. Цены указаны с НДС.'));
@@ -519,7 +578,7 @@
 
   $('btnJson').addEventListener('click', function () {
     var T = totals(), k = state.kp;
-    var dparts = (k.kpDate || '').split('.');
+    var dp = (k.kpDate || '').split('.');
     var MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля',
       'августа', 'сентября', 'октября', 'ноября', 'декабря'];
     var payload = {
@@ -528,13 +587,13 @@
       'ИСХ_НОМЕР': k.kpNum || '',
       'КОНТАКТ_ИМЯ': k.kpContact || APP.manager.name,
       'КОНТАКТ_ТЕЛЕФОН': k.kpPhone || APP.manager.phone,
-      'ДД': dparts[0] || '', 'МЕСЯЦА': MONTHS[(parseInt(dparts[1], 10) || 1) - 1],
-      'ГГГГ': dparts[2] || '',
+      'ДД': dp[0] || '', 'МЕСЯЦА': MONTHS[(parseInt(dp[1], 10) || 1) - 1], 'ГГГГ': dp[2] || '',
       'менеджер': APP.manager,
       'ставка_НДС': T.rate / 10,
-      'скидка_процент': T.disc / 10,
+      'скидка_по_умолчанию': T.gDisc / 10,
       'позиции': T.lines.map(function (L) {
-        return { наименование: L.item.name, количество: L.item.qty,
+        return { наименование: L.item.name, тип: TYPES[L.item.type] || '',
+          количество: L.item.qty, скидка_процент: L.dsc / 10,
           цена_прайс: L.item.price / 100, цена_со_скидкой: L.unit / 100,
           сумма: L.line / 100 };
       }),
@@ -552,49 +611,46 @@
     var ok = false;
     try { ok = d.execCommand('copy'); } catch (e) { ok = false; }
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () {
-        $('saveDot').textContent = 'JSON скопирован';
-      }, function () {});
-    } else if (ok) { $('saveDot').textContent = 'JSON скопирован'; }
+      navigator.clipboard.writeText(text).then(function () { toast('JSON скопирован'); },
+        function () { toast('JSON в поле ниже — скопируйте вручную'); });
+    } else { toast(ok ? 'JSON скопирован' : 'JSON в поле ниже — скопируйте вручную'); }
   });
 
-  // ------------------------------------------------------------------ подбор
-  Object.keys(APP.cutLimits).forEach(function (m) { opt($('mtMaterial'), m, m); });
+  // ------------------------------------------------------------------ подбор: волокно
+  var mtMat = fresh('mtMaterial');
+  Object.keys(APP.cutLimits).forEach(function (m) { opt(mtMat, m, m); });
   function renderMatch() {
     var out = $('matchOut'); clear(out);
     var m = $('mtMaterial').value;
-    var th = parseFloat($('mtThick').value.replace(',', '.'));
+    var th = parseFloat(String($('mtThick').value).replace(',', '.'));
     if (!(th > 0)) { out.appendChild(el('div', 'note', 'Введите толщину.')); return; }
     var lim = APP.cutLimits[m];
-    var needReserve = th / (1 - APP.reservePct / 100);   // запас не менее 30 %
-    var needComfort = th * 2;                            // комфортный поток
+    var needReserve = th / (1 - APP.reservePct / 100);
+    var needComfort = th * 2;
     var absMax = lim[lim.length - 1][1];
     var st = el('div', 'calcsteps');
     st.appendChild(el('div', '', 'Толщина: <b>' + String(th).replace('.', ',') + ' мм</b> по ' +
       esc(m.toLowerCase())));
     st.appendChild(el('div', '', 'С запасом ' + APP.reservePct + ' % нужен предел не ниже <b>' +
-      (Math.round(needReserve * 10) / 10).toString().replace('.', ',') + ' мм</b>'));
+      String(Math.round(needReserve * 10) / 10).replace('.', ',') + ' мм</b>'));
     st.appendChild(el('div', '', 'Комфортный поток — вдвое ниже предела, то есть предел от <b>' +
       String(needComfort).replace('.', ',') + ' мм</b>'));
     out.appendChild(st);
 
     if (th > absMax) {
       out.appendChild(el('div', 'note stop',
-        'Максимум по таблицам режимов для этого материала — ' + absMax +
-        ' мм. Толщина ' + String(th).replace('.', ',') +
-        ' мм за пределами линейки: это серия HARD, цен на неё в прайсе нет. К менеджеру.'));
+        'Максимум по таблицам режимов для этого материала — ' + absMax + ' мм. Толщина ' +
+        String(th).replace('.', ',') + ' мм за пределами линейки: это серия HARD, ' +
+        'цен на неё в прайсе нет. К менеджеру.'));
       return;
     }
     function findPower(need) {
       for (var i = 0; i < lim.length; i++) if (lim[i][1] >= need) return lim[i];
       return null;
     }
-    var pr = findPower(needReserve), pc = findPower(needComfort);
-    var recs = [];
-    if (pr) recs.push({ label: 'Минимум с запасом ' + APP.reservePct + ' %',
-      power: pr[0], max: pr[1] });
-    if (pc && (!pr || pc[0] !== pr[0])) recs.push({ label: 'Комфортный режим',
-      power: pc[0], max: pc[1] });
+    var pr = findPower(needReserve), pc = findPower(needComfort), recs = [];
+    if (pr) recs.push({ label: 'Минимум с запасом ' + APP.reservePct + ' %', power: pr[0], max: pr[1] });
+    if (pc && (!pr || pc[0] !== pr[0])) recs.push({ label: 'Комфортный режим', power: pc[0], max: pc[1] });
     if (!recs.length) {
       out.appendChild(el('div', 'note stop',
         'Под эту толщину с обязательным запасом 30 % в заведённых мощностях решения нет. ' +
@@ -602,32 +658,192 @@
       return;
     }
     recs.slice(0, 2).forEach(function (r) {
-      var c = el('div', 'card');
-      var series = r.power === 3000 ?
-        'Серия S ' + (r.power / 1000) + ' кВт, либо серия A (только 3 кВт, компактная)' :
-        'Серия S ' + (r.power / 1000) + ' кВт';
       var cheapest = null;
       APP.fiberS.forEach(function (x) {
         if (x.power === r.power && (!cheapest || x.base < cheapest.base)) cheapest = x;
       });
-      c.innerHTML = '<div class="muted">' + esc(r.label) + '</div>' +
-        '<div style="font-size:17px;font-weight:700;color:var(--navy)">' + esc(series) + '</div>' +
-        '<div class="muted">Предел по таблицам: ' + r.max + ' мм · газ: ' +
+      var rec = el('div', 'rec');
+      rec.innerHTML = '<div class="rec-l">' + esc(r.label) + '</div>' +
+        '<div class="rec-t">Серия S, ' + (r.power / 1000) + ' кВт' +
+        (r.power === 3000 ? ' — либо серия A, она только в 3 кВт' : '') + '</div>' +
+        '<div class="rec-d">Предел по заводским таблицам: ' + r.max + ' мм · газ: ' +
         esc(APP.gasByMaterial[m]) + '</div>' +
-        (cheapest ? '<div style="margin-top:6px">Самая доступная конфигурация этой мощности: ' +
-          'S ' + cheapest.format + ' ' + cheapest.power + 'W — <b>' +
-          fmtRub(toCents(cheapest.base)) + ' ₽</b> (поле ' +
-          APP.fiberFormats[cheapest.format] + ' мм)</div>' : '');
-      out.appendChild(c);
+        (cheapest ? '<div class="rec-p">Самая доступная сборка этой мощности: S ' +
+          cheapest.format + ' ' + cheapest.power + 'W, поле ' +
+          APP.fiberFormats[cheapest.format] + ' мм — <b>' +
+          fmtRub(toCents(cheapest.base)) + ' ₽</b></div>' : '');
+      if (cheapest) {
+        var b = el('button', 'btn mini noprint', 'Открыть в конфигураторе');
+        b.type = 'button';
+        b.style.marginTop = '10px';
+        b.addEventListener('click', function () {
+          $('cat').value = 'fiber'; switchCat();
+          $('fSeries').value = 'S'; fillFiberFormats();
+          $('fFormat').value = cheapest.format; fillFiberPowers();
+          $('fPower').value = String(cheapest.power);
+          $('fTable').value = '0'; $('fRot').value = '';
+          renderFiber(); showTab('cfg');
+        });
+        rec.appendChild(b);
+      }
+      out.appendChild(rec);
     });
     out.appendChild(el('div', 'note alert',
-      'Формат подбирается по размеру заготовки, а не по толщине. ' +
+      'Формат поля подбирается по размеру заготовки, а не по толщине. ' +
       'Толщину без газа и режима клиенту не называть.'));
   }
   ['mtMaterial', 'mtThick'].forEach(function (id) {
     $(id).addEventListener('input', renderMatch);
     $(id).addEventListener('change', renderMatch);
   });
+
+  // ------------------------------------------------------------------ подбор: фрезерный
+  // Задачи и формулировки решений берутся из матрицы подбора скилла (APP.matchRules).
+  // Здесь — только машинная привязка задачи к серии и формату.
+  var MILL_TASKS = [
+    { task: 'Маленькая столярка', series: ['0609'], fixed: '0609' },
+    { task: 'Пластик, акрил, мягкое дерево', series: ['A1'] },
+    { task: 'Мебельный цех, твёрдое дерево', series: ['M1'] },
+    { task: 'Крупная 3D-обработка', series: ['M2'],
+      answer: 'Wattsan M2 — серия под крупную 3D-обработку' },
+    { task: 'Деревообработка с поворотом заготовки', series: ['M1 1325 RD'], fixed: '1325' },
+    { task: 'Серийное производство', series: ['M1 1325 S3', 'M1 1325 S4'], fixed: '1325' },
+    { task: 'Двери и фасады', series: ['A1', 'M1'], fixed: '1325' },
+    { task: 'Фрезеровать металл и алюминий', series: ['M3'] }
+  ];
+  var ruleByTask = {};
+  APP.matchRules.forEach(function (r) { ruleByTask[r.task] = r.answer; });
+
+  var mkT = fresh('mkTask');
+  MILL_TASKS.forEach(function (t, i) { opt(mkT, String(i), t.task); });
+
+  function fillMkSize() {
+    var t = MILL_TASKS[parseInt($('mkTask').value, 10)];
+    var sel = $('mkSize'), prev = sel.value; clear(sel);
+    var avail = {};
+    APP.milling.forEach(function (r) {
+      if (matchesSeries(r.name, t.series)) avail[r.format] = true;
+    });
+    APP.millingOrder.forEach(function (f) {
+      if (avail[f] && (!t.fixed || t.fixed === f)) {
+        opt(sel, f, APP.millingFields[f] + ' мм' + (f === '1325' ? ' — дверная заготовка' : ''));
+      }
+    });
+    if (!sel.options.length) opt(sel, '', 'нет подходящих форматов в прайсе');
+    if (prev) { for (var i = 0; i < sel.options.length; i++) if (sel.options[i].value === prev) sel.value = prev; }
+    sel.disabled = !!t.fixed;
+    renderMatchMill();
+  }
+  function matchesSeries(name, list) {
+    for (var i = 0; i < list.length; i++) {
+      var s = list[i];
+      if (s.indexOf(' ') >= 0) { if (name.indexOf(s) === 0) return true; }
+      else if (new RegExp('(^|\\s)' + s + '(\\s|,|$)').test(name)) return true;
+    }
+    return false;
+  }
+
+  function renderMatchMill() {
+    var out = $('matchMillOut'); clear(out);
+    var t = MILL_TASKS[parseInt($('mkTask').value, 10)];
+    var fmtSel = $('mkSize').value;
+    var wantVac = $('mkVac').checked;
+    if (!fmtSel) {
+      out.appendChild(el('div', 'note stop',
+        'Под эту задачу в прайсе нет сборок. К продуктовому отделу.'));
+      return;
+    }
+    var answer = t.answer || ruleByTask[t.task] || '';
+    var st = el('div', 'calcsteps');
+    st.appendChild(el('div', '', 'Задача: <b>' + esc(t.task) + '</b>'));
+    if (answer) st.appendChild(el('div', '', 'Правило скилла: <b>' + esc(answer) + '</b>'));
+    st.appendChild(el('div', '', 'Поле: <b>' + APP.millingFields[fmtSel] + ' мм</b>' +
+      (wantVac ? ' · с вакуумным столом' : '')));
+    out.appendChild(st);
+
+    var pool = APP.milling.filter(function (r) {
+      return r.format === fmtSel && matchesSeries(r.name, t.series);
+    });
+    var withVac = pool.filter(function (r) { return r.vac; });
+    var noVac = pool.filter(function (r) { return !r.vac; });
+    var primary = wantVac ? withVac : noVac;
+    if (!primary.length) primary = pool;
+    primary = primary.slice().sort(function (a, b) { return a.order - b.order; });
+
+    var picks = [];
+    if (primary.length) picks.push({ label: 'Минимальная по цене', r: primary[0] });
+    if (primary.length > 1) {
+      picks.push({ label: 'Мощнее — если материал твёрдый или съём глубокий',
+        r: primary[primary.length - 1] });
+    }
+    if (wantVac && !withVac.length) {
+      out.appendChild(el('div', 'note alert',
+        'Вакуумных версий в этом формате и серии в прайсе нет — показаны обычные.'));
+    }
+    if (!picks.length) {
+      out.appendChild(el('div', 'note stop', 'В прайсе нет сборок под это сочетание.'));
+      return;
+    }
+
+    picks.slice(0, 2).forEach(function (p) {
+      var r = p.r;
+      var rec = el('div', 'rec');
+      rec.innerHTML = '<div class="rec-l">' + esc(p.label) + '</div>' +
+        '<div class="rec-t">' + esc(r.name) + '</div>' +
+        '<div class="rec-d">Шпиндель ' + r.kw + ' кВт · охлаждение ' + esc(r.cool) +
+        ' · стойка ' + esc(r.ctrl) + ' · вакуумный стол: ' + (r.vac ? 'да' : 'нет') +
+        ' · поле ' + APP.millingFields[r.format] + ' мм</div>' +
+        '<div class="rec-p">Под заказ <b>' + fmtRub(toCents(r.order)) + ' ₽</b>' +
+        '<span class="internal"> · из наличия <b>' + fmtRub(toCents(r.stock)) +
+        ' ₽</b></span></div>';
+      var b = el('button', 'btn mini noprint', 'Открыть в конфигураторе');
+      b.type = 'button'; b.style.marginTop = '10px';
+      b.addEventListener('click', function () {
+        $('cat').value = 'milling'; switchCat();
+        $('mFormat').value = r.format; fillMillConfigs();
+        $('mConfig').value = r.name; renderMill(); showTab('cfg');
+      });
+      rec.appendChild(b);
+      out.appendChild(rec);
+    });
+
+    // предупреждения из матрицы материалов скилла
+    var warns = [];
+    if (/(^|\s)A1(\s|,)/.test(picks[0].r.name) && /твёрдое дерево|Двери/.test(t.task)) {
+      warns.push('A1 по твёрдым породам работает медленно — под дуб, бук и ясень серия M1.');
+    }
+    if (/металл/i.test(t.task) && !/M3/.test(picks[0].r.name)) {
+      warns.push('Металл и толстый алюминий — только M3. У A1 металла нет, у M1 только тонкий лист.');
+    }
+    if (fmtSel === '1325') {
+      warns.push('Поле 1300×2500 мм — это размер дверной заготовки.');
+    }
+    if (picks[0].r.cool === 'водяное') {
+      warns.push('Водяное охлаждение шпинделя требует чиллер. В прайсе три модели S&A, ' +
+        'привязки к мощности шпинделя в данных нет — уточнять у сервиса.');
+    }
+    if (picks.some(function (p) { return p.r.vac; })) {
+      warns.push('Вакуумные версии питаются от 380 В, обычные — от 220 В.');
+    }
+    warns.push('Скоростей подачи и режимов фрезеровки в данных нет — время на изделие ' +
+      'приложение не считает и обещать его нельзя.');
+    var note = el('div', 'note alert', '<b>Что сказать клиенту и о чᄅм не забыть:</b><ul>' +
+      warns.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>');
+    out.appendChild(note);
+  }
+  $('mkTask').addEventListener('change', fillMkSize);
+  ['mkSize', 'mkVac'].forEach(function (id) {
+    $(id).addEventListener('change', renderMatchMill);
+  });
+
+  function switchMtCat() {
+    var c = $('mtCat').value;
+    state.mtCat = c;
+    $('mtFiber').style.display = c === 'fiber' ? '' : 'none';
+    $('mtMill').style.display = c === 'mill' ? '' : 'none';
+    save();
+  }
+  $('mtCat').addEventListener('change', switchMtCat);
 
   // ------------------------------------------------------------------ готовность цеха
   function renderReady() {
@@ -649,8 +865,9 @@
     summary();
     function summary() {
       var out = $('readyOut'); clear(out);
-      var openBlockers = [], openOther = 0;
+      var openBlockers = [], openOther = 0, totalBlockers = 0;
       APP.readiness.forEach(function (r, i) {
+        if (r.blocker) totalBlockers++;
         if (!state.ready[kind + '_' + i]) {
           if (r.blocker) openBlockers.push(r.name); else openOther++;
         }
@@ -658,7 +875,7 @@
       if (openBlockers.length) {
         out.className = 'check fail';
         out.innerHTML = '<b>КП не выпускать: не закрыто блокеров — ' + openBlockers.length +
-          ' из ' + APP.readiness.filter(function (r) { return r.blocker; }).length + '.</b><ul>' +
+          ' из ' + totalBlockers + '.</b><ul>' +
           openBlockers.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') +
           '</ul>Нет ввода 380 В — нет сделки. Проверять до КП, а не на монтаже.';
       } else {
@@ -671,10 +888,11 @@
   $('readyKind').addEventListener('change', renderReady);
 
   // ------------------------------------------------------------------ газ
-  APP.gas.forEach(function (g, i) { opt($('gNozzle'), String(i), 'Сопло ' + g.nozzle); });
-  $('gNozzle').value = String(state.gas.nozzle || 0);
+  var gNz = fresh('gNozzle');
+  APP.gas.forEach(function (g, i) { opt(gNz, String(i), 'Сопло ' + g.nozzle); });
+  $('gNozzle').value = String(state.gas.nozzle || '0');
   $('gGas').value = state.gas.gas || 'n2';
-  $('gHours').value = state.gas.hours || 80;
+  $('gHours').value = state.gas.hours || '80';
   if (state.gas.price) $('gPrice').value = state.gas.price;
 
   function renderGas() {
@@ -688,13 +906,13 @@
     save();
     var flow = kind === 'o2' ? g.o2 : g.n2;
     var bal = kind === 'o2' ? g.o2b : g.n2b;
+    var lo = Math.round(bal[0] * hours * 10) / 10, hi = Math.round(bal[1] * hours * 10) / 10;
     var st = el('div', 'calcsteps');
     st.appendChild(el('div', '', 'Поток: <b>' + esc(flow) + ' л/мин</b>'));
-    st.appendChild(el('div', '', 'Баллонов в час: <b>' +
-      String(bal[0]).replace('.', ',') + '–' + String(bal[1]).replace('.', ',') + '</b>'));
-    var lo = Math.round(bal[0] * hours * 10) / 10, hi = Math.round(bal[1] * hours * 10) / 10;
-    st.appendChild(el('div', '', 'За ' + hours + ' ч: <b>' +
-      String(lo).replace('.', ',') + '–' + String(hi).replace('.', ',') + ' баллонов</b>'));
+    st.appendChild(el('div', '', 'Баллонов в час: <b>' + String(bal[0]).replace('.', ',') +
+      '–' + String(bal[1]).replace('.', ',') + '</b>'));
+    st.appendChild(el('div', '', 'За ' + hours + ' ч: <b>' + String(lo).replace('.', ',') +
+      '–' + String(hi).replace('.', ',') + ' баллонов</b>'));
     if (price !== null && price > 0) {
       st.appendChild(el('div', '', 'При цене ' + fmtRub(toCents(price)) +
         ' ₽ за баллон: <b>' + fmtRub(toCents(lo * price)) + '–' +
@@ -705,15 +923,15 @@
     }
     out.appendChild(st);
     if (kind === 'n2' && bal[1] >= 10) {
-      out.appendChild(el('div', 'note alert',
-        'Это ' + String(bal[0]).replace('.', ',') + '–' + String(bal[1]).replace('.', ',') +
-        ' баллонов в час. Нужен криоцилиндр или газогенератор — иначе логистика ' +
-        'баллонов съест экономику.'));
+      out.appendChild(el('div', 'note alert', 'Это ' + String(bal[0]).replace('.', ',') +
+        '–' + String(bal[1]).replace('.', ',') + ' баллонов в час. Нужен криоцилиндр ' +
+        'или газогенератор — иначе логистика баллонов съест экономику.'));
     }
     if (kind === 'o2') {
       out.appendChild(el('div', 'note',
         'Кислород для углеродистой стали, чистота 99,99 %, давление 0,5–1 бар. ' +
-        'Если материал допускает воздух — компрессор подбирается по потоку азота, ресивер ≥ 500 л.'));
+        'Если материал допускает воздух — компрессор подбирается по потоку азота, ' +
+        'ресивер не меньше 500 л.'));
     }
   }
   ['gNozzle', 'gGas', 'gHours', 'gPrice'].forEach(function (id) {
@@ -725,11 +943,16 @@
   fillFiberFormats();
   fillMillConfigs();
   $('priceMode').value = state.mode || 'order';
+  $('cat').value = state.cat || 'fiber';
   switchCat();
   renderMill();
   renderPnr();
+  sortItems();
   renderSmeta();
   renderMatch();
+  $('mtCat').value = state.mtCat || 'fiber';
+  switchMtCat();
+  fillMkSize();
   renderReady();
   renderGas();
   var hash = (location.hash || '').replace('#', '');
