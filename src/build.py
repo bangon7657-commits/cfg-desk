@@ -16,7 +16,11 @@ import reference as ref
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DIST = os.environ.get('DIST_DIR') or os.path.join(HERE, 'dist')
-CACHE_VERSION = 1          # поднимать при каждом обновлении, иначе телефон отдаст старое
+
+# Версия кеша живёт в отдельном файле: поднять её при выпуске — одна правка одной цифры.
+# Не поднимешь — телефон отдаст старую версию из service worker.
+with open(os.path.join(HERE, 'cache_version.txt'), encoding='utf-8') as _f:
+    CACHE_VERSION = int(_f.read().strip())
 
 os.makedirs(DIST, exist_ok=True)
 
@@ -118,13 +122,13 @@ def png(size, bg, fg, inset):
             chunk(b'IDAT', zlib.compress(rows, 9)) + chunk(b'IEND', b''))
 
 
-NAVY = (31, 58, 95)
-WHITE = (255, 255, 255)
+DARK = (16, 14, 12)
+ORANGE = (255, 122, 24)
 ICONS = {
-    'icon-192.png': png(192, NAVY, WHITE, 0.18),
-    'icon-512.png': png(512, NAVY, WHITE, 0.18),
-    'icon-maskable-512.png': png(512, NAVY, WHITE, 0.28),
-    'apple-touch-icon-180.png': png(180, NAVY, WHITE, 0.18),
+    'icon-192.png': png(192, DARK, ORANGE, 0.18),
+    'icon-512.png': png(512, DARK, ORANGE, 0.18),
+    'icon-maskable-512.png': png(512, DARK, ORANGE, 0.28),
+    'apple-touch-icon-180.png': png(180, DARK, ORANGE, 0.18),
 }
 for name, blob in ICONS.items():
     with open(os.path.join(DIST, name), 'wb') as f:
@@ -176,9 +180,6 @@ MILLING_TABLE = table(
     [[esc(n), data.MILLING_FIELDS[f], f'{kw} кВт', c, ct, 'да' if v else 'нет',
       rub(o), f'<b>{rub(s)}</b>'] for f, n, kw, c, ct, v, o, s in data.MILLING],
     'wide')
-
-OPTIONS_TABLE = table(['Категория', 'Позиция', 'Цена'],
-                      [[c, esc(n), f'<b>{rub(p)}</b>'] for c, n, p in data.OPTIONS])
 
 PNR_TABLE = table(['Станок', 'Дней', 'ПНР', '+1 день', '+2 дня', 'Обучение', 'ПНР+обучение'],
                   [[esc(m), d, rub(p), rub(p1) if p1 else '—', rub(p2) if p2 else '—',
@@ -261,7 +262,6 @@ repl = {
     '__UI_JS__': UI_JS,
     '__FIBER_TABLE__': FIBER_TABLE,
     '__MILLING_TABLE__': MILLING_TABLE,
-    '__OPTIONS_TABLE__': OPTIONS_TABLE,
     '__PNR_TABLE__': PNR_TABLE,
     '__SERVICE_TABLE__': SERVICE_TABLE,
     '__CUT_TABLE__': CUT_TABLE,
@@ -324,8 +324,8 @@ manifest = {
     'start_url': './index.html',
     'scope': './',
     'display': 'standalone',
-    'background_color': '#F4F7FB',
-    'theme_color': '#1F3A5F',
+    'background_color': '#100e0c',
+    'theme_color': '#100e0c',
     'lang': 'ru',
     'icons': [
         {'src': 'icon-192.png', 'sizes': '192x192', 'type': 'image/png'},
@@ -337,7 +337,7 @@ manifest = {
 with open(os.path.join(DIST, 'manifest.webmanifest'), 'w', encoding='utf-8') as f:
     json.dump(manifest, f, ensure_ascii=False, indent=2)
 
-SW = """// Версия кеша поднимается при каждой сборке — иначе телефон отдаст старую версию.
+SW = """// Версия кеша берётся из cache_version.txt — поднимать при каждом выпуске.
 const CACHE = 'cfg-v%d';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png',
