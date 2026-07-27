@@ -827,7 +827,7 @@
     }
     warns.push('Скоростей подачи и режимов фрезеровки в данных нет — время на изделие ' +
       'приложение не считает и обещать его нельзя.');
-    var note = el('div', 'note alert', '<b>Что сказать клиенту и о чᄅм не забыть:</b><ul>' +
+    var note = el('div', 'note alert', '<b>Что сказать клиенту и о чём не забыть:</b><ul>' +
       warns.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>');
     out.appendChild(note);
   }
