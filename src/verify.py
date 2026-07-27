@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Сверка money.js с dengi.py. Показывает фактические отклонения, не «примерно».
+"""Сверка money.js с dengi.py и проверка целостности прайса.
+Показывает фактические отклонения, не «примерно».
 
 Прогоняет одни и те же значения через Python (Decimal, эталон из скилла)
 и через Node (money.js, то, что реально считает приложение).
@@ -9,11 +10,11 @@ import json
 import os
 import subprocess
 import sys
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from dengi import propisyu, nds_iznutri, so_skidkoy, fmt  # noqa: E402
+from dengi import propisyu, nds_iznutri, so_skidkoy  # noqa: E402
 import data  # noqa: E402
 
 
@@ -42,9 +43,7 @@ MARKUPS = [110, 75, 80, 55, 0]   # наценка × 10
 prices = all_prices()
 print(f'Позиций прайса в проверке: {len(prices)}')
 
-cases = []
-for p in prices:
-    cases.append({'cents': p * 100})
+cases = [{'cents': p * 100} for p in prices]
 
 # Эталон Python
 ref = []
@@ -53,7 +52,8 @@ for p in prices:
     row = {'cents': cents, 'propisyu': [], 'nds': [], 'skidka': [], 'nacenka': []}
     for r in RATES:
         bez, nds = nds_iznutri(Decimal(p), Decimal(r) / 10)
-        row['nds'].append([int((bez * 100).to_integral_value()), int((nds * 100).to_integral_value())])
+        row['nds'].append([int((bez * 100).to_integral_value()),
+                           int((nds * 100).to_integral_value())])
     for dsc in DISCOUNTS:
         v = so_skidkoy(Decimal(p), Decimal(dsc) / 10)
         row['skidka'].append(int((v * 100).to_integral_value()))
@@ -111,12 +111,11 @@ if errors:
     sys.exit(1)
 print('Расхождений: 0 — money.js считает копейка в копейку как dengi.py')
 
-# ---- Проверка самих данных на внутреннюю согласованность ----
+# ---- Проверка самих данных ----
 print()
 print('--- Проверка самих данных ---')
 
 # Наценка на фрезерных: гипотеза «+11 % с округлением до 100 ₽»
-from decimal import ROUND_HALF_UP  # noqa: E402
 bad = []
 for fmt_, name, kw, cool, ctrl, vac, order, stock in data.MILLING:
     r100 = int((Decimal(order) * Decimal('1.11') / 100).quantize(Decimal('1'), ROUND_HALF_UP)) * 100
@@ -128,8 +127,7 @@ if bad:
     for b in bad[:10]:
         print(f'  {b[0]}: прайс {b[2]} ₽, расчёт {b[3]} ₽')
     sys.exit(1)
-else:
-    print('Правило «+11 % с округлением до 100 ₽» подтверждается на всех позициях')
+print('Правило «+11 % с округлением до 100 ₽» подтверждается на всех позициях')
 
 # Количество конфигураций
 n_fiber = len(data.FIBER_A) + sum(2 + len(c['rot']) + len(c['table_rot'])
@@ -152,6 +150,49 @@ for (fmt_, power), cfg in sorted(data.FIBER_S.items()):
             mismatch += 1
             print(f'  S {fmt_} {power}W + стол + {rot}: выгода {diff} ₽, заявлено {exp} ₽')
 print(f'Несовпадений с заявленной пакетной скидкой: {mismatch}')
+
+# ---- Контрольная сумма прайса ----
+# Защита от тихой порчи цифр при любой правке data.py.
+# Если меняете прайс осознанно — пересчитайте и обновите оба числа ниже.
+PRICE_SUM_EXPECTED = 952547932
+PRICE_COUNT_EXPECTED = 351
+
+print()
+print('--- Контрольная сумма прайса ---')
+tot = 0
+cnt = 0
+for v in data.FIBER_A.values():
+    tot += v
+    cnt += 1
+for c in data.FIBER_S.values():
+    tot += c['base'] + c['table']
+    cnt += 2
+    for v in c['rot'].values():
+        tot += v
+        cnt += 1
+    for v in c['table_rot'].values():
+        tot += v
+        cnt += 1
+for r in data.MILLING:
+    tot += r[6] + r[7]
+    cnt += 2
+for _, _, p in data.OPTIONS:
+    tot += p
+    cnt += 1
+for row in data.PNR:
+    for v in row[2:5] + (row[6],):
+        if isinstance(v, int):
+            tot += v
+            cnt += 1
+for _, _, p in data.SERVICE:
+    tot += p
+    cnt += 1
+print(f'Цен в базе: {cnt}, сумма: {tot}')
+if cnt != PRICE_COUNT_EXPECTED or tot != PRICE_SUM_EXPECTED:
+    print(f'НЕ СОВПАДАЕТ: ожидалось {PRICE_COUNT_EXPECTED} цен '
+          f'на сумму {PRICE_SUM_EXPECTED}. Прайс изменён или испорчен.')
+    sys.exit(1)
+print('Совпадает с эталоном — цены не изменились')
 
 print()
 print('Проверка завершена.')
