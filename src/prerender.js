@@ -2,8 +2,7 @@
    1. Прогоняет страницу в jsdom, ловит любые ошибки JS.
    2. Проверяет, что вкладки отрисовались, а расчёты дали числа.
    3. Сериализует DOM обратно в index.html БЕЗ класса js на body — тогда файл
-      читается во встроенном просмотрщике Telegram и в режиме чтения:
-      все разделы идут подряд, потому что правило body.js .panel{display:none} не срабатывает.
+      читается во встроенном просмотрщике Telegram и в режиме чтения.
    4. Второй прогон проверяет, что пререндеренный файл запускается без ошибок
       и что скрипт не удвоил уже заполненные списки.
 */
@@ -124,19 +123,57 @@ check('смета: сумма прописью есть', propis && /рубл/.t
   (propis || '').slice(0, 120));
 check('смета: сходимость подтверждена',
   checkBlock && /Сходимость проверена/.test(checkBlock), (checkBlock || '').slice(0, 160));
+
 // повторное добавление не должно плодить строки
 win.document.getElementById('fAdd').click();
 check('смета: дубль слился в одну строку',
   doc.querySelectorAll('#smetaBody tr').length === 1,
   'строк ' + doc.querySelectorAll('#smetaBody tr').length);
+
 const kp = textOf(doc, '#kpPreview');
 check('ТКП: предпросмотр собрался', kp && /ИТОГО к оплате/.test(kp), (kp || '').slice(0, 120));
+check('ТКП: гарантия взята из данных', kp && kp.indexOf('12 месяцев') >= 0,
+  (kp || '').slice(0, 160));
+
+// Печать: правило @media print скрывает соседей .kpstep, поэтому предпросмотр
+// обязан лежать ВНУТРИ .kpstep, а сам .kpstep — быть прямым ребёнком панели.
+const kpStep = doc.querySelector('#p-smeta > .kpstep');
+check('печать: блок ТКП — прямой ребёнок панели', !!kpStep,
+  'не найден #p-smeta > .kpstep');
+check('печать: предпросмотр лежит внутри .kpstep',
+  !!(kpStep && kpStep.querySelector('#kpPreview')),
+  'предпросмотр вне .kpstep — на печать уйдёт пустой лист');
+check('печать: правило скрытия соседей на месте',
+  src.indexOf('.printme>*:not(.kpstep)') >= 0,
+  'в CSS нет .printme>*:not(.kpstep)');
+
+// Согласование числительных: «122 конфигураций» — ошибка, нужно «122 конфигурации»
+const badPlural = (src.match(/\b\d*[02-9][2-4]\s+конфигураций/g) || []);
+check('язык: согласование «конфигурации» с числом', badPlural.length === 0,
+  badPlural.join(', '));
+
+// Скидка по умолчанию не должна падать на услуги
+win.document.getElementById('cat').value = 'milling';
+win.document.getElementById('cat').dispatchEvent(new win.Event('change'));
+win.document.getElementById('pnrAdd').click();
+const srvRow = Array.from(doc.querySelectorAll('#smetaBody tr'))
+  .filter(r => /Услуга/.test(r.textContent))[0];
+const srvDisc = srvRow ? srvRow.querySelectorAll('input')[1].value : null;
+check('смета: услуга по умолчанию без скидки при общей 5 %', srvDisc === '0',
+  'в строке услуги скидка «' + srvDisc + '»');
+const eqRow = Array.from(doc.querySelectorAll('#smetaBody tr'))
+  .filter(r => /Оборудование/.test(r.textContent))[0];
+const eqDisc = eqRow ? eqRow.querySelectorAll('input')[1].value : null;
+check('смета: у оборудования общая скидка 5 % применилась', eqDisc === '5',
+  'в строке оборудования скидка «' + eqDisc + '»');
+check('смета: предел построчной скидки равен общему',
+  eqRow && eqRow.querySelectorAll('input')[1].getAttribute('max') === '30',
+  'max=«' + (eqRow ? eqRow.querySelectorAll('input')[1].getAttribute('max') : '?') + '»');
 
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
 doc.body.classList.remove('js');
 doc.body.classList.remove('demo');
 doc.querySelectorAll('.panel').forEach(p => p.classList.remove('active', 'printme'));
-// смету, добавленную тестом, из пререндера убираем — файл должен открываться чистым
 doc.getElementById('smetaBody').innerHTML = '';
 doc.getElementById('totals').innerHTML = '';
 doc.getElementById('propis').innerHTML = '';
