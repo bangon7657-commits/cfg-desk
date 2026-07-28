@@ -38,33 +38,26 @@ for row in data.MILLING:
     if r100 != stock:
         dev_r100 += 1
 
-MARKUP_FINDING = {
-    'total': len(data.MILLING),
-    'dev_exact': dev_exact,
-    'max_dev': max_dev,
-    'dev_r100': dev_r100,
-}
-
 n_fiber = len(data.FIBER_A) + sum(2 + len(c['rot']) + len(c['table_rot'])
                                   for c in data.FIBER_S.values())
 
 # ---------------------------------------------------------------------------
-# Данные для клиента (JSON внутри файла)
+# Данные для клиента. В JSON попадает только то, что реально читает интерфейс.
+# Остальное (массы, сервис, наценки) рисуется статическими таблицами.
 # ---------------------------------------------------------------------------
 APP = {
-    'cacheVersion': CACHE_VERSION,
-    'priceDates': data.PRICE_DATES,
     'ndsDefault': data.NDS_DEFAULT,
     'kpValidDays': data.KP_VALID_DAYS,
     'invoiceValidDays': data.INVOICE_VALID_DAYS,
     'manager': data.MANAGER,
+    'guarantee': data.GUARANTEE,
+    'maxDiscount': data.MAX_DISCOUNT_PCT,
+    'discountOnServices': data.DISCOUNT_ON_SERVICES_BY_DEFAULT,
     'fiberFormats': data.FIBER_FORMATS,
     'fiberA': [{'format': f, 'power': p, 'price': v} for (f, p), v in sorted(data.FIBER_A.items())],
     'fiberS': [{'format': f, 'power': p, 'base': c['base'], 'table': c['table'],
                 'rot': c['rot'], 'tableRot': c['table_rot']}
                for (f, p), c in sorted(data.FIBER_S.items())],
-    'bundleDiscount': data.BUNDLE_DISCOUNT,
-    'fiberMissing': data.FIBER_MISSING,
     'milling': [{'format': f, 'name': n, 'kw': kw, 'cool': c, 'ctrl': ct,
                  'vac': v, 'order': o, 'stock': s}
                 for f, n, kw, c, ct, v, o, s in data.MILLING],
@@ -73,15 +66,11 @@ APP = {
     # целого числа ('6090'), впереди остальных ('0404'), и список ломается.
     'millingOrder': list(data.MILLING_FIELDS.keys()),
     'fiberOrder': sorted(data.FIBER_FORMATS.keys()),
-    'millingMass': data.MILLING_MASS,
     'options': [{'cat': c, 'name': n, 'price': p} for c, n, p in data.OPTIONS],
     'vibroQty': data.VIBRO_QTY,
-    'vibroUnit': data.VIBRO_UNIT,
-    'a11ToA18': data.A11_TO_A18,
     'pnr': [{'model': m, 'days': d, 'pnr': p, 'plus1': p1, 'plus2': p2,
              'training': t, 'package': pk}
             for m, d, p, p1, p2, t, pk in data.PNR],
-    'service': [{'kind': k, 'name': n, 'price': p} for k, n, p in data.SERVICE],
     'cutLimits': ref.CUT_LIMITS,
     'gasByMaterial': ref.GAS_BY_MATERIAL,
     'reservePct': ref.RESERVE_PCT,
@@ -91,9 +80,9 @@ APP = {
                   for n, a, s, b, note in ref.READINESS],
     'matchRules': [{'kind': k, 'task': t, 'answer': a, 'scope': s}
                    for k, t, a, s in ref.MATCH_RULES],
-    'markupFinding': MARKUP_FINDING,
-    'counts': {'fiber': n_fiber, 'milling': len(data.MILLING)},
 }
+
+assert 'service' not in APP and 'millingMass' not in APP
 
 # ---------------------------------------------------------------------------
 # Иконки: генерируем PNG кодом, без внешних файлов
@@ -143,6 +132,22 @@ def esc(s):
 
 def rub(n):
     return f'{n:,}'.replace(',', ' ') + ' ₽'
+
+
+def plural(n, forms):
+    """Согласование существительного с числом: (1, 2-4, 5+).
+    plural(122, ('конфигурация','конфигурации','конфигураций')) -> '122 конфигурации'
+    """
+    m = n % 100
+    if 11 <= m <= 19:
+        w = forms[2]
+    else:
+        m = n % 10
+        w = forms[0] if m == 1 else forms[1] if 2 <= m <= 4 else forms[2]
+    return f'{n} {w}'
+
+
+CFG_FORMS = ('конфигурация', 'конфигурации', 'конфигураций')
 
 
 def table(headers, rows, cls=''):
@@ -213,6 +218,13 @@ MATCH_TABLE = table(['Задача клиента', 'Решение', 'В это
                        'other': '<span class="warn">другая категория</span>'}[s]]
                      for k, t, a, s in ref.MATCH_RULES])
 
+MARKUP_TABLE = table(['Что', 'Наценка за наличие', 'Замечание'],
+                     [[esc(k),
+                       ('нет второго ценника' if v['pct'] is None
+                        else f'<b>+{str(v["pct"]).replace(".", ",").replace(",0", "")} %</b>'),
+                       esc(v['note'])]
+                      for k, v in data.STOCK_MARKUP.items()])
+
 CONFLICTS_HTML = ''.join(
     f'<div class="conflict"><div class="conflict-t">{esc(t)}</div>'
     f'<div class="conflict-b">{esc(b)}</div>'
@@ -254,6 +266,12 @@ with open(os.path.join(HERE, 'style.css'), encoding='utf-8') as f:
 with open(os.path.join(HERE, 'template.html'), encoding='utf-8') as f:
     TPL = f.read()
 
+# Инвариант печати: правило скрывает соседей .kpstep, значит блок с предпросмотром
+# обязан иметь этот класс. Ошибка здесь один раз уже приводила к пустому листу.
+assert 'class="step kpstep"' in TPL, 'в шаблоне нет блока с классом kpstep'
+assert '.printme>*:not(.kpstep)' in CSS, 'в CSS нет правила печати для .kpstep'
+assert 'id="kpPreview"' in TPL
+
 html = TPL
 repl = {
     '__CSS__': CSS,
@@ -269,6 +287,7 @@ repl = {
     '__GAS_TABLE__': GAS_TABLE,
     '__READINESS_TABLE__': READINESS_TABLE,
     '__MATCH_TABLE__': MATCH_TABLE,
+    '__MARKUP_TABLE__': MARKUP_TABLE,
     '__CONFLICTS__': CONFLICTS_HTML,
     '__MISSING__': MISSING_HTML,
     '__SERIES_TABLE__': SERIES_TABLE,
@@ -286,8 +305,13 @@ repl = {
     '__GAS_PRICE_MISSING__': esc(ref.GAS_PRICE_MISSING),
     '__VIBRO_NOTE__': esc(data.VIBRO_NOTE),
     '__FIBER_A_NOTE__': esc(data.FIBER_A_NOTE),
+    '__GUARANTEE__': esc(data.GUARANTEE['label']),
+    '__GUARANTEE_NOTE__': esc(data.GUARANTEE['note']),
+    '__MAX_DISC__': str(data.MAX_DISCOUNT_PCT),
     '__N_FIBER__': str(n_fiber),
     '__N_MILLING__': str(len(data.MILLING)),
+    '__FIBER_COUNT__': plural(n_fiber, CFG_FORMS),
+    '__MILLING_COUNT__': plural(len(data.MILLING), CFG_FORMS),
     '__DATE_FIBER__': data.PRICE_DATES['fiber'],
     '__DATE_MILLING__': data.PRICE_DATES['milling'],
     '__DATE_OPTIONS__': data.PRICE_DATES['options'],
@@ -371,7 +395,8 @@ with open(os.path.join(DIST, 'robots.txt'), 'w', encoding='utf-8') as f:
     f.write('User-agent: *\nDisallow: /\n')
 
 size = os.path.getsize(os.path.join(DIST, 'index.html'))
-print(f'index.html: {size / 1024:.0f} КБ')
+print(f'index.html до пререндера: {size / 1024:.0f} КБ '
+      f'(после пререндера вырастет — итоговый размер печатает prerender.js)')
 print(f'Конфигураций волокна: {n_fiber} · фрезерных: {len(data.MILLING)}')
 print(f'Наценка +11 %: отклонений от точного расчёта {dev_exact} из {len(data.MILLING)}, '
       f'максимум {max_dev} ₽; при округлении до 100 ₽ отклонений {dev_r100}')

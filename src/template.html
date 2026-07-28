@@ -44,8 +44,8 @@
 <!-- ================= КОНФИГУРАТОР ================= -->
 <span class="nojs-title">Конфигуратор</span>
 <section class="panel active" id="p-cfg">
-  <p class="lead">Волокно — прайс от __DATE_FIBER__, __N_FIBER__ конфигураций.
-    Фрезерные — прайс __DATE_MILLING__, __N_MILLING__ конфигураций.
+  <p class="lead">Волокно — прайс от __DATE_FIBER__, __FIBER_COUNT__.
+    Фрезерные — прайс от __DATE_MILLING__, __MILLING_COUNT__.
     НДС включён. Доставка, ПНР, обучение и чиллер — сверху.</p>
 
   <div class="step">
@@ -124,7 +124,7 @@
 
     <div class="step">
       <div class="step-h"><div class="step-n">4</div>
-        <div class="step-t">Опции и доп. оборудование<small>прайс __DATE_OPTIONS__ · по CO₂ и маркерам аналога нет</small></div></div>
+        <div class="step-t">Опции и доп. оборудование<small>прайс от __DATE_OPTIONS__ · по CO₂ и маркерам аналога нет</small></div></div>
       <div class="step-b">
         <div id="mOptions"></div>
         <p class="muted">__VIBRO_NOTE__</p>
@@ -157,7 +157,7 @@
   <p class="muted">Свёрнуты, чтобы не мешать работе. Разворачивайте, когда нужно посмотреть весь ряд.</p>
 
   <details>
-    <summary>Полный прайс: волокно по металлу <span class="cnt">__N_FIBER__ конфигураций · прайс __DATE_FIBER__</span></summary>
+    <summary>Полный прайс: волокно по металлу <span class="cnt">__FIBER_COUNT__ · прайс от __DATE_FIBER__</span></summary>
     <div class="det-b">
       <p class="muted">По волокну в прайсе одна цена — второго ценника «из наличия» нет.</p>
       <div class="scroll">__FIBER_TABLE__</div>
@@ -165,12 +165,12 @@
   </details>
 
   <details>
-    <summary>Полный прайс: фрезерные с ЧПУ <span class="cnt">__N_MILLING__ конфигураций · прайс __DATE_MILLING__</span></summary>
+    <summary>Полный прайс: фрезерные с ЧПУ <span class="cnt">__MILLING_COUNT__ · прайс от __DATE_MILLING__</span></summary>
     <div class="det-b"><div class="scroll">__MILLING_TABLE__</div></div>
   </details>
 
   <details>
-    <summary>ПНР и обучение — полная таблица <span class="cnt">прайс __DATE_OPTIONS__</span></summary>
+    <summary>ПНР и обучение — полная таблица <span class="cnt">прайс от __DATE_OPTIONS__</span></summary>
     <div class="det-b"><div class="scroll">__PNR_TABLE__</div></div>
   </details>
 
@@ -203,8 +203,12 @@
             <option value="100">10</option><option value="50">5</option><option value="0">0</option>
           </select></div>
         <div class="internal"><label class="f">Лестница уступок</label>
-          <div class="muted" style="padding-top:10px">5 % → 2 % → 1 %. Не начинать с максимума.</div></div>
+          <div class="muted" style="padding-top:10px">5 % → 2 % → 1 %. Не начинать с максимума.
+            Максимум в приложении — __MAX_DISC__ %.</div></div>
       </div>
+      <div class="note">Скидка по умолчанию идёт на оборудование и опции.
+        ПНР и обучение — платные услуги по прайсу, они по умолчанию без скидки.
+        Нужна скидка и на услуги — поставьте её в строке сметы вручную.</div>
       <div class="note internal">Счёт фиксирует цену и наличие на __INVOICE_DAYS__ дней.
         Срок действия ТКП — __KP_DAYS__ дней. Оплата: 100 % со склада, 50 % + остаток под заказ.</div>
     </div>
@@ -232,7 +236,7 @@
     </div>
   </div>
 
-  <div class="step">
+  <div class="step kpstep">
     <div class="step-h"><div class="step-n">3</div>
       <div class="step-t">Шапка ТКП и предпросмотр<small>печать берёт только этот блок</small></div></div>
     <div class="step-b">
@@ -452,6 +456,20 @@
       а не ровно +11 %. Разница до 50 ₽ на позицию, для КП несущественна, но правило
       в скилле сформулировано неточно. В смету приложение всегда берёт цену из таблицы,
       а не считает её.</div>
+  </div>
+
+  <h2 class="internal">Наценка «из наличия» по брендам</h2>
+  <div class="internal">
+    <p class="muted">Правило зависит от бренда, а не от компании. Цену приложение всегда
+      берёт из таблицы прайса, эти проценты — только для понимания, откуда разница.</p>
+    __MARKUP_TABLE__
+  </div>
+
+  <h2>Гарантия</h2>
+  <div class="card">
+    <p>В предпросмотр ТКП подставляется <b>__GUARANTEE__</b> — значение берётся из данных,
+      а не вписано в шаблон руками.</p>
+    <div class="note alert">__GUARANTEE_NOTE__</div>
   </div>
 
   <h2>Расхождения в источниках</h2>
