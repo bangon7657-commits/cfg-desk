@@ -33,10 +33,20 @@
     mode: 'order', cat: 'fiber', mtCat: 'fiber'
   };
   try {
+    // v1 → v2: подхватываем черновик, сохранённый прошлой версией, и переносим его
     var raw = localStorage.getItem(LS);
+    if (!raw) {
+      var old = localStorage.getItem('cfg-state-v1');
+      if (old) { raw = old; localStorage.setItem(LS, old); }
+    }
     if (raw) {
       var s = JSON.parse(raw);
       for (var k in s) if (s.hasOwnProperty(k)) state[k] = s[k];
+      // в v1 у позиций не было типа и построчной скидки
+      (state.items || []).forEach(function (it) {
+        if (!it.type) it.type = 'eq';
+        if (it.disc === undefined) it.disc = null;
+      });
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
 
@@ -69,6 +79,14 @@
   for (var t = 0; t < tabs.length; t++) {
     tabs[t].addEventListener('click', function () { showTab(this.getAttribute('data-t')); });
   }
+
+  /* Высота шапки зависит от переносов текста, поэтому прибиваем вкладки
+     не к жёстким 63px из CSS, а к фактической высоте шапки. */
+  function fixNavOffset() {
+    var h = d.querySelector('header'), n = d.querySelector('nav');
+    if (h && n && h.offsetHeight) n.style.top = h.offsetHeight + 'px';
+  }
+  window.addEventListener('resize', fixNavOffset);
 
   // ------------------------------------------------------------------ демо-режим
   function applyDemo(on) {
@@ -403,7 +421,11 @@
     var rate = parseInt($('ndsRate').value, 10) || 0;
     var listSum = 0, discSum = 0, lines = [];
     state.items.forEach(function (it) {
-      var dsc = (it.disc === null || it.disc === undefined) ? gDisc : it.disc;
+      // Скидка по умолчанию — только на оборудование и опции.
+      // ПНР и обучение по прайсу платные услуги, они идут без скидки,
+      // пока менеджер не поставит её в строке вручную.
+      var auto = (it.type === 'srv' && !APP.discountOnServices) ? 0 : gDisc;
+      var dsc = (it.disc === null || it.disc === undefined) ? auto : it.disc;
       var unit = soSkidkoy(it.price, dsc);
       var line = unit * it.qty;
       listSum += it.price * it.qty;
@@ -432,7 +454,8 @@
       tr.innerHTML = '<td>' + nameCell + '</td>' +
         '<td><input type="number" min="1" max="99" value="' + L.item.qty + '" aria-label="количество"></td>' +
         '<td>' + fmt(L.item.price) + '</td>' +
-        '<td><input type="number" min="0" max="40" step="0.5" value="' +
+        '<td><input type="number" min="0" max="' + APP.maxDiscount +
+        '" step="0.5" value="' +
         String(L.dsc / 10).replace('.', ',') + '" aria-label="скидка"></td>' +
         '<td>' + fmt(L.unit) + '</td>' +
         '<td><b>' + fmt(L.line) + '</b></td>' +
@@ -445,7 +468,7 @@
       inputs[1].addEventListener('change', function () {
         var v = parseFloat(String(this.value).replace(',', '.'));
         if (!(v >= 0)) v = 0;
-        if (v > 40) v = 40;
+        if (v > APP.maxDiscount) v = APP.maxDiscount;
         L.item.disc = Math.round(v * 10);
         save(); renderSmeta();
       });
@@ -535,7 +558,8 @@
       '<div><div class="k">Стоимость, с НДС ' + pctText(T.rate) +
       '</div><div class="v">' + fmt(T.total) + ' ₽</div></div>' +
       '<div><div class="k">Ваша выгода</div><div class="v">' + fmt(T.gain) + ' ₽</div></div>' +
-      '<div><div class="k">Гарантия</div><div class="v">12 месяцев</div></div>'));
+      '<div><div class="k">Гарантия</div><div class="v">' +
+      esc(APP.guarantee.label) + '</div></div>'));
 
     if (state.items.length) {
       var tb = el('table');
@@ -589,6 +613,7 @@
       'КОНТАКТ_ТЕЛЕФОН': k.kpPhone || APP.manager.phone,
       'ДД': dp[0] || '', 'МЕСЯЦА': MONTHS[(parseInt(dp[1], 10) || 1) - 1], 'ГГГГ': dp[2] || '',
       'менеджер': APP.manager,
+      'гарантия': APP.guarantee.label,
       'ставка_НДС': T.rate / 10,
       'скидка_по_умолчанию': T.gDisc / 10,
       'позиции': T.lines.map(function (L) {
@@ -958,6 +983,7 @@
   var hash = (location.hash || '').replace('#', '');
   var valid = ['cfg', 'smeta', 'match', 'shop', 'gas', 'data'];
   showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');
+  fixNavOffset();
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
