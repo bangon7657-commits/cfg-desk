@@ -248,34 +248,77 @@ body.demo .internal{display:none !important}
 .internal-mark{font-size:10px;background:var(--or);color:#180d04;padding:1px 5px;
   border-radius:2px;margin-left:6px;vertical-align:1px;letter-spacing:.3px}
 
-/* ---------- предпросмотр ТКП: на печать белый ---------- */
-.kp{background:#fff;color:#1a1a1a;border-radius:10px;padding:26px 30px;margin-top:16px}
+/* ---------- лист ТКП: фирменное оформление шаблона lasercut-kp ----------
+   Палитра шаблона «синий фон»: тёмно-синий 1F3A5F (плашки), средний 2E5B94,
+   заливки DCE8F4 и EAF1F8, серый текст 5A6572. Шрифт Calibri (Carlito —
+   метрически совместимый свободный аналог, стоит в Linux). Экранный
+   предпросмотр = то, что уйдёт на бумагу, поэтому лист всегда белый. */
+.kp{background:#fff;color:#202020;border-radius:8px;padding:24px 26px;margin-top:16px;
+  font-family:Calibri,Carlito,"Segoe UI",system-ui,sans-serif;font-size:13.5px;line-height:1.42}
 .kp .muted{color:#5a6572}
+.kp b{color:#202020}
 .kp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
-  border-bottom:3px solid #1a1a1a;padding-bottom:11px;flex-wrap:wrap}
-.kp-logo{font-size:22px;font-weight:700;color:#1a1a1a;letter-spacing:1.5px}
-.kp-logo small{display:block;font-size:10.5px;font-weight:400;letter-spacing:.6px;
-  color:#e06a00;text-transform:uppercase;margin-top:2px}
-.kp-meta{font-size:12.5px;color:#5a6572;text-align:right}
-.kp h1{font-size:21px;color:#1a1a1a;margin:16px 0 8px}
-.kp p{color:#1a1a1a}
-.kp-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#d5d5d5;
-  margin:16px 0;border:1px solid #d5d5d5}
-.kp-sum div{background:#f6f2ee;padding:11px 13px}
-.kp-sum .k{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#5a6572}
-.kp-sum .v{font-size:15px;font-weight:700;color:#1a1a1a;margin-top:3px}
+  flex-wrap:wrap;padding-bottom:8px}
+.kp-logo{width:200px;height:auto;flex:0 0 auto}
+.kp-contacts{font-size:11.5px;color:#5a6572;text-align:right;line-height:1.5;flex:1 1 240px}
+.kp-contacts span{font-size:11px}
+.kp-title{background:#1f3a5f;color:#fff;text-align:center;padding:11px 14px;margin:6px 0 14px}
+.kp-title b{display:block;color:#fff;font-size:17px;letter-spacing:.6px}
+.kp-title span{display:block;font-size:13px;color:#dce8f4;margin-top:3px}
+.kp-to{display:grid;grid-template-columns:1.6fr 1fr;border:1px solid #b7c9dc;
+  margin:0 0 14px;font-size:12.5px}
+.kp-to div{padding:6px 9px;border-right:1px solid #b7c9dc;border-bottom:1px solid #b7c9dc}
+.kp-to div:nth-child(2n){border-right:0}
+.kp-to div:nth-last-child(-n+2){border-bottom:0}
+.kp-blank{display:inline-block;min-width:110px;border-bottom:1px solid #8a99a8;
+  vertical-align:baseline}
+.kp-lead{margin:0 0 14px;text-align:justify}
+.kp-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#2e5b94;
+  margin:0 0 16px}
+.kp-sum div{background:#1f3a5f;padding:8px 11px}
+.kp-sum .k{font-size:10.5px;color:#b9cbe0;letter-spacing:.3px}
+.kp-sum .v{font-size:15px;font-weight:700;color:#fff;margin-top:2px}
 @media(max-width:740px){.kp-sum{grid-template-columns:1fr 1fr}}
-.kp table{background:#fff;font-size:13.5px}
-.kp th{background:#f0ece7;color:#1a1a1a;text-transform:none;letter-spacing:0;font-size:13px}
-.kp th,.kp td{border-color:#d5d5d5}
-.kp tbody tr:nth-child(even){background:#faf8f6}
-.kp tbody tr:hover{background:#f3efe9}
-.kp td b{color:#1a1a1a}
-.kp-mgr{margin-top:18px;padding-top:13px;border-top:1px solid #d5d5d5;font-size:13.5px;
-  color:#1a1a1a}
-.kp-mgr b{color:#1a1a1a}
-.kp-foot{margin-top:14px;font-size:11.5px;color:#5a6572;border-top:1px solid #eee;
-  padding-top:9px}
+.kp-sec{background:#1f3a5f;color:#fff;font-weight:700;font-size:13.5px;
+  padding:6px 11px;margin:16px 0 9px}
+.kp table{background:#fff;font-size:12.5px;border-collapse:collapse;width:100%}
+.kp th,.kp td{border:1px solid #b7c9dc;padding:5px 8px;vertical-align:top}
+.kp thead th{background:#dce8f4;color:#1f3a5f;text-transform:none;letter-spacing:0;
+  font-size:12.5px;text-align:left}
+.kp tbody tr:nth-child(even){background:#fff}
+.kp tbody tr:hover{background:#f4f7fb}
+.kp .kp-n{width:28px;text-align:center;color:#5a6572}
+.kp .kp-q{width:56px;text-align:center;white-space:nowrap}
+.kp .kp-p{width:110px;text-align:right;white-space:nowrap}
+.kp .kp-nm b{color:#1f3a5f}
+.kp .kp-nm span{display:block;color:#5a6572;font-size:11.5px;margin-top:2px}
+.kp tr.kp-tot td{background:#eaf1f8;text-align:right;font-weight:700;color:#1f3a5f}
+.kp tr.kp-tot td:last-child{white-space:nowrap}
+.kp tr.kp-fin td{background:#1f3a5f;color:#fff;text-align:right;font-weight:700}
+.kp-t th{background:#dce8f4;color:#1f3a5f;width:26%;text-align:left;font-weight:700;
+  text-transform:none;letter-spacing:0}
+.kp-propis{margin:12px 0 0;font-size:12.5px;text-align:justify}
+.kp-propis b{color:#1f3a5f}
+.kp-cta{background:#1f3a5f;color:#dce8f4;padding:10px 12px;margin:16px 0 0;font-size:12.5px}
+.kp-cta b{display:block;color:#fff;font-size:14px;margin-bottom:3px}
+.kp-sign{display:flex;gap:32px;margin-top:18px;font-size:12.5px;flex-wrap:wrap}
+.kp-sign>div{flex:1 1 240px}
+.kp-sign-t{min-height:34px}
+.kp-line{border-bottom:1px solid #5a6572;margin-top:40px}
+.kp-cap{display:block;font-size:11px;color:#5a6572;margin-top:2px}
+.kp-cap b{color:#202020;font-size:12.5px}
+.kp-mgr{background:#eaf1f8;border-left:3px solid #1f3a5f;padding:8px 11px;margin-top:16px;
+  font-size:12.5px;color:#202020}
+.kp-mgr span{display:block;font-size:10.5px;color:#5a6572;letter-spacing:.3px}
+.kp-mgr b{color:#1f3a5f;font-size:13.5px}
+.kp-legal{margin-top:14px;border-top:1px solid #b7c9dc;padding-top:8px;
+  font-size:10.5px;color:#5a6572;line-height:1.45}
+.kp-legal b{display:block;color:#1f3a5f;font-size:11px;margin-bottom:2px}
+.kp-legal span{display:block}
+.kp-foot{margin-top:12px;font-size:11px;color:#5a6572;border-top:1px solid #dce8f4;
+  padding-top:8px}
+.kp-empty{border:1px dashed #b7c9dc;background:#f4f7fb;color:#5a6572;padding:14px;
+  font-size:12.5px;margin:0 0 14px}
 
 @media print{
   header,nav,.demo-banner,.noprint,.btns,.toast{display:none !important}
@@ -291,9 +334,26 @@ body.demo .internal{display:none !important}
   .kpstep>.step-h{display:none !important}
   .kpstep>.step-b{padding:0 !important}
   .kpstep .row{display:none !important}
-  .kp{border:0;padding:0;margin:0;border-radius:0}
-  table{page-break-inside:avoid;font-size:9.5pt}
-  @page{size:A4;margin:12mm}
+  /* Лист как в мастер-шаблоне: A4, поля 1,27 см, Calibri 9,5 pt. */
+  @page{size:A4;margin:12.7mm}
+  .kp{border:0;padding:0;margin:0;border-radius:0;font-size:9.5pt;line-height:1.35}
+  .kp table{font-size:8.5pt}
+  .kp thead th,.kp .kp-t th{font-size:8.5pt}
+  .kp-contacts{font-size:8pt}
+  .kp-contacts span{font-size:7.5pt}
+  .kp-title b{font-size:14pt}
+  .kp-title span{font-size:10pt}
+  .kp-sum .k{font-size:7.5pt}
+  .kp-sum .v{font-size:11pt}
+  .kp-sec{font-size:10.5pt;page-break-after:avoid;break-after:avoid}
+  .kp-legal,.kp-mgr span{font-size:7.5pt}
+  .kp-nm span,.kp-propis,.kp-cta,.kp-sign,.kp-mgr{font-size:8.5pt}
+  .kp-logo{width:52mm}
+  /* Ничего не рвём посередине: строки сметы, таблицы условий, подпись. */
+  .kp table,.kp tr,.kp-sum,.kp-to,.kp-cta,.kp-sign,.kp-mgr,.kp-legal{
+    page-break-inside:avoid;break-inside:avoid}
+  /* Плашки и заливки должны печататься, а не выцветать в белое. */
+  .kp,.kp *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
 @media(max-width:560px){

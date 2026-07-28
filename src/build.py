@@ -5,6 +5,7 @@
 Результат: dist/index.html, dist/manifest.webmanifest, dist/sw.js, dist/robots.txt,
 иконки 192/512/maskable/180.
 """
+import base64
 import json
 import os
 import struct
@@ -51,6 +52,9 @@ APP = {
     'invoiceValidDays': data.INVOICE_VALID_DAYS,
     'manager': data.MANAGER,
     'guarantee': data.GUARANTEE,
+    'deliveryOrder': data.DELIVERY_ORDER_LABEL,
+    'deliveryStock': data.DELIVERY_STOCK_LABEL,
+    'deliveryTerms': data.DELIVERY_TERMS,
     'maxDiscount': data.MAX_DISCOUNT_PCT,
     'discountOnServices': data.DISCOUNT_ON_SERVICES_BY_DEFAULT,
     'fiberFormats': data.FIBER_FORMATS,
@@ -257,6 +261,52 @@ DATA_RULES_HTML = ''.join(
     f'<div class="rule"><span class="st st-{i}">{esc(a)}</span><span>{esc(b)}</span></div>'
     for i, (a, b) in enumerate(ref.DATA_RULES))
 
+# ---------------------------------------------------------------------------
+# Печатный ТКП: фирменное оформление шаблона lasercut-kp («синий фон»).
+# Шапка, подвал и постоянные разделы — статическая разметка: печатаются
+# и без JS, и логотип не приходится тащить через JSON.
+# ---------------------------------------------------------------------------
+with open(os.path.join(HERE, 'kp_logo.png'), 'rb') as f:
+    LOGO_B64 = base64.b64encode(f.read()).decode('ascii')
+
+KP_HEAD = (
+    '<div class="kp-head">'
+    f'<img class="kp-logo" src="data:image/png;base64,{LOGO_B64}" '
+    'alt="LASERCUT" width="260" height="61">'
+    '<div class="kp-contacts">'
+    f'{esc(data.COMPANY["phone"])} · {esc(data.COMPANY["email"])} · '
+    f'{esc(data.COMPANY["site"])}<br><span>{esc(data.COMPANY["line"])}</span>'
+    '</div></div>')
+
+
+def kp_rows(rows):
+    return ''.join(
+        f'<tr><th>{esc(a)}</th><td>{esc(b)}</td></tr>' for a, b in rows)
+
+
+KP_TERMS = kp_rows(data.DELIVERY_ROWS) + (
+    f'<tr><th>Срок действия КП</th><td>{data.KP_VALID_DAYS} дней с даты выставления '
+    '(цены и наличие могут измениться)</td></tr>')
+KP_SERVICE = kp_rows(data.SERVICE_ROWS)
+KP_NEXT = (f'<div class="kp-cta"><b>{esc(data.NEXT_STEP["title"])}</b>'
+           f'<span>{esc(data.NEXT_STEP["text"])}</span></div>')
+KP_SIGN = (
+    '<div class="kp-sign">'
+    '<div><div class="kp-sign-t">С уважением,<br>'
+    f'<b>{esc(data.COMPANY["ceo_title"])}</b></div>'
+    '<div class="kp-line"></div>'
+    f'<span class="kp-cap"><b>{esc(data.COMPANY["ceo_short"])}</b> · подпись / Ф.И.О.</span>'
+    '</div>'
+    '<div><div class="kp-sign-t"></div><div class="kp-line"></div>'
+    '<span class="kp-cap">М.П.</span></div></div>')
+KP_MGR = ('<div class="kp-mgr"><span>Ваш менеджер</span>'
+          f'<b>{esc(data.MANAGER["name"])}</b> · {esc(data.MANAGER["role"])}<br>'
+          f'{esc(data.MANAGER["phone"])} · {esc(data.MANAGER["email"])} · '
+          f'{esc(data.MANAGER["sites"])}</div>')
+KP_LEGAL = ('<div class="kp-legal"><b>' + esc(data.COMPANY['brand']) + '</b>' +
+            ''.join(f'<span>{esc(x)}</span>' for x in data.COMPANY['legal']) +
+            '</div>')
+
 with open(os.path.join(HERE, 'money.js'), encoding='utf-8') as f:
     MONEY_JS = f.read()
 with open(os.path.join(HERE, 'ui.js'), encoding='utf-8') as f:
@@ -271,6 +321,10 @@ with open(os.path.join(HERE, 'template.html'), encoding='utf-8') as f:
 assert 'class="step kpstep"' in TPL, 'в шаблоне нет блока с классом kpstep'
 assert '.printme>*:not(.kpstep)' in CSS, 'в CSS нет правила печати для .kpstep'
 assert 'id="kpPreview"' in TPL
+# Фирменное оформление: палитра шаблона «синий фон» и логотип обязаны быть на месте.
+assert '#1f3a5f' in CSS.lower(), 'в CSS нет тёмно-синего 1F3A5F из шаблона ТКП'
+assert '#dce8f4' in CSS.lower(), 'в CSS нет светло-голубой заливки DCE8F4'
+assert len(LOGO_B64) > 3000, 'логотип LASERCUT не встроился'
 
 html = TPL
 repl = {
@@ -288,6 +342,16 @@ repl = {
     '__READINESS_TABLE__': READINESS_TABLE,
     '__MATCH_TABLE__': MATCH_TABLE,
     '__MARKUP_TABLE__': MARKUP_TABLE,
+    '__KP_HEAD__': KP_HEAD,
+    '__KP_TERMS__': KP_TERMS,
+    '__KP_SERVICE__': KP_SERVICE,
+    '__KP_NEXT__': KP_NEXT,
+    '__KP_SIGN__': KP_SIGN,
+    '__KP_MGR__': KP_MGR,
+    '__KP_LEGAL__': KP_LEGAL,
+    '__DELIVERY_ORDER__': esc(data.DELIVERY_ORDER_LABEL),
+    '__DELIVERY_ORDER_FULL__': esc(data.DELIVERY_TERMS['order']),
+    '__DELIVERY_STOCK_FULL__': esc(data.DELIVERY_TERMS['stock']),
     '__CONFLICTS__': CONFLICTS_HTML,
     '__MISSING__': MISSING_HTML,
     '__SERIES_TABLE__': SERIES_TABLE,

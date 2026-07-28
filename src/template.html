@@ -107,7 +107,7 @@
         </div>
         <div class="row internal">
           <div><label class="f">Какой ценник берём</label><select id="priceMode">
-            <option value="order">Под заказ — завод, около 60 дней</option>
+            <option value="order">Под заказ — завод, __DELIVERY_ORDER__</option>
             <option value="stock">Из наличия — склад</option></select></div>
         </div>
       </div>
@@ -251,7 +251,35 @@
         <div><label class="f">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
         <div><label class="f">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
       </div>
-      <div id="kpPreview" class="kp"></div>
+      <div class="row noprint">
+        <div style="flex:2 1 300px"><label class="f">Срок поставки в ТКП</label>
+          <select id="kpTerm">
+            <option value="order">Под заказ — __DELIVERY_ORDER__</option>
+            <option value="stock">Из наличия — со склада</option>
+          </select></div>
+        <div style="flex:3 1 320px"><label class="f">Заголовок предложения</label>
+          <input type="text" id="kpTitle" placeholder="подставится первая позиция сметы"></div>
+      </div>
+
+      <!-- Лист ТКП. Оформление повторяет мастер-шаблон скилла lasercut-kp:
+           тёмно-синие плашки разделов, светло-голубые заливки, Calibri, A4.
+           Шапка, постоянные разделы и подвал — статика, поэтому печатаются
+           даже если скрипт не запустился. -->
+      <div class="kp" id="kpDoc">
+        __KP_HEAD__
+        <div id="kpPreview"></div>
+        <div class="kp-sec">2.&nbsp; Условия поставки</div>
+        <table class="kp-t"><tbody>
+          <tr><th>Срок поставки</th><td id="kpTermVal">__DELIVERY_ORDER_FULL__</td></tr>
+          __KP_TERMS__
+        </tbody></table>
+        <div class="kp-sec">3.&nbsp; Гарантия и сервис</div>
+        <table class="kp-t"><tbody>__KP_SERVICE__</tbody></table>
+        __KP_NEXT__
+        __KP_SIGN__
+        __KP_MGR__
+        __KP_LEGAL__
+      </div>
     </div>
   </div>
 </section>
@@ -470,6 +498,15 @@
     <p>В предпросмотр ТКП подставляется <b>__GUARANTEE__</b> — значение берётся из данных,
       а не вписано в шаблон руками.</p>
     <div class="note alert">__GUARANTEE_NOTE__</div>
+  </div>
+
+  <h2>Срок поставки</h2>
+  <div class="card">
+    <p>В ТКП печатается: <b>__DELIVERY_ORDER_FULL__</b>. Для позиции со склада —
+      __DELIVERY_STOCK_FULL__. Переключатель — в шаге «Шапка ТКП».</p>
+    <div class="note alert">Подтверждено 28.07.2026 и совпадает с мастер-шаблоном ТКП.
+      В references/negotiation.md скилла продаж осталась прежняя оценка «~60 дн.» —
+      расхождение известное, приложение печатает 80 рабочих дней.</div>
   </div>
 
   <h2>Расхождения в источниках</h2>

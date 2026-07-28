@@ -147,6 +147,45 @@ check('печать: правило скрытия соседей на мест�
   src.indexOf('.printme>*:not(.kpstep)') >= 0,
   'в CSS нет .printme>*:not(.kpstep)');
 
+// ---- фирменное оформление печатного листа (мастер-шаблон lasercut-kp) ----
+const kpDoc = doc.getElementById('kpDoc');
+const kpDocTxt = kpDoc ? kpDoc.textContent.replace(/\s+/g, ' ') : '';
+check('ТКП: титульная плашка на месте',
+  /ТЕХНИКО-КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ/.test(kpDocTxt), kpDocTxt.slice(0, 90));
+check('ТКП: логотип встроен в лист',
+  !!(kpDoc && /^data:image\/png;base64,/.test(
+    (kpDoc.querySelector('img.kp-logo') || {}).src || '')),
+  'нет img.kp-logo с data-URL');
+check('ТКП: разделы 1-2-3 пронумерованы',
+  /1\.\s*Смета поставки/.test(kpDocTxt) && /2\.\s*Условия поставки/.test(kpDocTxt) &&
+  /3\.\s*Гарантия и сервис/.test(kpDocTxt), kpDocTxt.slice(0, 200));
+check('ТКП: реквизиты СТАНКОПРОМ в подвале',
+  kpDocTxt.indexOf('7811692637') >= 0 && /Греков Евгений Валерьевич/.test(kpDocTxt),
+  'нет ИНН или ФИО директора');
+check('ТКП: фирменная палитра шаблона в CSS',
+  src.indexOf('#1f3a5f') >= 0 && src.indexOf('#dce8f4') >= 0,
+  'нет 1F3A5F или DCE8F4');
+check('печать: лист A4 с полями 12,7 мм',
+  /@page\{size:A4;margin:12\.7mm\}/.test(src.replace(/\s+/g, '')),
+  'нет @page A4 margin 12.7mm');
+check('печать: заливки не выцветают',
+  /print-color-adjust:exact/.test(src), 'нет print-color-adjust:exact');
+
+// ---- срок поставки: 80 рабочих дней, старых 60 в файле быть не должно ----
+check('срок: плашка-резюме показывает до 80 раб. дней',
+  /до 80 раб\. дней/.test(kpDocTxt), kpDocTxt.slice(0, 200));
+check('срок: раздел условий печатает 80 рабочих дней',
+  /до 80 рабочих дней с даты оплаты/.test(kpDocTxt), '');
+check('срок: старых «60 дней» в файле нет',
+  !/(около\s*60|60\s*дней)/.test(src), (src.match(/.{0,30}60 дней.{0,20}/) || [''])[0]);
+win.document.getElementById('kpTerm').value = 'stock';
+win.document.getElementById('kpTerm').dispatchEvent(new win.Event('change'));
+check('срок: переключение на склад меняет строку условий',
+  /1–3 рабочих дня/.test(doc.getElementById('kpTermVal').textContent),
+  doc.getElementById('kpTermVal').textContent);
+win.document.getElementById('kpTerm').value = 'order';
+win.document.getElementById('kpTerm').dispatchEvent(new win.Event('change'));
+
 // Согласование числительных: «122 конфигураций» — ошибка, нужно «122 конфигурации»
 const badPlural = (src.match(/\b\d*[02-9][2-4]\s+конфигураций/g) || []);
 check('язык: согласование «конфигурации» с числом', badPlural.length === 0,

@@ -241,7 +241,8 @@
     state.mode = mode;
     var box = el('div', 'pricebox');
     box.appendChild(el('div', 'pb' + (mode === 'order' ? ' stock' : ''),
-      '<div class="lbl">Под заказ — завод, около 60 дней</div><div class="val">' +
+      '<div class="lbl">Под заказ — завод, ' + esc(APP.deliveryOrder) +
+      '</div><div class="val">' +
       fmtRub(toCents(r.order)) + ' ₽</div><div class="sub">Оплата 50 % + остаток</div>'));
     box.appendChild(el('div', 'pb' + (mode === 'stock' ? ' stock' : ''),
       '<div class="lbl">Из наличия — склад</div><div class="val">' +
@@ -378,12 +379,18 @@
   $('discount').value = String(state.disc || 0);
   $('ndsRate').value = String(state.nds || APP.ndsDefault * 10);
 
-  var KPF = ['kpClient', 'kpInn', 'kpNum', 'kpContact', 'kpPhone', 'kpNote', 'kpDate'];
+  var KPF = ['kpClient', 'kpInn', 'kpNum', 'kpContact', 'kpPhone', 'kpNote', 'kpDate',
+    'kpTitle'];
   KPF.forEach(function (id) {
     if (state.kp[id]) $(id).value = state.kp[id];
     $(id).addEventListener('input', function () {
       state.kp[id] = this.value; save(); renderKP();
     });
+  });
+  // Срок поставки в ТКП: под заказ или из наличия. Формулировки — из данных.
+  if (state.kp.kpTerm) $('kpTerm').value = state.kp.kpTerm;
+  $('kpTerm').addEventListener('change', function () {
+    state.kp.kpTerm = this.value; save(); renderKP();
   });
   if (!state.kp.kpDate) {
     var now = new Date();
@@ -537,60 +544,105 @@
   });
 
   // ------------------------------------------------------------------ ТКП
+  // Оформление повторяет мастер-шаблон скилла lasercut-kp: титульная плашка,
+  // блок «Кому / Исх. №», плашка-резюме из четырёх ячеек, раздел «1. Смета
+  // поставки» и сумма прописью. Постоянные разделы (условия, гарантия, подпись,
+  // реквизиты) лежат в статической разметке ниже предпросмотра.
+  var MONTHS_G = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля',
+    'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+
+  function dateLong(s) {
+    var p = String(s || '').split('.');
+    if (p.length !== 3 || !MONTHS_G[parseInt(p[1], 10) - 1]) return s || '—';
+    return 'от «' + p[0] + '» ' + MONTHS_G[parseInt(p[1], 10) - 1] + ' ' + p[2] + ' г.';
+  }
+
+  function termLabel() {
+    return state.kp.kpTerm === 'stock' ? APP.deliveryStock : APP.deliveryOrder;
+  }
+
   function renderKP() {
     var box = $('kpPreview'); clear(box);
     var T = totals(), k = state.kp;
-    box.appendChild(el('div', 'kp-head',
-      '<div class="kp-logo">LASERCUT<small>оборудование с ЧПУ</small></div>' +
-      '<div class="kp-meta">Технико-коммерческое предложение<br>Исх. № ' +
-      esc(k.kpNum || '—') + ' от ' + esc(k.kpDate || '—') + '<br>Действует ' +
-      APP.kpValidDays + ' дней</div>'));
+    var first = state.items.length ? state.items[0].name : '';
+    // Строка «Срок поставки» в разделе 2 живёт в статике — обновляем её текстом из данных.
+    var tv = $('kpTermVal');
+    if (tv) {
+      tv.textContent = state.kp.kpTerm === 'stock'
+        ? APP.deliveryTerms.stock : APP.deliveryTerms.order;
+    }
+    var title = k.kpTitle || first || 'Оборудование с ЧПУ LASERCUT';
 
-    var first = state.items.length ? state.items[0].name : '—';
-    box.appendChild(el('h1', '', esc(first)));
-    box.appendChild(el('p', '', 'Кому: <b>' + esc(k.kpClient || '—') + '</b>' +
-      (k.kpInn ? ', ИНН ' + esc(k.kpInn) : '') + (k.kpNote ? ' - ' + esc(k.kpNote) : '')));
-    box.appendChild(el('p', 'muted',
-      'Оборудование соответствует ТР ТС 004/2011, 010/2011, 020/2011.'));
+    box.appendChild(el('div', 'kp-title',
+      '<b>ТЕХНИКО-КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ</b><span>' + esc(title) + '</span>'));
+
+    // Пустое поле — линия под запись от руки, а не строка подчёркиваний:
+    // подчёркивания ловятся проверкой «незаменённых плейсхолдеров».
+    var BL = '<span class="kp-blank"></span>';
+    box.appendChild(el('div', 'kp-to',
+      '<div>Кому: <b>' + (k.kpClient ? esc(k.kpClient) : BL) + '</b>' +
+      ' ИНН ' + (k.kpInn ? esc(k.kpInn) : BL) +
+      (k.kpNote ? ' - ' + esc(k.kpNote) : '') + '</div>' +
+      '<div>Исх. № <b>' + (k.kpNum ? esc(k.kpNum) : BL) + '</b></div>' +
+      '<div>Контакты: <b>' + (k.kpContact ? esc(k.kpContact) : BL) + '</b>' +
+      (k.kpPhone ? ', тел. ' + esc(k.kpPhone) : '') + '</div>' +
+      '<div>' + esc(dateLong(k.kpDate)) + '</div>'));
+
+    box.appendChild(el('p', 'kp-lead',
+      'Благодарим за интерес к оборудованию LASERCUT. Ниже — состав поставки, ' +
+      'стоимость и условия. Оборудование новое, не бывшее в эксплуатации, ' +
+      'соответствует требованиям ТР ТС 004/2011, 010/2011, 020/2011.'));
 
     box.appendChild(el('div', 'kp-sum',
-      '<div><div class="k">Модель</div><div class="v">' + esc(first) + '</div></div>' +
+      '<div><div class="k">Рекомендуем</div><div class="v">' +
+      esc(first || '—') + '</div></div>' +
       '<div><div class="k">Стоимость, с НДС ' + pctText(T.rate) +
       '</div><div class="v">' + fmt(T.total) + ' ₽</div></div>' +
-      '<div><div class="k">Ваша выгода</div><div class="v">' + fmt(T.gain) + ' ₽</div></div>' +
+      '<div><div class="k">Срок поставки</div><div class="v">' +
+      esc(termLabel()) + '</div></div>' +
       '<div><div class="k">Гарантия</div><div class="v">' +
       esc(APP.guarantee.label) + '</div></div>'));
 
-    if (state.items.length) {
-      var tb = el('table');
-      var rows = T.lines.map(function (L, i) {
-        return '<tr><td>' + (i + 1) + '</td><td>' + esc(L.item.name) + '</td><td>' +
-          L.item.qty + '</td><td>' + fmt(L.unit) + '</td><td><b>' + fmt(L.line) +
-          '</b></td></tr>';
-      }).join('');
-      tb.innerHTML = '<thead><tr><th>№</th><th>Наименование</th><th>Кол-во</th>' +
-        '<th>Цена со скидкой</th><th>Сумма</th></tr></thead><tbody>' + rows +
-        '<tr><td colspan="4">Ваша выгода</td><td><b>' + fmt(T.gain) + ' ₽</b></td></tr>' +
-        '<tr><td colspan="4">Итого без НДС</td><td>' + fmt(T.bez) + ' ₽</td></tr>' +
-        '<tr><td colspan="4">в т. ч. НДС ' + pctText(T.rate) + '</td><td>' +
-        fmt(T.nds) + ' ₽</td></tr>' +
-        '<tr><td colspan="4"><b>ИТОГО к оплате</b></td><td><b>' + fmt(T.total) +
-        ' ₽</b></td></tr></tbody>';
-      box.appendChild(tb);
-      box.appendChild(el('p', '', '<i>' + esc(propisyu(T.total)) + '</i>'));
+    box.appendChild(el('div', 'kp-sec', '1.&nbsp; Смета поставки'));
+
+    if (!state.items.length) {
+      box.appendChild(el('div', 'kp-empty',
+        'Смета пуста: добавьте позиции на вкладке «Конфигуратор» — они встанут ' +
+        'в эту таблицу, а итоги и сумма прописью пересчитаются сами.'));
+      return;
     }
 
-    box.appendChild(el('p', 'muted',
-      'Условия поставки: под заказ — 50 % предоплата, остаток перед отгрузкой, срок с завода ' +
-      'около 60 дней. Из наличия — 100 % оплата, отгрузка 1–3 рабочих дня. ' +
-      'Доставка, пуско-наладка и обучение рассчитываются отдельно.'));
-    box.appendChild(el('div', 'kp-mgr',
-      'Ваш менеджер: <b>' + esc(k.kpContact || APP.manager.name) + '</b><br>' +
-      esc(APP.manager.phone) + ' · ' + esc(APP.manager.email) +
-      (k.kpPhone ? '<br>Контакт клиента: ' + esc(k.kpPhone) : '')));
-    box.appendChild(el('div', 'kp-foot',
-      'Предложение действует ' + APP.kpValidDays + ' дней. Счёт фиксирует цену и наличие на ' +
-      APP.invoiceValidDays + ' дней. Цены указаны с НДС.'));
+    var tb = el('table');
+    var rows = T.lines.map(function (L, i) {
+      return '<tr><td class="kp-n">' + (i + 1) + '</td>' +
+        '<td class="kp-nm"><b>' + esc(L.item.name) + '</b>' +
+        (L.dsc ? '<span>скидка ' + pctText(L.dsc) + ' от цены прайса ' +
+          fmt(L.item.price) + ' ₽</span>' : '') + '</td>' +
+        '<td class="kp-q">' + L.item.qty + ' шт</td>' +
+        '<td class="kp-p">' + fmt(L.unit) + '</td>' +
+        '<td class="kp-p"><b>' + fmt(L.line) + '</b></td></tr>';
+    }).join('');
+    var tot = '';
+    if (T.gain) {
+      tot += '<tr class="kp-tot"><td colspan="4">Ваша выгода:</td><td>' +
+        fmt(T.gain) + '</td></tr>';
+    }
+    tot += '<tr class="kp-tot"><td colspan="4">Итого без НДС:</td><td>' +
+      fmt(T.bez) + '</td></tr>' +
+      '<tr class="kp-tot"><td colspan="4">в т. ч. НДС ' + pctText(T.rate) +
+      ':</td><td>' + fmt(T.nds) + '</td></tr>' +
+      '<tr class="kp-fin"><td colspan="4">ИТОГО к оплате (с НДС ' + pctText(T.rate) +
+      '):</td><td>' + fmt(T.total) + ' ₽</td></tr>';
+    tb.innerHTML = '<thead><tr><th class="kp-n">№</th><th>Наименование</th>' +
+      '<th class="kp-q">Кол-во</th><th class="kp-p">Цена за ед., с НДС ₽</th>' +
+      '<th class="kp-p">Сумма, с НДС ₽</th></tr></thead><tbody>' + rows + tot + '</tbody>';
+    box.appendChild(tb);
+
+    box.appendChild(el('p', 'kp-propis',
+      '<b>Сумма прописью:</b> ' + esc(propisyu(T.total)) + ', в том числе НДС ' +
+      pctText(T.rate) + ' — ' + esc(propisyu(T.nds)) +
+      '. Доставка в стоимость не включена. Счёт фиксирует цену и наличие на ' +
+      APP.invoiceValidDays + ' дней.'));
   }
 
   $('btnPrint').addEventListener('click', function () {
@@ -603,17 +655,17 @@
   $('btnJson').addEventListener('click', function () {
     var T = totals(), k = state.kp;
     var dp = (k.kpDate || '').split('.');
-    var MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля',
-      'августа', 'сентября', 'октября', 'ноября', 'декабря'];
     var payload = {
       'КЛИЕНТ': k.kpClient || '', 'ИНН': k.kpInn || '',
       'ПРИМЕЧАНИЕ': k.kpNote ? ' - ' + k.kpNote : '',
       'ИСХ_НОМЕР': k.kpNum || '',
       'КОНТАКТ_ИМЯ': k.kpContact || APP.manager.name,
       'КОНТАКТ_ТЕЛЕФОН': k.kpPhone || APP.manager.phone,
-      'ДД': dp[0] || '', 'МЕСЯЦА': MONTHS[(parseInt(dp[1], 10) || 1) - 1], 'ГГГГ': dp[2] || '',
+      'ДД': dp[0] || '', 'МЕСЯЦА': MONTHS_G[(parseInt(dp[1], 10) || 1) - 1], 'ГГГГ': dp[2] || '',
       'менеджер': APP.manager,
       'гарантия': APP.guarantee.label,
+      'срок_поставки': state.kp.kpTerm === 'stock'
+        ? APP.deliveryTerms.stock : APP.deliveryTerms.order,
       'ставка_НДС': T.rate / 10,
       'скидка_по_умолчанию': T.gDisc / 10,
       'позиции': T.lines.map(function (L) {
