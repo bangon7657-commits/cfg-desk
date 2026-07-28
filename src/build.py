@@ -52,10 +52,13 @@ APP = {
     'invoiceValidDays': data.INVOICE_VALID_DAYS,
     'manager': data.MANAGER,
     'guarantee': data.GUARANTEE,
-    # Для выгрузки ТКП в файл: подпись директора собирается в JS,
-    # остальные реквизиты берутся из готовой статической разметки листа.
-    'company': {'ceoTitle': data.COMPANY['ceo_title'],
-                'ceoShort': data.COMPANY['ceo_short']},
+    # Для выгрузки ТКП в файл и для смены поставщика
+    'company': {'phone': data.COMPANY['phone'], 'email': data.COMPANY['email'],
+                'site': data.COMPANY['site'], 'brand': data.COMPANY['brand'],
+                'social': data.COMPANY['social']},
+    'suppliers': data.SUPPLIERS,
+    'supplierDefault': data.SUPPLIER_DEFAULT,
+    'supplierByWarning': data.SUPPLIER_BY_WARNING,
     'deliveryOrder': data.DELIVERY_ORDER_LABEL,
     'deliveryStock': data.DELIVERY_STOCK_LABEL,
     'deliveryTerms': data.DELIVERY_TERMS,
@@ -79,6 +82,8 @@ APP = {
     'pnr': [{'model': m, 'days': d, 'pnr': p, 'plus1': p1, 'plus2': p2,
              'training': t, 'package': pk}
             for m, d, p, p1, p2, t, pk in data.PNR],
+    'pnrTerms': data.PNR_TERMS,
+    'fiberAWorkMm': data.FIBER_A_WORK_MM,
     'cutLimits': ref.CUT_LIMITS,
     'gasByMaterial': ref.GAS_BY_MATERIAL,
     'reservePct': ref.RESERVE_PCT,
@@ -273,13 +278,53 @@ DATA_RULES_HTML = ''.join(
 with open(os.path.join(HERE, 'kp_logo.png'), 'rb') as f:
     LOGO_B64 = base64.b64encode(f.read()).decode('ascii')
 
+SUP_DEFAULT = [s for s in data.SUPPLIERS if s['id'] == data.SUPPLIER_DEFAULT][0]
+
+
+def legal_lines(sup_raw):
+    """Строки блока реквизитов. Пустые поля пропускаются — не выдумываем.
+
+    Тот же порядок строк собирает ui.js при смене поставщика; совпадение
+    статики и скрипта проверяется в prerender.js.
+    """
+    # .get(): профиль без какого-то ключа не должен ронять сборку
+    sup = {k: (sup_raw.get(k) or '') for k in
+           ('name', 'inn', 'kpp', 'ogrn', 'okpo', 'unp', 'ceo_full', 'account',
+            'bank', 'bik', 'corr', 'addr_legal', 'addr_fact')}
+    out = []
+    ident = []
+    if sup['inn']:
+        ident.append('ИНН/КПП ' + sup['inn'] + (' / ' + sup['kpp'] if sup['kpp'] else ''))
+    if sup['ogrn']:
+        ident.append('ОГРН/ОКПО ' + sup['ogrn'] + (' / ' + sup['okpo'] if sup['okpo'] else ''))
+    if sup['unp']:
+        ident.append('УНП ' + sup['unp'])
+    out.append('Юр. лицо: ' + sup['name'] + (' · ' + ' · '.join(ident) if ident else ''))
+    if sup['ceo_full']:
+        out.append('Руководитель: ' + sup['ceo_full'])
+    if sup['account']:
+        acc = 'Р/счёт: ' + sup['account']
+        for extra in (sup['bank'], 'БИК ' + sup['bik'] if sup['bik'] else '',
+                      'К/счёт ' + sup['corr'] if sup['corr'] else ''):
+            if extra:
+                acc += ' · ' + extra
+        out.append(acc)
+    if sup['addr_legal']:
+        out.append('Юр. адрес: ' + sup['addr_legal'])
+    if sup['addr_fact']:
+        out.append('Факт. адрес: ' + sup['addr_fact'])
+    out.append(data.COMPANY['social'])
+    return out
+
+
 KP_HEAD = (
     '<div class="kp-head">'
     f'<img class="kp-logo" src="data:image/png;base64,{LOGO_B64}" '
     'alt="LASERCUT" width="260" height="61">'
     '<div class="kp-contacts">'
     f'{esc(data.COMPANY["phone"])} · {esc(data.COMPANY["email"])} · '
-    f'{esc(data.COMPANY["site"])}<br><span>{esc(data.COMPANY["line"])}</span>'
+    f'{esc(data.COMPANY["site"])}<br>'
+    f'<span id="kpHeadLine">{esc(SUP_DEFAULT["head_line"])}</span>'
     '</div></div>')
 
 
@@ -297,9 +342,10 @@ KP_NEXT = (f'<div class="kp-cta"><b>{esc(data.NEXT_STEP["title"])}</b>'
 KP_SIGN = (
     '<div class="kp-sign">'
     '<div><div class="kp-sign-t">С уважением,<br>'
-    f'<b>{esc(data.COMPANY["ceo_title"])}</b></div>'
+    f'<b id="kpSignTitle">{esc(SUP_DEFAULT["ceo_title"])}</b></div>'
     '<div class="kp-line"></div>'
-    f'<span class="kp-cap"><b>{esc(data.COMPANY["ceo_short"])}</b> · подпись / Ф.И.О.</span>'
+    f'<span class="kp-cap"><b id="kpSignName">{esc(SUP_DEFAULT["ceo_short"])}</b>'
+    ' · подпись / Ф.И.О.</span>'
     '</div>'
     '<div><div class="kp-sign-t"></div><div class="kp-line"></div>'
     '<span class="kp-cap">М.П.</span></div></div>')
@@ -307,12 +353,34 @@ KP_MGR = ('<div class="kp-mgr"><span>Ваш менеджер</span>'
           f'<b>{esc(data.MANAGER["name"])}</b> · {esc(data.MANAGER["role"])}<br>'
           f'{esc(data.MANAGER["phone"])} · {esc(data.MANAGER["email"])} · '
           f'{esc(data.MANAGER["sites"])}</div>')
-KP_LEGAL = ('<div class="kp-legal"><b>' + esc(data.COMPANY['brand']) + '</b>' +
-            ''.join(f'<span>{esc(x)}</span>' for x in data.COMPANY['legal']) +
+KP_LEGAL = ('<div class="kp-legal" id="kpLegal"><b>' + esc(data.COMPANY['brand']) +
+            '</b>' +
+            ''.join(f'<span>{esc(x)}</span>' for x in legal_lines(SUP_DEFAULT)) +
             '</div>')
+
+SUPPLIER_OPTIONS = ''.join(
+    f'<option value="{s["id"]}">{esc(s["short"])}'
+    f'{"" if s["confirmed"] else " — реквизиты заполнить"}</option>'
+    for s in data.SUPPLIERS)
+
+SUPPLIER_FIELDS = [
+    ('name', 'Юр. лицо'), ('ceo_title', 'Должность и лицо в подписи'),
+    ('ceo_short', 'Фамилия И.О.'), ('ceo_full', 'Руководитель полностью'),
+    ('head_line', 'Строка в шапке ТКП'),
+    ('inn', 'ИНН'), ('kpp', 'КПП'), ('ogrn', 'ОГРН'), ('okpo', 'ОКПО'),
+    ('unp', 'УНП (РБ)'), ('account', 'Р/счёт'), ('bank', 'Банк'),
+    ('bik', 'БИК'), ('corr', 'К/счёт'),
+    ('addr_legal', 'Юр. адрес'), ('addr_fact', 'Факт. адрес'),
+]
+SUPPLIER_FORM = ''.join(
+    f'<div style="flex:1 1 240px"><label class="f">{esc(t)}</label>'
+    f'<input type="text" id="sup_{k}" data-sup="{k}"></div>'
+    for k, t in SUPPLIER_FIELDS)
 
 with open(os.path.join(HERE, 'money.js'), encoding='utf-8') as f:
     MONEY_JS = f.read()
+with open(os.path.join(HERE, 'docx.js'), encoding='utf-8') as f:
+    DOCX_JS = f.read()
 with open(os.path.join(HERE, 'ui.js'), encoding='utf-8') as f:
     UI_JS = f.read()
 with open(os.path.join(HERE, 'style.css'), encoding='utf-8') as f:
@@ -352,6 +420,11 @@ repl = {
     '__KP_NEXT__': KP_NEXT,
     '__KP_SIGN__': KP_SIGN,
     '__KP_MGR__': KP_MGR,
+    '__PAY_TERMS__': esc(dict(data.DELIVERY_ROWS)['Условия оплаты']),
+    '__SUPPLIER_OPTIONS__': SUPPLIER_OPTIONS,
+    '__SUPPLIER_FORM__': SUPPLIER_FORM,
+    '__SUPPLIER_NOTE__': esc(data.SUPPLIER_NOTE),
+    '__DOCX_JS__': DOCX_JS,
     '__KP_LEGAL__': KP_LEGAL,
     '__DELIVERY_ORDER__': esc(data.DELIVERY_ORDER_LABEL),
     '__DELIVERY_ORDER_FULL__': esc(data.DELIVERY_TERMS['order']),
@@ -376,26 +449,19 @@ repl = {
     '__GUARANTEE__': esc(data.GUARANTEE['label']),
     '__GUARANTEE_NOTE__': esc(data.GUARANTEE['note']),
     '__MAX_DISC__': str(data.MAX_DISCOUNT_PCT),
-    '__N_FIBER__': str(n_fiber),
-    '__N_MILLING__': str(len(data.MILLING)),
     '__FIBER_COUNT__': plural(n_fiber, CFG_FORMS),
     '__MILLING_COUNT__': plural(len(data.MILLING), CFG_FORMS),
     '__DATE_FIBER__': data.PRICE_DATES['fiber'],
     '__DATE_MILLING__': data.PRICE_DATES['milling'],
     '__DATE_OPTIONS__': data.PRICE_DATES['options'],
-    '__NDS__': str(data.NDS_DEFAULT),
     '__KP_DAYS__': str(data.KP_VALID_DAYS),
     '__INVOICE_DAYS__': str(data.INVOICE_VALID_DAYS),
-    '__MGR_NAME__': data.MANAGER['name'],
-    '__MGR_PHONE__': data.MANAGER['phone'],
-    '__MGR_EMAIL__': data.MANAGER['email'],
     '__DEV_EXACT__': str(dev_exact),
     '__DEV_TOTAL__': str(len(data.MILLING)),
     '__DEV_OK__': str(len(data.MILLING) - dev_exact),
     '__DEV_MAX__': str(max_dev),
     '__DEV_R100__': str(dev_r100),
     '__RESERVE__': str(ref.RESERVE_PCT),
-    '__CACHE_V__': str(CACHE_VERSION),
 }
 for k, v in repl.items():
     html = html.replace(k, v)
@@ -403,6 +469,11 @@ for k, v in repl.items():
 leftovers = [k for k in repl if k in html]
 if leftovers:
     raise SystemExit(f'Незаменённые плейсхолдеры: {leftovers}')
+
+# Обратная сторона: запись в карте замен, которой нет в шаблоне, — мёртвый код.
+unused = sorted(k for k in repl if k not in TPL)
+if unused:
+    raise SystemExit(f'Лишние записи в карте замен (нет в шаблоне): {unused}')
 
 with open(os.path.join(DIST, 'index.html'), 'w', encoding='utf-8') as f:
     f.write(html)

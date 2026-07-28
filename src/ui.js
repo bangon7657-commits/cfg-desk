@@ -10,6 +10,11 @@
     if (html !== undefined) n.innerHTML = html;
     return n;
   }
+  // первая буква строчной: сумма прописью в середине фразы не должна начинаться с большой
+  function lower1(t) {
+    return t ? t.charAt(0).toLowerCase() + t.slice(1) : t;
+  }
+
   function esc(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
@@ -30,7 +35,9 @@
   var state = {
     items: [], kp: {}, disc: 0, nds: 220, demo: false,
     ready: {}, gas: { nozzle: '2', gas: 'n2', hours: '80', price: '' },
-    mode: 'order', cat: 'fiber', mtCat: 'fiber'
+    mode: 'order', cat: 'fiber', mtCat: 'fiber',
+    // поставщик в ТКП и правки его реквизитов, тема оформления
+    supId: '', sups: {}, theme: 'dark'
   };
   try {
     // v1 → v2: подхватываем черновик, сохранённый прошлой версией, и переносим его
@@ -47,6 +54,9 @@
         if (!it.type) it.type = 'eq';
         if (it.disc === undefined) it.disc = null;
       });
+      // черновики прошлых версий не знали про поставщика и тему
+      if (!state.sups || typeof state.sups !== 'object') state.sups = {};
+      if (state.theme !== 'light' && state.theme !== 'dark') state.theme = 'dark';
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
 
@@ -98,6 +108,28 @@
   $('demoMode').addEventListener('change', function () { applyDemo(this.checked); });
   $('demoOff').addEventListener('click', function () { applyDemo(false); });
   applyDemo(!!state.demo);
+
+  // ------------------------------------------------------------------ тема
+  // Тёмная — по умолчанию, как было; светлая включается атрибутом на <html>.
+  // Лист ТКП в обеих темах белый, поэтому печать не меняется.
+  function applyTheme(name) {
+    var light = name === 'light';
+    state.theme = light ? 'light' : 'dark';
+    if (light) d.documentElement.setAttribute('data-theme', 'light');
+    else d.documentElement.removeAttribute('data-theme');
+    var b = $('themeBtn');
+    if (b) {
+      b.textContent = light ? 'Тёмная тема' : 'Светлая тема';
+      b.setAttribute('aria-pressed', light ? 'true' : 'false');
+    }
+    var meta = d.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', light ? '#f6f4f1' : '#100e0c');
+    save();
+  }
+  $('themeBtn').addEventListener('click', function () {
+    applyTheme(state.theme === 'light' ? 'dark' : 'light');
+  });
+  applyTheme(state.theme === 'light' ? 'light' : 'dark');
 
   // ------------------------------------------------------------------ тост
   var toastTimer = null;
@@ -201,7 +233,7 @@
     }
     out.appendChild(el('div', 'note',
       'Сверх цены станка: доставка, ПНР, обучение и подготовка цеха. ' +
-      'Стабилизатор 30 000 или 50 000 Вт — отдельная статья и условие гарантии.'));
+      'Стабилизатор ' + esc(stabPower()) + ' — отдельная статья и условие гарантии.'));
   }
 
   $('fSeries').addEventListener('change', fillFiberFormats);
@@ -351,8 +383,8 @@
       st.appendChild(el('div', '', 'Коэффициент ×1,2 на сторонний станок: <b>' +
         fmtRub(toCents(p.price)) + ' ₽</b>'));
     }
-    st.appendChild(el('div', '', 'Минимальный выезд за день — 22 000 ₽, ' +
-      'штраф за ложный выезд 19 000 ₽'));
+    // условия берём из данных: правка прайса должна доходить до экрана
+    st.appendChild(el('div', '', esc(APP.pnrTerms.join(' · '))));
     out.appendChild(st);
   }
   ['pnrModel', 'pnrKind', 'thirdParty'].forEach(function (id) {
@@ -368,9 +400,19 @@
     state.cat = c;
     $('blkFiber').style.display = c === 'fiber' ? '' : 'none';
     $('blkMill').style.display = c === 'milling' ? '' : 'none';
+    if (c === 'milling') renderMill();
     save();
   }
   $('cat').addEventListener('change', switchCat);
+
+  // Мощности стабилизатора берём из справочника готовности цеха, а не из текста
+  function stabPower() {
+    var found = '';
+    (APP.readiness || []).forEach(function (r) {
+      if (r.name === 'Стабилизатор') found = r.a + ' (волокно) или ' + r.s + ' (труборез)';
+    });
+    return found || '';
+  }
 
   // ------------------------------------------------------------------ смета
   var dscSel = fresh('discount');
@@ -391,6 +433,130 @@
   if (state.kp.kpTerm) $('kpTerm').value = state.kp.kpTerm;
   $('kpTerm').addEventListener('change', function () {
     state.kp.kpTerm = this.value; save(); renderKP();
+  });
+
+  // ------------------------------------------------------- поставщик в ТКП
+  // Профили из данных плюс правки пользователя. Правки живут в state.sups
+  // (localStorage), исходные значения всегда можно вернуть кнопкой.
+  var SUP_KEYS = ['name', 'ceo_title', 'ceo_short', 'ceo_full', 'head_line', 'inn',
+    'kpp', 'ogrn', 'okpo', 'unp', 'account', 'bank', 'bik', 'corr',
+    'addr_legal', 'addr_fact'];
+
+  function supExists(id) {
+    var yes = false;
+    APP.suppliers.forEach(function (s) { if (s.id === id) yes = true; });
+    return yes;
+  }
+
+  function supBase(id) {
+    var found = null;
+    APP.suppliers.forEach(function (s) { if (s.id === id) found = s; });
+    return found || APP.suppliers[0];
+  }
+
+  function supNow() {
+    // если в сохранённом черновике остался неизвестный профиль, чиним state,
+    // иначе правки продолжали бы писаться под мёртвый ключ
+    if (state.supId && !supExists(state.supId)) state.supId = '';
+    var id = state.supId || APP.supplierDefault;
+    var base = supBase(id), out = {};
+    SUP_KEYS.forEach(function (k) { out[k] = base[k] || ''; });
+    out.id = base.id; out.short = base.short; out.confirmed = base.confirmed;
+    out.country = base.country;
+    var edits = state.sups && state.sups[id];
+    if (edits) {
+      SUP_KEYS.forEach(function (k) {
+        if (edits[k] !== undefined && edits[k] !== null) out[k] = edits[k];
+      });
+    }
+    return out;
+  }
+
+  // Тот же порядок строк собирает build.py для статики — совпадение под проверкой
+  function legalLines(s) {
+    var out = [], ident = [];
+    if (s.inn) ident.push('ИНН/КПП ' + s.inn + (s.kpp ? ' / ' + s.kpp : ''));
+    if (s.ogrn) ident.push('ОГРН/ОКПО ' + s.ogrn + (s.okpo ? ' / ' + s.okpo : ''));
+    if (s.unp) ident.push('УНП ' + s.unp);
+    out.push('Юр. лицо: ' + s.name + (ident.length ? ' · ' + ident.join(' · ') : ''));
+    if (s.ceo_full) out.push('Руководитель: ' + s.ceo_full);
+    if (s.account) {
+      var acc = 'Р/счёт: ' + s.account;
+      if (s.bank) acc += ' · ' + s.bank;
+      if (s.bik) acc += ' · БИК ' + s.bik;
+      if (s.corr) acc += ' · К/счёт ' + s.corr;
+      out.push(acc);
+    }
+    if (s.addr_legal) out.push('Юр. адрес: ' + s.addr_legal);
+    if (s.addr_fact) out.push('Факт. адрес: ' + s.addr_fact);
+    out.push(APP.company.social);
+    return out;
+  }
+
+  function fillSupForm(s) {
+    SUP_KEYS.forEach(function (k) {
+      var n = $('sup_' + k);
+      if (n) n.value = s[k] || '';
+    });
+  }
+
+  function applySupplier() {
+    var s = supNow();
+    var hl = $('kpHeadLine'); if (hl) hl.textContent = s.head_line;
+    var st = $('kpSignTitle'); if (st) st.textContent = s.ceo_title;
+    var sn = $('kpSignName'); if (sn) sn.textContent = s.ceo_short || '—';
+    var lg = $('kpLegal');
+    if (lg) {
+      clear(lg);
+      lg.appendChild(el('b', '', esc(APP.company.brand)));
+      legalLines(s).forEach(function (t) { lg.appendChild(el('span', '', esc(t))); });
+    }
+    // Чего не хватает для нормального ТКП — говорим прямо, не подставляя выдумок
+    var need = [];
+    if (!s.ceo_short) need.push('фамилию в подписи');
+    if (!s.inn && !s.unp) need.push('ИНН или УНП');
+    if (!s.addr_legal) need.push('юридический адрес');
+    if (!s.account) need.push('банковские реквизиты');
+    var w = $('supWarn');
+    if (w) {
+      var msg = need.length
+        ? 'Для «' + s.short + '» не заполнено: ' + need.join(', ') +
+          '. В ТКП эти строки просто не печатаются.'
+        : 'Реквизиты «' + s.short + '» заполнены полностью.';
+      // условия поставки написаны под РФ: для белорусского юрлица это надо видеть
+      if (s.country === 'BY') msg += ' ' + APP.supplierByWarning;
+      w.className = (need.length || s.country === 'BY') ? 'note alert' : 'note';
+      w.textContent = msg;
+    }
+    var sel = $('kpSupplier');
+    if (sel && sel.value !== s.id) sel.value = s.id;
+    fillSupForm(s);
+  }
+
+  $('kpSupplier').addEventListener('change', function () {
+    state.supId = this.value; save(); applySupplier(); renderKP();
+  });
+  $('supEdit').addEventListener('click', function () {
+    var b = $('supBox');
+    b.open = !b.open;
+    if (b.open && b.scrollIntoView) b.scrollIntoView();
+  });
+  SUP_KEYS.forEach(function (k) {
+    var n = $('sup_' + k);
+    if (!n) return;
+    n.addEventListener('input', function () {
+      var id = state.supId || APP.supplierDefault;
+      if (!state.sups) state.sups = {};
+      if (!state.sups[id]) state.sups[id] = {};
+      state.sups[id][k] = this.value;
+      save(); applySupplier(); renderKP();
+    });
+  });
+  $('supReset').addEventListener('click', function () {
+    var id = state.supId || APP.supplierDefault;
+    if (state.sups) delete state.sups[id];
+    save(); applySupplier(); renderKP();
+    toast('Реквизиты «' + supNow().short + '» вернулись к исходным');
   });
   if (!state.kp.kpDate) {
     var now = new Date();
@@ -495,7 +661,14 @@
       tot.appendChild(n);
     }
     row('Сумма по прайсу', fmt(T.listSum) + ' ₽');
-    row('Ваша выгода — скидка ' + pctText(T.gDisc), '−' + fmt(T.gain) + ' ₽', 'gain');
+    // Подпись честная: общий процент показываем только если построчных скидок нет,
+    // иначе он не описывает сумму выгоды.
+    var perLine = false;
+    T.lines.forEach(function (L) { if (L.dsc !== T.gDisc) perLine = true; });
+    row(T.gain
+      ? (perLine ? 'Ваша выгода — скидки по строкам'
+        : 'Ваша выгода — скидка ' + pctText(T.gDisc))
+      : 'Ваша выгода', (T.gain ? '−' : '') + fmt(T.gain) + ' ₽', 'gain');
     row('Итого без НДС', fmt(T.bez) + ' ₽');
     row('в т. ч. НДС ' + pctText(T.rate), fmt(T.nds) + ' ₽');
     row('ИТОГО к оплате', fmt(T.total) + ' ₽', 'big');
@@ -510,14 +683,27 @@
       problems.push('Без НДС + НДС = ' + fmt(T.bez + T.nds) + ' ₽, а ИТОГО = ' +
         fmt(T.total) + ' ₽. Расхождение ' + fmt(Math.abs(T.bez + T.nds - T.total)) + ' ₽');
     }
-    var reSum = 0;
-    T.lines.forEach(function (L) { reSum += soSkidkoy(L.item.price, L.dsc) * L.item.qty; });
-    if (reSum !== T.total) {
-      problems.push('Пересчёт построчно даёт ' + fmt(reSum) + ' ₽ против ' + fmt(T.total) + ' ₽');
-    }
-    if (T.listSum - T.gain !== T.total) {
-      problems.push('Прайс − выгода = ' + fmt(T.listSum - T.gain) + ' ₽ против ИТОГО ' +
+    // Пересчёт другим путём: скидка через долю от прайса, а не функцией soSkidkoy,
+    // и НДС из суммы без налога, а не изнутри итога. Совпадение двух разных
+    // способов — это уже проверка, а не пересказ первого расчёта.
+    var alt = 0;
+    T.lines.forEach(function (L) {
+      var line = L.item.price * L.item.qty;
+      alt += line - divHalfUp(line * L.dsc, 1000);
+    });
+    if (Math.abs(alt - T.total) > T.lines.length) {
+      problems.push('Другой способ расчёта скидки даёт ' + fmt(alt) + ' ₽ против ' +
         fmt(T.total) + ' ₽');
+    }
+    var ndsBack = divHalfUp(T.bez * T.rate, 1000);
+    if (Math.abs(ndsBack - T.nds) > 1) {
+      problems.push('НДС от суммы без налога = ' + fmt(ndsBack) + ' ₽, а изнутри итога ' +
+        fmt(T.nds) + ' ₽');
+    }
+    var gainCheck = T.listSum - T.total;
+    if (gainCheck !== T.gain) {
+      problems.push('Выгода как прайс минус итог = ' + fmt(gainCheck) + ' ₽ против ' +
+        fmt(T.gain) + ' ₽');
     }
     if (problems.length) {
       cb.className = 'check fail';
@@ -525,9 +711,10 @@
         problems.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>';
     } else {
       cb.className = 'check good';
-      cb.innerHTML = '<b>Сходимость проверена.</b> Плашка-резюме, смета и сумма прописью ' +
-        'считаются от одного числа: ' + fmt(T.total) + ' ₽. Без НДС + НДС = ИТОГО, ' +
-        'построчный пересчёт совпадает, прайс минус выгода совпадает.';
+      cb.innerHTML = '<b>Сходимость проверена.</b> Всё считается от одного числа: ' +
+        fmt(T.total) + ' ₽. Без НДС + НДС = ИТОГО; скидка, посчитанная другим ' +
+        'способом (доля от прайса), даёт тот же итог; НДС, начисленный на сумму ' +
+        'без налога, совпадает с выделенным изнутри.';
     }
     renderKP();
   }
@@ -582,7 +769,7 @@
     box.appendChild(el('div', 'kp-to',
       '<div>Кому: <b>' + (k.kpClient ? esc(k.kpClient) : BL) + '</b>' +
       ' ИНН ' + (k.kpInn ? esc(k.kpInn) : BL) +
-      (k.kpNote ? ' - ' + esc(k.kpNote) : '') + '</div>' +
+      (k.kpNote ? ' — ' + esc(k.kpNote) : '') + '</div>' +
       '<div>Исх. № <b>' + (k.kpNum ? esc(k.kpNum) : BL) + '</b></div>' +
       '<div>Контакты: <b>' + (k.kpContact ? esc(k.kpContact) : BL) + '</b>' +
       (k.kpPhone ? ', тел. ' + esc(k.kpPhone) : '') + '</div>' +
@@ -640,7 +827,7 @@
 
     box.appendChild(el('p', 'kp-propis',
       '<b>Сумма прописью:</b> ' + esc(propisyu(T.total)) + ', в том числе НДС ' +
-      pctText(T.rate) + ' — ' + esc(propisyu(T.nds)) +
+      pctText(T.rate) + ' — ' + esc(lower1(propisyu(T.nds))) +
       '. Доставка в стоимость не включена. Счёт фиксирует цену и наличие на ' +
       APP.invoiceValidDays + ' дней.'));
   }
@@ -653,246 +840,324 @@
   });
 
   // ------------------------------------------------- выгрузка ТКП в файл
-  // Word открывает HTML-документ как обычный .doc и сохраняет таблицы,
-  // заливки и логотип. Но flex и grid он не понимает, поэтому блоки-сетки
-  // пересобираются в таблицы. Файл автономный: логотип уже data-URL,
-  // внешних ссылок нет — открывается офлайн и в Word, и в Google Docs.
-  // Стили — только inline и атрибутом bgcolor: и Word, и LibreOffice, и
-  // Google Документы применяют их гарантированно, тогда как классы из <style>
-  // теряются (проверено рендером в LibreOffice — заливки пропадали).
-  var NAVY = '#1F3A5F', LIGHT = '#DCE8F4', PALE = '#EAF1F8', GREY = '#5A6572';
-  var BRD = 'border:1px solid #B7C9DC;';
-  var CELL = BRD + 'padding:3px 6px;vertical-align:top;font-family:Calibri,sans-serif;' +
-    'font-size:8.5pt;line-height:1.25;color:#202020;';
-  var HEADCELL = CELL + 'background:' + LIGHT + ';color:' + NAVY + ';font-weight:bold;';
-  var NUM = 'text-align:right;';
-  var MID = 'text-align:center;';
+  // Собирается настоящий .docx (модуль docx.js). Прежний вариант «HTML внутри
+  // .doc» настольный Word открывал, а мобильные Word и Google Документы
+  // считали файл повреждённым — поэтому пакет OOXML собирается честно:
+  // document.xml, styles.xml, логотип в word/media, ZIP без сжатия.
+  var NAVY = '1F3A5F', LIGHT = 'DCE8F4', PALE = 'EAF1F8', GREY = '5A6572',
+    WHITE = 'FFFFFF', DIM = 'B9CBE0', INK = '202020';
+  var W_ALL = 10466;            // ширина текста: A4 (11906) минус поля 2×720
 
-  function td(html, style, attrs) {
-    return '<td style="' + CELL + (style || '') + '"' + (attrs || '') + '>' + html + '</td>';
+  function logoB64() {
+    var img = d.querySelector('#kpDoc img.kp-logo');
+    var src = img ? (img.getAttribute('src') || '') : '';
+    var i = src.indexOf('base64,');
+    return i < 0 ? '' : src.slice(i + 7);
   }
 
-  function band(html, bg, style) {
-    // плашка на всю ширину: таблица из одной ячейки — так заливка не теряется.
-    // page-break-inside:avoid — иначе плашка рвётся между страницами и наверху
-    // следующей остаётся пустая синяя полоса.
-    return '<table width="100%" cellspacing="0" cellpadding="0" border="0" ' +
-      'style="page-break-inside:avoid"><tr>' +
-      '<td bgcolor="' + bg + '" style="padding:6px 9px;font-family:Calibri,sans-serif;' +
-      'page-break-inside:avoid;' + (style || '') + '">' + html + '</td></tr></table>';
+  // плашка во всю ширину — таблица из одной ячейки с заливкой
+  function dBand(inner, fill, keep) {
+    return DOCX.tbl([DOCX.tr([DOCX.tc(inner, { w: W_ALL, fill: fill, noBorder: true })])],
+      [W_ALL]) + (keep ? DOCX.p('', { space: { after: 0 } }) : '');
   }
 
-  function sectionBand(t) {
-    return '<p style="margin:14px 0 7px;page-break-after:avoid">' +
-      band(t, NAVY, 'color:#FFFFFF;font-weight:bold;font-size:10.5pt') + '</p>';
+  function dSection(num, name) {
+    return dBand(DOCX.p(DOCX.run(num + '.  ' + name, { b: true, color: WHITE, sz: 21 }),
+      { space: { before: 40, after: 40 }, keepNext: true }), NAVY) +
+      DOCX.p('', { space: { after: 40 } });
   }
 
-  function rowsFromTable(node) {
-    // таблицу условий / гарантии пересобираем с inline-стилями
-    if (!node) return '';
-    var out = Array.prototype.map.call(node.querySelectorAll('tr'), function (tr) {
-      var h = tr.querySelector('th'), c = tr.querySelector('td');
-      return '<tr>' + td(esc(h ? h.textContent : ''),
-        'background:' + LIGHT + ';color:' + NAVY + ';font-weight:bold;width:29%') +
-        td(esc(c ? c.textContent : '')) + '</tr>';
-    }).join('');
-    return '<table width="100%" cellspacing="0" cellpadding="0">' + out + '</table>';
+  function dGap(after) {
+    return DOCX.p('', { space: { after: after === undefined ? 120 : after } });
   }
 
-  function buildWordDoc() {
-    var T = totals(), k = state.kp;
+  function docxBody() {
+    var T = totals(), k = state.kp, sup = supNow();
     var first = state.items.length ? state.items[0].name : '';
     var title = k.kpTitle || first || 'Оборудование с ЧПУ LASERCUT';
-    var logo = d.querySelector('#kpDoc img.kp-logo');
-    var contacts = d.querySelector('#kpDoc .kp-contacts');
-    var kpTables = d.querySelectorAll('#kpDoc table.kp-t');
-    var cta = d.querySelector('#kpDoc .kp-cta');
-    var legal = d.querySelector('#kpDoc .kp-legal');
+    var out = '';
 
-    var head = '<table width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' +
-      '<td width="45%" style="vertical-align:top"><img src="' +
-      (logo ? logo.getAttribute('src') : '') +
-      '" width="200" height="47" alt="LASERCUT"></td>' +
-      '<td style="text-align:right;vertical-align:top;font-family:Calibri,sans-serif;' +
-      'font-size:8pt;color:' + GREY + '">' + (contacts ? contacts.innerHTML : '') +
-      '</td></tr></table>';
+    // шапка: логотип и контакты
+    var contacts = APP.company.phone + ' · ' + APP.company.email + ' · ' +
+      APP.company.site;
+    out += DOCX.tbl([DOCX.tr([
+      DOCX.tc(DOCX.p(DOCX.image(1, 5.5, 1.29, 'LASERCUT'), { space: { after: 0 } }),
+        { w: 4600, noBorder: true, valign: 'center' }),
+      DOCX.tc(DOCX.p(DOCX.run(contacts, { sz: 16, color: GREY }),
+        { align: 'right', space: { after: 20 } }) +
+        DOCX.p(DOCX.run(sup.head_line, { sz: 15, color: GREY }),
+          { align: 'right', space: { after: 0 } }),
+        { w: 5866, noBorder: true })
+    ])], [4600, 5866]);
+    out += dGap(80);
 
-    var titleBand = '<p style="margin:10px 0 10px">' + band(
-      '<div style="font-size:14pt;font-weight:bold;text-align:center;color:#FFFFFF">' +
-      'ТЕХНИКО-КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ</div>' +
-      '<div style="font-size:10pt;text-align:center;color:' + LIGHT + '">' +
-      esc(title) + '</div>', NAVY, 'padding:9px 12px') + '</p>';
+    // титульная плашка
+    out += dBand(
+      DOCX.p(DOCX.run('ТЕХНИКО-КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ',
+        { b: true, color: WHITE, sz: 28 }), { align: 'center', space: { after: 30 } }) +
+      DOCX.p(DOCX.run(title, { color: LIGHT, sz: 20 }),
+        { align: 'center', space: { after: 0 } }), NAVY);
+    out += dGap(80);
 
-    var line = '<span style="border-bottom:1px solid #8A99A8">' +
-      '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>';
-    var to = '<table width="100%" cellspacing="0" cellpadding="0">' +
-      '<tr>' + td('Кому: <b>' + (k.kpClient ? esc(k.kpClient) : line) + '</b> ИНН ' +
-        (k.kpInn ? esc(k.kpInn) : line) + (k.kpNote ? ' - ' + esc(k.kpNote) : ''),
-        'width:62%') +
-      td('Исх. № <b>' + (k.kpNum ? esc(k.kpNum) : line) + '</b>') + '</tr>' +
-      '<tr>' + td('Контакты: <b>' + (k.kpContact ? esc(k.kpContact) : line) + '</b>' +
-        (k.kpPhone ? ', тел. ' + esc(k.kpPhone) : '')) +
-      td(esc(dateLong(k.kpDate))) + '</tr></table>';
-
-    var lead = '<p style="font-family:Calibri,sans-serif;font-size:9.5pt;text-align:justify">' +
-      'Благодарим за интерес к оборудованию LASERCUT. Ниже — состав поставки, ' +
-      'стоимость и условия. Оборудование новое, не бывшее в эксплуатации, ' +
-      'соответствует требованиям ТР ТС 004/2011, 010/2011, 020/2011.</p>';
-
-    function sumCell(kk, vv) {
-      return '<td bgcolor="' + NAVY + '" width="25%" style="border:1px solid #2E5B94;' +
-        'padding:6px 9px;font-family:Calibri,sans-serif;vertical-align:top">' +
-        '<div style="font-size:7.5pt;color:#B9CBE0">' + kk + '</div>' +
-        '<div style="font-size:11pt;font-weight:bold;color:#FFFFFF">' + vv + '</div></td>';
+    // кому / исх. номер / контакты / дата
+    // пустое поле — подчёркнутые пробелы, а не строка подчёркиваний:
+    // подряд идущие «_» ловятся проверкой «незаменённых плейсхолдеров»
+    function orLine(v, opt) {
+      return v ? DOCX.run(v, opt)
+        : DOCX.run('                  ', { u: true, sz: (opt && opt.sz) || 17 });
     }
-    var sum = '<table width="100%" cellspacing="0" cellpadding="0"><tr>' +
-      sumCell('Рекомендуем', esc(first || '—')) +
-      sumCell('Стоимость, с НДС ' + pctText(T.rate), fmt(T.total) + ' ₽') +
-      sumCell('Срок поставки', esc(termLabel())) +
-      sumCell('Гарантия', esc(APP.guarantee.label)) + '</tr></table>';
+    out += DOCX.tbl([
+      DOCX.tr([
+        DOCX.tc(DOCX.p(DOCX.run('Кому: ', { sz: 17 }) +
+          orLine(k.kpClient, { b: true, sz: 17 }) +
+          DOCX.run('  ИНН ', { sz: 17 }) + orLine(k.kpInn, { sz: 17 }) +
+          DOCX.run(k.kpNote ? ' — ' + k.kpNote : '', { sz: 17 }),
+          { space: { after: 0 } }), { w: 6500 }),
+        DOCX.tc(DOCX.p(DOCX.run('Исх. № ', { sz: 17 }) +
+          orLine(k.kpNum, { b: true, sz: 17 }), { space: { after: 0 } }),
+          { w: 3966 })
+      ]),
+      DOCX.tr([
+        DOCX.tc(DOCX.p(DOCX.run('Контакты: ', { sz: 17 }) +
+          orLine(k.kpContact, { b: true, sz: 17 }) +
+          DOCX.run(k.kpPhone ? ', тел. ' + k.kpPhone : '', { sz: 17 }),
+          { space: { after: 0 } }), { w: 6500 }),
+        DOCX.tc(DOCX.p(DOCX.run(dateLong(k.kpDate), { sz: 17 }),
+          { space: { after: 0 } }), { w: 3966 })
+      ])
+    ], [6500, 3966]);
+    out += dGap(100);
 
-    var smeta = '';
+    // вводный абзац
+    out += DOCX.p(DOCX.run('Благодарим за интерес к оборудованию LASERCUT. Ниже — ' +
+      'состав поставки, стоимость и условия. Оборудование новое, не бывшее ' +
+      'в эксплуатации, соответствует требованиям ТР ТС 004/2011, 010/2011, 020/2011.',
+      { sz: 19 }), { align: 'both', space: { after: 140 } });
+
+    // плашка-резюме из четырёх ячеек
+    function sumCell(kk, vv, w) {
+      return DOCX.tc(
+        DOCX.p(DOCX.run(kk, { sz: 15, color: DIM }), { space: { after: 20 } }) +
+        DOCX.p(DOCX.run(vv, { b: true, color: WHITE, sz: 22 }), { space: { after: 0 } }),
+        { w: w, fill: NAVY, noBorder: true });
+    }
+    var q = Math.floor(W_ALL / 4);
+    out += DOCX.tbl([DOCX.tr([
+      sumCell('Рекомендуем', first || '—', q),
+      sumCell('Стоимость, с НДС ' + pctText(T.rate), fmt(T.total) + ' ₽', q),
+      sumCell('Срок поставки', termLabel(), q),
+      sumCell('Гарантия', APP.guarantee.label, W_ALL - q * 3)
+    ])], [q, q, q, W_ALL - q * 3]);
+    out += dGap(120);
+
+    // 1. Смета поставки
+    out += dSection(1, 'Смета поставки');
+    var G = [560, 4620, 800, 2200, 2286];
     if (state.items.length) {
-      var rows = T.lines.map(function (L, i) {
-        return '<tr>' + td(String(i + 1), MID + 'color:' + GREY) +
-          td('<b style="color:' + NAVY + '">' + esc(L.item.name) + '</b>' +
-            (L.dsc ? '<br><span style="font-size:7.5pt;color:' + GREY + '">скидка ' +
-              pctText(L.dsc) + ' от цены прайса ' + fmt(L.item.price) + ' ₽</span>' : '')) +
-          td(L.item.qty + ' шт', MID) + td(fmt(L.unit), NUM) +
-          td('<b>' + fmt(L.line) + '</b>', NUM) + '</tr>';
-      }).join('');
-      var totStyle = 'background:' + PALE + ';color:' + NAVY + ';font-weight:bold;' + NUM;
-      var tot = '';
-      if (T.gain) {
-        tot += '<tr>' + td('Ваша выгода:', totStyle, ' colspan="4"') +
-          td(fmt(T.gain), totStyle) + '</tr>';
+      var rows = [DOCX.tr([
+        DOCX.tc(DOCX.p(DOCX.run('№', { b: true, color: NAVY, sz: 17 }),
+          { align: 'center', space: { after: 0 } }), { w: G[0], fill: LIGHT }),
+        DOCX.tc(DOCX.p(DOCX.run('Наименование', { b: true, color: NAVY, sz: 17 }),
+          { space: { after: 0 } }), { w: G[1], fill: LIGHT }),
+        DOCX.tc(DOCX.p(DOCX.run('Кол-во', { b: true, color: NAVY, sz: 17 }),
+          { align: 'center', space: { after: 0 } }), { w: G[2], fill: LIGHT }),
+        DOCX.tc(DOCX.p(DOCX.run('Цена за ед., с НДС ₽', { b: true, color: NAVY, sz: 17 }),
+          { align: 'right', space: { after: 0 } }), { w: G[3], fill: LIGHT }),
+        DOCX.tc(DOCX.p(DOCX.run('Сумма, с НДС ₽', { b: true, color: NAVY, sz: 17 }),
+          { align: 'right', space: { after: 0 } }), { w: G[4], fill: LIGHT })
+      ], { header: true })];
+
+      T.lines.forEach(function (L, i) {
+        var nm = DOCX.p(DOCX.run(L.item.name, { b: true, color: NAVY, sz: 17 }),
+          { space: { after: L.dsc ? 20 : 0 } });
+        if (L.dsc) {
+          nm += DOCX.p(DOCX.run('скидка ' + pctText(L.dsc) + ' от цены прайса ' +
+            fmt(L.item.price) + ' ₽', { sz: 15, color: GREY }), { space: { after: 0 } });
+        }
+        rows.push(DOCX.tr([
+          DOCX.tc(DOCX.p(DOCX.run(String(i + 1), { sz: 17, color: GREY }),
+            { align: 'center', space: { after: 0 } }), { w: G[0] }),
+          DOCX.tc(nm, { w: G[1] }),
+          DOCX.tc(DOCX.p(DOCX.run(L.item.qty + ' шт', { sz: 17 }),
+            { align: 'center', space: { after: 0 } }), { w: G[2] }),
+          DOCX.tc(DOCX.p(DOCX.run(fmt(L.unit), { sz: 17 }),
+            { align: 'right', space: { after: 0 } }), { w: G[3] }),
+          DOCX.tc(DOCX.p(DOCX.run(fmt(L.line), { b: true, sz: 17 }),
+            { align: 'right', space: { after: 0 } }), { w: G[4] })
+        ]));
+      });
+
+      function totRow(label, value, fill, color) {
+        return DOCX.tr([
+          DOCX.tc(DOCX.p(DOCX.run(label, { b: true, color: color, sz: 17 }),
+            { align: 'right', space: { after: 0 } }),
+            { w: G[0] + G[1] + G[2] + G[3], span: 4, fill: fill }),
+          DOCX.tc(DOCX.p(DOCX.run(value, { b: true, color: color, sz: 17 }),
+            { align: 'right', space: { after: 0 } }), { w: G[4], fill: fill })
+        ]);
       }
-      tot += '<tr>' + td('Итого без НДС:', totStyle, ' colspan="4"') +
-        td(fmt(T.bez), totStyle) + '</tr>' +
-        '<tr>' + td('в т. ч. НДС ' + pctText(T.rate) + ':', totStyle, ' colspan="4"') +
-        td(fmt(T.nds), totStyle) + '</tr>';
-      var finStyle = 'background:' + NAVY + ';color:#FFFFFF;font-weight:bold;' + NUM;
-      tot += '<tr>' + td('ИТОГО к оплате (с НДС ' + pctText(T.rate) + '):',
-        finStyle, ' colspan="4" bgcolor="' + NAVY + '"') +
-        td(fmt(T.total) + ' ₽', finStyle, ' bgcolor="' + NAVY + '"') + '</tr>';
-      smeta = '<table width="100%" cellspacing="0" cellpadding="0"><tr>' +
-        '<th style="' + HEADCELL + MID + 'width:6%">№</th>' +
-        '<th style="' + HEADCELL + 'text-align:left">Наименование</th>' +
-        '<th style="' + HEADCELL + MID + 'width:9%">Кол-во</th>' +
-        '<th style="' + HEADCELL + NUM + 'width:17%">Цена за ед., с НДС ₽</th>' +
-        '<th style="' + HEADCELL + NUM + 'width:17%">Сумма, с НДС ₽</th></tr>' +
-        rows + tot + '</table>' +
-        '<p style="font-family:Calibri,sans-serif;font-size:8.5pt;text-align:justify">' +
-        '<b style="color:' + NAVY + '">Сумма прописью:</b> ' + esc(propisyu(T.total)) +
-        ', в том числе НДС ' + pctText(T.rate) + ' — ' + esc(propisyu(T.nds)) +
-        '. Доставка в стоимость не включена. Счёт фиксирует цену и наличие на ' +
-        APP.invoiceValidDays + ' дней.</p>';
+      if (T.gain) rows.push(totRow('Ваша выгода:', fmt(T.gain), PALE, NAVY));
+      rows.push(totRow('Итого без НДС:', fmt(T.bez), PALE, NAVY));
+      rows.push(totRow('в т. ч. НДС ' + pctText(T.rate) + ':', fmt(T.nds), PALE, NAVY));
+      rows.push(totRow('ИТОГО к оплате (с НДС ' + pctText(T.rate) + '):',
+        fmt(T.total) + ' ₽', NAVY, WHITE));
+      out += DOCX.tbl(rows, G);
+
+      out += DOCX.p(DOCX.run('Сумма прописью: ', { b: true, color: NAVY, sz: 17 }) +
+        DOCX.run(propisyu(T.total) + ', в том числе НДС ' + pctText(T.rate) + ' — ' +
+          lower1(propisyu(T.nds)) + '. Доставка в стоимость не включена. Счёт фиксирует цену ' +
+          'и наличие на ' + APP.invoiceValidDays + ' дней.', { sz: 17 }),
+        { align: 'both', space: { before: 80, after: 120 } });
     } else {
-      smeta = '<p style="font-family:Calibri,sans-serif;font-size:9pt;color:' + GREY +
-        '">Смета пуста: позиции добавляются на вкладке «Конфигуратор».</p>';
+      out += DOCX.p(DOCX.run('Смета пуста: позиции добавляются на вкладке ' +
+        '«Конфигуратор».', { sz: 17, color: GREY }), { space: { after: 120 } });
     }
 
-    var capStyle = 'font-size:7.5pt;color:' + GREY;
-    // Линия под подпись — нижняя граница ячейки фиксированной высоты:
-    // border-bottom у div внутри ячейки LibreOffice печатает обрезанным.
-    var sign = '<table width="100%" cellspacing="0" cellpadding="0" border="0" ' +
-      'style="page-break-inside:avoid;margin-top:16px">' +
-      '<tr><td width="48%" style="font-family:Calibri,sans-serif;font-size:9pt;' +
-      'vertical-align:top">С уважением,<br><b>' + esc(APP.company.ceoTitle) + '</b></td>' +
-      '<td width="4%"></td><td width="48%"></td></tr>' +
-      '<tr><td height="46" style="border-bottom:1px solid ' + GREY + '">&nbsp;</td>' +
-      '<td></td><td height="46" style="border-bottom:1px solid ' + GREY +
-      '">&nbsp;</td></tr>' +
-      '<tr><td style="font-family:Calibri,sans-serif;' + capStyle + '"><b>' +
-      esc(APP.company.ceoShort) + '</b> · подпись / Ф.И.О.</td><td></td>' +
-      '<td style="font-family:Calibri,sans-serif;' + capStyle + '">М.П.</td></tr></table>';
+    // 2 и 3 — таблицы из листа ТКП: тексты берутся из разметки, не дублируются
+    function pairs(node) {
+      if (!node) return [];
+      return Array.prototype.map.call(node.querySelectorAll('tr'), function (tr) {
+        var h = tr.querySelector('th'), c = tr.querySelector('td');
+        return [h ? h.textContent : '', c ? c.textContent : ''];
+      });
+    }
+    function pairTable(list) {
+      var g = [3050, W_ALL - 3050];
+      return DOCX.tbl(list.map(function (row) {
+        return DOCX.tr([
+          DOCX.tc(DOCX.p(DOCX.run(row[0], { b: true, color: NAVY, sz: 17 }),
+            { space: { after: 0 } }), { w: g[0], fill: LIGHT }),
+          DOCX.tc(DOCX.p(DOCX.run(row[1], { sz: 17 }), { space: { after: 0 } }),
+            { w: g[1] })
+        ]);
+      }), g);
+    }
+    var kpTables = d.querySelectorAll('#kpDoc table.kp-t');
+    out += dSection(2, 'Условия поставки') + pairTable(pairs(kpTables[0])) + dGap();
+    out += dSection(3, 'Гарантия и сервис') + pairTable(pairs(kpTables[1])) + dGap();
 
-    var mgr = '<p style="margin:14px 0 0">' + band(
-      '<div style="' + capStyle + '">Ваш менеджер</div>' +
-      '<div style="font-size:9.5pt"><b style="color:' + NAVY + '">' +
-      esc(APP.manager.name) + '</b> · ' + esc(APP.manager.role) + '<br>' +
-      esc(APP.manager.phone) + ' · ' + esc(APP.manager.email) + ' · ' +
-      esc(APP.manager.sites) + '</div>', PALE, 'color:#202020') + '</p>';
-
-    var ctaBlock = '';
+    // «Готовы сделать следующий шаг?»
+    var cta = d.querySelector('#kpDoc .kp-cta');
     if (cta) {
-      ctaBlock = '<p style="margin:14px 0 0">' + band(
-        '<div style="font-size:12pt;font-weight:bold;color:#FFFFFF">' +
-        esc(cta.querySelector('b').textContent) + '</div>' +
-        '<div style="font-size:8.5pt;color:' + LIGHT + '">' +
-        esc(cta.querySelector('span').textContent) + '</div>', NAVY) + '</p>';
+      out += dBand(
+        DOCX.p(DOCX.run(cta.querySelector('b').textContent,
+          { b: true, color: WHITE, sz: 24 }), { space: { after: 30 } }) +
+        DOCX.p(DOCX.run(cta.querySelector('span').textContent,
+          { color: LIGHT, sz: 17 }), { space: { after: 0 } }), NAVY);
+      out += dGap(160);
     }
 
-    var legalBlock = '';
-    if (legal) {
-      var parts = Array.prototype.map.call(legal.querySelectorAll('span'), function (s) {
-        return esc(s.textContent);
-      }).join('<br>');
-      legalBlock = '<p style="margin:14px 0 0;border-top:1px solid #B7C9DC;padding-top:6px;' +
-        'font-family:Calibri,sans-serif;font-size:7.5pt;color:' + GREY + '">' +
-        '<b style="color:' + NAVY + ';font-size:8pt">' +
-        esc(legal.querySelector('b').textContent) + '</b><br>' + parts + '</p>';
-    }
+    // подпись и М.П.
+    var sg = [5000, 466, 5000];
+    out += DOCX.tbl([
+      DOCX.tr([
+        DOCX.tc(DOCX.p(DOCX.run('С уважением,', { sz: 17 }), { space: { after: 20 } }) +
+          DOCX.p(DOCX.run(sup.ceo_title, { b: true, sz: 17 }), { space: { after: 0 } }),
+          { w: sg[0], noBorder: true }),
+        DOCX.tc(DOCX.p('', { space: { after: 0 } }), { w: sg[1], noBorder: true }),
+        DOCX.tc(DOCX.p('', { space: { after: 0 } }), { w: sg[2], noBorder: true })
+      ]),
+      DOCX.tr([
+        DOCX.tc(DOCX.p('', { space: { after: 0 } }), { w: sg[0], edge: 'bottom' }),
+        DOCX.tc(DOCX.p('', { space: { after: 0 } }), { w: sg[1], noBorder: true }),
+        DOCX.tc(DOCX.p('', { space: { after: 0 } }), { w: sg[2], edge: 'bottom' })
+      ], { h: 700 }),
+      DOCX.tr([
+        DOCX.tc(DOCX.p(DOCX.run(sup.ceo_short || '—', { b: true, sz: 17 }) +
+          DOCX.run(' · подпись / Ф.И.О.', { sz: 15, color: GREY }),
+          { space: { after: 0 } }), { w: sg[0], noBorder: true }),
+        DOCX.tc(DOCX.p('', { space: { after: 0 } }), { w: sg[1], noBorder: true }),
+        DOCX.tc(DOCX.p(DOCX.run('М.П.', { sz: 15, color: GREY }),
+          { space: { after: 0 } }), { w: sg[2], noBorder: true })
+      ])
+    ], sg);
+    out += dGap(140);
 
-    var gap = '<p style="margin:0;font-size:6pt">&nbsp;</p>';
-    var body = head + titleBand + to + lead + gap + sum + gap +
-      sectionBand('1.&nbsp; Смета поставки') + smeta + gap +
-      sectionBand('2.&nbsp; Условия поставки') + rowsFromTable(kpTables[0]) + gap +
-      sectionBand('3.&nbsp; Гарантия и сервис') + rowsFromTable(kpTables[1]) +
-      ctaBlock + gap + sign + gap + mgr + legalBlock;
+    // менеджер
+    out += dBand(
+      DOCX.p(DOCX.run('Ваш менеджер', { sz: 15, color: GREY }), { space: { after: 20 } }) +
+      DOCX.p(DOCX.run(APP.manager.name, { b: true, color: NAVY, sz: 19 }) +
+        DOCX.run(' · ' + APP.manager.role, { sz: 17, color: INK }),
+        { space: { after: 20 } }) +
+      DOCX.p(DOCX.run(APP.manager.phone + ' · ' + APP.manager.email + ' · ' +
+        APP.manager.sites, { sz: 17, color: INK }), { space: { after: 0 } }), PALE);
+    out += dGap(140);
 
-    // Поля 1,27 см: Word берёт их из mso-разметки, LibreOffice — из @page
-    return '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
-      'xmlns:w="urn:schemas-microsoft-com:office:word"><head>' +
-      '<meta charset="utf-8"><title>ТКП LASERCUT</title>' +
-      '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>' +
-      '</w:WordDocument></xml><![endif]-->' +
-      '<style>@page{size:21cm 29.7cm;margin:1.27cm;mso-page-orientation:portrait}' +
-      'body{font-family:Calibri,sans-serif;font-size:9.5pt;color:#202020;margin:0}' +
-      'table{border-collapse:collapse}</style>' +
-      '</head><body>' + body + '</body></html>';
+    // реквизиты выбранного поставщика
+    out += DOCX.p(DOCX.run(APP.company.brand, { b: true, color: NAVY, sz: 16 }),
+      { space: { after: 20 } });
+    legalLines(sup).forEach(function (t) {
+      out += DOCX.p(DOCX.run(t, { sz: 15, color: GREY }), { space: { after: 10 } });
+    });
+    return out;
   }
 
   function kpFileName(ext) {
     var k = state.kp;
     var who = (k.kpClient || 'клиент').replace(/[\\/:*?"<>|]/g, ' ').trim();
     var num = k.kpNum ? ' № ' + k.kpNum : '';
-    return 'ТКП ' + who + num + ' от ' + (k.kpDate || '') + '.' + ext;
+    var when = k.kpDate ? ' от ' + k.kpDate : '';
+    return 'ТКП ' + who + num + when + '.' + ext;
   }
 
+  var DOCX_MIME =
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
   function kpBlob() {
-    // BOM в начале — Word без него иногда читает файл как ANSI и ломает кириллицу
-    return new Blob(['﻿' + buildWordDoc()],
-      { type: 'application/msword;charset=utf-8' });
+    var logo = logoB64();
+    var bytes = DOCX.build({
+      body: docxBody(),
+      // пустую картинку в пакет не кладём: Word посчитал бы файл повреждённым
+      images: logo ? [{ name: 'logo.png', b64: logo }] : []
+    });
+    return new Blob([bytes], { type: DOCX_MIME });
   }
 
   function downloadBlob(blob, name) {
     var url = URL.createObjectURL(blob);
     var a = d.createElement('a');
-    a.href = url; a.download = name;
+    a.href = url; a.download = name; a.rel = 'noopener';
     d.body.appendChild(a); a.click(); d.body.removeChild(a);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 8000);
   }
 
   $('btnWord').addEventListener('click', function () {
     if (!state.items.length && !confirm('Смета пуста. Всё равно скачать файл?')) return;
-    downloadBlob(kpBlob(), kpFileName('doc'));
-    toast('Файл скачан — открывается в Word');
+    try {
+      downloadBlob(kpBlob(), kpFileName('docx'));
+      toast('Файл .docx скачан');
+    } catch (e) {
+      toast('Не удалось собрать файл: ' + (e && e.message ? e.message : 'ошибка'));
+    }
   });
 
+  // «Отправить файлом»: сначала системное «Поделиться» (телефон), иначе скачивание.
+  // Раньше отказ share проглатывался молча и выглядел как «кнопка не работает» —
+  // теперь каждый исход отвечает сообщением, а при ошибке файл всё равно скачивается.
   $('btnSend').addEventListener('click', function () {
-    var name = kpFileName('doc');
-    var blob = kpBlob();
-    var f = null;
-    try { f = new File([blob], name, { type: blob.type }); } catch (e) { f = null; }
-    if (f && navigator.canShare && navigator.canShare({ files: [f] }) && navigator.share) {
-      navigator.share({ files: [f], title: 'ТКП LASERCUT' }).then(function () {
-        toast('Файл передан');
-      }, function () { /* пользователь отменил — молчим */ });
+    var name = kpFileName('docx'), blob, file = null;
+    try { blob = kpBlob(); } catch (e) {
+      toast('Не удалось собрать файл: ' + (e && e.message ? e.message : 'ошибка'));
       return;
     }
-    downloadBlob(blob, name);
-    toast('Отправка файлом недоступна в этом браузере — файл скачан');
+    try { file = new File([blob], name, { type: DOCX_MIME }); } catch (e) { file = null; }
+    var can = !!(file && navigator.share && navigator.canShare &&
+      navigator.canShare({ files: [file] }));
+    if (!can) {
+      downloadBlob(blob, name);
+      toast(navigator.share
+        ? 'Браузер не умеет делиться файлами — файл скачан, отправьте вложением'
+        : 'Системное «Поделиться» недоступно — файл скачан');
+      return;
+    }
+    navigator.share({ files: [file], title: 'ТКП LASERCUT' }).then(function () {
+      toast('Файл передан');
+    }, function (err) {
+      var n = err && err.name;
+      if (n === 'AbortError') { toast('Отправка отменена'); return; }
+      downloadBlob(blob, name);
+      toast('Поделиться не вышло (' + (n || 'ошибка') + ') — файл скачан');
+    });
   });
 
   $('btnJson').addEventListener('click', function () {
@@ -900,11 +1165,13 @@
     var dp = (k.kpDate || '').split('.');
     var payload = {
       'КЛИЕНТ': k.kpClient || '', 'ИНН': k.kpInn || '',
-      'ПРИМЕЧАНИЕ': k.kpNote ? ' - ' + k.kpNote : '',
+      'ПРИМЕЧАНИЕ': k.kpNote ? ' — ' + k.kpNote : '',
       'ИСХ_НОМЕР': k.kpNum || '',
       'КОНТАКТ_ИМЯ': k.kpContact || APP.manager.name,
       'КОНТАКТ_ТЕЛЕФОН': k.kpPhone || APP.manager.phone,
-      'ДД': dp[0] || '', 'МЕСЯЦА': MONTHS_G[(parseInt(dp[1], 10) || 1) - 1], 'ГГГГ': dp[2] || '',
+      'ДД': dp[0] || '',
+      'МЕСЯЦА': MONTHS_G[parseInt(dp[1], 10) - 1] || '',
+      'ГГГГ': dp[2] || '',
       'менеджер': APP.manager,
       'гарантия': APP.guarantee.label,
       'срок_поставки': state.kp.kpTerm === 'stock'
@@ -973,7 +1240,8 @@
     if (pc && (!pr || pc[0] !== pr[0])) recs.push({ label: 'Комфортный режим', power: pc[0], max: pc[1] });
     if (!recs.length) {
       out.appendChild(el('div', 'note stop',
-        'Под эту толщину с обязательным запасом 30 % в заведённых мощностях решения нет. ' +
+        'Под эту толщину с обязательным запасом ' + APP.reservePct +
+        ' % в заведённых мощностях решения нет. ' +
         'Это серия HARD — к менеджеру.'));
       return;
     }
@@ -985,7 +1253,10 @@
       var rec = el('div', 'rec');
       rec.innerHTML = '<div class="rec-l">' + esc(r.label) + '</div>' +
         '<div class="rec-t">Серия S, ' + (r.power / 1000) + ' кВт' +
-        (r.power === 3000 ? ' — либо серия A, она только в 3 кВт' : '') + '</div>' +
+        (r.power === 3000 && th <= APP.fiberAWorkMm
+          ? ' — на такой толщине подойдёт и серия A (только 3 кВт, паспорт — до ' +
+            APP.fiberAWorkMm + ' мм в режиме 24/7)'
+          : '') + '</div>' +
         '<div class="rec-d">Предел по заводским таблицам: ' + r.max + ' мм · газ: ' +
         esc(APP.gasByMaterial[m]) + '</div>' +
         (cheapest ? '<div class="rec-p">Самая доступная сборка этой мощности: S ' +
@@ -1024,8 +1295,7 @@
     { task: 'Маленькая столярка', series: ['0609'], fixed: '0609' },
     { task: 'Пластик, акрил, мягкое дерево', series: ['A1'] },
     { task: 'Мебельный цех, твёрдое дерево', series: ['M1'] },
-    { task: 'Крупная 3D-обработка', series: ['M2'],
-      answer: 'Wattsan M2 — серия под крупную 3D-обработку' },
+    { task: 'Крупная 3D-обработка', series: ['M2'] },
     { task: 'Деревообработка с поворотом заготовки', series: ['M1 1325 RD'], fixed: '1325' },
     { task: 'Серийное производство', series: ['M1 1325 S3', 'M1 1325 S4'], fixed: '1325' },
     { task: 'Двери и фасады', series: ['A1', 'M1'], fixed: '1325' },
@@ -1262,11 +1532,13 @@
   // ------------------------------------------------------------------ старт
   fillFiberFormats();
   fillMillConfigs();
+  // Режим цены ставим ДО renderMill: он читает селектор и переписывает state.mode,
+  // поэтому при обратном порядке выбор «из наличия» не восстанавливался.
   $('priceMode').value = state.mode || 'order';
   $('cat').value = state.cat || 'fiber';
   switchCat();
-  renderMill();
   renderPnr();
+  applySupplier();
   sortItems();
   renderSmeta();
   renderMatch();

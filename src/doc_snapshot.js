@@ -1,27 +1,31 @@
-/* Снимок выгрузки ТКП в файл для Word — для глазной проверки.
-   Наполняет смету, нажимает «Скачать ТКП для Word», перехватывает Blob
-   и сохраняет его содержимое на диск. Дальше файл открывается в LibreOffice
-   и рендерится в PDF. В сборку не входит: инструмент проверки. */
+/* Снимок выгрузки ТКП в .docx — для проверки валидатором и глазами.
+   Наполняет смету и шапку, нажимает «Скачать ТКП для Word», перехватывает
+   байты пакета и пишет их на диск. Дальше файл проверяется validate.py
+   и рендерится LibreOffice в PDF. В сборку не входит: инструмент проверки.
+   Аргументы: <путь к .docx> [id поставщика] */
 const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
 
 const FILE = path.join(__dirname, 'dist', 'index.html');
-const OUT = process.argv[2] || '/tmp/kp.doc';
+const OUT = process.argv[2] || '/tmp/kp.docx';
+const SUP = process.argv[3] || '';
 
 const dom = new JSDOM(fs.readFileSync(FILE, 'utf8'), { runScripts: 'dangerously' });
 const w = dom.window;
 const d = w.document;
 
-// jsdom не умеет createObjectURL — подменяем и ловим содержимое
-let captured = null;
-let fileName = null;
-w.URL.createObjectURL = function (blob) { captured = blob; return 'blob:test'; };
+let bytes = null, fileName = null, mime = null;
+const RealBlob = w.Blob;
+w.Blob = function (parts, opts) {
+  if (parts && parts[0] && parts[0].byteLength !== undefined) bytes = parts[0];
+  mime = opts && opts.type;
+  return new RealBlob(parts, opts);
+};
+w.URL.createObjectURL = function () { return 'blob:test'; };
 w.URL.revokeObjectURL = function () {};
-const origClick = w.HTMLAnchorElement.prototype.click;
 w.HTMLAnchorElement.prototype.click = function () {
   if (this.download) fileName = this.download;
-  return origClick ? undefined : undefined;
 };
 
 d.getElementById('fAdd').click();
@@ -42,17 +46,22 @@ set('kpNum', '1207');
 set('kpContact', 'Иван Петров');
 set('kpPhone', '+7 900 000-00-00');
 
+if (SUP) {
+  d.getElementById('kpSupplier').value = SUP;
+  d.getElementById('kpSupplier').dispatchEvent(new w.Event('change'));
+}
+
 d.getElementById('btnWord').click();
 
-if (!captured) {
-  console.error('Blob не перехвачен — кнопка ничего не сформировала');
+if (!bytes) {
+  console.error('байты пакета не перехвачены');
   process.exit(1);
 }
-captured.text().then(text => {
-  fs.writeFileSync(OUT, text, 'utf8');
-  console.log('файл готов:', OUT, Math.round(Buffer.byteLength(text) / 1024) + ' КБ');
-  console.log('имя файла:', fileName);
-  console.log('таблиц в документе:', (text.match(/<table/g) || []).length);
-  console.log('логотип:', /src="data:image\/png;base64,/.test(text) ? 'встроен' : 'НЕТ');
-  console.log('внешних ссылок:', (text.match(/https?:\/\//g) || []).length);
-});
+fs.writeFileSync(OUT, Buffer.from(bytes));
+console.log('файл готов:', OUT, Math.round(bytes.length / 1024) + ' КБ');
+console.log('имя файла:', fileName);
+console.log('MIME:', mime);
+console.log('поставщик:', d.getElementById('kpSupplier').value);
+// jsdom держит таймеры (тост, отзыв blob-URL) — выходим сами, иначе процесс висит
+w.close();
+process.exit(0);

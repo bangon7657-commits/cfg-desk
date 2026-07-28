@@ -141,15 +141,23 @@ assert len(data.MILLING) == 85, len(data.MILLING)
 print()
 print('--- Пакетная скидка на стол + ось ---')
 mismatch = 0
+undeclared = {}
 for (fmt_, power), cfg in sorted(data.FIBER_S.items()):
     exp = data.BUNDLE_DISCOUNT.get(fmt_)
     for rot, price in sorted(cfg['table_rot'].items()):
         sep = cfg['table'] + (cfg['rot'][rot] - cfg['base'])
         diff = sep - price
-        if exp is not None and diff != exp:
+        if exp is None:
+            # молчаливый пропуск скрывал бы, что для формата выгода не заявлена
+            undeclared.setdefault(fmt_, set()).add(diff)
+        elif diff != exp:
             mismatch += 1
             print(f'  S {fmt_} {power}W + стол + {rot}: выгода {diff} ₽, заявлено {exp} ₽')
 print(f'Несовпадений с заявленной пакетной скидкой: {mismatch}')
+for fmt_, diffs in sorted(undeclared.items()):
+    vals = ', '.join(f'{d} ₽' for d in sorted(diffs))
+    print(f'  формат {fmt_}: выгода в прайсе не заявлена, по факту {vals}')
+print(f'Форматов без заявленной пакетной скидки: {len(undeclared)}')
 
 # ---- Контрольная сумма прайса ----
 # Защита от тихой порчи цифр при любой правке data.py.

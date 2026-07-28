@@ -11,6 +11,16 @@
 <link rel="apple-touch-icon" href="apple-touch-icon-180.png">
 <link rel="icon" href="icon-192.png" type="image/png">
 <style>__CSS__</style>
+<script>
+/* Тема применяется до отрисовки: иначе у выбравших светлую тему на секунду
+   мелькает тёмный экран. Полная логика — в основном скрипте ниже. */
+(function () {
+  try {
+    var s = JSON.parse(localStorage.getItem('cfg-state-v2') || '{}');
+    if (s.theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  } catch (e) { /* приватный режим — просто тёмная тема */ }
+}());
+</script>
 </head>
 <body>
 
@@ -18,6 +28,8 @@
   <div class="head">
     <div class="brand">Конфигуратор и смета<small>волокно и фрезерные · внутренний инструмент</small></div>
     <div class="head-right">
+      <button type="button" class="themebtn" id="themeBtn" aria-pressed="false"
+        title="Светлая или тёмная тема">Светлая тема</button>
       <label class="toggle"><input type="checkbox" id="demoMode"> Режим демонстрации</label>
       <span class="savedot" id="saveDot"></span>
     </div>
@@ -45,8 +57,9 @@
 <span class="nojs-title">Конфигуратор</span>
 <section class="panel active" id="p-cfg">
   <p class="lead">Волокно — прайс от __DATE_FIBER__, __FIBER_COUNT__.
-    Фрезерные — прайс от __DATE_MILLING__, __MILLING_COUNT__.
-    НДС включён. Доставка, ПНР, обучение и чиллер — сверху.</p>
+    Фрезерные — прайс __DATE_MILLING__, __MILLING_COUNT__.
+    НДС включён. Доставка, ПНР и обучение — сверху. Чиллер тоже сверху,
+    но у металлорезов CWFL уже входит в цену — это единственное исключение.</p>
 
   <div class="step">
     <div class="step-h"><div class="step-n">1</div>
@@ -165,7 +178,7 @@
   </details>
 
   <details>
-    <summary>Полный прайс: фрезерные с ЧПУ <span class="cnt">__MILLING_COUNT__ · прайс от __DATE_MILLING__</span></summary>
+    <summary>Полный прайс: фрезерные с ЧПУ <span class="cnt">__MILLING_COUNT__ · прайс __DATE_MILLING__</span></summary>
     <div class="det-b"><div class="scroll">__MILLING_TABLE__</div></div>
   </details>
 
@@ -210,13 +223,14 @@
         ПНР и обучение — платные услуги по прайсу, они по умолчанию без скидки.
         Нужна скидка и на услуги — поставьте её в строке сметы вручную.</div>
       <div class="note internal">Счёт фиксирует цену и наличие на __INVOICE_DAYS__ дней.
-        Срок действия ТКП — __KP_DAYS__ дней. Оплата: 100 % со склада, 50 % + остаток под заказ.</div>
+        Срок действия ТКП — __KP_DAYS__ дней. Оплата в ТКП печатается так:
+        __PAY_TERMS__</div>
     </div>
   </div>
 
   <div class="step noprint">
     <div class="step-h"><div class="step-n">2</div>
-      <div class="step-t">Позиции сметы<small>оборудование, опции и услуги идут группами</small></div></div>
+      <div class="step-t">Позиции сметы<small>отсортированы: сначала оборудование, потом опции, потом услуги</small></div></div>
     <div class="step-b">
       <div class="scroll" id="smetaWrap"><table id="smetaTable"><thead><tr>
         <th style="width:40%">Наименование</th><th>Кол-во</th><th>Цена прайса</th>
@@ -233,12 +247,12 @@
         <button class="btn sec" id="btnJson">Скопировать JSON для скилла</button>
         <button class="btn danger" id="btnClear">Очистить смету</button>
       </div>
-      <div class="note">Файл для Word — обычный документ с таблицами и логотипом,
-        открывается в Word, LibreOffice и Google Документах; внутри HTML, поэтому
-        Word при первом открытии может спросить подтверждение. PDF получается
-        печатью: в диалоге выберите «Сохранить как PDF».
-        «Отправить файлом» на телефоне открывает системный «Поделиться»
-        (Telegram, WhatsApp, почта), на компьютере просто скачивает файл.</div>
+      <div class="note">Файл — настоящий <b>.docx</b>: открывается в Word (в том числе
+        на телефоне), LibreOffice и Google Документах, правится как обычный документ.
+        PDF получается печатью: в диалоге выберите «Сохранить как PDF».
+        «Отправить файлом» на телефоне открывает системное «Поделиться»
+        (Telegram, WhatsApp, почта), на компьютере скачивает файл — отправьте его
+        вложением.</div>
       <textarea id="jsonOut" class="noprint" rows="8" style="margin-top:12px;display:none;
         font-family:ui-monospace,Consolas,monospace;font-size:12.5px"></textarea>
     </div>
@@ -259,6 +273,23 @@
         <div><label class="f">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
         <div><label class="f">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
       </div>
+      <div class="row noprint">
+        <div style="flex:2 1 300px"><label class="f">Поставщик в ТКП</label>
+          <select id="kpSupplier">__SUPPLIER_OPTIONS__</select></div>
+        <div style="flex:0 0 auto;align-self:flex-end">
+          <button class="btn sec" type="button" id="supEdit">Реквизиты поставщика</button></div>
+      </div>
+      <details class="det noprint" id="supBox">
+        <summary class="det-h">Реквизиты поставщика<small>сохраняются в этом браузере</small></summary>
+        <div class="det-b">
+          <div class="note alert">__SUPPLIER_NOTE__</div>
+          <div class="row">__SUPPLIER_FORM__</div>
+          <div class="btns">
+            <button class="btn sec" type="button" id="supReset">Вернуть исходные</button>
+          </div>
+          <div id="supWarn" class="note"></div>
+        </div>
+      </details>
       <div class="row noprint">
         <div style="flex:2 1 300px"><label class="f">Срок поставки в ТКП</label>
           <select id="kpTerm">
@@ -541,6 +572,7 @@
 <div class="toast" id="toast"><span id="toastText"></span><button type="button" id="toastGo">Открыть смету</button></div>
 
 <script>__MONEY_JS__</script>
+<script>__DOCX_JS__</script>
 <script>var APP = __DATA__;</script>
 <script>__UI_JS__</script>
 </body>

@@ -5,6 +5,11 @@
       читается во встроенном просмотрщике Telegram и в режиме чтения.
    4. Второй прогон проверяет, что пререндеренный файл запускается без ошибок
       и что скрипт не удвоил уже заполненные списки.
+
+   Работает в два этапа, чтобы каждый укладывался в короткий таймаут окружения:
+     node prerender.js 1   — первый прогон, проверки, запись index.html
+     node prerender.js 2   — второй прогон, проверки чистоты, итог
+   Без аргумента выполняются оба этапа подряд (так делает CI).
 */
 const fs = require('fs');
 const path = require('path');
@@ -12,6 +17,8 @@ const { JSDOM, VirtualConsole } = require('jsdom');
 
 const DIST = process.env.DIST_DIR || path.join(__dirname, 'dist');
 const FILE = path.join(DIST, 'index.html');
+const STAGE = process.argv[2] ? Number(process.argv[2]) : 0;   // 0 = оба этапа
+const STATE = path.join(DIST, '.prerender-stage.json');
 
 function run(html, label) {
   const errors = [];
@@ -32,14 +39,32 @@ function textOf(doc, sel) {
   return n ? n.textContent.replace(/\s+/g, ' ').trim() : null;
 }
 
-const src = fs.readFileSync(FILE, 'utf8');
-const first = run(src, 'первый прогон');
-const doc = first.dom.window.document;
-
 const checks = [];
 function check(name, cond, detail) {
   checks.push({ name, ok: !!cond, detail: detail || '' });
 }
+
+// Списки, у которых сравнивается число вариантов до и после пререндера:
+// если скрипт наполняет заполненный список, файл покажет всё по два раза.
+const SELECTS = ['fSeries', 'fFormat', 'fPower', 'mFormat', 'mConfig', 'pnrModel',
+  'discount', 'ndsRate', 'mtMaterial', 'mkTask', 'mkSize', 'gNozzle', 'cat', 'mtCat',
+  'readyKind', 'gGas', 'fTable', 'fRot', 'pnrKind', 'priceMode'];
+
+// Этап 2 работает с уже пререндеренным файлом и результатами этапа 1
+let before = {}, beforeOptions = 0, src = '', first = null, doc = null;
+if (STAGE === 2) {
+  const saved = JSON.parse(fs.readFileSync(STATE, 'utf8'));
+  saved.checks.forEach(c => checks.push(c));
+  before = saved.before;
+  beforeOptions = saved.beforeOptions;
+  src = fs.readFileSync(FILE, 'utf8');
+} else {
+  src = fs.readFileSync(FILE, 'utf8');
+  first = run(src, 'первый прогон');
+  doc = first.dom.window.document;
+}
+
+if (STAGE !== 2) {
 
 check('ошибок JS нет', first.errors.length === 0, first.errors.join(' | '));
 check('вкладок 6', doc.querySelectorAll('#tabs button').length === 6,
@@ -101,6 +126,9 @@ check('нет незаменённых плейсхолдеров', !/__[A-Z_]+_
 check('нет внешних скриптов', !/<script[^>]+src=/i.test(src));
 check('нет ссылок на CDN', !/https?:\/\/(cdn|unpkg|ajax|fonts)/i.test(src));
 check('noindex на месте', /name="robots"[^>]+noindex/.test(src));
+check('тема применяется до отрисовки',
+  /data-theme', 'light'/.test(src.slice(0, src.indexOf('</head>'))),
+  'в head нет раннего применения темы — светлая будет мигать тёмным');
 // опечатки: в тексте не должно быть символов вне латиницы и кириллицы
 const alien = src.match(/[ᄀ-ᇿ぀-ヿ一-鿿가-힯]/g);
 check('нет случайных иероглифов и хангыля', !alien,
@@ -186,15 +214,16 @@ check('срок: переключение на склад меняет стро�
 win.document.getElementById('kpTerm').value = 'order';
 win.document.getElementById('kpTerm').dispatchEvent(new win.Event('change'));
 
-// ---- выгрузка ТКП в файл: кнопки на месте, документ собирается ----
+// ---- выгрузка ТКП в файл (.docx): кнопки на месте, пакет собирается ----
 check('файл: кнопка «Скачать ТКП для Word» есть', !!doc.getElementById('btnWord'));
 check('файл: кнопка «Отправить файлом» есть', !!doc.getElementById('btnSend'));
-// Blob подменяем на обёртку, чтобы получить текст синхронно: blob.text()
-// вернул бы промис, а проверки идут в одном потоке.
-let wordBlob = null, wordName = null, wordParts = null;
+// Blob перехватываем: нужны сами байты пакета, а blob.arrayBuffer() вернул бы промис
+let docBytes = null, wordName = null, docType = null;
 const RealBlob = win.Blob;
 win.Blob = function (parts, opts) {
-  wordParts = parts; wordBlob = new RealBlob(parts, opts); return wordBlob;
+  if (parts && parts[0] && parts[0].byteLength !== undefined) docBytes = parts[0];
+  docType = opts && opts.type;
+  return new RealBlob(parts, opts);
 };
 win.URL.createObjectURL = function () { return 'blob:test'; };
 win.URL.revokeObjectURL = function () {};
@@ -205,35 +234,109 @@ win.HTMLAnchorElement.prototype.click = function () {
 win.document.getElementById('btnWord').click();
 win.HTMLAnchorElement.prototype.click = origAClick;
 win.Blob = RealBlob;
-check('файл: имя содержит клиента и дату',
-  !!wordName && /^ТКП .*\.doc$/.test(wordName), 'имя «' + wordName + '»');
-check('файл: тип для Word',
-  !!wordBlob && /application\/msword/.test(wordBlob.type),
-  wordBlob ? wordBlob.type : 'блоб не создан');
 
-const docText = wordParts ? wordParts.join('') : '';
-check('файл: BOM в начале — Word не сломает кириллицу',
-  docText.charCodeAt(0) === 0xFEFF, 'первый символ ' + docText.charCodeAt(0));
-check('файл: логотип встроен data-URL',
-  /<img src="data:image\/png;base64,/.test(docText), '');
-check('файл: нет внешних ссылок и скриптов',
-  !/https?:\/\//.test(docText) && !/<script/i.test(docText),
-  (docText.match(/https?:\/\/[^"' ]{0,40}/) || [''])[0]);
-check('файл: заливки заданы атрибутом bgcolor',
-  (docText.match(/bgcolor="#1F3A5F"/g) || []).length >= 3,
-  'найдено ' + (docText.match(/bgcolor=/g) || []).length);
-check('файл: flex и grid не попали в документ',
-  !/display:\s*(flex|grid)/.test(docText), '');
+check('файл: имя с расширением .docx',
+  !!wordName && /^ТКП .*\.docx$/.test(wordName), 'имя «' + wordName + '»');
+check('файл: тип OOXML, а не msword',
+  docType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'тип «' + docType + '»');
+check('файл: собраны байты пакета', !!docBytes && docBytes.length > 5000,
+  docBytes ? docBytes.length + ' байт' : 'байты не получены');
+
+// ZIP: подпись PK, конец архива, наличие обязательных частей и логотипа
+const zipBuf = docBytes ? Buffer.from(docBytes) : Buffer.alloc(0);
+const zipStr = zipBuf.toString('latin1');
+check('файл: это ZIP-пакет (подпись PK)',
+  zipBuf.length > 4 && zipBuf[0] === 0x50 && zipBuf[1] === 0x4B, '');
+check('файл: центральный каталог на месте',
+  zipStr.indexOf('PK\u0005\u0006') >= 0, '');
+['[Content_Types].xml', 'word/document.xml', 'word/styles.xml',
+  'word/_rels/document.xml.rels', 'word/media/logo.png'].forEach(function (part) {
+  check('файл: внутри есть ' + part, zipStr.indexOf(part) >= 0, '');
+});
+check('файл: логотип уехал внутрь как PNG', zipStr.indexOf('\u0089PNG') >= 0, '');
+
+// содержимое document.xml — извлекаем как текст (пакет пишется без сжатия)
+const docXml = (function () {
+  const i = zipStr.indexOf('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document');
+  if (i < 0) return '';
+  const j = zipStr.indexOf('</w:document>', i);
+  return Buffer.from(zipStr.slice(i, j + 13), 'latin1').toString('utf8');
+})();
+check('файл: document.xml читается и закрыт',
+  docXml.indexOf('<w:body>') >= 0 && /<\/w:document>$/.test(docXml),
+  docXml.slice(0, 80));
 check('файл: итог совпадает с предпросмотром',
-  docText.indexOf('2 723 650,00') >= 0 && docText.indexOf('ИТОГО к оплате') >= 0, '');
+  docXml.indexOf('2 723 650,00') >= 0 && docXml.indexOf('ИТОГО к оплате') >= 0, '');
 check('файл: сумма прописью внутри',
-  /Сумма прописью/.test(docText) && /рубл/.test(docText), '');
+  /Сумма прописью/.test(docXml) && /рубл/.test(docXml), '');
 check('файл: срок поставки 80 раб. дней',
-  /до 80 раб\. дней/.test(docText) && /до 80 рабочих дней/.test(docText), '');
-check('файл: реквизиты и подпись директора',
-  docText.indexOf('7811692637') >= 0 && /Греков Е\.В\./.test(docText), '');
-check('файл: поля страницы 1,27 см',
-  /margin:1\.27cm/.test(docText.replace(/\s+/g, '')), '');
+  /до 80 раб\. дней/.test(docXml) && /до 80 рабочих дней/.test(docXml), '');
+check('файл: реквизиты и подпись поставщика',
+  docXml.indexOf('7811692637') >= 0 && /Греков Е\.В\./.test(docXml), '');
+check('файл: фирменные заливки в ячейках',
+  (docXml.match(/w:fill="1F3A5F"/g) || []).length >= 4,
+  'найдено ' + (docXml.match(/w:fill=/g) || []).length);
+check('файл: логотип вставлен как рисунок',
+  docXml.indexOf('<w:drawing>') >= 0 && docXml.indexOf('r:embed="rId1"') >= 0, '');
+check('файл: A4 и поля 720 twips',
+  /w:pgSz w:w="11906" w:h="16838"/.test(docXml) &&
+  /w:pgMar w:top="720"/.test(docXml), '');
+check('файл: нет незакрытых плейсхолдеров и HTML',
+  !/__[A-Z_]+__/.test(docXml) && !/<table|<td|bgcolor/i.test(docXml), '');
+
+// ---- поставщик в ТКП ----
+const supSel = doc.getElementById('kpSupplier');
+check('поставщик: три профиля в списке',
+  !!supSel && supSel.options.length === 3,
+  supSel ? 'вариантов ' + supSel.options.length : 'селектор не найден');
+check('поставщик: по умолчанию СТАНКОПРОМ',
+  !!supSel && supSel.value === 'stankoprom', supSel ? supSel.value : '');
+const legalTxt0 = doc.getElementById('kpLegal').textContent.replace(/\s+/g, ' ');
+check('поставщик: статика и скрипт дают одни реквизиты',
+  legalTxt0.indexOf('ИНН/КПП 7811692637 / 781001001') >= 0 &&
+  legalTxt0.indexOf('Греков Евгений Валерьевич') >= 0, legalTxt0.slice(0, 120));
+win.document.getElementById('kpSupplier').value = 'lasercut_td';
+win.document.getElementById('kpSupplier').dispatchEvent(new win.Event('change'));
+const legalTd = doc.getElementById('kpLegal').textContent.replace(/\s+/g, ' ');
+check('поставщик: смена на ТД ЛАЗЕРКАТ меняет лист',
+  legalTd.indexOf('ООО «ТД ЛАЗЕРКАТ»') >= 0 && legalTd.indexOf('УНП 193382531') >= 0,
+  legalTd.slice(0, 120));
+check('поставщик: чужие реквизиты не подставляются',
+  legalTd.indexOf('7811692637') < 0 && legalTd.indexOf('Греков') < 0,
+  legalTd.slice(0, 160));
+check('поставщик: подпись в листе сменилась',
+  /ТД ЛАЗЕРКАТ/.test(doc.getElementById('kpSignTitle').textContent),
+  doc.getElementById('kpSignTitle').textContent);
+check('поставщик: про российские условия у РБ юрлица предупреждаем',
+  /белорусское юрлицо/.test(doc.getElementById('supWarn').textContent),
+  doc.getElementById('supWarn').textContent.slice(0, 120));
+check('поставщик: незаполненное названо прямо',
+  /не заполнено/.test(doc.getElementById('supWarn').textContent),
+  doc.getElementById('supWarn').textContent.slice(0, 90));
+win.document.getElementById('kpSupplier').value = 'stankoprom';
+win.document.getElementById('kpSupplier').dispatchEvent(new win.Event('change'));
+
+// ---- темы ----
+check('тема: кнопка переключения есть', !!doc.getElementById('themeBtn'));
+check('тема: по умолчанию тёмная',
+  !doc.documentElement.getAttribute('data-theme'),
+  'атрибут «' + doc.documentElement.getAttribute('data-theme') + '»');
+win.document.getElementById('themeBtn').click();
+check('тема: светлая включается атрибутом',
+  doc.documentElement.getAttribute('data-theme') === 'light',
+  'атрибут «' + doc.documentElement.getAttribute('data-theme') + '»');
+check('тема: кнопка предлагает вернуться к тёмной',
+  /Тёмная тема/.test(doc.getElementById('themeBtn').textContent),
+  doc.getElementById('themeBtn').textContent);
+check('тема: светлая палитра описана в CSS',
+  src.indexOf('html[data-theme="light"]') >= 0, '');
+check('тема: лист ТКП белый в обеих темах',
+  !/html\[data-theme="light"\][^{]*\{[^}]*--kp/.test(src) &&
+  src.indexOf('.kp{background:#fff') >= 0, '');
+win.document.getElementById('themeBtn').click();
+check('тема: возврат к тёмной снимает атрибут',
+  !doc.documentElement.getAttribute('data-theme'), '');
 
 // Согласование числительных: «122 конфигураций» — ошибка, нужно «122 конфигурации»
 const badPlural = (src.match(/\b\d*[02-9][2-4]\s+конфигураций/g) || []);
@@ -259,6 +362,9 @@ check('смета: предел построчной скидки равен о�
   'max=«' + (eqRow ? eqRow.querySelectorAll('input')[1].getAttribute('max') : '?') + '»');
 
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
+// Всё, что натворили проверки, должно быть убрано: файл обязан открываться
+// чистым. Забытый след один раз уже уезжал в выпуск — теперь список полный,
+// а второй прогон ниже проверяет результат.
 doc.body.classList.remove('js');
 doc.body.classList.remove('demo');
 doc.querySelectorAll('.panel').forEach(p => p.classList.remove('active', 'printme'));
@@ -270,35 +376,82 @@ doc.getElementById('checkBlock').className = '';
 doc.getElementById('smetaBadge').textContent = '';
 doc.getElementById('jsonOut').value = '';
 doc.getElementById('discount').value = '0';
+// предпросмотр ТКП: без этого в файл уезжает КП с позициями из теста
+doc.getElementById('kpPreview').innerHTML = '';
+// тост: класс show снимается по таймеру, которого в пререндере не будет
+const toastNode = doc.getElementById('toast');
+if (toastNode) {
+  toastNode.className = 'toast';
+  const tText = doc.getElementById('toastText');
+  if (tText) tText.textContent = '';
+}
+doc.getElementById('saveDot').textContent = '';
+// поля шапки ТКП, заполненные проверками
+['kpClient', 'kpInn', 'kpNum', 'kpContact', 'kpPhone', 'kpNote', 'kpDate', 'kpTitle']
+  .forEach(id => { const n = doc.getElementById(id); if (n) n.value = ''; });
+doc.querySelectorAll('#supBox input').forEach(n => { n.value = ''; });
+const supBoxNode = doc.getElementById('supBox');
+if (supBoxNode) supBoxNode.removeAttribute('open');
+const supWarnNode = doc.getElementById('supWarn');
+if (supWarnNode) { supWarnNode.className = 'note'; supWarnNode.textContent = ''; }
+// inline display от переключателей категорий: без JS всё должно быть видно
+doc.querySelectorAll('[style]').forEach(n => {
+  const st = n.getAttribute('style') || '';
+  if (/display\s*:\s*none/.test(st) && n.id !== 'jsonOut' && n.id !== 'supBox') {
+    const left = st.replace(/display\s*:\s*none;?/g, '').trim();
+    if (left) n.setAttribute('style', left); else n.removeAttribute('style');
+  }
+});
+// селекторы и чекбоксы — в исходное состояние
+doc.getElementById('cat').value = 'fiber';
+doc.getElementById('mtCat').value = 'fiber';
+doc.getElementById('kpSupplier').value = 'stankoprom';
+doc.getElementById('kpTerm').value = 'order';
+doc.getElementById('priceMode').value = 'order';
+const mk = doc.getElementById('mkSize');
+if (mk) mk.removeAttribute('disabled');
+doc.querySelectorAll('input[type=checkbox]').forEach(n => { n.checked = false; });
+doc.documentElement.removeAttribute('data-theme');
 try { win.localStorage.clear(); } catch (e) {}
 
 // Сколько вариантов в каждом списке было после первого прогона.
+
 // Во втором прогоне должно быть столько же: если скрипт наполняет список,
 // не очистив его, пререндеренный файл покажет всё по два раза.
-const SELECTS = ['fSeries', 'fFormat', 'fPower', 'mFormat', 'mConfig', 'pnrModel',
-  'discount', 'ndsRate', 'mtMaterial', 'mkTask', 'mkSize', 'gNozzle', 'cat', 'mtCat',
-  'readyKind', 'gGas', 'fTable', 'fRot', 'pnrKind', 'priceMode'];
-const before = {};
 SELECTS.forEach(id => {
   const n = doc.getElementById(id);
   before[id] = n ? n.querySelectorAll('option').length : -1;
 });
-const beforeOptions = doc.querySelectorAll('#mOptions details').length;
+beforeOptions = doc.querySelectorAll('#mOptions details').length;
 
 const out = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
 fs.writeFileSync(FILE, out, 'utf8');
+}   // конец первого этапа
+
+const outSrc = STAGE === 2 ? src : fs.readFileSync(FILE, 'utf8');
+
+if (STAGE === 1) {
+  fs.writeFileSync(STATE, JSON.stringify({ checks, before, beforeOptions }), 'utf8');
+  console.log('Этап 1 пройден: проверок ' + checks.length +
+    ', файл записан (' + Math.round(fs.statSync(FILE).size / 1024) + ' КБ)');
+  const bad1 = checks.filter(c => !c.ok);
+  bad1.forEach(c => console.log('  ОШИБКА  ' + c.name +
+    (c.detail ? '\n             ' + c.detail : '')));
+  try { first.dom.window.close(); } catch (e) {}
+  process.exit(bad1.length ? 1 : 0);
+}
 
 // ---- второй прогон: пререндеренный файл должен работать ----
 const second = run(fs.readFileSync(FILE, 'utf8'), 'второй прогон');
 const doc2 = second.dom.window.document;
 check('пререндер: ошибок JS нет', second.errors.length === 0, second.errors.join(' | '));
 check('пререндер: контент читается без скриптов',
-  !/class="[^"]*\bjs\b/.test(out.slice(0, out.indexOf('<nav'))),
+  !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
   doc2.querySelectorAll('.nojs-title').length === 6,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
-check('пререндер: цены всё ещё в файле', out.indexOf('2 867 000') >= 0);
+check('пререндер: цены всё ещё в файле', outSrc.indexOf('2 867 000') >= 0);
 check('пререндер: смета пуста при открытии',
   doc2.querySelectorAll('#smetaBody tr').length === 0,
   'строк ' + doc2.querySelectorAll('#smetaBody tr').length);
@@ -317,6 +470,42 @@ check('пререндер: блоки опций не удвоились',
   doc2.querySelectorAll('#mOptions details').length === beforeOptions,
   'было ' + beforeOptions + ', стало ' + doc2.querySelectorAll('#mOptions details').length);
 
+// ---- в выпущенном файле не должно остаться следов проверок ----
+// Ищем только в разметке: слова вроде «Добавлено:» есть и в коде скрипта,
+// а placeholder «ООО «Ромашка»» — штатная подсказка поля.
+const markup = outSrc
+  .replace(/<script[\s\S]*?<\/script>/gi, '')
+  .replace(/<style[\s\S]*?<\/style>/gi, '')
+  .replace(/placeholder="[^"]*"/gi, '');
+check('чистота: тост не висит на экране',
+  !/class="toast show"/.test(markup) && !/Добавлено:/.test(markup),
+  (markup.match(/class="toast[^"]*"|.{0,20}Добавлено:.{0,20}/) || [''])[0]);
+check('чистота: в файле предпросмотр ТКП пуст',
+  /id="kpPreview"><\/div>/.test(markup.replace(/\s+/g, ' ')),
+  (markup.match(/id="kpPreview">[\s\S]{0,80}/) || [''])[0]);
+check('чистота: без сметы в ТКП нет чужих позиций',
+  !/Wattsan S 1530/.test(doc2.getElementById('kpPreview').textContent) &&
+  /Смета пуста/.test(doc2.getElementById('kpPreview').textContent),
+  doc2.getElementById('kpPreview').textContent.slice(0, 90));
+check('чистота: поля шапки ТКП не заполнены',
+  !/Ромашка/.test(markup) && !/7801234567/.test(markup),
+  (markup.match(/.{0,30}Ромашка.{0,20}|.{0,30}7801234567.{0,10}/) || [''])[0]);
+check('чистота: ничего не спрятано inline-стилем',
+  !/style="[^"]*display:\s*none/.test(markup.replace(/<textarea[\s\S]*?<\/textarea>/gi, '')),
+  (markup.match(/id="[^"]*"[^>]*style="[^"]*display:\s*none[^"]*"/) || [''])[0]);
+check('чистота: пометка «сохранено» снята',
+  /id="saveDot"><\/span>/.test(markup.replace(/\s+/g, ' ')) ||
+  /id="saveDot"\s*><\/span>/.test(markup),
+  (markup.match(/id="saveDot"[^>]*>[^<]*/) || [''])[0]);
+check('чистота: чекбоксы сняты',
+  !/type="checkbox"[^>]*checked/.test(markup) &&
+  !/checked[^>]*type="checkbox"/.test(markup), '');
+check('чистота: тема тёмная по умолчанию',
+  !/data-theme=/.test(markup.slice(markup.indexOf('<html'), markup.indexOf('<head'))), '');
+check('чистота: реквизиты в форме не затёрты пустыми',
+  doc2.getElementById('kpLegal').textContent.indexOf('7811692637') >= 0,
+  'в подвале листа нет ИНН СТАНКОПРОМ');
+
 // ---- вывод ----
 let bad = 0;
 console.log('Проверка сборки через jsdom\n');
@@ -327,4 +516,9 @@ checks.forEach(c => {
 });
 console.log('\nПройдено ' + (checks.length - bad) + ' из ' + checks.length);
 console.log('Размер index.html: ' + Math.round(fs.statSync(FILE).size / 1024) + ' КБ');
-if (bad) process.exit(1);
+try { fs.unlinkSync(STATE); } catch (e) { /* этап 1 не запускался отдельно */ }
+// Явный выход: в окнах jsdom остаются таймеры (тост, отзыв blob-URL), из-за них
+// процесс висел до внешнего таймаута, а вывод терялся в буфере.
+try { if (first) first.dom.window.close(); } catch (e) {}
+try { second.dom.window.close(); } catch (e) {}
+process.exit(bad ? 1 : 0);

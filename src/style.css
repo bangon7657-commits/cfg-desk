@@ -1,3 +1,6 @@
+/* Тёмная тема — по умолчанию, как было. Светлая включается атрибутом
+   data-theme="light" на <html>: те же переменные, другие значения, поэтому
+   правила ниже одинаковы для обеих тем. Лист ТКП в любой теме белый. */
 :root{
   --bg:#100e0c; --bg2:#1a1613; --bg3:#231d18; --bg4:#2c241d;
   --line:#3d332a; --line2:#4d4036;
@@ -5,6 +8,20 @@
   --or:#ff7a18; --or2:#ffa04d; --or3:#c95c07; --orbg:#2a1a0c;
   --ok:#57b877; --okbg:#12230f; --bad:#ff6152; --badbg:#2a1110;
   --warn:#ffb43a; --warnbg:#2b1f0a;
+  --head:linear-gradient(180deg,#1c1713,#141110);
+  --onor:#180d04; --onok:#08170c; --onwarn:#241700; --onbad:#ffffff;
+  --shadow:rgba(0,0,0,.45);
+}
+html[data-theme="light"]{
+  --bg:#f6f4f1; --bg2:#ffffff; --bg3:#f1ece6; --bg4:#e7e0d8;
+  --line:#dcd4c9; --line2:#c8bdaf;
+  --tx:#1b1815; --tx2:#4a423a; --muted:#6f665c;
+  --or:#c95c07; --or2:#a34a05; --or3:#e0761d; --orbg:#fdf0e3;
+  --ok:#1f7a44; --okbg:#e8f5ec; --bad:#b3271a; --badbg:#fdeceb;
+  --warn:#8a5a06; --warnbg:#fdf3e0;
+  --head:linear-gradient(180deg,#ffffff,#f3efe9);
+  --onor:#fff8f2; --onok:#ffffff; --onwarn:#fff8ea; --onbad:#ffffff;
+  --shadow:rgba(60,45,30,.14);
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -14,7 +31,7 @@ body{margin:0;background:var(--bg);color:var(--tx);
 .wrap{max-width:1200px;margin:0 auto;padding:0 16px 80px}
 
 /* ---------- шапка ---------- */
-header{background:linear-gradient(180deg,#1c1713,#141110);
+header{background:var(--head);
   border-bottom:2px solid var(--or);position:sticky;top:0;z-index:30}
 .head{max-width:1200px;margin:0 auto;padding:12px 16px;display:flex;gap:16px;
   align-items:center;flex-wrap:wrap}
@@ -28,16 +45,20 @@ header{background:linear-gradient(180deg,#1c1713,#141110);
 .toggle:hover{border-color:var(--or);color:var(--tx)}
 .toggle input{width:18px;height:18px;margin:0;cursor:pointer;accent-color:var(--or)}
 .savedot{font-size:13px;color:var(--or2);min-height:19px}
+.themebtn{font:inherit;font-size:13.5px;font-weight:600;padding:8px 14px;
+  border-radius:24px;cursor:pointer;background:var(--bg3);color:var(--tx2);
+  border:1px solid var(--line2)}
+.themebtn:hover{border-color:var(--or);color:var(--or2)}
 
 /* баннер демо-режима с выходом */
-.demo-banner{display:none;background:var(--or);color:#180d04;padding:10px 16px;
+.demo-banner{display:none;background:var(--or);color:var(--onor);padding:10px 16px;
   font-size:14.5px;font-weight:600;text-align:center}
 body.demo .demo-banner{display:flex;gap:14px;align-items:center;justify-content:center;
   flex-wrap:wrap}
 .demo-banner button{font:inherit;font-size:13.5px;font-weight:700;padding:5px 14px;
-  border-radius:20px;border:2px solid #180d04;background:transparent;color:#180d04;
+  border-radius:20px;border:2px solid var(--onor);background:transparent;color:var(--onor);
   cursor:pointer}
-.demo-banner button:hover{background:#180d04;color:var(--or)}
+.demo-banner button:hover{background:var(--onor);color:var(--or)}
 
 /* ---------- вкладки ---------- */
 nav{display:none;background:var(--bg2);border-bottom:1px solid var(--line);
@@ -53,7 +74,7 @@ nav button{border:0;background:none;font:inherit;font-size:15px;padding:14px 16p
 nav button:hover{color:var(--tx);background:var(--bg3)}
 nav button[aria-selected="true"]{color:var(--or);font-weight:700;
   border-bottom-color:var(--or);background:var(--bg3)}
-.badge{background:var(--or);color:#180d04;font-size:12px;font-weight:700;
+.badge{background:var(--or);color:var(--onor);font-size:12px;font-weight:700;
   min-width:20px;padding:1px 6px;border-radius:10px;line-height:1.5}
 .badge:empty{display:none}
 
@@ -62,7 +83,7 @@ nav button[aria-selected="true"]{color:var(--or);font-weight:700;
 body.js .panel{display:none}
 body.js .panel.active{display:block}
 .nojs-title{display:block;margin:34px 0 0;padding:12px 16px;background:var(--or);
-  color:#180d04;font-size:19px;font-weight:700;border-radius:6px}
+  color:var(--onor);font-size:19px;font-weight:700;border-radius:6px}
 body.js .nojs-title{display:none}
 
 h2{font-size:22px;color:var(--tx);margin:32px 0 12px;padding-bottom:8px;
@@ -79,12 +100,12 @@ a{color:var(--or2)}
 .step-h{display:flex;align-items:center;gap:12px;padding:14px 18px;
   background:var(--bg3);border-bottom:1px solid var(--line)}
 .step-n{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--or);
-  color:#180d04;font-weight:700;font-size:15px;display:flex;align-items:center;
+  color:var(--onor);font-weight:700;font-size:15px;display:flex;align-items:center;
   justify-content:center}
 .step-t{font-size:16.5px;font-weight:700;color:var(--tx)}
 .step-t small{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:1px}
 .step-b{padding:16px 18px}
-.step.done .step-n{background:var(--ok);color:#08170c}
+.step.done .step-n{background:var(--ok);color:var(--onok)}
 .step.off{opacity:.5}
 .step.off .step-n{background:var(--line2);color:var(--muted)}
 
@@ -100,7 +121,7 @@ select,input[type=text],input[type=number],textarea{width:100%;font:inherit;font
 select{cursor:pointer}
 select:focus,input:focus,textarea:focus{outline:0;border-color:var(--or);
   box-shadow:0 0 0 3px rgba(255,122,24,.22)}
-input::placeholder{color:#6f6558}
+input::placeholder{color:var(--muted);opacity:.85}
 .row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
 .row>div{flex:1 1 190px;min-width:0}
 .chk{display:flex;align-items:center;gap:11px;margin:10px 0;font-size:15px;cursor:pointer;
@@ -110,7 +131,7 @@ input::placeholder{color:#6f6558}
   accent-color:var(--or)}
 
 button.btn{font:inherit;font-size:15px;font-weight:600;padding:12px 20px;border-radius:8px;
-  cursor:pointer;border:0;background:var(--or);color:#180d04}
+  cursor:pointer;border:0;background:var(--or);color:var(--onor)}
 button.btn:hover{background:var(--or2)}
 button.btn.sec{background:var(--bg4);color:var(--tx);border:1px solid var(--line2)}
 button.btn.sec:hover{border-color:var(--or);color:var(--or2);background:var(--bg3)}
@@ -121,11 +142,11 @@ button.btn.danger:hover{border-color:var(--bad)}
 
 /* тост */
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:60;
-  background:var(--or);color:#180d04;font-weight:700;font-size:15px;padding:12px 22px;
+  background:var(--or);color:var(--onor);font-weight:700;font-size:15px;padding:12px 22px;
   border-radius:26px;box-shadow:0 6px 24px rgba(0,0,0,.5);display:none;
   align-items:center;gap:14px}
 .toast.show{display:flex}
-.toast button{font:inherit;font-size:13.5px;font-weight:700;background:#180d04;
+.toast button{font:inherit;font-size:13.5px;font-weight:700;background:var(--onor);
   color:var(--or);border:0;padding:6px 14px;border-radius:18px;cursor:pointer}
 
 /* ---------- цена ---------- */
@@ -177,7 +198,7 @@ summary{cursor:pointer;padding:15px 18px;font-size:16px;font-weight:700;color:va
   list-style:none;display:flex;align-items:center;gap:11px;background:var(--bg3)}
 summary::-webkit-details-marker{display:none}
 summary::before{content:"+";flex:0 0 auto;width:24px;height:24px;border-radius:6px;
-  background:var(--or);color:#180d04;font-size:17px;font-weight:700;
+  background:var(--or);color:var(--onor);font-size:17px;font-weight:700;
   display:flex;align-items:center;justify-content:center;line-height:1}
 details[open] summary::before{content:"\2212"}
 summary:hover{color:var(--or2)}
@@ -201,13 +222,13 @@ tr.grouphead td{background:var(--bg4);color:var(--or2);font-weight:700;font-size
   font-size:14.5px;color:var(--tx2);border-left:3px solid var(--or3)}
 
 .check{margin-top:14px;padding:13px 16px;border-radius:8px;font-size:14.5px}
-.check.good{background:var(--okbg);border-left:4px solid var(--ok);color:#bfe8cb}
-.check.fail{background:var(--badbg);border-left:4px solid var(--bad);color:#ffcac4}
+.check.good{background:var(--okbg);border-left:4px solid var(--ok);color:var(--tx)}
+.check.fail{background:var(--badbg);border-left:4px solid var(--bad);color:var(--tx)}
 .check ul{margin:8px 0 0 20px;padding:0}
-.check b{color:#fff}
+.check b{color:var(--tx)}
 
 /* ---------- флаги ---------- */
-.flag-block{display:inline-block;background:var(--bad);color:#fff;font-size:11.5px;
+.flag-block{display:inline-block;background:var(--bad);color:var(--onbad);font-size:11.5px;
   padding:3px 9px;border-radius:5px;text-transform:uppercase;letter-spacing:.5px;
   font-weight:700}
 .ok{color:var(--ok);font-weight:700}
@@ -239,13 +260,13 @@ tr.grouphead td{background:var(--bg4);color:var(--or2);font-weight:700;font-size
 .rule:last-child{border-bottom:0}
 .st{flex:0 0 auto;font-size:11.5px;padding:3px 10px;border-radius:5px;
   text-transform:uppercase;letter-spacing:.5px;font-weight:700}
-.st-0{background:var(--ok);color:#08170c}
-.st-1{background:var(--warn);color:#241700}
-.st-2{background:var(--bad);color:#fff}
+.st-0{background:var(--ok);color:var(--onok)}
+.st-1{background:var(--warn);color:var(--onwarn)}
+.st-2{background:var(--bad);color:var(--onbad)}
 
 /* внутреннее */
 body.demo .internal{display:none !important}
-.internal-mark{font-size:10px;background:var(--or);color:#180d04;padding:1px 5px;
+.internal-mark{font-size:10px;background:var(--or);color:var(--onor);padding:1px 5px;
   border-radius:2px;margin-left:6px;vertical-align:1px;letter-spacing:.3px}
 
 /* ---------- лист ТКП: фирменное оформление шаблона lasercut-kp ----------
