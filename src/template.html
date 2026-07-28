@@ -227,10 +227,18 @@
       <div id="propis" class="propis"></div>
       <div id="checkBlock"></div>
       <div class="btns noprint">
-        <button class="btn" id="btnPrint">Печать в PDF</button>
+        <button class="btn" id="btnWord">Скачать ТКП для Word</button>
+        <button class="btn" id="btnPrint">PDF — печать → «Сохранить как PDF»</button>
+        <button class="btn sec" id="btnSend">Отправить файлом</button>
         <button class="btn sec" id="btnJson">Скопировать JSON для скилла</button>
         <button class="btn danger" id="btnClear">Очистить смету</button>
       </div>
+      <div class="note">Файл для Word — обычный документ с таблицами и логотипом,
+        открывается в Word, LibreOffice и Google Документах; внутри HTML, поэтому
+        Word при первом открытии может спросить подтверждение. PDF получается
+        печатью: в диалоге выберите «Сохранить как PDF».
+        «Отправить файлом» на телефоне открывает системный «Поделиться»
+        (Telegram, WhatsApp, почта), на компьютере просто скачивает файл.</div>
       <textarea id="jsonOut" class="noprint" rows="8" style="margin-top:12px;display:none;
         font-family:ui-monospace,Consolas,monospace;font-size:12.5px"></textarea>
     </div>

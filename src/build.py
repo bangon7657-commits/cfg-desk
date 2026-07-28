@@ -52,6 +52,10 @@ APP = {
     'invoiceValidDays': data.INVOICE_VALID_DAYS,
     'manager': data.MANAGER,
     'guarantee': data.GUARANTEE,
+    # Для выгрузки ТКП в файл: подпись директора собирается в JS,
+    # остальные реквизиты берутся из готовой статической разметки листа.
+    'company': {'ceoTitle': data.COMPANY['ceo_title'],
+                'ceoShort': data.COMPANY['ceo_short']},
     'deliveryOrder': data.DELIVERY_ORDER_LABEL,
     'deliveryStock': data.DELIVERY_STOCK_LABEL,
     'deliveryTerms': data.DELIVERY_TERMS,

@@ -652,6 +652,249 @@
     setTimeout(function () { p.classList.remove('printme'); }, 400);
   });
 
+  // ------------------------------------------------- выгрузка ТКП в файл
+  // Word открывает HTML-документ как обычный .doc и сохраняет таблицы,
+  // заливки и логотип. Но flex и grid он не понимает, поэтому блоки-сетки
+  // пересобираются в таблицы. Файл автономный: логотип уже data-URL,
+  // внешних ссылок нет — открывается офлайн и в Word, и в Google Docs.
+  // Стили — только inline и атрибутом bgcolor: и Word, и LibreOffice, и
+  // Google Документы применяют их гарантированно, тогда как классы из <style>
+  // теряются (проверено рендером в LibreOffice — заливки пропадали).
+  var NAVY = '#1F3A5F', LIGHT = '#DCE8F4', PALE = '#EAF1F8', GREY = '#5A6572';
+  var BRD = 'border:1px solid #B7C9DC;';
+  var CELL = BRD + 'padding:3px 6px;vertical-align:top;font-family:Calibri,sans-serif;' +
+    'font-size:8.5pt;line-height:1.25;color:#202020;';
+  var HEADCELL = CELL + 'background:' + LIGHT + ';color:' + NAVY + ';font-weight:bold;';
+  var NUM = 'text-align:right;';
+  var MID = 'text-align:center;';
+
+  function td(html, style, attrs) {
+    return '<td style="' + CELL + (style || '') + '"' + (attrs || '') + '>' + html + '</td>';
+  }
+
+  function band(html, bg, style) {
+    // плашка на всю ширину: таблица из одной ячейки — так заливка не теряется.
+    // page-break-inside:avoid — иначе плашка рвётся между страницами и наверху
+    // следующей остаётся пустая синяя полоса.
+    return '<table width="100%" cellspacing="0" cellpadding="0" border="0" ' +
+      'style="page-break-inside:avoid"><tr>' +
+      '<td bgcolor="' + bg + '" style="padding:6px 9px;font-family:Calibri,sans-serif;' +
+      'page-break-inside:avoid;' + (style || '') + '">' + html + '</td></tr></table>';
+  }
+
+  function sectionBand(t) {
+    return '<p style="margin:14px 0 7px;page-break-after:avoid">' +
+      band(t, NAVY, 'color:#FFFFFF;font-weight:bold;font-size:10.5pt') + '</p>';
+  }
+
+  function rowsFromTable(node) {
+    // таблицу условий / гарантии пересобираем с inline-стилями
+    if (!node) return '';
+    var out = Array.prototype.map.call(node.querySelectorAll('tr'), function (tr) {
+      var h = tr.querySelector('th'), c = tr.querySelector('td');
+      return '<tr>' + td(esc(h ? h.textContent : ''),
+        'background:' + LIGHT + ';color:' + NAVY + ';font-weight:bold;width:29%') +
+        td(esc(c ? c.textContent : '')) + '</tr>';
+    }).join('');
+    return '<table width="100%" cellspacing="0" cellpadding="0">' + out + '</table>';
+  }
+
+  function buildWordDoc() {
+    var T = totals(), k = state.kp;
+    var first = state.items.length ? state.items[0].name : '';
+    var title = k.kpTitle || first || 'Оборудование с ЧПУ LASERCUT';
+    var logo = d.querySelector('#kpDoc img.kp-logo');
+    var contacts = d.querySelector('#kpDoc .kp-contacts');
+    var kpTables = d.querySelectorAll('#kpDoc table.kp-t');
+    var cta = d.querySelector('#kpDoc .kp-cta');
+    var legal = d.querySelector('#kpDoc .kp-legal');
+
+    var head = '<table width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' +
+      '<td width="45%" style="vertical-align:top"><img src="' +
+      (logo ? logo.getAttribute('src') : '') +
+      '" width="200" height="47" alt="LASERCUT"></td>' +
+      '<td style="text-align:right;vertical-align:top;font-family:Calibri,sans-serif;' +
+      'font-size:8pt;color:' + GREY + '">' + (contacts ? contacts.innerHTML : '') +
+      '</td></tr></table>';
+
+    var titleBand = '<p style="margin:10px 0 10px">' + band(
+      '<div style="font-size:14pt;font-weight:bold;text-align:center;color:#FFFFFF">' +
+      'ТЕХНИКО-КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ</div>' +
+      '<div style="font-size:10pt;text-align:center;color:' + LIGHT + '">' +
+      esc(title) + '</div>', NAVY, 'padding:9px 12px') + '</p>';
+
+    var line = '<span style="border-bottom:1px solid #8A99A8">' +
+      '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>';
+    var to = '<table width="100%" cellspacing="0" cellpadding="0">' +
+      '<tr>' + td('Кому: <b>' + (k.kpClient ? esc(k.kpClient) : line) + '</b> ИНН ' +
+        (k.kpInn ? esc(k.kpInn) : line) + (k.kpNote ? ' - ' + esc(k.kpNote) : ''),
+        'width:62%') +
+      td('Исх. № <b>' + (k.kpNum ? esc(k.kpNum) : line) + '</b>') + '</tr>' +
+      '<tr>' + td('Контакты: <b>' + (k.kpContact ? esc(k.kpContact) : line) + '</b>' +
+        (k.kpPhone ? ', тел. ' + esc(k.kpPhone) : '')) +
+      td(esc(dateLong(k.kpDate))) + '</tr></table>';
+
+    var lead = '<p style="font-family:Calibri,sans-serif;font-size:9.5pt;text-align:justify">' +
+      'Благодарим за интерес к оборудованию LASERCUT. Ниже — состав поставки, ' +
+      'стоимость и условия. Оборудование новое, не бывшее в эксплуатации, ' +
+      'соответствует требованиям ТР ТС 004/2011, 010/2011, 020/2011.</p>';
+
+    function sumCell(kk, vv) {
+      return '<td bgcolor="' + NAVY + '" width="25%" style="border:1px solid #2E5B94;' +
+        'padding:6px 9px;font-family:Calibri,sans-serif;vertical-align:top">' +
+        '<div style="font-size:7.5pt;color:#B9CBE0">' + kk + '</div>' +
+        '<div style="font-size:11pt;font-weight:bold;color:#FFFFFF">' + vv + '</div></td>';
+    }
+    var sum = '<table width="100%" cellspacing="0" cellpadding="0"><tr>' +
+      sumCell('Рекомендуем', esc(first || '—')) +
+      sumCell('Стоимость, с НДС ' + pctText(T.rate), fmt(T.total) + ' ₽') +
+      sumCell('Срок поставки', esc(termLabel())) +
+      sumCell('Гарантия', esc(APP.guarantee.label)) + '</tr></table>';
+
+    var smeta = '';
+    if (state.items.length) {
+      var rows = T.lines.map(function (L, i) {
+        return '<tr>' + td(String(i + 1), MID + 'color:' + GREY) +
+          td('<b style="color:' + NAVY + '">' + esc(L.item.name) + '</b>' +
+            (L.dsc ? '<br><span style="font-size:7.5pt;color:' + GREY + '">скидка ' +
+              pctText(L.dsc) + ' от цены прайса ' + fmt(L.item.price) + ' ₽</span>' : '')) +
+          td(L.item.qty + ' шт', MID) + td(fmt(L.unit), NUM) +
+          td('<b>' + fmt(L.line) + '</b>', NUM) + '</tr>';
+      }).join('');
+      var totStyle = 'background:' + PALE + ';color:' + NAVY + ';font-weight:bold;' + NUM;
+      var tot = '';
+      if (T.gain) {
+        tot += '<tr>' + td('Ваша выгода:', totStyle, ' colspan="4"') +
+          td(fmt(T.gain), totStyle) + '</tr>';
+      }
+      tot += '<tr>' + td('Итого без НДС:', totStyle, ' colspan="4"') +
+        td(fmt(T.bez), totStyle) + '</tr>' +
+        '<tr>' + td('в т. ч. НДС ' + pctText(T.rate) + ':', totStyle, ' colspan="4"') +
+        td(fmt(T.nds), totStyle) + '</tr>';
+      var finStyle = 'background:' + NAVY + ';color:#FFFFFF;font-weight:bold;' + NUM;
+      tot += '<tr>' + td('ИТОГО к оплате (с НДС ' + pctText(T.rate) + '):',
+        finStyle, ' colspan="4" bgcolor="' + NAVY + '"') +
+        td(fmt(T.total) + ' ₽', finStyle, ' bgcolor="' + NAVY + '"') + '</tr>';
+      smeta = '<table width="100%" cellspacing="0" cellpadding="0"><tr>' +
+        '<th style="' + HEADCELL + MID + 'width:6%">№</th>' +
+        '<th style="' + HEADCELL + 'text-align:left">Наименование</th>' +
+        '<th style="' + HEADCELL + MID + 'width:9%">Кол-во</th>' +
+        '<th style="' + HEADCELL + NUM + 'width:17%">Цена за ед., с НДС ₽</th>' +
+        '<th style="' + HEADCELL + NUM + 'width:17%">Сумма, с НДС ₽</th></tr>' +
+        rows + tot + '</table>' +
+        '<p style="font-family:Calibri,sans-serif;font-size:8.5pt;text-align:justify">' +
+        '<b style="color:' + NAVY + '">Сумма прописью:</b> ' + esc(propisyu(T.total)) +
+        ', в том числе НДС ' + pctText(T.rate) + ' — ' + esc(propisyu(T.nds)) +
+        '. Доставка в стоимость не включена. Счёт фиксирует цену и наличие на ' +
+        APP.invoiceValidDays + ' дней.</p>';
+    } else {
+      smeta = '<p style="font-family:Calibri,sans-serif;font-size:9pt;color:' + GREY +
+        '">Смета пуста: позиции добавляются на вкладке «Конфигуратор».</p>';
+    }
+
+    var capStyle = 'font-size:7.5pt;color:' + GREY;
+    // Линия под подпись — нижняя граница ячейки фиксированной высоты:
+    // border-bottom у div внутри ячейки LibreOffice печатает обрезанным.
+    var sign = '<table width="100%" cellspacing="0" cellpadding="0" border="0" ' +
+      'style="page-break-inside:avoid;margin-top:16px">' +
+      '<tr><td width="48%" style="font-family:Calibri,sans-serif;font-size:9pt;' +
+      'vertical-align:top">С уважением,<br><b>' + esc(APP.company.ceoTitle) + '</b></td>' +
+      '<td width="4%"></td><td width="48%"></td></tr>' +
+      '<tr><td height="46" style="border-bottom:1px solid ' + GREY + '">&nbsp;</td>' +
+      '<td></td><td height="46" style="border-bottom:1px solid ' + GREY +
+      '">&nbsp;</td></tr>' +
+      '<tr><td style="font-family:Calibri,sans-serif;' + capStyle + '"><b>' +
+      esc(APP.company.ceoShort) + '</b> · подпись / Ф.И.О.</td><td></td>' +
+      '<td style="font-family:Calibri,sans-serif;' + capStyle + '">М.П.</td></tr></table>';
+
+    var mgr = '<p style="margin:14px 0 0">' + band(
+      '<div style="' + capStyle + '">Ваш менеджер</div>' +
+      '<div style="font-size:9.5pt"><b style="color:' + NAVY + '">' +
+      esc(APP.manager.name) + '</b> · ' + esc(APP.manager.role) + '<br>' +
+      esc(APP.manager.phone) + ' · ' + esc(APP.manager.email) + ' · ' +
+      esc(APP.manager.sites) + '</div>', PALE, 'color:#202020') + '</p>';
+
+    var ctaBlock = '';
+    if (cta) {
+      ctaBlock = '<p style="margin:14px 0 0">' + band(
+        '<div style="font-size:12pt;font-weight:bold;color:#FFFFFF">' +
+        esc(cta.querySelector('b').textContent) + '</div>' +
+        '<div style="font-size:8.5pt;color:' + LIGHT + '">' +
+        esc(cta.querySelector('span').textContent) + '</div>', NAVY) + '</p>';
+    }
+
+    var legalBlock = '';
+    if (legal) {
+      var parts = Array.prototype.map.call(legal.querySelectorAll('span'), function (s) {
+        return esc(s.textContent);
+      }).join('<br>');
+      legalBlock = '<p style="margin:14px 0 0;border-top:1px solid #B7C9DC;padding-top:6px;' +
+        'font-family:Calibri,sans-serif;font-size:7.5pt;color:' + GREY + '">' +
+        '<b style="color:' + NAVY + ';font-size:8pt">' +
+        esc(legal.querySelector('b').textContent) + '</b><br>' + parts + '</p>';
+    }
+
+    var gap = '<p style="margin:0;font-size:6pt">&nbsp;</p>';
+    var body = head + titleBand + to + lead + gap + sum + gap +
+      sectionBand('1.&nbsp; Смета поставки') + smeta + gap +
+      sectionBand('2.&nbsp; Условия поставки') + rowsFromTable(kpTables[0]) + gap +
+      sectionBand('3.&nbsp; Гарантия и сервис') + rowsFromTable(kpTables[1]) +
+      ctaBlock + gap + sign + gap + mgr + legalBlock;
+
+    // Поля 1,27 см: Word берёт их из mso-разметки, LibreOffice — из @page
+    return '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+      'xmlns:w="urn:schemas-microsoft-com:office:word"><head>' +
+      '<meta charset="utf-8"><title>ТКП LASERCUT</title>' +
+      '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>' +
+      '</w:WordDocument></xml><![endif]-->' +
+      '<style>@page{size:21cm 29.7cm;margin:1.27cm;mso-page-orientation:portrait}' +
+      'body{font-family:Calibri,sans-serif;font-size:9.5pt;color:#202020;margin:0}' +
+      'table{border-collapse:collapse}</style>' +
+      '</head><body>' + body + '</body></html>';
+  }
+
+  function kpFileName(ext) {
+    var k = state.kp;
+    var who = (k.kpClient || 'клиент').replace(/[\\/:*?"<>|]/g, ' ').trim();
+    var num = k.kpNum ? ' № ' + k.kpNum : '';
+    return 'ТКП ' + who + num + ' от ' + (k.kpDate || '') + '.' + ext;
+  }
+
+  function kpBlob() {
+    // BOM в начале — Word без него иногда читает файл как ANSI и ломает кириллицу
+    return new Blob(['﻿' + buildWordDoc()],
+      { type: 'application/msword;charset=utf-8' });
+  }
+
+  function downloadBlob(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = d.createElement('a');
+    a.href = url; a.download = name;
+    d.body.appendChild(a); a.click(); d.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  $('btnWord').addEventListener('click', function () {
+    if (!state.items.length && !confirm('Смета пуста. Всё равно скачать файл?')) return;
+    downloadBlob(kpBlob(), kpFileName('doc'));
+    toast('Файл скачан — открывается в Word');
+  });
+
+  $('btnSend').addEventListener('click', function () {
+    var name = kpFileName('doc');
+    var blob = kpBlob();
+    var f = null;
+    try { f = new File([blob], name, { type: blob.type }); } catch (e) { f = null; }
+    if (f && navigator.canShare && navigator.canShare({ files: [f] }) && navigator.share) {
+      navigator.share({ files: [f], title: 'ТКП LASERCUT' }).then(function () {
+        toast('Файл передан');
+      }, function () { /* пользователь отменил — молчим */ });
+      return;
+    }
+    downloadBlob(blob, name);
+    toast('Отправка файлом недоступна в этом браузере — файл скачан');
+  });
+
   $('btnJson').addEventListener('click', function () {
     var T = totals(), k = state.kp;
     var dp = (k.kpDate || '').split('.');

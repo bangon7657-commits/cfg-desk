@@ -186,6 +186,55 @@ check('срок: переключение на склад меняет стро�
 win.document.getElementById('kpTerm').value = 'order';
 win.document.getElementById('kpTerm').dispatchEvent(new win.Event('change'));
 
+// ---- выгрузка ТКП в файл: кнопки на месте, документ собирается ----
+check('файл: кнопка «Скачать ТКП для Word» есть', !!doc.getElementById('btnWord'));
+check('файл: кнопка «Отправить файлом» есть', !!doc.getElementById('btnSend'));
+// Blob подменяем на обёртку, чтобы получить текст синхронно: blob.text()
+// вернул бы промис, а проверки идут в одном потоке.
+let wordBlob = null, wordName = null, wordParts = null;
+const RealBlob = win.Blob;
+win.Blob = function (parts, opts) {
+  wordParts = parts; wordBlob = new RealBlob(parts, opts); return wordBlob;
+};
+win.URL.createObjectURL = function () { return 'blob:test'; };
+win.URL.revokeObjectURL = function () {};
+const origAClick = win.HTMLAnchorElement.prototype.click;
+win.HTMLAnchorElement.prototype.click = function () {
+  if (this.download) wordName = this.download;
+};
+win.document.getElementById('btnWord').click();
+win.HTMLAnchorElement.prototype.click = origAClick;
+win.Blob = RealBlob;
+check('файл: имя содержит клиента и дату',
+  !!wordName && /^ТКП .*\.doc$/.test(wordName), 'имя «' + wordName + '»');
+check('файл: тип для Word',
+  !!wordBlob && /application\/msword/.test(wordBlob.type),
+  wordBlob ? wordBlob.type : 'блоб не создан');
+
+const docText = wordParts ? wordParts.join('') : '';
+check('файл: BOM в начале — Word не сломает кириллицу',
+  docText.charCodeAt(0) === 0xFEFF, 'первый символ ' + docText.charCodeAt(0));
+check('файл: логотип встроен data-URL',
+  /<img src="data:image\/png;base64,/.test(docText), '');
+check('файл: нет внешних ссылок и скриптов',
+  !/https?:\/\//.test(docText) && !/<script/i.test(docText),
+  (docText.match(/https?:\/\/[^"' ]{0,40}/) || [''])[0]);
+check('файл: заливки заданы атрибутом bgcolor',
+  (docText.match(/bgcolor="#1F3A5F"/g) || []).length >= 3,
+  'найдено ' + (docText.match(/bgcolor=/g) || []).length);
+check('файл: flex и grid не попали в документ',
+  !/display:\s*(flex|grid)/.test(docText), '');
+check('файл: итог совпадает с предпросмотром',
+  docText.indexOf('2 723 650,00') >= 0 && docText.indexOf('ИТОГО к оплате') >= 0, '');
+check('файл: сумма прописью внутри',
+  /Сумма прописью/.test(docText) && /рубл/.test(docText), '');
+check('файл: срок поставки 80 раб. дней',
+  /до 80 раб\. дней/.test(docText) && /до 80 рабочих дней/.test(docText), '');
+check('файл: реквизиты и подпись директора',
+  docText.indexOf('7811692637') >= 0 && /Греков Е\.В\./.test(docText), '');
+check('файл: поля страницы 1,27 см',
+  /margin:1\.27cm/.test(docText.replace(/\s+/g, '')), '');
+
 // Согласование числительных: «122 конфигураций» — ошибка, нужно «122 конфигурации»
 const badPlural = (src.match(/\b\d*[02-9][2-4]\s+конфигураций/g) || []);
 check('язык: согласование «конфигурации» с числом', badPlural.length === 0,
