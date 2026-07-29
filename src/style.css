@@ -60,20 +60,61 @@ body.demo .demo-banner{display:flex;gap:14px;align-items:center;justify-content:
   cursor:pointer}
 .demo-banner button:hover{background:var(--onor);color:var(--or)}
 
-/* ---------- вкладки ---------- */
+/* ---------- вкладки и кнопка разделов ----------
+   Строка вкладок держит только частые разделы; всё остальное — в кнопке
+   «Разделы». Форма скруглённая, фон полупрозрачный: вкладка читается как
+   «пилюля», а активная подсвечивается фирменным оранжевым. */
 nav{display:none;background:var(--bg2);border-bottom:1px solid var(--line);
   position:sticky;top:63px;z-index:29}
 body.js nav{display:block}
-.navinner{max-width:1200px;margin:0 auto;padding:0 8px;display:flex;gap:2px;
-  overflow-x:auto;scrollbar-width:thin}
-.navinner::-webkit-scrollbar{height:3px}
-.navinner::-webkit-scrollbar-thumb{background:var(--or3)}
-nav button{border:0;background:none;font:inherit;font-size:15px;padding:14px 16px;
-  cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;
-  display:flex;align-items:center;gap:7px}
-nav button:hover{color:var(--tx);background:var(--bg3)}
-nav button[aria-selected="true"]{color:var(--or);font-weight:700;
-  border-bottom-color:var(--or);background:var(--bg3)}
+.navinner{max-width:1200px;margin:0 auto;padding:9px 12px;display:flex;gap:12px;
+  align-items:center}
+.navtabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding:2px 0;
+  flex:1 1 auto}
+.navtabs::-webkit-scrollbar{height:3px}
+.navtabs::-webkit-scrollbar-thumb{background:var(--or3);border-radius:3px}
+.navtabs button{border:1px solid var(--line2);border-radius:22px;font:inherit;
+  font-size:15px;padding:9px 18px;cursor:pointer;color:var(--tx2);white-space:nowrap;
+  display:flex;align-items:center;gap:7px;
+  background:color-mix(in srgb, var(--bg3) 55%, transparent);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:border-color .15s, color .15s, background .15s}
+.navtabs button:hover{color:var(--tx);border-color:var(--or);
+  background:color-mix(in srgb, var(--bg4) 70%, transparent)}
+.navtabs button[aria-selected="true"]{color:var(--or);font-weight:700;
+  border-color:var(--or);background:color-mix(in srgb, var(--orbg) 75%, transparent);
+  box-shadow:0 2px 12px color-mix(in srgb, var(--or) 22%, transparent)}
+
+/* кнопка «Разделы» — фирменный оранжевый блок с меню */
+.navmenu{position:relative;flex:0 0 auto}
+.menubtn{font:inherit;font-size:15px;font-weight:700;padding:9px 18px 9px 40px;
+  border-radius:22px;cursor:pointer;border:0;background:var(--or);color:var(--onor);
+  position:relative;letter-spacing:.2px;
+  box-shadow:0 3px 14px color-mix(in srgb, var(--or) 35%, transparent)}
+.menubtn::before{content:"";position:absolute;left:15px;top:50%;
+  width:15px;height:2px;background:var(--onor);border-radius:2px;
+  box-shadow:0 -5px 0 var(--onor), 0 5px 0 var(--onor);transform:translateY(-1px)}
+.menubtn:hover{background:var(--or2)}
+.menulist{display:none;position:absolute;left:0;top:calc(100% + 8px);z-index:40;
+  min-width:250px;padding:8px;border-radius:16px;border:1px solid var(--line2);
+  background:color-mix(in srgb, var(--bg2) 92%, transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 14px 40px var(--shadow)}
+.menulist.open{display:block}
+.menulist button{display:flex;width:100%;align-items:center;justify-content:space-between;
+  gap:12px;font:inherit;font-size:15px;text-align:left;padding:11px 14px;
+  border:0;border-radius:11px;background:none;color:var(--tx2);cursor:pointer}
+.menulist button:hover{background:var(--bg3);color:var(--tx)}
+.menulist button[aria-selected="true"]{color:var(--or);font-weight:700;
+  background:var(--orbg)}
+.menulist button small{font-size:12.5px;color:var(--muted);font-weight:400}
+@media(max-width:560px){
+  .navinner{padding:8px 10px;gap:8px}
+  .navtabs button{font-size:14px;padding:8px 14px}
+  .menubtn{font-size:14px;padding:8px 14px 8px 34px}
+  .menubtn::before{left:12px;width:13px}
+  .menulist{min-width:min(78vw, 320px)}
+}
 .badge{background:var(--or);color:var(--onor);font-size:12px;font-weight:700;
   min-width:20px;padding:1px 6px;border-radius:10px;line-height:1.5}
 .badge:empty{display:none}
@@ -182,7 +223,7 @@ th{background:var(--bg4);color:var(--or2);font-weight:700;font-size:13px;
 tbody tr:nth-child(even){background:var(--bg3)}
 tbody tr:hover{background:var(--bg4)}
 td b{color:var(--or)}
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;
   border:1px solid var(--line);border-radius:9px}
 .scroll table{margin:0;border:0}
 .scroll th:first-child,.scroll td:first-child{border-left:0}
@@ -299,6 +340,7 @@ body.demo .internal{display:none !important}
 .kp-sum div{background:#1f3a5f;padding:8px 11px}
 .kp-sum .k{font-size:10.5px;color:#b9cbe0;letter-spacing:.3px}
 .kp-sum .v{font-size:15px;font-weight:700;color:#fff;margin-top:2px}
+.kp-sum .s{font-size:10.5px;color:#b9cbe0;margin-top:3px}
 @media(max-width:740px){.kp-sum{grid-template-columns:1fr 1fr}}
 .kp-sec{background:#1f3a5f;color:#fff;font-weight:700;font-size:13.5px;
   padding:6px 11px;margin:16px 0 9px}
@@ -377,15 +419,47 @@ body.demo .internal{display:none !important}
   .kp,.kp *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
-@media(max-width:560px){
-  body{font-size:15.5px}
+/* Только screen: при печати A4 ширина листа около 700 px, и без этой оговорки
+   узкий формат (A5, «уместить на страницу») ломал бы таблицы в ТКП. */
+@media screen and (max-width:640px){
+  body{font-size:15.5px;overflow-x:hidden}
   .wrap{padding:0 12px 70px}
   .head{padding:10px 12px}
   .brand{font-size:16.5px}
   nav{top:59px}
-  nav button{padding:13px 13px;font-size:14.5px}
   h2{font-size:20px;margin-top:26px}
   .step-b,.det-b{padding:14px}
   .pb .val{font-size:25px}
-  .kp{padding:18px}
+  .kp{padding:14px}
+
+  /* Смета на телефоне: таблица шириной в шесть колонок не влезает никуда,
+     поэтому каждая строка становится карточкой, а названия колонок
+     подставляются подписями из data-label. Прайсы и справочники остаются
+     таблицами — они внутри .scroll и листаются по горизонтали. */
+  #smetaWrap{overflow:visible;border:0;border-radius:0}
+  #smetaTable{display:block;border:0}
+  #smetaTable thead{display:none}
+  #smetaTable tbody,#smetaTable tr,#smetaTable td{display:block;width:auto}
+  #smetaTable tr{border:1px solid var(--line2);border-radius:12px;
+    background:var(--bg2);padding:10px 12px;margin-bottom:12px}
+  #smetaTable tr:nth-child(even){background:var(--bg2)}
+  #smetaTable tbody tr:hover{background:var(--bg2)}
+  #smetaTable td{border:0;padding:5px 0;display:flex;gap:12px;
+    align-items:center;justify-content:space-between}
+  #smetaTable td::before{content:attr(data-label);flex:0 0 auto;
+    font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--muted)}
+  #smetaTable td:first-child{display:block;font-weight:700;color:var(--tx);
+    font-size:16px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  #smetaTable td:first-child::before{display:none}
+  #smetaTable td:last-child{justify-content:flex-end;padding-top:10px}
+  #smetaTable input[type=number]{width:92px;text-align:right}
+  #smetaTable td.num{font-variant-numeric:tabular-nums}
+
+  /* Лист ТКП на узком экране: таблицы могут только листаться, зато
+     не рвут вёрстку страницы. */
+  .kp table{display:block;overflow-x:auto}
+  .kp-sum{grid-template-columns:1fr 1fr}
+  .kp-to{grid-template-columns:1fr}
+  .kp-to div{border-right:0}
 }

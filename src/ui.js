@@ -10,6 +10,16 @@
     if (html !== undefined) n.innerHTML = html;
     return n;
   }
+  // согласование существительного с числом: 1,5 баллона / 5 баллонов
+  function plural(n, forms) {
+    var whole = Math.floor(n);
+    if (n !== whole) return forms[0];          // дробное — всегда «баллона»
+    var m = whole % 100;
+    if (m >= 11 && m <= 19) return forms[1];
+    m = whole % 10;
+    return (m >= 2 && m <= 4) || m === 1 ? forms[0] : forms[1];
+  }
+
   // первая буква строчной: сумма прописью в середине фразы не должна начинаться с большой
   function lower1(t) {
     return t ? t.charAt(0).toLowerCase() + t.slice(1) : t;
@@ -76,17 +86,95 @@
   }
 
   // ------------------------------------------------------------------ вкладки
+  // В строке живут только частые разделы, полный список — в кнопке «Разделы».
+  // Один источник истины: SECTIONS. Из него строится меню, по нему же
+  // проверяется хеш в адресе.
+  var SECTIONS = [
+    { id: 'cfg', title: 'Конфигуратор', hint: 'станок, обвязка, цена' },
+    { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
+    { id: 'match', title: 'Подбор по задаче', hint: 'толщина и материал' },
+    { id: 'gas', title: 'Газ и владение', hint: 'расход и стоимость' },
+    { id: 'shop', title: 'Готовность цеха', hint: 'блокеры до монтажа' },
+    { id: 'data', title: 'Данные', hint: 'прайсы, источники, расхождения' }
+  ];
   var tabs = $('tabs').querySelectorAll('button');
+  // подписи вкладок берём из SECTIONS: иначе переименование раздела меняло
+  // бы только надпись в меню, а строка вкладок оставалась со старым текстом
+  for (var ti = 0; ti < tabs.length; ti++) {
+    var tid = tabs[ti].getAttribute('data-t');
+    SECTIONS.forEach(function (s) {
+      if (s.id !== tid) return;
+      var badge = tabs[ti].querySelector('.badge');
+      tabs[ti].textContent = s.title + ' ';
+      if (badge) tabs[ti].appendChild(badge);
+    });
+  }
+
+  var menuList = fresh('menuList');
+  SECTIONS.forEach(function (s) {
+    var b = d.createElement('button');
+    b.type = 'button';
+    b.setAttribute('data-t', s.id);
+    b.setAttribute('role', 'menuitem');
+    b.innerHTML = '<span>' + esc(s.title) + '</span><small>' + esc(s.hint) + '</small>';
+    b.addEventListener('click', function () {
+      showTab(s.id);
+      closeMenu();
+    });
+    menuList.appendChild(b);
+  });
+
+  window.addEventListener('hashchange', function () {
+    var h = (location.hash || '').replace('#', '');
+    var ok = false;
+    SECTIONS.forEach(function (s) { if (s.id === h) ok = true; });
+    if (ok) showTab(h);
+  });
+
+  function closeMenu() {
+    $('menuList').classList.remove('open');
+    $('menuBtn').setAttribute('aria-expanded', 'false');
+  }
+  $('menuBtn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    var open = !$('menuList').classList.contains('open');
+    $('menuList').classList.toggle('open', open);
+    this.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  d.addEventListener('click', function (e) {
+    if (!$('menuList').contains(e.target) && e.target !== $('menuBtn')) closeMenu();
+  });
+  d.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeMenu();
+  });
+
   function showTab(name) {
     for (var i = 0; i < tabs.length; i++) {
       tabs[i].setAttribute('aria-selected',
         tabs[i].getAttribute('data-t') === name ? 'true' : 'false');
     }
+    var mi = $('menuList').querySelectorAll('button');
+    for (var k = 0; k < mi.length; k++) {
+      mi[k].setAttribute('aria-selected',
+        mi[k].getAttribute('data-t') === name ? 'true' : 'false');
+    }
+    // Кнопка показывает, где мы находимся, если раздела нет в строке вкладок
+    var inTabs = false;
+    for (var t = 0; t < tabs.length; t++) {
+      if (tabs[t].getAttribute('data-t') === name) inTabs = true;
+    }
+    var title = name;
+    SECTIONS.forEach(function (s) { if (s.id === name) title = s.title; });
+    $('menuBtn').textContent = inTabs ? 'Разделы' : title;
     var panels = d.querySelectorAll('.panel');
     for (var j = 0; j < panels.length; j++) {
       panels[j].classList.toggle('active', panels[j].id === 'p-' + name);
     }
-    if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+    // При открытии файла с диска (file://) браузер запрещает replaceState и
+    // бросает SecurityError. Раньше это валило остаток инициализации.
+    try {
+      if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+    } catch (e) { location.hash = name; }
     // не window.scrollTo — в jsdom он не реализован и валит проверку сборки
     d.documentElement.scrollTop = 0;
     d.body.scrollTop = 0;
@@ -104,20 +192,21 @@
   window.addEventListener('resize', fixNavOffset);
 
   // ------------------------------------------------------------------ демо-режим
-  function applyDemo(on) {
+  function applyDemo(on, silent) {
     state.demo = on;
     $('demoMode').checked = on;
     d.body.classList.toggle('demo', on);
-    save(); renderMill();
+    if (!silent) save();
+    renderMill();
   }
   $('demoMode').addEventListener('change', function () { applyDemo(this.checked); });
   $('demoOff').addEventListener('click', function () { applyDemo(false); });
-  applyDemo(!!state.demo);
+  applyDemo(!!state.demo, true);
 
   // ------------------------------------------------------------------ тема
   // Тёмная — по умолчанию, как было; светлая включается атрибутом на <html>.
   // Лист ТКП в обеих темах белый, поэтому печать не меняется.
-  function applyTheme(name) {
+  function applyTheme(name, silent) {
     var light = name === 'light';
     state.theme = light ? 'light' : 'dark';
     if (light) d.documentElement.setAttribute('data-theme', 'light');
@@ -129,16 +218,19 @@
     }
     var meta = d.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', light ? '#f6f4f1' : '#100e0c');
-    save();
+    if (!silent) save();
   }
   $('themeBtn').addEventListener('click', function () {
     applyTheme(state.theme === 'light' ? 'dark' : 'light');
   });
-  applyTheme(state.theme === 'light' ? 'light' : 'dark');
+  applyTheme(state.theme === 'light' ? 'light' : 'dark', true);
 
   // ------------------------------------------------------------------ тост
   var toastTimer = null;
-  function toast(text) {
+  function toast(text, withButton) {
+    // Кнопка «Открыть смету» уместна только у сообщений о добавлении позиции;
+    // у «JSON скопирован» она сбивала с толку.
+    $('toastGo').style.display = withButton ? '' : 'none';
     $('toastText').textContent = text;
     $('toast').classList.add('show');
     clearTimeout(toastTimer);
@@ -164,7 +256,11 @@
   function servoNow() {
     var id = state.servo || APP.servoDefault, found = null;
     APP.servo.forEach(function (s) { if (s.id === id) found = s; });
-    if (!found) { state.servo = APP.servoDefault; found = APP.servo[0]; }
+    if (!found) {
+      state.servo = APP.servoDefault;
+      APP.servo.forEach(function (s) { if (s.id === APP.servoDefault) found = s; });
+      found = found || APP.servo[0];
+    }
     return found;
   }
 
@@ -251,9 +347,10 @@
       steps.push(['Усиленные приводы ' + sv.brand, add]);
       price += add;
     }
+    var shortName = name;              // без приписки про приводы — для титула ТКП
     name += ' · приводы ' + sv.label;
-    return { name: name, price: price, steps: steps, servo: sv, fmt: f, power: p,
-      rot: rot };
+    return { name: name, short: shortName, price: price, steps: steps, servo: sv,
+      fmt: f, power: p, rot: rot };
   }
 
   function renderFiber() {
@@ -336,7 +433,8 @@
   $('fAdd').addEventListener('click', function () {
     var p = fiberPick();
     if (p.err) return;
-    addItem(p.name, p.price, 1, 'eq');
+    addItem(p.name, p.price, 1, 'eq',
+      { short: p.short || '', sub: p.servo ? 'приводы ' + p.servo.label : '' });
   });
 
   // ------------------------------------------------------------------ фрезерные
@@ -660,7 +758,11 @@
   var TYPES = { eq: 'Оборудование', opt: 'Опция', srv: 'Услуга' };
   var TYPE_ORDER = { eq: 0, opt: 1, srv: 2 };
 
-  function addItem(name, priceRub, qty, type) {
+  // extra — необязательное: short (короткое имя для титула ТКП) и sub
+  // (подпись мелким, например выбранные приводы). В смете печатается полное
+  // наименование, а в титуле и плашке-резюме — короткое: длинная строка
+  // разъезжалась на три строки и ломала вёрстку листа.
+  function addItem(name, priceRub, qty, type, extra) {
     var cents = toCents(priceRub);
     var found = null;
     state.items.forEach(function (it) {
@@ -668,10 +770,14 @@
     });
     if (found) {
       found.qty = Math.min(99, found.qty + qty);
-      toast('Уже было в смете — количество стало ' + found.qty);
+      // черновик прошлой версии мог не знать про короткое имя — дописываем
+      if (extra && extra.short && !found.short) found.short = extra.short;
+      if (extra && extra.sub && !found.sub) found.sub = extra.sub;
+      toast('Уже было в смете — количество стало ' + found.qty, true);
     } else {
-      state.items.push({ name: name, price: cents, qty: qty, type: type || 'eq', disc: null });
-      toast('Добавлено: ' + (name.length > 42 ? name.slice(0, 42) + '…' : name));
+      state.items.push({ name: name, price: cents, qty: qty, type: type || 'eq',
+        disc: null, short: (extra && extra.short) || '', sub: (extra && extra.sub) || '' });
+      toast('Добавлено: ' + (name.length > 42 ? name.slice(0, 42) + '…' : name), true);
     }
     sortItems(); save(); renderSmeta();
   }
@@ -716,14 +822,17 @@
       var nameCell = '<b style="color:var(--tx);font-weight:600">' + esc(L.item.name) +
         '</b><br><span class="muted">' + (TYPES[L.item.type] || '') +
         (L.item.disc !== null && L.item.disc !== undefined ? ' · своя скидка' : '') + '</span>';
+      // data-label читает мобильная вёрстка: на узком экране строка
+      // превращается в карточку, а подписи колонок берутся отсюда
       tr.innerHTML = '<td>' + nameCell + '</td>' +
-        '<td><input type="number" min="1" max="99" value="' + L.item.qty + '" aria-label="количество"></td>' +
-        '<td>' + fmt(L.item.price) + '</td>' +
-        '<td><input type="number" min="0" max="' + APP.maxDiscount +
+        '<td data-label="Кол-во"><input type="number" min="1" max="99" value="' +
+        L.item.qty + '" aria-label="количество"></td>' +
+        '<td data-label="Цена прайса" class="num">' + fmt(L.item.price) + '</td>' +
+        '<td data-label="Скидка, %"><input type="number" min="0" max="' + APP.maxDiscount +
         '" step="0.5" value="' +
         String(L.dsc / 10).replace('.', ',') + '" aria-label="скидка"></td>' +
-        '<td>' + fmt(L.unit) + '</td>' +
-        '<td><b>' + fmt(L.line) + '</b></td>' +
+        '<td data-label="Со скидкой" class="num">' + fmt(L.unit) + '</td>' +
+        '<td data-label="Сумма" class="num"><b>' + fmt(L.line) + '</b></td>' +
         '<td class="noprint"><button class="btn mini danger" type="button">Убрать</button></td>';
       var inputs = tr.querySelectorAll('input');
       inputs[0].addEventListener('change', function () {
@@ -843,7 +952,9 @@
   function renderKP() {
     var box = $('kpPreview'); clear(box);
     var T = totals(), k = state.kp;
-    var first = state.items.length ? state.items[0].name : '';
+    var it0 = state.items.length ? state.items[0] : null;
+    var first = it0 ? (it0.short || it0.name) : '';
+    var firstSub = it0 ? (it0.sub || '') : '';
     // Строка «Срок поставки» в разделе 2 живёт в статике — обновляем её текстом из данных.
     var tv = $('kpTermVal');
     if (tv) {
@@ -874,7 +985,8 @@
 
     box.appendChild(el('div', 'kp-sum',
       '<div><div class="k">Рекомендуем</div><div class="v">' +
-      esc(first || '—') + '</div></div>' +
+      esc(first || '—') + '</div>' +
+      (firstSub ? '<div class="s">' + esc(firstSub) + '</div>' : '') + '</div>' +
       '<div><div class="k">Стоимость, с НДС ' + pctText(T.rate) +
       '</div><div class="v">' + fmt(T.total) + ' ₽</div></div>' +
       '<div><div class="k">Срок поставки</div><div class="v">' +
@@ -955,17 +1067,19 @@
 
   function dSection(num, name) {
     return dBand(DOCX.p(DOCX.run(num + '.  ' + name, { b: true, color: WHITE, sz: 21 }),
-      { space: { before: 40, after: 40 }, keepNext: true }), NAVY) +
-      DOCX.p('', { space: { after: 40 } });
+      { space: { before: 20, after: 20 }, keepNext: true }), NAVY) +
+      DOCX.p('', { space: { after: 20 } });
   }
 
   function dGap(after) {
-    return DOCX.p('', { space: { after: after === undefined ? 120 : after } });
+    return DOCX.p('', { space: { after: after === undefined ? 80 : after } });
   }
 
   function docxBody() {
     var T = totals(), k = state.kp, sup = supNow();
-    var first = state.items.length ? state.items[0].name : '';
+    var it0 = state.items.length ? state.items[0] : null;
+    var first = it0 ? (it0.short || it0.name) : '';
+    var firstSub = it0 ? (it0.sub || '') : '';
     var title = k.kpTitle || first || 'Оборудование с ЧПУ LASERCUT';
     var out = '';
 
@@ -1024,18 +1138,20 @@
     out += DOCX.p(DOCX.run('Благодарим за интерес к оборудованию LASERCUT. Ниже — ' +
       'состав поставки, стоимость и условия. Оборудование новое, не бывшее ' +
       'в эксплуатации, соответствует требованиям ТР ТС 004/2011, 010/2011, 020/2011.',
-      { sz: 19 }), { align: 'both', space: { after: 140 } });
+      { sz: 19 }), { align: 'both', space: { after: 100 } });
 
     // плашка-резюме из четырёх ячеек
-    function sumCell(kk, vv, w) {
+    function sumCell(kk, vv, w, sub) {
       return DOCX.tc(
         DOCX.p(DOCX.run(kk, { sz: 15, color: DIM }), { space: { after: 20 } }) +
-        DOCX.p(DOCX.run(vv, { b: true, color: WHITE, sz: 22 }), { space: { after: 0 } }),
+        DOCX.p(DOCX.run(vv, { b: true, color: WHITE, sz: 22 }),
+          { space: { after: sub ? 20 : 0 } }) +
+        (sub ? DOCX.p(DOCX.run(sub, { sz: 15, color: DIM }), { space: { after: 0 } }) : ''),
         { w: w, fill: NAVY, noBorder: true });
     }
     var q = Math.floor(W_ALL / 4);
     out += DOCX.tbl([DOCX.tr([
-      sumCell('Рекомендуем', first || '—', q),
+      sumCell('Рекомендуем', first || '—', q, firstSub),
       sumCell('Стоимость, с НДС ' + pctText(T.rate), fmt(T.total) + ' ₽', q),
       sumCell('Срок поставки', termLabel(), q),
       sumCell('Гарантия', APP.guarantee.label, W_ALL - q * 3)
@@ -1099,7 +1215,7 @@
         DOCX.run(propisyu(T.total) + ', в том числе НДС ' + pctText(T.rate) + ' — ' +
           lower1(propisyu(T.nds)) + '. Доставка в стоимость не включена. Счёт фиксирует цену ' +
           'и наличие на ' + APP.invoiceValidDays + ' дней.', { sz: 17 }),
-        { align: 'both', space: { before: 80, after: 120 } });
+        { align: 'both', space: { before: 60, after: 80 } });
     } else {
       out += DOCX.p(DOCX.run('Смета пуста: позиции добавляются на вкладке ' +
         '«Конфигуратор».', { sz: 17, color: GREY }), { space: { after: 120 } });
@@ -1596,23 +1712,45 @@
     box.appendChild(el('div', '', 'Давление <b>' + c.bar + ' бар</b> · подача <b>' +
       c.lmin + ' л/мин</b> · двигатель <b>' + String(c.kw).replace('.', ',') +
       ' кВт</b> · ресивер <b>' + c.tank + ' л</b>'));
+    // краткая памятка по подбору идёт сразу за строкой давления: именно здесь
+    // менеджер решает, годится модель под задачу или нет
+    APP.compressorAdvice.forEach(function (a) {
+      box.appendChild(el('div', '', '<b>' + esc(a[0]) + ':</b> ' + esc(a[1])));
+    });
     box.appendChild(el('div', '', 'Шум ' + esc(c.noise) + ' · осушитель: ' +
       esc(c.dryer)));
     box.appendChild(el('div', '', 'Гарантия ' + esc(c.warranty) + ' · срок: ' +
       esc(c.lead) + (c.size ? ' · габариты ' + esc(c.size) : '') +
       (c.mass ? ' · масса ' + c.mass + ' кг' : '')));
-    box.appendChild(el('div', 'internal', 'Источник цены: ' + esc(c.src)));
     out.appendChild(box);
     if (c.kp_valid) {
       out.appendChild(el('div', 'note alert', 'КП от ' + esc(c.kp_date) + ': ' +
         esc(c.kp_valid) + '.'));
     }
-    // сколько такой компрессор закрывает по расходу воздуха на 6 кВт
+    // сколько такой компрессор закрывает по расходу воздуха на 6 кВт.
+    // Границы берём из таблицы расхода, а не из текста: правка данных должна
+    // доходить до экрана сама.
     var perMin = c.lmin / 1000;
-    out.appendChild(el('div', 'note',
-      'Подача ' + String(Math.round(perMin * 100) / 100).replace('.', ',') +
-      ' м³/мин. По таблице 6 кВт резка воздухом требует от 0,35 м³/мин (1 мм) ' +
-      'до 3,8 м³/мин (нержавейка 20 мм) — сравнивайте с режимом заказчика.'));
+    var need = APP.airDemand;          // {min, max, maxLabel} в м³/мин
+    var reserve = Math.round(need.max * 1.25 * 100) / 100;
+    var line = 'Подача ' + String(Math.round(perMin * 100) / 100).replace('.', ',') +
+      ' м³/мин. По таблице 6 кВт резка воздухом требует от ' +
+      String(need.min).replace('.', ',') + ' м³/мин (1 мм) до ' +
+      String(need.max).replace('.', ',') + ' м³/мин (' + esc(need.maxLabel) + ').';
+    if (perMin < need.max) {
+      line += ' Верх таблицы эта модель не закрывает: для ' +
+        String(need.max).replace('.', ',') + ' м³/мин с запасом нужно около ' +
+        String(reserve).replace('.', ',') + ' м³/мин, а такого компрессора ' +
+        'в заведённых КП нет — считайте по реальному режиму заказчика.';
+    }
+    out.appendChild(el('div', 'note', line));
+    if (c.tank < APP.minTankL) {
+      out.appendChild(el('div', 'note alert', 'Ресивер ' + c.tank + ' л — меньше ' +
+        APP.minTankL + ' л, которые требует справочник готовности цеха. ' +
+        'Уточняйте у сервиса, годится ли модель под конкретный станок.'));
+    }
+    // общее примечание по компрессорам показываем здесь же, один раз
+    out.appendChild(el('div', 'note', esc(APP.compressorNote)));
   }
 
   function renderExtraction() {
@@ -1642,12 +1780,14 @@
       (c.lead ? ' · ' + esc(c.lead) : '')));
     box.appendChild(el('div', 'internal', 'Источник цены: ' + esc(c.src)));
     out.appendChild(box);
-    // сравнение с баллонами: 1 баллон 40 л = 6 м³ газа
-    var hours = Math.round(c.flow / 6 * 10) / 10;
+    // сравнение с баллонами: объём одного баллона берём из данных, а не из текста
+    var perCyl = APP.cylinderM3;
+    var cyls = Math.round(c.flow / perCyl * 10) / 10;
     out.appendChild(el('div', 'note',
-      'Один баллон 40 л даёт 6 м³ газа, значит на максимальном расходе ' +
-      'этот криоцилиндр заменяет около ' + String(hours).replace('.', ',') +
-      ' баллона в час непрерывной резки.'));
+      'Один баллон 40 л даёт ' + String(perCyl).replace('.', ',') + ' м³ газа, ' +
+      'значит на максимальном расходе этот криоцилиндр заменяет около ' +
+      String(cyls).replace('.', ',') + ' ' + plural(cyls, ['баллона', 'баллонов']) +
+      ' в час непрерывной резки.'));
   }
 
   fillKit('kitCompressor', APP.compressors, 'compressor');
@@ -1751,7 +1891,7 @@
   renderExtraction();
   renderCryo();
   var hash = (location.hash || '').replace('#', '');
-  var valid = ['cfg', 'smeta', 'match', 'shop', 'gas', 'kit', 'data'];
+  var valid = SECTIONS.map(function (s) { return s.id; });
   showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');
   fixNavOffset();
 

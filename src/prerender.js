@@ -67,10 +67,21 @@ if (STAGE === 2) {
 if (STAGE !== 2) {
 
 check('ошибок JS нет', first.errors.length === 0, first.errors.join(' | '));
-check('вкладок 7', doc.querySelectorAll('#tabs button').length === 7,
+check('в строке вкладок 4 частых раздела',
+  doc.querySelectorAll('#tabs button').length === 4,
   'найдено ' + doc.querySelectorAll('#tabs button').length);
-check('панелей 7', doc.querySelectorAll('.panel').length === 7,
+check('панелей 6', doc.querySelectorAll('.panel').length === 6,
   'найдено ' + doc.querySelectorAll('.panel').length);
+check('в кнопке «Разделы» все 6 разделов',
+  doc.querySelectorAll('#menuList button').length === 6,
+  'найдено ' + doc.querySelectorAll('#menuList button').length);
+check('меню закрыто при открытии',
+  !doc.getElementById('menuList').classList.contains('open'), '');
+check('навигация: скруглённые полупрозрачные вкладки',
+  /\.navtabs button\{[^}]*border-radius:22px/.test(src) &&
+  /\.navtabs button\{[^}]*color-mix/.test(src), '');
+check('навигация: кнопка «Разделы» в фирменном оранжевом',
+  /\.menubtn\{[^}]*background:var\(--or\)/.test(src), '');
 
 // конфигуратор волокна посчитал цену
 const fOut = textOf(doc, '#fOut');
@@ -414,8 +425,24 @@ check('обвязка: компрессор идёт как опция',
   /ERSTVAK ESC-20X-500AL/.test(doc.getElementById('smetaBody').textContent),
   doc.getElementById('smetaBody').textContent.slice(0, 160));
 
-// ---- справочники новой вкладки ----
-const kitPanel = doc.getElementById('p-kit').textContent.replace(/\s+/g, ' ');
+// ---- обвязка и справочники живут внутри конфигуратора ----
+const kitPanel = doc.getElementById('p-cfg').textContent.replace(/\s+/g, ' ');
+check('обвязка: блоки внутри конфигуратора, отдельной вкладки нет',
+  !doc.getElementById('p-kit') &&
+  !!doc.getElementById('p-cfg').querySelector('#kitCompressor'), '');
+check('обвязка: подсказка по подбору рядом с давлением',
+  /винтовой, а не поршневой/.test(textOf(doc, '#compressorOut')) &&
+  /16 бар/.test(textOf(doc, '#compressorOut')),
+  (textOf(doc, '#compressorOut') || '').slice(0, 160));
+check('обвязка: строки «Источник цены» в карточке нет',
+  !/Источник цены/.test(textOf(doc, '#compressorOut')),
+  (textOf(doc, '#compressorOut') || '').slice(0, 120));
+check('смета: у ячеек есть подписи для мобильной вёрстки',
+  (src.match(/data-label="/g) || []).length >= 5,
+  'найдено ' + (src.match(/data-label="/g) || []).length);
+check('смета: мобильные правила карточек в CSS',
+  src.replace(/\s+/g, '').indexOf('#smetaTabletd::before{content:attr(data-label)') >= 0,
+  '');
 check('справочник: расход газа 6 кВт на месте',
   /21 м³/.test(kitPanel) && /0,008 м³/.test(kitPanel) && /226 м³/.test(kitPanel), '');
 check('справочник: головы Boci перечислены',
@@ -424,6 +451,43 @@ check('справочник: узлы станков из карточек',
   /Hiwin/.test(kitPanel) && /Mitsubishi/.test(kitPanel) && /BCS100/.test(kitPanel), '');
 check('справочник: баллон 40 л даёт 6 м³',
   /40 л/.test(kitPanel) && /6 м³/.test(kitPanel), '');
+
+
+// ---- находки прошлого аудита: проверяем, что не вернутся ----
+check('чистота: примечание про компрессор не дублируется',
+  (doc.getElementById('p-cfg').textContent.match(/Компрессор нужен для резки/g) || [])
+    .length === 1,
+  'вхождений ' + (doc.getElementById('p-cfg').textContent
+    .match(/Компрессор нужен для резки/g) || []).length);
+check('чистота: примечание про приводы не дублируется',
+  (doc.getElementById('p-cfg').textContent
+    .match(/Мощности осей, скорость и ускорение/g) || []).length === 1, '');
+check('навигация: подписи вкладок берутся из SECTIONS',
+  Array.from(doc.querySelectorAll('#tabs button')).every(b => b.textContent.trim()),
+  '');
+check('навигация: replaceState обёрнут в try',
+  /try \{[\s\S]{0,120}history\.replaceState/.test(src),
+  'при открытии файла с диска SecurityError валил инициализацию');
+check('навигация: есть реакция на смену хеша',
+  /addEventListener\('hashchange'/.test(src), '');
+check('смета: подпись мобильной ячейки совпадает с заголовком',
+  src.indexOf('<th>Скидка, %</th>') >= 0 && src.indexOf('data-label="Скидка, %"') >= 0,
+  '');
+check('мобильные правила ограничены screen',
+  /@media screen and \(max-width:640px\)/.test(src), '');
+check('обвязка: объём баллона взят из данных',
+  /"cylinderM3":\s*6/.test(src), (src.match(/"cylinderM3":[^,]*/) || [''])[0]);
+check('обвязка: границы расхода воздуха из таблицы',
+  /"airDemand"/.test(src) && /"max":\s*3\.8/.test(src), '');
+const cryoTxt = textOf(doc, '#cryoOut');
+check('обвязка: числительное «баллонов» согласовано',
+  !/\d\s+баллона в час/.test(cryoTxt) || /1,5 баллона/.test(cryoTxt),
+  (cryoTxt || '').slice(0, 140));
+check('обвязка: сказано, что верх таблицы расхода компрессор не закрывает',
+  /Верх таблицы эта модель не закрывает/.test(textOf(doc, '#compressorOut')),
+  (textOf(doc, '#compressorOut') || '').slice(-160));
+check('данные: пробел по цеху для 12 кВт заявлен',
+  doc.getElementById('p-data').textContent.indexOf('12 кВт и форматов 2030') >= 0, '');
 
 // Согласование числительных: «122 конфигураций» — ошибка, нужно «122 конфигурации»
 const badPlural = (src.match(/\b\d*[02-9][2-4]\s+конфигураций/g) || []);
@@ -536,7 +600,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 7,
+  doc2.querySelectorAll('.nojs-title').length === 6,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('2 867 000') >= 0);
 check('пререндер: смета пуста при открытии',

@@ -216,6 +216,20 @@ for c in data.CRYO:
     print(f'  {c["name"]}: {c["price"]} ₽ · {c["flow"]} нм³/ч')
 assert all(c['price'] > 0 for c in data.COMPRESSORS + data.EXTRACTION + data.CRYO)
 
+# ---- Контрольная сумма обвязки: эти цены идут прямо в смету клиенту ----
+kit_sum = (sum(c['price'] for c in data.COMPRESSORS) +
+           sum(e['price'] for e in data.EXTRACTION) +
+           sum(c['price'] for c in data.CRYO))
+kit_count = len(data.COMPRESSORS) + len(data.EXTRACTION) + len(data.CRYO)
+print()
+print(f'Позиций обвязки: {kit_count}, сумма: {kit_sum}')
+KIT_SUM_EXPECTED = 6193300
+KIT_COUNT_EXPECTED = 8
+if kit_sum != KIT_SUM_EXPECTED or kit_count != KIT_COUNT_EXPECTED:
+    print(f'ВНИМАНИЕ: эталон {KIT_SUM_EXPECTED} / {KIT_COUNT_EXPECTED}')
+    sys.exit(1)
+print('Совпадает с эталоном — цены обвязки не изменились')
+
 # ---- Контрольная сумма прайса ----
 # Защита от тихой порчи цифр при любой правке data.py.
 # Если меняете прайс осознанно — пересчитайте и обновите оба числа ниже.

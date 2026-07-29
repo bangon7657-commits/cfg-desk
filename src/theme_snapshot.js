@@ -8,7 +8,10 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
 
-const FILE = path.join(__dirname, 'dist', 'index.html');
+// DIST_DIR позволяет запускать скрипт из другой папки: node_modules
+// в смонтированном каталоге резолвится очень медленно
+const DIST = process.env.DIST_DIR || path.join(__dirname, 'dist');
+const FILE = path.join(DIST, 'index.html');
 const OUT = process.argv[2] || '/tmp/theme.html';
 const THEME = process.argv[3] || 'dark';
 const TAB = process.argv[4] || 'smeta';
