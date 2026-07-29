@@ -292,11 +292,13 @@ SERVO_DIFF_TABLE = table(['Формат', 'Bochu дешевле Yaskawa', 'По�
                             else f'от {rub(min(v))} до {rub(max(v))}'), str(len(v))]
                           for f_, v in sorted(_diffs.items())])
 
-COMPRESSOR_TABLE = table(['Модель', 'Давление', 'Производительность', 'Мощность',
-                          'Ресивер', 'Шум', 'Гарантия', 'Цена с НДС'],
+COMPRESSOR_TABLE = table(['Модель', 'Давление', 'Подача', 'Мощность', 'Ресивер',
+                          'Шум', 'Габариты, масса', 'Гарантия', 'КП', 'Цена с НДС'],
                          [[f'<b>{esc(c["name"])}</b>', f'{c["bar"]} бар',
                            f'{c["lmin"]} л/мин', f'{str(c["kw"]).replace(".", ",")} кВт',
-                           f'{c["tank"]} л', esc(c['noise']), esc(c['warranty']),
+                           f'{c["tank"]} л', esc(c['noise']),
+                           f'{esc(c["size"])}, {c["mass"]} кг', esc(c['warranty']),
+                           f'{esc(c["kp_date"])} — {esc(c["kp_valid"])}',
                            f'<b>{rub(c["price"])}</b>'] for c in data.COMPRESSORS])
 
 EXTRACTION_TABLE = table(['Модель', 'Производительность', 'Разрежение', 'Мощность',

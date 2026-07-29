@@ -1603,6 +1603,10 @@
       (c.mass ? ' · масса ' + c.mass + ' кг' : '')));
     box.appendChild(el('div', 'internal', 'Источник цены: ' + esc(c.src)));
     out.appendChild(box);
+    if (c.kp_valid) {
+      out.appendChild(el('div', 'note alert', 'КП от ' + esc(c.kp_date) + ': ' +
+        esc(c.kp_valid) + '.'));
+    }
     // сколько такой компрессор закрывает по расходу воздуха на 6 кВт
     var perMin = c.lmin / 1000;
     out.appendChild(el('div', 'note',
@@ -1620,8 +1624,13 @@
       String(e.kw).replace('.', ',') + ' кВт</b> · патрубок ' + esc(e.port)));
     box.appendChild(el('div', '', esc(e.filter)));
     box.appendChild(el('div', '', 'Габариты ' + esc(e.size) + ' · масса ' + e.mass + ' кг'));
+    if (e.terms) box.appendChild(el('div', '', esc(e.terms)));
     box.appendChild(el('div', 'internal', 'Источник цены: ' + esc(e.src)));
     out.appendChild(box);
+    if (e.kp_valid) {
+      out.appendChild(el('div', 'note alert', 'КП от ' + esc(e.kp_date) + ': ' +
+        esc(e.kp_valid) + '.'));
+    }
   }
 
   function renderCryo() {
@@ -1629,7 +1638,8 @@
     var c = kitFind(APP.cryo, $('kitCryo').value);
     var box = el('div', 'calcsteps');
     box.appendChild(el('div', '', 'Производительность <b>' +
-      String(c.flow).replace('.', ',') + ' нм³/ч</b> · объём ' + c.volume + ' л'));
+      String(c.flow).replace('.', ',') + ' нм³/ч</b> · объём ' + c.volume + ' л' +
+      (c.lead ? ' · ' + esc(c.lead) : '')));
     box.appendChild(el('div', 'internal', 'Источник цены: ' + esc(c.src)));
     out.appendChild(box);
     // сравнение с баллонами: 1 баллон 40 л = 6 м³ газа
