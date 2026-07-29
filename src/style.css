@@ -61,59 +61,62 @@ body.demo .demo-banner{display:flex;gap:14px;align-items:center;justify-content:
 .demo-banner button:hover{background:var(--onor);color:var(--or)}
 
 /* ---------- вкладки и кнопка разделов ----------
-   Строка вкладок держит только частые разделы; всё остальное — в кнопке
-   «Разделы». Форма скруглённая, фон полупрозрачный: вкладка читается как
-   «пилюля», а активная подсвечивается фирменным оранжевым. */
+   Компактно и чётко: вкладка — плотная «пилюля» с ощутимой рамкой, активная
+   заливается фирменным оранжевым и читается сразу. Меню в кнопке «Разделы»
+   держит все шесть разделов; текст в нём мелкий и в одну строку, подсказка —
+   ещё мельче, чтобы список не разрастался. */
 nav{display:none;background:var(--bg2);border-bottom:1px solid var(--line);
   position:sticky;top:63px;z-index:29}
 body.js nav{display:block}
-.navinner{max-width:1200px;margin:0 auto;padding:9px 12px;display:flex;gap:12px;
+.navinner{max-width:1200px;margin:0 auto;padding:7px 12px;display:flex;gap:9px;
   align-items:center}
-.navtabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding:2px 0;
+.navtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px 0;
   flex:1 1 auto}
-.navtabs::-webkit-scrollbar{height:3px}
-.navtabs::-webkit-scrollbar-thumb{background:var(--or3);border-radius:3px}
-.navtabs button{border:1px solid var(--line2);border-radius:22px;font:inherit;
-  font-size:15px;padding:9px 18px;cursor:pointer;color:var(--tx2);white-space:nowrap;
-  display:flex;align-items:center;gap:7px;
-  background:color-mix(in srgb, var(--bg3) 55%, transparent);
+.navtabs::-webkit-scrollbar{display:none}
+.navtabs button{border:1px solid var(--line2);border-radius:16px;font:inherit;
+  font-size:13.5px;font-weight:600;padding:6px 13px;cursor:pointer;color:var(--tx2);
+  white-space:nowrap;display:flex;align-items:center;gap:6px;line-height:1.25;
+  background:color-mix(in srgb, var(--bg3) 62%, transparent);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  transition:border-color .15s, color .15s, background .15s}
-.navtabs button:hover{color:var(--tx);border-color:var(--or);
-  background:color-mix(in srgb, var(--bg4) 70%, transparent)}
-.navtabs button[aria-selected="true"]{color:var(--or);font-weight:700;
-  border-color:var(--or);background:color-mix(in srgb, var(--orbg) 75%, transparent);
-  box-shadow:0 2px 12px color-mix(in srgb, var(--or) 22%, transparent)}
+  transition:border-color .12s, color .12s, background .12s}
+.navtabs button:hover{color:var(--tx);border-color:var(--or2);
+  background:color-mix(in srgb, var(--bg4) 78%, transparent)}
+.navtabs button[aria-selected="true"]{color:var(--onor);border-color:var(--or);
+  background:var(--or);font-weight:700}
+.navtabs button[aria-selected="true"] .badge{background:var(--onor);color:var(--or)}
 
 /* кнопка «Разделы» — фирменный оранжевый блок с меню */
 .navmenu{position:relative;flex:0 0 auto}
-.menubtn{font:inherit;font-size:15px;font-weight:700;padding:9px 18px 9px 40px;
-  border-radius:22px;cursor:pointer;border:0;background:var(--or);color:var(--onor);
-  position:relative;letter-spacing:.2px;
-  box-shadow:0 3px 14px color-mix(in srgb, var(--or) 35%, transparent)}
-.menubtn::before{content:"";position:absolute;left:15px;top:50%;
-  width:15px;height:2px;background:var(--onor);border-radius:2px;
-  box-shadow:0 -5px 0 var(--onor), 0 5px 0 var(--onor);transform:translateY(-1px)}
-.menubtn:hover{background:var(--or2)}
-.menulist{display:none;position:absolute;left:0;top:calc(100% + 8px);z-index:40;
-  min-width:250px;padding:8px;border-radius:16px;border:1px solid var(--line2);
-  background:color-mix(in srgb, var(--bg2) 92%, transparent);
+.menubtn{font:inherit;font-size:13.5px;font-weight:700;padding:6px 14px 6px 32px;
+  border-radius:16px;cursor:pointer;border:1px solid var(--or);
+  background:color-mix(in srgb, var(--or) 16%, transparent);color:var(--or);
+  position:relative;line-height:1.25;white-space:nowrap}
+.menubtn::before{content:"";position:absolute;left:12px;top:50%;
+  width:13px;height:2px;background:var(--or);border-radius:2px;
+  box-shadow:0 -4px 0 var(--or), 0 4px 0 var(--or);transform:translateY(-1px)}
+.menubtn:hover{background:var(--or);color:var(--onor)}
+.menubtn:hover::before{background:var(--onor);
+  box-shadow:0 -4px 0 var(--onor), 0 4px 0 var(--onor)}
+.menulist{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:40;
+  min-width:228px;padding:6px;border-radius:13px;border:1px solid var(--line2);
+  background:color-mix(in srgb, var(--bg2) 94%, transparent);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  box-shadow:0 14px 40px var(--shadow)}
+  box-shadow:0 12px 32px var(--shadow)}
 .menulist.open{display:block}
-.menulist button{display:flex;width:100%;align-items:center;justify-content:space-between;
-  gap:12px;font:inherit;font-size:15px;text-align:left;padding:11px 14px;
-  border:0;border-radius:11px;background:none;color:var(--tx2);cursor:pointer}
+.menulist button{display:block;width:100%;font:inherit;font-size:13.5px;
+  text-align:left;padding:7px 11px;border:0;border-radius:9px;background:none;
+  color:var(--tx2);cursor:pointer;line-height:1.3}
 .menulist button:hover{background:var(--bg3);color:var(--tx)}
 .menulist button[aria-selected="true"]{color:var(--or);font-weight:700;
   background:var(--orbg)}
-.menulist button small{font-size:12.5px;color:var(--muted);font-weight:400}
+.menulist button small{display:block;font-size:11px;color:var(--muted);
+  font-weight:400;margin-top:1px}
 @media(max-width:560px){
-  .navinner{padding:8px 10px;gap:8px}
-  .navtabs button{font-size:14px;padding:8px 14px}
-  .menubtn{font-size:14px;padding:8px 14px 8px 34px}
-  .menubtn::before{left:12px;width:13px}
-  .menulist{min-width:min(78vw, 320px)}
+  .navinner{padding:6px 10px;gap:7px}
+  .navtabs button{font-size:13px;padding:6px 11px}
+  .menubtn{font-size:13px;padding:6px 12px 6px 29px}
+  .menubtn::before{left:11px;width:12px}
+  .menulist{min-width:min(74vw, 300px)}
 }
 .badge{background:var(--or);color:var(--onor);font-size:12px;font-weight:700;
   min-width:20px;padding:1px 6px;border-radius:10px;line-height:1.5}

@@ -78,6 +78,8 @@ APP = {
     'servoSmall': list(data.SERVO_SMALL),
     'fiberKit': {str(k): v for k, v in data.FIBER_KIT.items()},
     'fiberKitRotaryCtrl': data.FIBER_KIT_ROTARY_CTRL,
+    'stabilizers': data.STABILIZERS,
+    'stabilizerNote': data.STABILIZER_NOTE,
     'compressors': data.COMPRESSORS,
     'compressorAdvice': data.COMPRESSOR_ADVICE,
     'compressorNote': data.COMPRESSOR_NOTE,
@@ -301,6 +303,11 @@ SERVO_DIFF_TABLE = table(['Формат', 'Bochu дешевле Yaskawa', 'По�
                            (rub(min(v)) if min(v) == max(v)
                             else f'от {rub(min(v))} до {rub(max(v))}'), str(len(v))]
                           for f_, v in sorted(_diffs.items())])
+
+STAB_TABLE = table(['Модель', 'Мощность', 'Питание', 'Назначение', 'Цена'],
+                   [[f'<b>{esc(s["name"])}</b>', esc(s['power']), esc(s['phase']),
+                     'металлорез' if s['for'] == 'fiber' else 'сварка',
+                     f'<b>{rub(s["price"])}</b>'] for s in data.STABILIZERS])
 
 COMPRESSOR_TABLE = table(['Модель', 'Давление', 'Подача', 'Мощность', 'Ресивер',
                           'Шум', 'Габариты, масса', 'Гарантия', 'КП', 'Цена с НДС'],
@@ -536,6 +543,9 @@ repl = {
     '__SERVO_NOTE__': esc(data.SERVO_NOTE),
     '__SERVO_A_NOTE__': esc(data.SERVO_A_NOTE),
     '__COMPRESSOR_TABLE__': COMPRESSOR_TABLE,
+    '__STAB_TABLE__': STAB_TABLE,
+    '__STAB_NOTE__': esc(data.STABILIZER_NOTE),
+    '__STAB_WELD_NOTE__': esc(data.STABILIZER_WELD_NOTE),
     '__EXTRACTION_TABLE__': EXTRACTION_TABLE,
     '__CRYO_TABLE__': CRYO_TABLE,
     '__CRYO_SPEC_TABLE__': CRYO_SPEC_TABLE,

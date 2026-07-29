@@ -77,11 +77,17 @@ check('в кнопке «Разделы» все 6 разделов',
   'найдено ' + doc.querySelectorAll('#menuList button').length);
 check('меню закрыто при открытии',
   !doc.getElementById('menuList').classList.contains('open'), '');
-check('навигация: скруглённые полупрозрачные вкладки',
-  /\.navtabs button\{[^}]*border-radius:22px/.test(src) &&
+check('навигация: вкладки скруглённые и полупрозрачные',
+  /\.navtabs button\{[^}]*border-radius:1[0-9]px/.test(src) &&
   /\.navtabs button\{[^}]*color-mix/.test(src), '');
-check('навигация: кнопка «Разделы» в фирменном оранжевом',
-  /\.menubtn\{[^}]*background:var\(--or\)/.test(src), '');
+check('навигация: активная вкладка залита фирменным оранжевым',
+  /\.navtabs button\[aria-selected="true"\]\{[^}]*background:var\(--or\)/.test(src), '');
+check('навигация: кнопка «Разделы» в фирменном цвете',
+  /\.menubtn\{[^}]*color:var\(--or\)/.test(src) &&
+  /\.menubtn:hover\{background:var\(--or\)/.test(src), '');
+check('навигация: текст в меню компактный',
+  /\.menulist button\{[^}]*font-size:13\.5px/.test(src) &&
+  /\.menulist button small\{[^}]*font-size:11px/.test(src), '');
 
 // конфигуратор волокна посчитал цену
 const fOut = textOf(doc, '#fOut');
@@ -452,6 +458,44 @@ check('справочник: узлы станков из карточек',
 check('справочник: баллон 40 л даёт 6 м³',
   /40 л/.test(kitPanel) && /6 м³/.test(kitPanel), '');
 
+
+
+// ---- стабилизатор ----
+const stabSel = doc.getElementById('kitStab');
+check('стабилизатор: в списке только модели для металлорезов',
+  !!stabSel && stabSel.options.length === 8,
+  stabSel ? 'вариантов ' + stabSel.options.length : 'селектор не найден');
+check('стабилизатор: цены из присланного списка',
+  stabSel.textContent.indexOf('117 000') >= 0 &&
+  stabSel.textContent.indexOf('960 000') >= 0, '');
+const stabTxt = textOf(doc, '#stabOut');
+check('стабилизатор: сверяется с требованием карты готовности',
+  /Требование карты готовности/.test(stabTxt) && /30 000 Вт/.test(stabTxt),
+  (stabTxt || '').slice(0, 160));
+check('стабилизатор: предупреждение про ВА у Ресанты',
+  /полная мощность в ВА/.test(stabTxt), (stabTxt || '').slice(-160));
+win.document.getElementById('stabAll').checked = true;
+win.document.getElementById('stabAll').dispatchEvent(new win.Event('change'));
+check('стабилизатор: галочка добавляет сварочные модели',
+  doc.getElementById('kitStab').options.length === 10,
+  'вариантов ' + doc.getElementById('kitStab').options.length);
+win.document.getElementById('stabAll').checked = false;
+win.document.getElementById('stabAll').dispatchEvent(new win.Event('change'));
+// с труборезом планка выше — 50 000 Вт
+win.document.getElementById('fRot').value = '6-160';
+win.document.getElementById('fRot').dispatchEvent(new win.Event('change'));
+check('стабилизатор: с труборезом требование поднимается до 50 000 Вт',
+  /50 000 Вт/.test(textOf(doc, '#stabOut')),
+  (textOf(doc, '#stabOut') || '').slice(0, 160));
+check('стабилизатор: слабая модель помечена как непроходная',
+  /Не проходит по мощности/.test(textOf(doc, '#stabOut')),
+  (textOf(doc, '#stabOut') || '').slice(0, 200));
+win.document.getElementById('fRot').value = '';
+win.document.getElementById('fRot').dispatchEvent(new win.Event('change'));
+win.document.getElementById('stabAdd').click();
+check('стабилизатор: добавляется в смету',
+  /Стабилизатор Ресанта/.test(doc.getElementById('smetaBody').textContent),
+  doc.getElementById('smetaBody').textContent.slice(0, 200));
 
 // ---- находки прошлого аудита: проверяем, что не вернутся ----
 check('чистота: примечание про компрессор не дублируется',

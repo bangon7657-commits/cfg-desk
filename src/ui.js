@@ -49,7 +49,7 @@
     // поставщик в ТКП и правки его реквизитов, тема оформления
     supId: '', sups: {}, theme: 'dark',
     // приводы серии S и выбранная обвязка волокна
-    servo: '', kit: { compressor: '', extraction: '', cryo: '' }
+    servo: '', kit: { compressor: '', extraction: '', cryo: '', stab: '' }
   };
   try {
     // v1 → v2: подхватываем черновик, сохранённый прошлой версией, и переносим его
@@ -70,7 +70,7 @@
       if (!state.sups || typeof state.sups !== 'object') state.sups = {};
       if (state.theme !== 'light' && state.theme !== 'dark') state.theme = 'dark';
       if (!state.kit || typeof state.kit !== 'object') {
-        state.kit = { compressor: '', extraction: '', cryo: '' };
+        state.kit = { compressor: '', extraction: '', cryo: '', stab: '' };
       }
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
@@ -1816,6 +1816,79 @@
     addItem(c.name, c.price, 1, 'opt');
   });
 
+
+  // ---- стабилизатор: подбор по требованию карты готовности цеха ----
+  // Требование зависит от конфигурации: с труборезом планка выше, поэтому
+  // минимум берём из справочника, а не из текста.
+  function stabNeedWatt() {
+    var rot = $('fRot').value;
+    var need = 0;
+    (APP.readiness || []).forEach(function (r) {
+      if (r.name !== 'Стабилизатор') return;
+      var src = rot ? r.s : r.a;                     // r.s — линейка с труборезом
+      var m = String(src).replace(/[^0-9]/g, '');
+      if (m) need = parseInt(m, 10);
+    });
+    return need;
+  }
+
+  function fillStab() {
+    var sel = fresh('kitStab');
+    var all = $('stabAll').checked;
+    APP.stabilizers.forEach(function (s) {
+      if (!all && s.for !== 'fiber') return;
+      opt(sel, s.id, s.name + ' — ' + s.power + ' — ' + fmtRub(toCents(s.price)) + ' ₽');
+    });
+    if (state.kit.stab && sel.querySelector('option[value="' + state.kit.stab + '"]')) {
+      sel.value = state.kit.stab;
+    }
+    renderStab();
+  }
+
+  function renderStab() {
+    var out = $('stabOut'); clear(out);
+    var s = kitFind(APP.stabilizers, $('kitStab').value);
+    var need = stabNeedWatt();
+    var box = el('div', 'calcsteps');
+    box.appendChild(el('div', '', 'Мощность <b>' + esc(s.power) + '</b> · питание ' +
+      esc(s.phase) + ' · назначение: ' +
+      (s.for === 'fiber' ? 'металлорез' : 'сварочный аппарат')));
+    box.appendChild(el('div', '', 'Цена: <b>' + fmtRub(toCents(s.price)) + ' ₽</b>'));
+    if (need) {
+      box.appendChild(el('div', '', 'Требование карты готовности под эту конфигурацию: ' +
+        '<b>от ' + fmtRub(toCents(need)).replace(',00', '') + ' Вт</b>' +
+        ($('fRot').value ? ' (в станке есть труборез)' : '')));
+    }
+    out.appendChild(box);
+    if (need && s.watt < need) {
+      out.appendChild(el('div', 'note stop', 'Не проходит по мощности: у модели ' +
+        esc(s.power) + ', а нужно от ' + fmtRub(toCents(need)).replace(',00', '') +
+        ' Вт. Работа без подходящего стабилизатора снимает гарантию.'));
+    } else if (need) {
+      out.appendChild(el('div', 'note', 'По мощности проходит. Ресанта — ' +
+        'электромеханика попроще и дешевле, Штиль дороже при той же мощности: ' +
+        'сравнивайте не только цену, но и класс.'));
+    }
+    // Ресанта маркируется в ВА, Штиль в кВт — честно предупреждаем
+    if (/Ресанта/.test(s.name)) {
+      out.appendChild(el('div', 'note internal',
+        'У Ресанты в названии полная мощность в ВА. Сколько это ватт, зависит ' +
+        'от коэффициента мощности — в данных его нет, поэтому сравнение с ' +
+        'требованием в ваттах приблизительное.'));
+    }
+  }
+
+  fillStab();
+  $('stabAll').addEventListener('change', fillStab);
+  $('kitStab').addEventListener('change', function () {
+    state.kit.stab = this.value; save(); renderStab();
+  });
+  $('fRot').addEventListener('change', renderStab);
+  $('stabAdd').addEventListener('click', function () {
+    var s = kitFind(APP.stabilizers, $('kitStab').value);
+    addItem(s.name, s.price, 1, 'opt');
+  });
+
   // ------------------------------------------------------------------ газ
   var gNz = fresh('gNozzle');
   APP.gas.forEach(function (g, i) { opt(gNz, String(i), 'Сопло ' + g.nozzle); });
@@ -1890,6 +1963,7 @@
   renderCompressor();
   renderExtraction();
   renderCryo();
+  renderStab();
   var hash = (location.hash || '').replace('#', '');
   var valid = SECTIONS.map(function (s) { return s.id; });
   showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');

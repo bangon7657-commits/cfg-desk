@@ -219,12 +219,14 @@ assert all(c['price'] > 0 for c in data.COMPRESSORS + data.EXTRACTION + data.CRY
 # ---- Контрольная сумма обвязки: эти цены идут прямо в смету клиенту ----
 kit_sum = (sum(c['price'] for c in data.COMPRESSORS) +
            sum(e['price'] for e in data.EXTRACTION) +
-           sum(c['price'] for c in data.CRYO))
-kit_count = len(data.COMPRESSORS) + len(data.EXTRACTION) + len(data.CRYO)
+           sum(c['price'] for c in data.CRYO) +
+           sum(s['price'] for s in data.STABILIZERS))
+kit_count = (len(data.COMPRESSORS) + len(data.EXTRACTION) + len(data.CRYO) +
+             len(data.STABILIZERS))
 print()
 print(f'Позиций обвязки: {kit_count}, сумма: {kit_sum}')
-KIT_SUM_EXPECTED = 6193300
-KIT_COUNT_EXPECTED = 8
+KIT_SUM_EXPECTED = 10291300
+KIT_COUNT_EXPECTED = 18
 if kit_sum != KIT_SUM_EXPECTED or kit_count != KIT_COUNT_EXPECTED:
     print(f'ВНИМАНИЕ: эталон {KIT_SUM_EXPECTED} / {KIT_COUNT_EXPECTED}')
     sys.exit(1)
