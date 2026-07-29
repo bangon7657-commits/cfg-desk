@@ -47,6 +47,7 @@
     <button data-t="match" aria-selected="false">Подбор по задаче</button>
     <button data-t="shop" aria-selected="false">Готовность цеха</button>
     <button data-t="gas" aria-selected="false">Газ и владение</button>
+    <button data-t="kit" aria-selected="false">Обвязка и узлы</button>
     <button data-t="data" aria-selected="false">Данные</button>
   </div>
 </nav>
@@ -86,11 +87,18 @@
         <div class="row">
           <div><label class="f">Сменный стол</label><select id="fTable">
             <option value="0">нет</option><option value="1">да</option></select></div>
-          <div><label class="f">RD-модуль (труборез)</label><select id="fRot">
+          <div><label class="f">RD-модуль (труборез, поворотная ось)</label><select id="fRot">
             <option value="">нет</option><option value="6-160">rotary 6-160</option>
             <option value="6-240">rotary 6-240</option><option value="6-360">rotary 6-360</option>
           </select></div>
         </div>
+        <div class="row">
+          <div style="flex:2 1 340px"><label class="f">Приводы (сервомоторы)</label>
+            <select id="fServo"></select></div>
+        </div>
+        <div id="servoOut"></div>
+        <div class="note">__SERVO_NOTE__</div>
+        <div class="note internal">__SERVO_A_NOTE__</div>
       </div>
     </div>
 
@@ -456,6 +464,108 @@
       <div class="scroll">__MASS_TABLE__</div>
     </div>
   </details>
+</section>
+
+
+<!-- ================= ОБВЯЗКА И УЗЛЫ ================= -->
+<span class="nojs-title">Обвязка и узлы</span>
+<section class="panel" id="p-kit">
+  <p class="lead">Что докупается к волоконному станку и что стоит внутри. Всё —
+    из коммерческих предложений поставщиков и сервисных карточек товара, цены с НДС.</p>
+
+  <div class="step">
+    <div class="step-h"><div class="step-n">1</div>
+      <div class="step-t">Компрессор<small>для резки воздухом и пневматики станка</small></div></div>
+    <div class="step-b">
+      <div class="row">
+        <div style="flex:3 1 340px"><label class="f">Модель</label>
+          <select id="kitCompressor"></select></div>
+      </div>
+      <div id="compressorOut"></div>
+      <div class="btns noprint">
+        <button class="btn" id="compressorAdd">Добавить в смету</button></div>
+      <div class="note">__COMPRESSOR_NOTE__</div>
+      <div class="scroll">__COMPRESSOR_TABLE__</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="step-n">2</div>
+      <div class="step-t">Дымоуловитель<small>вытяжка в комплекте станка есть, но фильтрации у неё нет</small></div></div>
+    <div class="step-b">
+      <div class="row">
+        <div style="flex:3 1 340px"><label class="f">Модель</label>
+          <select id="kitExtraction"></select></div>
+      </div>
+      <div id="extractionOut"></div>
+      <div class="btns noprint">
+        <button class="btn" id="extractionAdd">Добавить в смету</button></div>
+      <div class="scroll">__EXTRACTION_TABLE__</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="step-n">3</div>
+      <div class="step-t">Криоцилиндр вместо баллонов<small>когда азота нужно много</small></div></div>
+    <div class="step-b">
+      <div class="row">
+        <div style="flex:3 1 340px"><label class="f">Позиция</label>
+          <select id="kitCryo"></select></div>
+      </div>
+      <div id="cryoOut"></div>
+      <div class="btns noprint">
+        <button class="btn" id="cryoAdd">Добавить в смету</button></div>
+      <div class="note">__CRYO_NOTE__</div>
+      <div class="scroll">__CRYO_TABLE__</div>
+      <details><summary>Характеристики газификатора</summary>
+        <div class="det-b"><div class="scroll">__CRYO_SPEC_TABLE__</div></div></details>
+    </div>
+  </div>
+
+  <h2>Расход газа: источник 6000 Вт</h2>
+  <div class="card">
+    <p class="muted">__GAS6_NOTE__</p>
+    <h3>Чёрная сталь</h3>
+    <div class="scroll">__GAS6_STEEL_TABLE__</div>
+    <h3>Нержавеющая сталь</h3>
+    <div class="scroll">__GAS6_INOX_TABLE__</div>
+    <details><summary>Перевод жидкого газа в газообразный и баллон</summary>
+      <div class="det-b">
+        <h3>Кислород</h3><div class="scroll">__GAS_LIQ_O2_TABLE__</div>
+        <h3>Азот</h3><div class="scroll">__GAS_LIQ_N2_TABLE__</div>
+        <h3>Баллон сжатого газа</h3><div class="scroll">__GAS_CYL_TABLE__</div>
+      </div>
+    </details>
+  </div>
+
+  <h2>Приводы серии S</h2>
+  <div class="card">
+    <div class="scroll">__SERVO_TABLE__</div>
+    <p class="muted">__SERVO_NOTE__</p>
+    <h3>Насколько прайс с Bochu дешевле</h3>
+    <p class="muted">Считается по двум прайсам целиком, а не по формуле «минус 200 тысяч».</p>
+    <div class="scroll">__SERVO_DIFF_TABLE__</div>
+  </div>
+
+  <h2>Что ставится под мощность источника</h2>
+  <div class="card">
+    <div class="scroll">__KIT_TABLE__</div>
+    <div class="note alert">__KIT_NOTE__</div>
+  </div>
+
+  <h2>Лазерные головы Boci</h2>
+  <div class="card">
+    <p class="muted">__HEADS_NOTE__</p>
+    <div class="scroll">__HEADS_TABLES__</div>
+  </div>
+
+  <h2>Узлы станков: что внутри</h2>
+  <div class="card">
+    <p class="muted">__COMPONENTS_NOTE__</p>
+    __COMPONENTS__
+    <h3>Общее для всех моделей</h3>
+    <div class="scroll">__COMPONENTS_COMMON__</div>
+  </div>
 </section>
 
 <!-- ================= ГАЗ ================= -->

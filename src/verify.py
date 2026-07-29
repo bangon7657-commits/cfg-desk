@@ -159,6 +159,63 @@ for fmt_, diffs in sorted(undeclared.items()):
     print(f'  формат {fmt_}: выгода в прайсе не заявлена, по факту {vals}')
 print(f'Форматов без заявленной пакетной скидки: {len(undeclared)}')
 
+# ---- Второй прайс: приводы Bochu S9 ----
+print()
+print('--- Прайс Bochu: состав и разница с Yaskawa ---')
+assert set(data.FIBER_S_BOCHU) == set(data.FIBER_S), 'наборы конфигураций разошлись'
+bo_sum, bo_count, diffs = 0, 0, []
+for key, c in sorted(data.FIBER_S.items()):
+    b = data.FIBER_S_BOCHU[key]
+    assert set(b['rot']) == set(c['rot']) and set(b['table_rot']) == set(c['table_rot']), key
+    pairs = [(c['base'], b['base']), (c['table'], b['table'])]
+    pairs += [(c['rot'][r], b['rot'][r]) for r in c['rot']]
+    pairs += [(c['table_rot'][r], b['table_rot'][r]) for r in c['table_rot']]
+    for y, bb in pairs:
+        bo_sum += bb
+        bo_count += 1
+        diffs.append((key[0], y - bb))
+        assert bb < y, f'{key}: Bochu не дешевле Yaskawa'
+print(f'Позиций в прайсе Bochu: {bo_count}, сумма: {bo_sum}')
+BOCHU_SUM_EXPECTED = 760015000
+BOCHU_COUNT_EXPECTED = 120
+if bo_sum == BOCHU_SUM_EXPECTED and bo_count == BOCHU_COUNT_EXPECTED:
+    print('Совпадает с эталоном — второй прайс не изменился')
+else:
+    print(f'ВНИМАНИЕ: эталон {BOCHU_SUM_EXPECTED} / {BOCHU_COUNT_EXPECTED}')
+    sys.exit(1)
+by_fmt = {}
+for fmt, d in diffs:
+    by_fmt.setdefault(fmt, set()).add(d)
+for fmt, ds in sorted(by_fmt.items()):
+    lo, hi = min(ds), max(ds)
+    rng = f'{lo} ₽' if lo == hi else f'от {lo} до {hi} ₽'
+    print(f'  {fmt}: Bochu дешевле на {rng}')
+print('Заявлено менеджером: 200 000 ₽ на 1530/1560 и 260 000 ₽ на 2030/2040/2060 — '
+      'фактические цифры выше и по форматам расходятся с этой формулировкой')
+
+# ---- Надбавки за усиленные приводы ----
+print()
+print('--- Надбавки за усиление ---')
+for s in data.SERVO:
+    a, b_ = s['add']['small'], s['add']['big']
+    print(f'  {s["label"]}: 1530/1560 +{a} ₽ · 2030/2040/2060 +{b_} ₽ · '
+          f'{s["speed"]}, {s["accel"]}')
+assert data.SERVO[1]['add'] == {'small': 85000, 'big': 85000}
+assert data.SERVO[3]['add'] == {'small': 20000, 'big': 40000}
+print('Надбавки совпадают с присланными: Yaskawa 85 000 ₽, Bochu 20 000 / 40 000 ₽')
+
+# ---- Обвязка волокна ----
+print()
+print('--- Обвязка волокна из КП поставщиков ---')
+for c in data.COMPRESSORS:
+    print(f'  {c["name"]}: {c["price"]} ₽ · {c["bar"]} бар · {c["lmin"]} л/мин · '
+          f'{c["kw"]} кВт · ресивер {c["tank"]} л')
+for e in data.EXTRACTION:
+    print(f'  {e["name"]}: {e["price"]} ₽ · {e["flow"]} м³/ч · {e["kw"]} кВт')
+for c in data.CRYO:
+    print(f'  {c["name"]}: {c["price"]} ₽ · {c["flow"]} нм³/ч')
+assert all(c['price'] > 0 for c in data.COMPRESSORS + data.EXTRACTION + data.CRYO)
+
 # ---- Контрольная сумма прайса ----
 # Защита от тихой порчи цифр при любой правке data.py.
 # Если меняете прайс осознанно — пересчитайте и обновите оба числа ниже.

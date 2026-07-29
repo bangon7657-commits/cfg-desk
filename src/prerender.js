@@ -67,9 +67,9 @@ if (STAGE === 2) {
 if (STAGE !== 2) {
 
 check('ошибок JS нет', first.errors.length === 0, first.errors.join(' | '));
-check('вкладок 6', doc.querySelectorAll('#tabs button').length === 6,
+check('вкладок 7', doc.querySelectorAll('#tabs button').length === 7,
   'найдено ' + doc.querySelectorAll('#tabs button').length);
-check('панелей 6', doc.querySelectorAll('.panel').length === 6,
+check('панелей 7', doc.querySelectorAll('.panel').length === 7,
   'найдено ' + doc.querySelectorAll('.panel').length);
 
 // конфигуратор волокна посчитал цену
@@ -338,6 +338,93 @@ win.document.getElementById('themeBtn').click();
 check('тема: возврат к тёмной снимает атрибут',
   !doc.documentElement.getAttribute('data-theme'), '');
 
+
+// ---- приводы серии S: два прайса и надбавка за усиление ----
+const svSelNode = doc.getElementById('fServo');
+check('приводы: четыре варианта в списке',
+  !!svSelNode && svSelNode.options.length === 4,
+  svSelNode ? 'вариантов ' + svSelNode.options.length : 'селектор не найден');
+check('приводы: по умолчанию Yaskawa стандарт',
+  !!svSelNode && svSelNode.value === 'yaskawa_std', svSelNode ? svSelNode.value : '');
+const svTxt0 = textOf(doc, '#servoOut');
+check('приводы: карточка показывает оси и динамику',
+  /0,85 кВт/.test(svTxt0) && /100 м\/мин/.test(svTxt0) && /1,2 G/.test(svTxt0),
+  (svTxt0 || '').slice(0, 140));
+check('приводы: комплектация под мощность названа',
+  /FSCUT3000E/.test(svTxt0) && /BLT310/.test(svTxt0), (svTxt0 || '').slice(0, 200));
+
+function setServo(id) {
+  const n = win.document.getElementById('fServo');
+  n.value = id;
+  n.dispatchEvent(new win.Event('change'));
+  return textOf(doc, '#fOut');
+}
+const priceYaPlus = setServo('yaskawa_plus');
+check('приводы: усиленный Yaskawa = 2 867 000 + 85 000',
+  priceYaPlus.indexOf('2 952 000') >= 0, priceYaPlus.slice(0, 140));
+const priceBo = setServo('bochu_std');
+check('приводы: Bochu стандарт берёт цену из второго прайса',
+  priceBo.indexOf('2 669 000') >= 0, priceBo.slice(0, 140));
+check('приводы: разница прайсов показана расчётом',
+  /дешевле Yaskawa/.test(priceBo), priceBo.slice(0, 220));
+const priceBoPlus = setServo('bochu_plus');
+check('приводы: Bochu усиленный = 2 669 000 + 20 000',
+  priceBoPlus.indexOf('2 689 000') >= 0, priceBoPlus.slice(0, 140));
+// у крупных форматов надбавка Bochu другая: 40 000
+win.document.getElementById('fFormat').value = '2060';
+win.document.getElementById('fFormat').dispatchEvent(new win.Event('change'));
+const priceBig = textOf(doc, '#fOut');
+check('приводы: на 2060 надбавка Bochu 40 000 (3 422 000 + 40 000)',
+  priceBig.indexOf('3 462 000') >= 0, priceBig.slice(0, 160));
+const svBig = textOf(doc, '#servoOut');
+check('приводы: у крупного формата свои мощности осей',
+  /2×3,9 кВт/.test(svBig), (svBig || '').slice(0, 140));
+setServo('yaskawa_std');
+win.document.getElementById('fFormat').value = '1530';
+win.document.getElementById('fFormat').dispatchEvent(new win.Event('change'));
+
+// ---- поворотная ось: контроллер меняется ----
+win.document.getElementById('fRot').value = '6-160';
+win.document.getElementById('fRot').dispatchEvent(new win.Event('change'));
+check('поворотная ось: ставится контроллер FSCUT3000DE-M',
+  /FSCUT3000DE-M/.test(textOf(doc, '#servoOut')),
+  (textOf(doc, '#servoOut') || '').slice(0, 200));
+win.document.getElementById('fRot').value = '';
+win.document.getElementById('fRot').dispatchEvent(new win.Event('change'));
+
+// ---- обвязка волокна: компрессор, дымоуловитель, криоцилиндр ----
+check('обвязка: пять компрессоров в списке',
+  doc.querySelectorAll('#kitCompressor option').length === 5,
+  'вариантов ' + doc.querySelectorAll('#kitCompressor option').length);
+const compTxt = textOf(doc, '#compressorOut');
+check('обвязка: характеристики компрессора показаны',
+  /бар/.test(compTxt) && /л\/мин/.test(compTxt) && /ресивер/.test(compTxt),
+  (compTxt || '').slice(0, 160));
+check('обвязка: цена дымоуловителя из КП',
+  doc.getElementById('kitExtraction').textContent.indexOf('1 380 000') >= 0,
+  doc.getElementById('kitExtraction').textContent.slice(0, 120));
+check('обвязка: криоцилиндр 352 300 ₽ на 30 нм³/ч',
+  doc.getElementById('kitCryo').textContent.indexOf('352 300') >= 0,
+  doc.getElementById('kitCryo').textContent.slice(0, 140));
+win.document.getElementById('compressorAdd').click();
+const smetaRows = doc.querySelectorAll('#smetaBody tr').length;
+check('обвязка: компрессор добавляется в смету', smetaRows >= 2,
+  'строк ' + smetaRows);
+check('обвязка: компрессор идёт как опция',
+  /ERSTVAK ESC-20X-500AL/.test(doc.getElementById('smetaBody').textContent),
+  doc.getElementById('smetaBody').textContent.slice(0, 160));
+
+// ---- справочники новой вкладки ----
+const kitPanel = doc.getElementById('p-kit').textContent.replace(/\s+/g, ' ');
+check('справочник: расход газа 6 кВт на месте',
+  /21 м³/.test(kitPanel) && /0,008 м³/.test(kitPanel) && /226 м³/.test(kitPanel), '');
+check('справочник: головы Boci перечислены',
+  /BLT4102/.test(kitPanel) && /BLT6120/.test(kitPanel) && /BLT560/.test(kitPanel), '');
+check('справочник: узлы станков из карточек',
+  /Hiwin/.test(kitPanel) && /Mitsubishi/.test(kitPanel) && /BCS100/.test(kitPanel), '');
+check('справочник: баллон 40 л даёт 6 м³',
+  /40 л/.test(kitPanel) && /6 м³/.test(kitPanel), '');
+
 // Согласование числительных: «122 конфигураций» — ошибка, нужно «122 конфигурации»
 const badPlural = (src.match(/\b\d*[02-9][2-4]\s+конфигураций/g) || []);
 check('язык: согласование «конфигурации» с числом', badPlural.length === 0,
@@ -449,7 +536,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 6,
+  doc2.querySelectorAll('.nojs-title').length === 7,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('2 867 000') >= 0);
 check('пререндер: смета пуста при открытии',

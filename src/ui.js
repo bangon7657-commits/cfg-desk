@@ -37,7 +37,9 @@
     ready: {}, gas: { nozzle: '2', gas: 'n2', hours: '80', price: '' },
     mode: 'order', cat: 'fiber', mtCat: 'fiber',
     // поставщик в ТКП и правки его реквизитов, тема оформления
-    supId: '', sups: {}, theme: 'dark'
+    supId: '', sups: {}, theme: 'dark',
+    // приводы серии S и выбранная обвязка волокна
+    servo: '', kit: { compressor: '', extraction: '', cryo: '' }
   };
   try {
     // v1 → v2: подхватываем черновик, сохранённый прошлой версией, и переносим его
@@ -57,6 +59,9 @@
       // черновики прошлых версий не знали про поставщика и тему
       if (!state.sups || typeof state.sups !== 'object') state.sups = {};
       if (state.theme !== 'light' && state.theme !== 'dark') state.theme = 'dark';
+      if (!state.kit || typeof state.kit !== 'object') {
+        state.kit = { compressor: '', extraction: '', cryo: '' };
+      }
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
 
@@ -145,11 +150,37 @@
   });
 
   // ------------------------------------------------------------------ волокно
-  var fiberIdx = {}, fiberAIdx = {};
+  var fiberIdx = {}, fiberAIdx = {}, fiberBoIdx = {};
   APP.fiberS.forEach(function (r) {
     fiberIdx[r.format] = fiberIdx[r.format] || {};
     fiberIdx[r.format][r.power] = r;
   });
+  // второй прайс: те же конфигурации с приводами Bochu S9
+  APP.fiberSBochu.forEach(function (r) {
+    fiberBoIdx[r.format] = fiberBoIdx[r.format] || {};
+    fiberBoIdx[r.format][r.power] = r;
+  });
+
+  function servoNow() {
+    var id = state.servo || APP.servoDefault, found = null;
+    APP.servo.forEach(function (s) { if (s.id === id) found = s; });
+    if (!found) { state.servo = APP.servoDefault; found = APP.servo[0]; }
+    return found;
+  }
+
+  function servoSize(fmt) {
+    // у 1530/1560 свои мощности осей и своя надбавка за усиление
+    return APP.servoSmall.indexOf(fmt) >= 0 ? 'small' : 'big';
+  }
+
+  function servoAdd(fmt) {
+    return servoNow().add[servoSize(fmt)];
+  }
+
+  // прайс, из которого берём базовую цену выбранного привода
+  function fiberSrc(brandFrom) {
+    return brandFrom === 'bochu' ? fiberBoIdx : fiberIdx;
+  }
   APP.fiberA.forEach(function (r) {
     fiberAIdx[r.format] = fiberAIdx[r.format] || {};
     fiberAIdx[r.format][r.power] = r.price;
@@ -190,7 +221,9 @@
       if (!price) return { err: 'Цены на эту конфигурацию в прайсе нет.' };
       return { name: 'Wattsan A ' + f + ' ' + p + 'W', price: price, steps: [] };
     }
-    var r = fiberIdx[f] && fiberIdx[f][p];
+    var sv = servoNow();
+    var idx = fiberSrc(sv.price_from);
+    var r = idx[f] && idx[f][p];
     if (!r) return { err: 'Цены на эту конфигурацию в прайсе нет.' };
     var name = 'Wattsan S ' + f + ' ' + p + 'W', price, steps = [];
     if (!tbl && !rot) { price = r.base; }
@@ -205,7 +238,22 @@
       steps.push(['По отдельности вышло бы', sep]);
       steps.push(['Пакетная выгода — стол и ось вместе', -(sep - price)]);
     }
-    return { name: name, price: price, steps: steps };
+    // привод: базовая цена уже из нужного прайса, надбавка за усиление — сверху
+    var add = servoAdd(f);
+    if (sv.price_from === 'bochu') {
+      var yr = fiberIdx[f][p];
+      var ybase = !tbl && !rot ? yr.base : (tbl && !rot ? yr.table
+        : (!tbl && rot ? yr.rot[rot] : yr.tableRot[rot]));
+      steps.push(['Приводы ' + sv.brand + ' — прайс дешевле Yaskawa на',
+        -(ybase - price)]);
+    }
+    if (add) {
+      steps.push(['Усиленные приводы ' + sv.brand, add]);
+      price += add;
+    }
+    name += ' · приводы ' + sv.label;
+    return { name: name, price: price, steps: steps, servo: sv, fmt: f, power: p,
+      rot: rot };
   }
 
   function renderFiber() {
@@ -236,10 +284,54 @@
       'Стабилизатор ' + esc(stabPower()) + ' — отдельная статья и условие гарантии.'));
   }
 
-  $('fSeries').addEventListener('change', fillFiberFormats);
-  $('fFormat').addEventListener('change', fillFiberPowers);
+  // ---- приводы серии S: Yaskawa или Bochu S9, стандарт или усиленный ----
+  var svSel = fresh('fServo');
+  APP.servo.forEach(function (s) { opt(svSel, s.id, s.label); });
+  svSel.value = state.servo || APP.servoDefault;
+
+  function renderServo() {
+    var out = $('servoOut'); clear(out);
+    var series = $('fSeries').value;
+    if (series === 'A') {
+      out.appendChild(el('div', 'note', 'Серия A: выбор приводов не влияет на цену — ' +
+        'в обоих прайсах цены на A одинаковые.'));
+      return;
+    }
+    var sv = servoNow(), f = $('fFormat').value, size = servoSize(f);
+    var add = servoAdd(f);
+    var box = el('div', 'calcsteps');
+    box.appendChild(el('div', '', 'Оси: <b>' + esc(sv.axes[size]) + '</b>'));
+    box.appendChild(el('div', '', 'Скорость <b>' + esc(sv.speed) +
+      '</b> · ускорение <b>' + esc(sv.accel) + '</b>'));
+    box.appendChild(el('div', '', esc(sv.note)));
+    box.appendChild(el('div', '', add
+      ? 'Надбавка за усиление: <b>' + fmtRub(toCents(add)) + ' ₽</b>'
+      : 'Надбавки нет: цена берётся прямо из прайса.'));
+    out.appendChild(box);
+
+    // что физически ставится под выбранную мощность источника
+    var kit = APP.fiberKit[$('fPower').value];
+    if (kit) {
+      var rot = $('fRot').value;
+      out.appendChild(el('div', 'note',
+        'Под эту мощность в станок ставится: контроллер <b>' +
+        esc(rot ? APP.fiberKitRotaryCtrl : kit.ctrl) + '</b>' +
+        (rot ? ' (поворотная ось RD)' : '') + ', голова <b>' + esc(kit.head) +
+        '</b>, чиллер ' + esc(kit.chiller) + '.'));
+    }
+  }
+
+  $('fSeries').addEventListener('change', function () {
+    fillFiberFormats(); renderServo();
+  });
+  $('fFormat').addEventListener('change', function () {
+    fillFiberPowers(); renderServo();
+  });
   ['fPower', 'fTable', 'fRot'].forEach(function (id) {
-    $(id).addEventListener('change', renderFiber);
+    $(id).addEventListener('change', function () { renderFiber(); renderServo(); });
+  });
+  $('fServo').addEventListener('change', function () {
+    state.servo = this.value; save(); renderFiber(); renderServo();
   });
   $('fAdd').addEventListener('click', function () {
     var p = fiberPick();
@@ -1477,6 +1569,103 @@
   }
   $('readyKind').addEventListener('change', renderReady);
 
+  // ------------------------------------------------- обвязка волокна
+  // Компрессор, дымоуловитель и криоцилиндр — позиции из КП поставщиков.
+  // Цены с НДС, поэтому идут в смету как обычные опции.
+  function fillKit(selId, list, label) {
+    var sel = fresh(selId);
+    list.forEach(function (x) {
+      opt(sel, x.id, x.name + ' — ' + fmtRub(toCents(x.price)) + ' ₽');
+    });
+    if (state.kit[label] && sel.querySelector('option[value="' + state.kit[label] + '"]')) {
+      sel.value = state.kit[label];
+    }
+    return sel;
+  }
+
+  function kitFind(list, id) {
+    var found = null;
+    list.forEach(function (x) { if (x.id === id) found = x; });
+    return found || list[0];
+  }
+
+  function renderCompressor() {
+    var out = $('compressorOut'); clear(out);
+    var c = kitFind(APP.compressors, $('kitCompressor').value);
+    var box = el('div', 'calcsteps');
+    box.appendChild(el('div', '', 'Давление <b>' + c.bar + ' бар</b> · подача <b>' +
+      c.lmin + ' л/мин</b> · двигатель <b>' + String(c.kw).replace('.', ',') +
+      ' кВт</b> · ресивер <b>' + c.tank + ' л</b>'));
+    box.appendChild(el('div', '', 'Шум ' + esc(c.noise) + ' · осушитель: ' +
+      esc(c.dryer)));
+    box.appendChild(el('div', '', 'Гарантия ' + esc(c.warranty) + ' · срок: ' +
+      esc(c.lead) + (c.size ? ' · габариты ' + esc(c.size) : '') +
+      (c.mass ? ' · масса ' + c.mass + ' кг' : '')));
+    box.appendChild(el('div', 'internal', 'Источник цены: ' + esc(c.src)));
+    out.appendChild(box);
+    // сколько такой компрессор закрывает по расходу воздуха на 6 кВт
+    var perMin = c.lmin / 1000;
+    out.appendChild(el('div', 'note',
+      'Подача ' + String(Math.round(perMin * 100) / 100).replace('.', ',') +
+      ' м³/мин. По таблице 6 кВт резка воздухом требует от 0,35 м³/мин (1 мм) ' +
+      'до 3,8 м³/мин (нержавейка 20 мм) — сравнивайте с режимом заказчика.'));
+  }
+
+  function renderExtraction() {
+    var out = $('extractionOut'); clear(out);
+    var e = kitFind(APP.extraction, $('kitExtraction').value);
+    var box = el('div', 'calcsteps');
+    box.appendChild(el('div', '', 'Производительность <b>' + e.flow +
+      ' м³/ч</b> · разрежение <b>' + esc(e.vacuum) + '</b> · мощность <b>' +
+      String(e.kw).replace('.', ',') + ' кВт</b> · патрубок ' + esc(e.port)));
+    box.appendChild(el('div', '', esc(e.filter)));
+    box.appendChild(el('div', '', 'Габариты ' + esc(e.size) + ' · масса ' + e.mass + ' кг'));
+    box.appendChild(el('div', 'internal', 'Источник цены: ' + esc(e.src)));
+    out.appendChild(box);
+  }
+
+  function renderCryo() {
+    var out = $('cryoOut'); clear(out);
+    var c = kitFind(APP.cryo, $('kitCryo').value);
+    var box = el('div', 'calcsteps');
+    box.appendChild(el('div', '', 'Производительность <b>' +
+      String(c.flow).replace('.', ',') + ' нм³/ч</b> · объём ' + c.volume + ' л'));
+    box.appendChild(el('div', 'internal', 'Источник цены: ' + esc(c.src)));
+    out.appendChild(box);
+    // сравнение с баллонами: 1 баллон 40 л = 6 м³ газа
+    var hours = Math.round(c.flow / 6 * 10) / 10;
+    out.appendChild(el('div', 'note',
+      'Один баллон 40 л даёт 6 м³ газа, значит на максимальном расходе ' +
+      'этот криоцилиндр заменяет около ' + String(hours).replace('.', ',') +
+      ' баллона в час непрерывной резки.'));
+  }
+
+  fillKit('kitCompressor', APP.compressors, 'compressor');
+  fillKit('kitExtraction', APP.extraction, 'extraction');
+  fillKit('kitCryo', APP.cryo, 'cryo');
+
+  $('kitCompressor').addEventListener('change', function () {
+    state.kit.compressor = this.value; save(); renderCompressor();
+  });
+  $('kitExtraction').addEventListener('change', function () {
+    state.kit.extraction = this.value; save(); renderExtraction();
+  });
+  $('kitCryo').addEventListener('change', function () {
+    state.kit.cryo = this.value; save(); renderCryo();
+  });
+  $('compressorAdd').addEventListener('click', function () {
+    var c = kitFind(APP.compressors, $('kitCompressor').value);
+    addItem(c.name, c.price, 1, 'opt');
+  });
+  $('extractionAdd').addEventListener('click', function () {
+    var e = kitFind(APP.extraction, $('kitExtraction').value);
+    addItem(e.name, e.price, 1, 'opt');
+  });
+  $('cryoAdd').addEventListener('click', function () {
+    var c = kitFind(APP.cryo, $('kitCryo').value);
+    addItem(c.name, c.price, 1, 'opt');
+  });
+
   // ------------------------------------------------------------------ газ
   var gNz = fresh('gNozzle');
   APP.gas.forEach(function (g, i) { opt(gNz, String(i), 'Сопло ' + g.nozzle); });
@@ -1547,8 +1736,12 @@
   fillMkSize();
   renderReady();
   renderGas();
+  renderServo();
+  renderCompressor();
+  renderExtraction();
+  renderCryo();
   var hash = (location.hash || '').replace('#', '');
-  var valid = ['cfg', 'smeta', 'match', 'shop', 'gas', 'data'];
+  var valid = ['cfg', 'smeta', 'match', 'shop', 'gas', 'kit', 'data'];
   showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');
   fixNavOffset();
 

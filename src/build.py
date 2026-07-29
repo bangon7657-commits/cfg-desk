@@ -69,6 +69,19 @@ APP = {
     'fiberS': [{'format': f, 'power': p, 'base': c['base'], 'table': c['table'],
                 'rot': c['rot'], 'tableRot': c['table_rot']}
                for (f, p), c in sorted(data.FIBER_S.items())],
+    # второй прайс: те же конфигурации, приводы Bochu S9
+    'fiberSBochu': [{'format': f, 'power': p, 'base': c['base'], 'table': c['table'],
+                     'rot': c['rot'], 'tableRot': c['table_rot']}
+                    for (f, p), c in sorted(data.FIBER_S_BOCHU.items())],
+    'servo': data.SERVO,
+    'servoDefault': data.SERVO_DEFAULT,
+    'servoSmall': list(data.SERVO_SMALL),
+    'servoNote': data.SERVO_NOTE,
+    'fiberKit': {str(k): v for k, v in data.FIBER_KIT.items()},
+    'fiberKitRotaryCtrl': data.FIBER_KIT_ROTARY_CTRL,
+    'compressors': data.COMPRESSORS,
+    'extraction': data.EXTRACTION,
+    'cryo': data.CRYO,
     'milling': [{'format': f, 'name': n, 'kw': kw, 'cool': c, 'ctrl': ct,
                  'vac': v, 'order': o, 'stock': s}
                 for f, n, kw, c, ct, v, o, s in data.MILLING],
@@ -237,6 +250,94 @@ MARKUP_TABLE = table(['Что', 'Наценка за наличие', 'Заме�
                         else f'<b>+{str(v["pct"]).replace(".", ",").replace(",0", "")} %</b>'),
                        esc(v['note'])]
                       for k, v in data.STOCK_MARKUP.items()])
+
+# --- новые справочники: приводы, головы, обвязка, газ 6 кВт, узлы ---
+HEADS_TABLES = ''.join(
+    f'<h3>{esc(group)}</h3>' +
+    table(['Голова', 'Предел по источнику'],
+          [[f'<b>{esc(n)}</b>', f'{kw} кВт'] for n, kw in rows])
+    for group, rows in data.HEADS.items())
+
+KIT_TABLE = table(['Мощность источника', 'Контроллер', 'Голова', 'Чиллер'],
+                  [[f'<b>{p} Вт</b>', esc(v['ctrl']), esc(v['head']), esc(v['chiller'])]
+                   for p, v in sorted(data.FIBER_KIT.items())])
+
+
+def _servo_add(s):
+    a, b_ = s['add']['small'], s['add']['big']
+    if not a and not b_:
+        return 'в цене прайса'
+    if a == b_:
+        return f'+{rub(a)}'
+    return f'+{rub(a)} (1530/1560) · +{rub(b_)} (2030/2040/2060)'
+
+
+SERVO_TABLE = table(['Привод', 'Оси 1530 / 1560', 'Оси 2030 / 2040 / 2060',
+                     'Скорость', 'Ускорение', 'Надбавка'],
+                    [[f'<b>{esc(s["label"])}</b>', esc(s['axes']['small']),
+                      esc(s['axes']['big']), esc(s['speed']), esc(s['accel']),
+                      _servo_add(s)] for s in data.SERVO])
+
+# Фактическая разница двух прайсов — считаем, а не пересказываем «−200 тыс.»
+_diffs = {}
+for (f_, p_), c_ in data.FIBER_S.items():
+    b_ = data.FIBER_S_BOCHU[(f_, p_)]
+    vals = [c_['base'] - b_['base'], c_['table'] - b_['table']]
+    vals += [c_['rot'][r] - b_['rot'][r] for r in c_['rot']]
+    vals += [c_['table_rot'][r] - b_['table_rot'][r] for r in c_['table_rot']]
+    _diffs.setdefault(f_, []).extend(vals)
+SERVO_DIFF_TABLE = table(['Формат', 'Bochu дешевле Yaskawa', 'Позиций в прайсе'],
+                         [[f'<b>{esc(f_)}</b>',
+                           (rub(min(v)) if min(v) == max(v)
+                            else f'от {rub(min(v))} до {rub(max(v))}'), str(len(v))]
+                          for f_, v in sorted(_diffs.items())])
+
+COMPRESSOR_TABLE = table(['Модель', 'Давление', 'Производительность', 'Мощность',
+                          'Ресивер', 'Шум', 'Гарантия', 'Цена с НДС'],
+                         [[f'<b>{esc(c["name"])}</b>', f'{c["bar"]} бар',
+                           f'{c["lmin"]} л/мин', f'{str(c["kw"]).replace(".", ",")} кВт',
+                           f'{c["tank"]} л', esc(c['noise']), esc(c['warranty']),
+                           f'<b>{rub(c["price"])}</b>'] for c in data.COMPRESSORS])
+
+EXTRACTION_TABLE = table(['Модель', 'Производительность', 'Разрежение', 'Мощность',
+                          'Патрубок', 'Фильтр', 'Цена с НДС'],
+                         [[f'<b>{esc(e["name"])}</b>', f'{e["flow"]} м³/ч',
+                           esc(e['vacuum']), f'{str(e["kw"]).replace(".", ",")} кВт',
+                           esc(e['port']), esc(e['filter']), f'<b>{rub(e["price"])}</b>']
+                          for e in data.EXTRACTION])
+
+CRYO_TABLE = table(['Позиция', 'Производительность', 'Цена с НДС'],
+                   [[f'<b>{esc(c["name"])}</b>',
+                     f'{str(c["flow"]).replace(".", ",")} нм³/ч',
+                     f'<b>{rub(c["price"])}</b>'] for c in data.CRYO])
+CRYO_SPEC_TABLE = table(['Параметр', 'Значение'],
+                        [[esc(a), esc(v)] for a, v in data.CRYO_SPEC])
+
+
+def gas6_table(rows):
+    return table(['Толщина', 'Расход в час', 'Расход в минуту', 'На 1 м реза', 'Газ'],
+                 [[f'<b>{t} мм</b>', f'{h} м³', f'{m} м³', f'{one} м³', esc(g)]
+                  for t, h, m, one, g in rows])
+
+
+GAS6_STEEL_TABLE = gas6_table(data.GAS_6KW_STEEL)
+GAS6_INOX_TABLE = gas6_table(data.GAS_6KW_INOX)
+GAS_LIQ_O2_TABLE = table(['кг', 'л', 'м³ при 0 °C', 'м³ при 20 °C'],
+                         [list(r) for r in data.GAS_LIQUID_O2])
+GAS_LIQ_N2_TABLE = table(['кг', 'л', 'м³ при 0 °C', 'м³ при 20 °C'],
+                         [list(r) for r in data.GAS_LIQUID_N2])
+GAS_CYL_TABLE = table(['Параметр', 'Значение'],
+                      [[esc(a), f'<b>{esc(v)}</b>'] for a, v in data.GAS_CYLINDER])
+
+COMPONENTS_HTML = ''.join(
+    f'<details><summary>{esc(model)}</summary><div class="det-b">' +
+    table(['Узел', 'Что стоит'], [[f'<b>{esc(a)}</b>', esc(v)] for a, v in rows]) +
+    '</div></details>'
+    for model, rows in data.COMPONENTS)
+COMPONENTS_COMMON_TABLE = table(['Группа', 'Состав'],
+                                [[f'<b>{esc(a)}</b>', esc(v)]
+                                 for a, v in data.COMPONENTS_COMMON])
+
 
 CONFLICTS_HTML = ''.join(
     f'<div class="conflict"><div class="conflict-t">{esc(t)}</div>'
@@ -414,6 +515,29 @@ repl = {
     '__READINESS_TABLE__': READINESS_TABLE,
     '__MATCH_TABLE__': MATCH_TABLE,
     '__MARKUP_TABLE__': MARKUP_TABLE,
+    '__HEADS_TABLES__': HEADS_TABLES,
+    '__HEADS_NOTE__': esc(data.HEADS_NOTE),
+    '__KIT_TABLE__': KIT_TABLE,
+    '__KIT_NOTE__': esc(data.FIBER_KIT_NOTE),
+    '__SERVO_TABLE__': SERVO_TABLE,
+    '__SERVO_DIFF_TABLE__': SERVO_DIFF_TABLE,
+    '__SERVO_NOTE__': esc(data.SERVO_NOTE),
+    '__SERVO_A_NOTE__': esc(data.SERVO_A_NOTE),
+    '__COMPRESSOR_TABLE__': COMPRESSOR_TABLE,
+    '__COMPRESSOR_NOTE__': esc(data.COMPRESSOR_NOTE),
+    '__EXTRACTION_TABLE__': EXTRACTION_TABLE,
+    '__CRYO_TABLE__': CRYO_TABLE,
+    '__CRYO_SPEC_TABLE__': CRYO_SPEC_TABLE,
+    '__CRYO_NOTE__': esc(data.CRYO_NOTE),
+    '__GAS6_STEEL_TABLE__': GAS6_STEEL_TABLE,
+    '__GAS6_INOX_TABLE__': GAS6_INOX_TABLE,
+    '__GAS6_NOTE__': esc(data.GAS_6KW_NOTE),
+    '__GAS_LIQ_O2_TABLE__': GAS_LIQ_O2_TABLE,
+    '__GAS_LIQ_N2_TABLE__': GAS_LIQ_N2_TABLE,
+    '__GAS_CYL_TABLE__': GAS_CYL_TABLE,
+    '__COMPONENTS__': COMPONENTS_HTML,
+    '__COMPONENTS_COMMON__': COMPONENTS_COMMON_TABLE,
+    '__COMPONENTS_NOTE__': esc(data.COMPONENTS_NOTE),
     '__KP_HEAD__': KP_HEAD,
     '__KP_TERMS__': KP_TERMS,
     '__KP_SERVICE__': KP_SERVICE,
