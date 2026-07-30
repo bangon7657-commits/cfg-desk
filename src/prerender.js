@@ -557,7 +557,7 @@ win.document.getElementById('fRot').value = '';
 win.document.getElementById('fRot').dispatchEvent(new win.Event('change'));
 win.document.getElementById('stabAdd').click();
 check('стабилизатор: добавляется в смету',
-  /Стабилизатор Ресанта/.test(doc.getElementById('smetaBody').textContent),
+  /Стабилизатор напряжения Ресанта/.test(doc.getElementById('smetaBody').textContent),
   doc.getElementById('smetaBody').textContent.slice(0, 200));
 
 
@@ -629,17 +629,111 @@ win.document.getElementById('cat').dispatchEvent(new win.Event('change'));
 win.document.getElementById('pnrAdd').click();
 const srvRow = Array.from(doc.querySelectorAll('#smetaBody tr'))
   .filter(r => /Услуга/.test(r.textContent))[0];
-const srvDisc = srvRow ? srvRow.querySelectorAll('input')[1].value : null;
+const srvDisc = srvRow ? srvRow.querySelectorAll('input')[2].value : null;
 check('смета: услуга по умолчанию без скидки при общей 5 %', srvDisc === '0',
   'в строке услуги скидка «' + srvDisc + '»');
 const eqRow = Array.from(doc.querySelectorAll('#smetaBody tr'))
   .filter(r => /Оборудование/.test(r.textContent))[0];
-const eqDisc = eqRow ? eqRow.querySelectorAll('input')[1].value : null;
+const eqDisc = eqRow ? eqRow.querySelectorAll('input')[2].value : null;
 check('смета: у оборудования общая скидка 5 % применилась', eqDisc === '5',
   'в строке оборудования скидка «' + eqDisc + '»');
 check('смета: предел построчной скидки равен общему',
-  eqRow && eqRow.querySelectorAll('input')[1].getAttribute('max') === '30',
-  'max=«' + (eqRow ? eqRow.querySelectorAll('input')[1].getAttribute('max') : '?') + '»');
+  eqRow && eqRow.querySelectorAll('input')[2].getAttribute('max') === '30',
+  'max=«' + (eqRow ? eqRow.querySelectorAll('input')[2].getAttribute('max') : '?') + '»');
+
+// ---- полные наименования, правка цены, менеджер, реквизиты ----
+const smetaTxt = () => doc.getElementById('smetaBody').textContent;
+check('наименование: волокно названо станком по металлу',
+  /Лазерный станок по металлу WATTSAN S 1530/.test(smetaTxt()),
+  smetaTxt().slice(0, 120));
+win.document.getElementById('mAdd').click();
+check('наименование: фрезер названо фрезерным станком',
+  /Фрезерный станок WATTSAN /.test(smetaTxt()),
+  smetaTxt().slice(0, 200));
+// опция из категории «Чиллеры» должна получить слово «Чиллер»
+const chillBtn = Array.from(doc.querySelectorAll('#mOptions .chk'))
+  .filter(r => /CW-5200TH/.test(r.textContent))[0];
+if (chillBtn) chillBtn.querySelector('button').click();
+check('наименование: чиллер назван чиллером',
+  /Чиллер S&A CW-5200TH/.test(smetaTxt()), smetaTxt().slice(-200));
+check('наименование: ПНР расшифрован в смете',
+  /Пусконаладочные работы/.test(smetaTxt()), '');
+
+// Правка цены руками: сумма строки, итог и НДС должны пересчитаться,
+// а блок сходимости — остаться зелёным.
+const eqRow2 = Array.from(doc.querySelectorAll('#smetaBody tr'))
+  .filter(r => /Лазерный станок по металлу/.test(r.textContent))[0];
+const priceIn = eqRow2 ? eqRow2.querySelectorAll('input.pricein')[0] : null;
+check('цена: в строке сметы есть поле для правки', !!priceIn, '');
+if (priceIn) {
+  priceIn.value = '1 000 000,50';
+  priceIn.dispatchEvent(new win.Event('change'));
+}
+const rowNow = Array.from(doc.querySelectorAll('#smetaBody tr'))
+  .filter(r => /Лазерный станок по металлу/.test(r.textContent))[0];
+check('цена: правка руками попала в строку',
+  !!rowNow && /1 000 000,50/.test(rowNow.querySelector('input.pricein').value),
+  rowNow ? rowNow.textContent.slice(0, 120) : '');
+check('цена: строка помечена как правленная вручную',
+  !!rowNow && /цена правлена вручную/.test(rowNow.textContent), '');
+// 1 000 000,50 со скидкой 5 % = 950 000,48 (полукопейка вверх), это и должно
+// стоять в строке вместо прежней цены прайса
+check('цена: итог пересчитан от новой цены',
+  /950 000,48/.test(textOf(doc, '#smetaBody')) &&
+  !/2 867 000,00/.test(textOf(doc, '#smetaBody')),
+  textOf(doc, '#smetaBody').slice(0, 200));
+check('цена: сходимость итога и НДС не нарушена',
+  /Сходится/.test(textOf(doc, '#checkBlock')) ||
+  !/Сходимость нарушена/.test(textOf(doc, '#checkBlock')),
+  textOf(doc, '#checkBlock').slice(0, 160));
+check('цена: подпись строки итога больше не «по прайсу»',
+  /цены правлены вручную/.test(textOf(doc, '#totals')),
+  textOf(doc, '#totals').slice(0, 160));
+
+// Менеджер сделки
+win.document.getElementById('mgrName').value = 'Пётр Смирнов';
+win.document.getElementById('mgrName').dispatchEvent(new win.Event('input'));
+win.document.getElementById('mgrPhone').value = '+7 (999) 000-11-22';
+win.document.getElementById('mgrPhone').dispatchEvent(new win.Event('input'));
+check('менеджер: имя из шага 1 попало в лист ТКП',
+  /Пётр Смирнов/.test(textOf(doc, '#kpMgrBox')), textOf(doc, '#kpMgrBox'));
+check('менеджер: телефон из шага 1 попал в лист ТКП',
+  /\+7 \(999\) 000-11-22/.test(textOf(doc, '#kpMgrBox')), textOf(doc, '#kpMgrBox'));
+win.document.getElementById('mgrReset').click();
+check('менеджер: сброс возвращает менеджера из данных',
+  /Вениамин Вараксин/.test(textOf(doc, '#kpMgrBox')) &&
+  !/Пётр Смирнов/.test(textOf(doc, '#kpMgrBox')), textOf(doc, '#kpMgrBox'));
+
+// Реквизиты новых поставщиков
+win.document.getElementById('kpSupplier').value = 'infoservice';
+win.document.getElementById('kpSupplier').dispatchEvent(new win.Event('change'));
+check('реквизиты: у ИНФО-СЕРВИС подставлен ИНН и счёт',
+  /7816345877/.test(textOf(doc, '#kpLegal')) &&
+  /40702810206000022267/.test(textOf(doc, '#kpLegal')),
+  textOf(doc, '#kpLegal').slice(0, 200));
+check('реквизиты: ИНФО-СЕРВИС больше не помечен «заполнить»',
+  !/ИНФО-СЕРВИС — реквизиты заполнить/.test(src), '');
+win.document.getElementById('kpSupplier').value = 'lasercut_td';
+win.document.getElementById('kpSupplier').dispatchEvent(new win.Event('change'));
+check('реквизиты: у ТД ЛАЗЕРКАТ подставлен УНП и счёт в BYN',
+  /193382531/.test(textOf(doc, '#kpLegal')) &&
+  /BY94ALFA30122607620010270000/.test(textOf(doc, '#kpLegal')),
+  textOf(doc, '#kpLegal').slice(0, 200));
+check('реквизиты: белорусский поставщик по-прежнему с предупреждением',
+  /белорусское юрлицо/.test(textOf(doc, '#supWarn')), textOf(doc, '#supWarn'));
+win.document.getElementById('kpSupplier').value = 'stankoprom';
+win.document.getElementById('kpSupplier').dispatchEvent(new win.Event('change'));
+
+// Стабилизаторы для фрезеров из присланного списка
+check('стабилизаторы фрезера: четыре новые модели в опциях',
+  /Ресанта-10000\/1-ЭМ/.test(src) && /Ресанта-12000\/1-ЭМ/.test(src) &&
+  /Ресанта-15000\/3-ЭМ \(380 В\)/.test(src) &&
+  /Ресанта АСН-20000\/3-ЭМ \(380 В\)/.test(src), '');
+check('стабилизаторы фрезера: цены совпадают с присланными',
+  /28090/.test(src) && /33590/.test(src) && /75590/.test(src) && /95190/.test(src), '');
+check('данные: расхождение цен на один стабилизатор описано',
+  doc.getElementById('p-data').textContent
+    .indexOf('Один стабилизатор Ресанта в двух списках') >= 0, '');
 
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
 // Всё, что натворили проверки, должно быть убрано: файл обязан открываться
@@ -667,7 +761,8 @@ if (toastNode) {
 }
 doc.getElementById('saveDot').textContent = '';
 // поля шапки ТКП, заполненные проверками
-['kpClient', 'kpInn', 'kpNum', 'kpContact', 'kpPhone', 'kpNote', 'kpDate', 'kpTitle']
+['kpClient', 'kpInn', 'kpNum', 'kpContact', 'kpPhone', 'kpNote', 'kpDate', 'kpTitle',
+  'mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail']
   .forEach(id => { const n = doc.getElementById(id); if (n) n.value = ''; });
 doc.querySelectorAll('#supBox input').forEach(n => { n.value = ''; });
 const supBoxNode = doc.getElementById('supBox');
@@ -764,7 +859,7 @@ check('чистота: в файле предпросмотр ТКП пуст',
   /id="kpPreview"><\/div>/.test(markup.replace(/\s+/g, ' ')),
   (markup.match(/id="kpPreview">[\s\S]{0,80}/) || [''])[0]);
 check('чистота: без сметы в ТКП нет чужих позиций',
-  !/Wattsan S 1530/.test(doc2.getElementById('kpPreview').textContent) &&
+  !/WATTSAN S 1530/.test(doc2.getElementById('kpPreview').textContent) &&
   /Смета пуста/.test(doc2.getElementById('kpPreview').textContent),
   doc2.getElementById('kpPreview').textContent.slice(0, 90));
 check('чистота: поля шапки ТКП не заполнены',

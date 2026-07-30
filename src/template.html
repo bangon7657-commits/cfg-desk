@@ -79,6 +79,27 @@
 
   <div class="step">
     <div class="step-h"><div class="step-n">1</div>
+      <div class="step-t">Менеджер сделки<small>подставляется в подпись ТКП и в файл Word</small></div></div>
+    <div class="step-b">
+      <div class="row">
+        <div style="flex:2 1 240px"><label class="f">Имя и фамилия</label>
+          <input type="text" id="mgrName" placeholder="__MGR_NAME__"></div>
+        <div><label class="f">Должность</label>
+          <input type="text" id="mgrRole" placeholder="__MGR_ROLE__"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">Телефон</label>
+          <input type="text" id="mgrPhone" placeholder="__MGR_PHONE__"></div>
+        <div><label class="f">Почта</label>
+          <input type="text" id="mgrEmail" placeholder="__MGR_EMAIL__"></div>
+      </div>
+      <div class="note" id="mgrOut"></div>
+      <button class="btn mini sec" type="button" id="mgrReset">Вернуть менеджера по умолчанию</button>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="step-n">2</div>
       <div class="step-t">Категория оборудования<small>дальше поля меняются под выбранную категорию</small></div></div>
     <div class="step-b">
       <select id="cat">
@@ -91,7 +112,7 @@
   <!-- волокно -->
   <div id="blkFiber">
     <div class="step">
-      <div class="step-h"><div class="step-n">2</div>
+      <div class="step-h"><div class="step-n">3</div>
         <div class="step-t">Конфигурация волоконного станка<small>серия, формат, мощность, модули</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -118,7 +139,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">3</div>
+      <div class="step-h"><div class="step-n">4</div>
         <div class="step-t">Цена и что входит<small>НДС включён, подготовка цеха — сверху</small></div></div>
       <div class="step-b">
         <div id="fOut"></div>
@@ -136,7 +157,7 @@
     <p class="lead">Компрессор, дымоуловитель и криоцилиндр — из коммерческих
       предложений поставщиков, цены с НДС. Добавляются в ту же смету.</p>
 <div class="step">
-    <div class="step-h"><div class="step-n">4</div>
+    <div class="step-h"><div class="step-n">5</div>
       <div class="step-t">Компрессор<small>для резки воздухом и пневматики станка</small></div></div>
     <div class="step-b">
       <div class="row">
@@ -151,7 +172,7 @@
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="step-n">5</div>
+    <div class="step-h"><div class="step-n">6</div>
       <div class="step-t">Дымоуловитель<small>вытяжка в комплекте станка есть, но фильтрации у неё нет</small></div></div>
     <div class="step-b">
       <div class="row">
@@ -166,7 +187,7 @@
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="step-n">6</div>
+    <div class="step-h"><div class="step-n">7</div>
       <div class="step-t">Криоцилиндр вместо баллонов<small>когда азота нужно много</small></div></div>
     <div class="step-b">
       <div class="row">
@@ -184,7 +205,7 @@
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="step-n">7</div>
+    <div class="step-h"><div class="step-n">8</div>
       <div class="step-t">Стабилизатор напряжения<small>условие гарантии, а не опция</small></div></div>
     <div class="step-b">
       <div class="row">
@@ -251,7 +272,7 @@
   <!-- фрезерный -->
   <div id="blkMill">
     <div class="step">
-      <div class="step-h"><div class="step-n">2</div>
+      <div class="step-h"><div class="step-n">3</div>
         <div class="step-t">Конфигурация фрезерного станка<small>формат поля, затем конкретная сборка</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -267,7 +288,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">3</div>
+      <div class="step-h"><div class="step-n">4</div>
         <div class="step-t">Цена<small>две цены рядом: под заказ и из наличия</small></div></div>
       <div class="step-b">
         <div id="mOut"></div>
@@ -276,7 +297,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">4</div>
+      <div class="step-h"><div class="step-n">5</div>
         <div class="step-t">Опции и доп. оборудование<small>прайс от __DATE_OPTIONS__ · по CO₂ и маркерам аналога нет</small></div></div>
       <div class="step-b">
         <div id="mOptions"></div>
@@ -285,7 +306,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">5</div>
+      <div class="step-h"><div class="step-n">6</div>
         <div class="step-t">ПНР и обучение<small>платные услуги — не обещать как бесплатное преимущество</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -370,10 +391,10 @@
 
   <div class="step noprint">
     <div class="step-h"><div class="step-n">2</div>
-      <div class="step-t">Позиции сметы<small>отсортированы: сначала оборудование, потом опции, потом услуги</small></div></div>
+      <div class="step-t">Позиции сметы<small>цену и количество можно править прямо в строке — итог и НДС пересчитаются</small></div></div>
     <div class="step-b">
       <div class="scroll" id="smetaWrap"><table id="smetaTable"><thead><tr>
-        <th style="width:40%">Наименование</th><th>Кол-во</th><th>Цена прайса</th>
+        <th style="width:40%">Наименование</th><th>Кол-во</th><th>Цена, ₽</th>
         <th>Скидка, %</th><th>Со скидкой</th><th>Сумма</th><th class="noprint"></th>
       </tr></thead><tbody id="smetaBody"></tbody></table></div>
       <div id="smetaEmpty" class="empty">Смета пуста. Добавьте позиции на вкладке «Конфигуратор».</div>

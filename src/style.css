@@ -265,6 +265,12 @@ summary span.cnt{margin-left:auto;font-size:13px;font-weight:400;color:var(--mut
 /* ---------- смета ---------- */
 #smetaBody td{vertical-align:middle}
 #smetaBody input[type=number]{width:74px;padding:7px 8px;font-size:14.5px}
+/* цена правится прямо в строке: поле выглядит как текст, пока в него не зашли */
+#smetaBody input.pricein{width:118px;padding:7px 8px;font-size:14.5px;
+  text-align:right;font-variant-numeric:tabular-nums}
+#smetaBody input.pricein.own{border-color:var(--or);
+  background:color-mix(in srgb,var(--or) 12%,transparent)}
+@media print{#smetaBody input.pricein{border:0;background:none;padding:0;width:auto}}
 tr.grouphead td{background:var(--bg4);color:var(--or2);font-weight:700;font-size:12.5px;
   text-transform:uppercase;letter-spacing:.5px}
 .empty{padding:26px 18px;text-align:center;color:var(--muted);font-size:15px;

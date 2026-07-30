@@ -509,10 +509,13 @@ KP_SIGN = (
     '</div>'
     '<div><div class="kp-sign-t"></div><div class="kp-line"></div>'
     '<span class="kp-cap">М.П.</span></div></div>')
-KP_MGR = ('<div class="kp-mgr"><span>Ваш менеджер</span>'
-          f'<b>{esc(data.MANAGER["name"])}</b> · {esc(data.MANAGER["role"])}<br>'
-          f'{esc(data.MANAGER["phone"])} · {esc(data.MANAGER["email"])} · '
-          f'{esc(data.MANAGER["sites"])}</div>')
+# Имя и контакты менеджера правятся в конфигураторе, поэтому блок собирается
+# заново в renderKP: здесь только начальное состояние из данных.
+KP_MGR = ('<div class="kp-mgr" id="kpMgrBox"><span>Ваш менеджер</span>'
+          f'<b id="kpMgrName">{esc(data.MANAGER["name"])}</b>'
+          f'<span id="kpMgrRole"> · {esc(data.MANAGER["role"])}</span><br>'
+          f'<span id="kpMgrLine">{esc(data.MANAGER["phone"])} · '
+          f'{esc(data.MANAGER["email"])} · {esc(data.MANAGER["sites"])}</span></div>')
 KP_LEGAL = ('<div class="kp-legal" id="kpLegal"><b>' + esc(data.COMPANY['brand']) +
             '</b>' +
             ''.join(f'<span>{esc(x)}</span>' for x in legal_lines(SUP_DEFAULT)) +
@@ -616,6 +619,10 @@ repl = {
     '__APP_NAME__': APP_NAME,
     '__APP_TAGLINE__': APP_TAGLINE,
     '__SITE_URL__': SITE_URL,
+    '__MGR_NAME__': esc(data.MANAGER['name']),
+    '__MGR_ROLE__': esc(data.MANAGER['role']),
+    '__MGR_PHONE__': esc(data.MANAGER['phone']),
+    '__MGR_EMAIL__': esc(data.MANAGER['email']),
     '__KP_TERMS__': KP_TERMS,
     '__KP_SERVICE__': KP_SERVICE,
     '__KP_NEXT__': KP_NEXT,

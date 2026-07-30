@@ -49,7 +49,9 @@
     // поставщик в ТКП и правки его реквизитов, тема оформления
     supId: '', sups: {}, theme: 'dark',
     // приводы серии S и выбранная обвязка волокна
-    servo: '', kit: { compressor: '', extraction: '', cryo: '', stab: '' }
+    servo: '', kit: { compressor: '', extraction: '', cryo: '', stab: '' },
+    // имя и контакты менеджера сделки: пустые поля = менеджер из данных
+    mgr: {}
   };
   try {
     // v1 → v2: подхватываем черновик, сохранённый прошлой версией, и переносим его
@@ -72,6 +74,8 @@
       if (!state.kit || typeof state.kit !== 'object') {
         state.kit = { compressor: '', extraction: '', cryo: '', stab: '' };
       }
+      // черновики до версии 13 не знали про своего менеджера
+      if (!state.mgr || typeof state.mgr !== 'object') state.mgr = {};
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
 
@@ -242,6 +246,79 @@
     showTab('smeta');
   });
 
+  // ---------------------------------------------------------------- менеджер
+  // Менеджер сделки правится в шаге 1: у каждого свои имя и телефон, а ТКП
+  // уходит клиенту от конкретного человека. Пустое поле = значение из данных.
+  var MGRF = ['mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail'];
+  var MGR_MAP = { mgrName: 'name', mgrRole: 'role', mgrPhone: 'phone', mgrEmail: 'email' };
+  function mgr() {
+    var out = {};
+    ['name', 'role', 'phone', 'email', 'sites'].forEach(function (k) {
+      out[k] = APP.manager[k];
+    });
+    MGRF.forEach(function (id) {
+      var v = (state.mgr[id] || '').trim();
+      if (v) out[MGR_MAP[id]] = v;
+    });
+    return out;
+  }
+  function mgrOwn() {
+    var own = false;
+    MGRF.forEach(function (id) { if ((state.mgr[id] || '').trim()) own = true; });
+    return own;
+  }
+  function renderMgr() {
+    var m = mgr(), n = $('mgrOut');
+    if (n) {
+      n.textContent = 'В подписи ТКП: ' + m.name + ' · ' + m.role + ' · ' +
+        m.phone + ' · ' + m.email +
+        (mgrOwn() ? '' : ' — это менеджер по умолчанию из данных');
+    }
+    var nm = $('kpMgrName'), rl = $('kpMgrRole'), ln = $('kpMgrLine');
+    if (nm) nm.textContent = m.name;
+    if (rl) rl.textContent = ' · ' + m.role;
+    if (ln) ln.textContent = m.phone + ' · ' + m.email + ' · ' + m.sites;
+  }
+  MGRF.forEach(function (id) {
+    if (state.mgr[id]) $(id).value = state.mgr[id];
+    $(id).addEventListener('input', function () {
+      state.mgr[id] = this.value; save(); renderMgr();
+    });
+  });
+  $('mgrReset').addEventListener('click', function () {
+    state.mgr = {};
+    MGRF.forEach(function (id) { $(id).value = ''; });
+    save(); renderMgr();
+    toast('Менеджер снова по умолчанию: ' + APP.manager.name);
+  });
+
+  // ------------------------------------------------- полные наименования
+  // В смете и ТКП позиция должна читаться как товар, а не как артикул из
+  // прайса: «A1 6090, 1.5wc» клиент не опознает, «Фрезерный станок WATTSAN
+  // A1 6090, 1.5wc» — опознает. Префиксы добавляются при выводе, данные
+  // остаются дословными.
+  var NOM_PREFIX = {
+    'Стабилизаторы напряжения': 'Стабилизатор напряжения ',
+    'Чиллеры': 'Чиллер ',
+    'DSP-контроллеры': 'DSP-контроллер ',
+    'Датчики высоты инструмента': 'Датчик высоты инструмента ',
+    'Виброопоры': 'Виброопора '
+  };
+  function nomOption(cat, name) {
+    if (cat === 'Аспирация') {
+      return /BELMASH/i.test(name) ? 'Пылеулавливающий агрегат ' + name : name;
+    }
+    var p = NOM_PREFIX[cat];
+    if (!p) return name;
+    if (name.indexOf(p.trim()) === 0) return name;
+    return p + (cat === 'Датчики высоты инструмента' ? lower1(name) : name);
+  }
+  function nomFiber(series, f, power) {
+    return 'Лазерный станок по металлу WATTSAN ' + series + ' ' + f + ' ' +
+      power + ' Вт';
+  }
+  function nomMill(name) { return 'Фрезерный станок WATTSAN ' + name; }
+
   // ------------------------------------------------------------------ волокно
   var fiberIdx = {}, fiberAIdx = {}, fiberBoIdx = {};
   APP.fiberS.forEach(function (r) {
@@ -316,13 +393,14 @@
       }
       var price = fiberAIdx[f] && fiberAIdx[f][p];
       if (!price) return { err: 'Цены на эту конфигурацию в прайсе нет.' };
-      return { name: 'Wattsan A ' + f + ' ' + p + 'W', price: price, steps: [] };
+      return { name: nomFiber('A', f, p), short: nomFiber('A', f, p),
+        price: price, steps: [] };
     }
     var sv = servoNow();
     var idx = fiberSrc(sv.price_from);
     var r = idx[f] && idx[f][p];
     if (!r) return { err: 'Цены на эту конфигурацию в прайсе нет.' };
-    var name = 'Wattsan S ' + f + ' ' + p + 'W', price, steps = [];
+    var name = nomFiber('S', f, p), price, steps = [];
     if (!tbl && !rot) { price = r.base; }
     else if (tbl && !rot) { price = r.table; name += ' + сменный стол'; }
     else if (!tbl && rot) { price = r.rot[rot]; name += ' + rotary ' + rot; }
@@ -500,8 +578,8 @@
   $('mAdd').addEventListener('click', function () {
     var r = millPick(); if (!r) return;
     var mode = $('priceMode').value;
-    addItem(r.name + (mode === 'stock' ? ' (из наличия)' : ' (под заказ)'),
-      mode === 'stock' ? r.stock : r.order, 1, 'eq');
+    addItem(nomMill(r.name) + (mode === 'stock' ? ' (из наличия)' : ' (под заказ)'),
+      mode === 'stock' ? r.stock : r.order, 1, 'eq', { short: nomMill(r.name) });
   });
 
   // опции — по одной группе, без повторов названия категории
@@ -531,7 +609,8 @@
         var btn = el('button', 'btn mini sec', 'В смету');
         btn.type = 'button';
         btn.addEventListener('click', function () {
-          addItem(o.name, o.price, Math.max(1, parseInt(qty.value, 10) || 1), 'opt');
+          addItem(nomOption(o.cat, o.name), o.price,
+            Math.max(1, parseInt(qty.value, 10) || 1), 'opt');
         });
         row.appendChild(qty); row.appendChild(btn);
         body.appendChild(row);
@@ -547,8 +626,12 @@
   function pnrPick() {
     var p = APP.pnr[parseInt($('pnrModel').value, 10)];
     var kind = $('pnrKind').value;
-    var labels = { pnr: 'ПНР', plus1: 'ПНР +1 день', plus2: 'ПНР +2 дня',
-      training: 'Обучение', package: 'ПНР + обучение' };
+    // в смету идёт расшифровка, а не «ПНР»: документ читает клиент
+    var labels = { pnr: 'Пусконаладочные работы',
+      plus1: 'Пусконаладочные работы, +1 день выезда',
+      plus2: 'Пусконаладочные работы, +2 дня выезда',
+      training: 'Обучение оператора',
+      package: 'Пусконаладочные работы и обучение оператора' };
     var v = p[kind];
     if (typeof v === 'string' && !/^\d/.test(v.replace(/\s/g, ''))) {
       return { text: v + ' — отдельной строкой в смету не идёт.',
@@ -843,13 +926,16 @@
       tr.className = 'item';
       var nameCell = '<b style="color:var(--tx);font-weight:600">' + esc(L.item.name) +
         '</b><br><span class="muted">' + (TYPES[L.item.type] || '') +
-        (L.item.disc !== null && L.item.disc !== undefined ? ' · своя скидка' : '') + '</span>';
+        (L.item.disc !== null && L.item.disc !== undefined ? ' · своя скидка' : '') +
+        (L.item.ownPrice ? ' · цена правлена вручную' : '') + '</span>';
       // data-label читает мобильная вёрстка: на узком экране строка
       // превращается в карточку, а подписи колонок берутся отсюда
       tr.innerHTML = '<td>' + nameCell + '</td>' +
         '<td data-label="Кол-во"><input type="number" min="1" max="99" value="' +
         L.item.qty + '" aria-label="количество"></td>' +
-        '<td data-label="Цена прайса" class="num">' + fmt(L.item.price) + '</td>' +
+        '<td data-label="Цена, ₽" class="num"><input type="text" class="pricein' +
+        (L.item.ownPrice ? ' own' : '') + '" value="' + fmt(L.item.price) +
+        '" aria-label="цена за единицу" inputmode="decimal"></td>' +
         '<td data-label="Скидка, %"><input type="number" min="0" max="' + APP.maxDiscount +
         '" step="0.5" value="' +
         String(L.dsc / 10).replace('.', ',') + '" aria-label="скидка"></td>' +
@@ -861,7 +947,21 @@
         L.item.qty = Math.max(1, Math.min(99, parseInt(this.value, 10) || 1));
         save(); renderSmeta();
       });
+      // Цена правится вручную: прайс не всегда последнее слово — бывает
+      // спецпредложение поставщика или согласованная закупкой цена.
+      // Пробелы-разделители разрядов и запятая как в выводе — принимаются.
       inputs[1].addEventListener('change', function () {
+        var raw = String(this.value).replace(/\s| /g, '').replace(',', '.');
+        var v = parseFloat(raw);
+        if (!(v >= 0)) { renderSmeta(); return; }
+        var cents = toCents(v);
+        if (cents > 9999999999) cents = 9999999999;
+        var was = L.item.price;
+        L.item.price = cents;
+        if (cents !== was) L.item.ownPrice = true;
+        save(); renderSmeta();
+      });
+      inputs[2].addEventListener('change', function () {
         var v = parseFloat(String(this.value).replace(',', '.'));
         if (!(v >= 0)) v = 0;
         if (v > APP.maxDiscount) v = APP.maxDiscount;
@@ -883,7 +983,11 @@
       n.innerHTML = '<span>' + k + '</span><span>' + v + '</span>';
       tot.appendChild(n);
     }
-    row('Сумма по прайсу', fmt(T.listSum) + ' ₽');
+    // Если менеджер правил цену руками, называть строку «по прайсу» нельзя
+    var ownAny = false;
+    T.lines.forEach(function (L) { if (L.item.ownPrice) ownAny = true; });
+    row(ownAny ? 'Сумма до скидки — цены правлены вручную' : 'Сумма по прайсу',
+      fmt(T.listSum) + ' ₽');
     // Подпись честная: общий процент показываем только если построчных скидок нет,
     // иначе он не описывает сумму выгоды.
     var perLine = false;
@@ -1123,7 +1227,10 @@
     var found = null;
     state.items.forEach(function (it) {
       if (found || it.type !== 'eq') return;
-      var m = /Wattsan (A|S) (\d{4}) (\d+)W/.exec(it.name);
+      // «Лазерный станок по металлу WATTSAN S 1530 3000 Вт …»; старые
+      // черновики хранят прежний вид «Wattsan S 1530 3000W» — читаем оба
+      var m = /WATTSAN (A|S) (\d{4}) (\d+) Вт/i.exec(it.name) ||
+        /Wattsan (A|S) (\d{4}) (\d+)W/i.exec(it.name);
       if (!m) return;
       var kit = APP.fiberKit[m[3]] || {};
       found = {
@@ -1479,14 +1586,15 @@
     ], sg);
     out += dGap(140);
 
-    // менеджер
+    // менеджер — тот, что задан в шаге 1 конфигуратора
+    var M = mgr();
     out += dBand(
       DOCX.p(DOCX.run('Ваш менеджер', { sz: 15, color: GREY }), { space: { after: 20 } }) +
-      DOCX.p(DOCX.run(APP.manager.name, { b: true, color: NAVY, sz: 19 }) +
-        DOCX.run(' · ' + APP.manager.role, { sz: 17, color: INK }),
+      DOCX.p(DOCX.run(M.name, { b: true, color: NAVY, sz: 19 }) +
+        DOCX.run(' · ' + M.role, { sz: 17, color: INK }),
         { space: { after: 20 } }) +
-      DOCX.p(DOCX.run(APP.manager.phone + ' · ' + APP.manager.email + ' · ' +
-        APP.manager.sites, { sz: 17, color: INK }), { space: { after: 0 } }), PALE);
+      DOCX.p(DOCX.run(M.phone + ' · ' + M.email + ' · ' +
+        M.sites, { sz: 17, color: INK }), { space: { after: 0 } }), PALE);
     out += dGap(140);
 
     // реквизиты выбранного поставщика
@@ -1574,12 +1682,12 @@
       'КЛИЕНТ': k.kpClient || '', 'ИНН': k.kpInn || '',
       'ПРИМЕЧАНИЕ': k.kpNote ? ' — ' + k.kpNote : '',
       'ИСХ_НОМЕР': k.kpNum || '',
-      'КОНТАКТ_ИМЯ': k.kpContact || APP.manager.name,
-      'КОНТАКТ_ТЕЛЕФОН': k.kpPhone || APP.manager.phone,
+      'КОНТАКТ_ИМЯ': k.kpContact || mgr().name,
+      'КОНТАКТ_ТЕЛЕФОН': k.kpPhone || mgr().phone,
       'ДД': dp[0] || '',
       'МЕСЯЦА': MONTHS_G[parseInt(dp[1], 10) - 1] || '',
       'ГГГГ': dp[2] || '',
-      'менеджер': APP.manager,
+      'менеджер': mgr(),
       'гарантия': APP.guarantee.label,
       'срок_поставки': state.kp.kpTerm === 'stock'
         ? APP.deliveryTerms.stock : APP.deliveryTerms.order,
@@ -2163,6 +2271,7 @@
   renderExtraction();
   renderCryo();
   renderStab();
+  renderMgr();
   var hash = (location.hash || '').replace('#', '');
   var valid = SECTIONS.map(function (s) { return s.id; });
   showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');
