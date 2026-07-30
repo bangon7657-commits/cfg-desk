@@ -735,6 +735,85 @@ check('данные: расхождение цен на один стабили�
   doc.getElementById('p-data').textContent
     .indexOf('Один стабилизатор Ресанта в двух списках') >= 0, '');
 
+// ---- CO₂, маркираторы, «мысли» и полоса итога ----
+check('каталог: 43 модели CO₂ и 126 маркираторов в данных',
+  /"co2":\s*\[/.test(src) && (src.match(/"brand": "Wattsan"/g) || []).length === 31 &&
+  (src.match(/"series": "FL GT"/g) || []).length === 31, '');
+
+win.document.getElementById('cat').value = 'co2';
+win.document.getElementById('cat').dispatchEvent(new win.Event('change'));
+check('CO₂: блок показан, остальные скрыты',
+  doc.getElementById('blkCo2').style.display === '' &&
+  doc.getElementById('blkFiber').style.display === 'none', '');
+check('CO₂: подсказка о порядке шагов на месте',
+  /чиллер/.test(textOf(doc, '#catFlow')), textOf(doc, '#catFlow'));
+const co2Opts = doc.getElementById('cModel').options.length;
+check('CO₂: в списке Wattsan 31 модель', co2Opts === 31, 'моделей ' + co2Opts);
+check('CO₂: цена и характеристики показаны',
+  /₽/.test(textOf(doc, '#cOut')) && /Поле /.test(textOf(doc, '#cOut')),
+  textOf(doc, '#cOut').slice(0, 140));
+win.document.getElementById('cAdd').click();
+check('CO₂: в смете полное наименование со словом «станок»',
+  /Лазерный станок CO₂ Wattsan/.test(doc.getElementById('smetaBody').textContent),
+  doc.getElementById('smetaBody').textContent.slice(0, 120));
+win.document.getElementById('cChillerAdd').click();
+check('CO₂: чиллер добавляется отдельной строкой',
+  /Чиллер S&A CW-/.test(doc.getElementById('smetaBody').textContent), '');
+win.document.getElementById('cStabAdd').click();
+check('CO₂: стабилизатор добавляется с полным именем',
+  /Стабилизатор напряжения Ресанта/.test(doc.getElementById('smetaBody').textContent), '');
+win.document.getElementById('cPnrAdd').click();
+const pnrRow = Array.from(doc.querySelectorAll('#smetaBody tr'))
+  .filter(r => /Пусконаладочные работы \(CO₂/.test(r.textContent))[0];
+check('CO₂: ПНР уходит строкой с пометкой «цену уточнить»',
+  !!pnrRow && /цену уточнить у сервиса/.test(pnrRow.textContent), '');
+check('CO₂: строка без цены не ломает сходимость',
+  !/Сходимость нарушена/.test(textOf(doc, '#checkBlock')),
+  textOf(doc, '#checkBlock').slice(0, 140));
+check('CO₂: ошибка витрины 1830 Conveyor описана',
+  /1830 Conveyor/.test(doc.getElementById('blkCo2').textContent) ||
+  /1830 Conveyor/.test(src), '');
+
+win.document.getElementById('cat').value = 'marker';
+win.document.getElementById('cat').dispatchEvent(new win.Event('change'));
+const kSer = doc.getElementById('kSeries').options.length;
+check('маркираторы: 16 серий в списке', kSer === 16, 'серий ' + kSer);
+check('маркираторы: две цены и наценка показаны',
+  /Под заказ/.test(textOf(doc, '#kOut')) && /Из наличия/.test(textOf(doc, '#kOut')),
+  textOf(doc, '#kOut').slice(0, 140));
+win.document.getElementById('kAdd').click();
+check('маркиратор: в смете полное наименование',
+  /Лазерный маркиратор Wattsan/.test(doc.getElementById('smetaBody').textContent),
+  doc.getElementById('smetaBody').textContent.slice(-160));
+win.document.getElementById('kRotAdd').click();
+check('маркиратор: поворотное устройство строкой без цены',
+  /Поворотное устройство .* — цену уточнить у сервиса/
+    .test(doc.getElementById('smetaBody').textContent), '');
+win.document.getElementById('kPnrAdd').click();
+check('маркиратор: ПНР строкой без цены',
+  /Пусконаладочные работы \(маркиратор\)/.test(doc.getElementById('smetaBody').textContent), '');
+
+// «Мысли»: пояснения стоят в правой колонке шага, а не среди полей
+const thinkBoxes = doc.querySelectorAll('.step-b > .think');
+check('мысли: правая колонка построена у каждого шага',
+  thinkBoxes.length >= 15, 'колонок ' + thinkBoxes.length);
+const filled = Array.from(thinkBoxes).filter(t => t.childNodes.length > 0).length;
+check('мысли: в колонках есть содержимое', filled >= 10, 'заполнено ' + filled);
+check('мысли: заметки ушли из левой части',
+  Array.from(doc.querySelectorAll('.step-b > .doing > .note')).length === 0,
+  'осталось ' + doc.querySelectorAll('.step-b > .doing > .note').length);
+check('мысли: техничка приводов в колонке, а не в поле выбора',
+  !!doc.querySelector('.think > #servoOut'), '');
+check('мысли: CSS даёт две колонки на широком экране',
+  /\.step-b\.has-think\{display:grid/.test(src), '');
+
+// Полоса итога
+check('итог: полоса показана и считает позиции',
+  doc.getElementById('sumBar').className.indexOf('show') >= 0 &&
+  /позици/.test(textOf(doc, '#sumBarTx')), textOf(doc, '#sumBarTx'));
+check('итог: в полосе видно строки без цены',
+  /без цены/.test(textOf(doc, '#sumBarTx')), textOf(doc, '#sumBarTx'));
+
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
 // Всё, что натворили проверки, должно быть убрано: файл обязан открываться
 // чистым. Забытый след один раз уже уезжал в выпуск — теперь список полный,
@@ -780,6 +859,14 @@ doc.querySelectorAll('[style]').forEach(n => {
 // селекторы и чекбоксы — в исходное состояние
 doc.getElementById('cat').value = 'fiber';
 doc.getElementById('mtCat').value = 'fiber';
+doc.getElementById('cBrand').value = 'Wattsan';
+// полоса итога: в выпуске смета пуста, полосе показываться нечего
+const sumBarNode = doc.getElementById('sumBar');
+if (sumBarNode) { sumBarNode.className = 'sumbar'; }
+const sumBarTx = doc.getElementById('sumBarTx');
+if (sumBarTx) sumBarTx.textContent = '';
+const catFlowNode = doc.getElementById('catFlow');
+if (catFlowNode) catFlowNode.textContent = '';
 doc.getElementById('kpSupplier').value = 'stankoprom';
 doc.getElementById('kpTerm').value = 'order';
 doc.getElementById('priceMode').value = 'order';
