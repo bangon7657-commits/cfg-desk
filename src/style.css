@@ -162,6 +162,37 @@ a{color:var(--or2)}
 .step-t{font-size:16.5px;font-weight:700;color:var(--tx)}
 .step-t small{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:1px}
 .step-b{padding:16px 18px}
+/* Шаг в две колонки: слева действия, справа «мысли» — пояснения и техданные.
+   Колонка появляется только там, где мыслям есть что сказать. */
+@media screen and (min-width:1000px){
+  .step-b.has-think{display:grid;grid-template-columns:minmax(0,1fr) 330px;
+    gap:18px;align-items:start}
+}
+.think{display:flex;flex-direction:column;gap:8px}
+.step-b.has-think>.think{border-left:2px dashed var(--line2);padding-left:14px}
+.think>*{margin:0}
+.think .note,.think .calcsteps{font-size:13px}
+.think .muted{font-size:12.5px;color:var(--muted)}
+@media screen and (min-width:1000px){
+  .step-b.has-think>.think{position:sticky;top:96px;max-height:calc(100vh - 130px);
+    overflow:auto}
+}
+@media screen and (max-width:999px){
+  .step-b.has-think>.think{margin-top:12px;border-top:1px dashed var(--line2);
+    padding-top:10px}
+}
+/* Подсветка шага, к которому приложение только что подвело пользователя */
+.step.step-hi{box-shadow:0 0 0 2px var(--or)}
+/* Закреплённая полоса итога */
+.sumbar{position:fixed;left:0;right:0;bottom:0;z-index:40;
+  transform:translateY(110%);transition:transform .18s ease;
+  background:color-mix(in srgb,var(--bg2) 92%,transparent);
+  backdrop-filter:blur(8px);border-top:1px solid var(--line)}
+.sumbar.show{transform:none}
+.sumbar-in{max-width:1180px;margin:0 auto;padding:9px 16px;display:flex;
+  align-items:center;justify-content:space-between;gap:12px}
+.sumbar-tx{font-size:14px;font-weight:600;color:var(--tx)}
+@media print{.sumbar{display:none}}
 .step.done .step-n{background:var(--ok);color:var(--onok)}
 .step.off{opacity:.5}
 .step.off .step-n{background:var(--line2);color:var(--muted)}
