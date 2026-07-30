@@ -112,6 +112,27 @@ APP = {
     'millingOrder': list(data.MILLING_FIELDS.keys()),
     'fiberOrder': sorted(data.FIBER_FORMATS.keys()),
     'options': [{'cat': c, 'name': n, 'price': p} for c, n, p in data.OPTIONS],
+    # CO₂ и маркираторы
+    'co2': [{'brand': b, 'name': n, 'field': f, 'tube': t, 'ctrl': c,
+             'was': w, 'price': p}
+            for b, n, f, t, c, w, p in data.CO2],
+    'co2Note': data.CO2_NOTE,
+    'co2Date': data.CO2_DATE,
+    'co2SiteWarning': data.CO2_SITE_WARNING,
+    'co2Missing': data.CO2_MISSING,
+    'co2ZerderNote': data.CO2_ZERDER_NOTE,
+    'markers': [{'series': s, 'name': n, 'src': sr, 'watt': w, 'mopa': m,
+                 'order': o, 'stock': st}
+                for s, n, sr, w, m, o, st in data.MARKERS],
+    'markerDate': data.MARKER_DATE,
+    'markerNote': data.MARKER_NOTE,
+    'markerMissing': data.MARKER_MISSING,
+    'markerRotary': data.MARKER_ROTARY,
+    'markerRotaryNote': data.MARKER_ROTARY_NOTE,
+    'chillers': data.CHILLERS,
+    'chillerNote': data.CHILLER_NOTE,
+    'pnrNoPrice': data.PNR_NO_PRICE,
+    'pnrNoPriceNote': data.PNR_NO_PRICE_NOTE,
     'vibroQty': data.VIBRO_QTY,
     'pnr': [{'model': m, 'days': d, 'pnr': p, 'plus1': p1, 'plus2': p2,
              'training': t, 'package': pk}
@@ -422,6 +443,21 @@ DATA_RULES_HTML = ''.join(
     f'<div class="rule"><span class="st st-{i}">{esc(a)}</span><span>{esc(b)}</span></div>'
     for i, (a, b) in enumerate(ref.DATA_RULES))
 
+CO2_MISSING_HTML = ''.join(f'<li>{esc(x)}</li>' for x in data.CO2_MISSING)
+MARKER_MISSING_HTML = ''.join(f'<li>{esc(x)}</li>' for x in data.MARKER_MISSING)
+
+CO2_TABLE = table(
+    ['Бренд', 'Модель', 'Поле, мм', 'Трубка, Вт', 'Стойка', 'Было', 'Цена'],
+    [[esc(b), f'<b>{esc(n)}</b>', esc(f), esc(t), esc(c) or '—',
+      (f'<s>{rub(w)}</s>' if w else '—'), f'<b>{rub(p)} ₽</b>']
+     for b, n, f, t, c, w, p in data.CO2])
+
+MARKER_TABLE = table(
+    ['Серия', 'Модель', 'Излучатель', 'Вт', 'MOPA', 'Под заказ', 'Из наличия'],
+    [[esc(s), f'<b>{esc(n)}</b>', esc(sr), (str(w) if w else '—'),
+      ('да' if m else 'нет'), f'{rub(o)} ₽', f'{rub(st)} ₽']
+     for s, n, sr, w, m, o, st in data.MARKERS])
+
 # ---------------------------------------------------------------------------
 # Печатный ТКП: фирменное оформление шаблона lasercut-kp («синий фон»).
 # Шапка, подвал и постоянные разделы — статическая разметка: печатаются
@@ -659,6 +695,24 @@ repl = {
     '__MAX_DISC__': str(data.MAX_DISCOUNT_PCT),
     '__FIBER_COUNT__': plural(n_fiber, CFG_FORMS),
     '__MILLING_COUNT__': plural(len(data.MILLING), CFG_FORMS),
+    '__CO2_COUNT__': plural(len(data.CO2), ('модель', 'модели', 'моделей')),
+    '__MARKER_COUNT__': plural(len(data.MARKERS), CFG_FORMS),
+    '__CO2_DATE__': esc(data.CO2_DATE),
+    '__CO2_NOTE__': esc(data.CO2_NOTE),
+    '__CO2_SITE_WARNING__': esc(data.CO2_SITE_WARNING),
+    '__CO2_ZERDER_NOTE__': esc(data.CO2_ZERDER_NOTE),
+    '__CO2_MISSING__': CO2_MISSING_HTML,
+    '__CO2_TABLE__': CO2_TABLE,
+    '__MARKER_DATE__': esc(data.MARKER_DATE),
+    '__MARKER_NOTE__': esc(data.MARKER_NOTE),
+    '__MARKER_MISSING__': MARKER_MISSING_HTML,
+    '__MARKER_TABLE__': MARKER_TABLE,
+    '__MARKER_ROTARY_NOTE__': esc(data.MARKER_ROTARY_NOTE),
+    '__CHILLER_NOTE__': esc(data.CHILLER_NOTE),
+    '__PNR_NO_PRICE_NOTE__': esc(data.PNR_NO_PRICE_NOTE),
+    '__PNR_NO_PRICE_NOTE_2__': esc(data.PNR_NO_PRICE_NOTE),
+    '__CO2_DATE_2__': esc(data.CO2_DATE),
+    '__MARKER_DATE_2__': esc(data.MARKER_DATE),
     '__DATE_FIBER__': data.PRICE_DATES['fiber'],
     '__DATE_MILLING__': data.PRICE_DATES['milling'],
     '__DATE_OPTIONS__': data.PRICE_DATES['options'],
