@@ -25,10 +25,11 @@ d.getElementById('discount').value = '50';
 d.getElementById('discount').dispatchEvent(new w.Event('change'));
 if (THEME === 'light') d.getElementById('themeBtn').click();
 
-// вкладка
-Array.prototype.forEach.call(d.querySelectorAll('#tabs button'), function (b) {
-  if (b.getAttribute('data-t') === TAB) b.click();
-});
+// вкладка: часть разделов живёт только в кнопке «Разделы», поэтому ищем и там
+Array.prototype.forEach.call(
+  d.querySelectorAll('#tabs button, #menuList button'), function (b) {
+    if (b.getAttribute('data-t') === TAB) b.click();
+  });
 
 let html = '<!doctype html>' + d.documentElement.outerHTML;
 // печатные правила мешают: снимаем весь блок @media print

@@ -70,10 +70,10 @@ check('ошибок JS нет', first.errors.length === 0, first.errors.join(' |
 check('в строке вкладок 4 частых раздела',
   doc.querySelectorAll('#tabs button').length === 4,
   'найдено ' + doc.querySelectorAll('#tabs button').length);
-check('панелей 6', doc.querySelectorAll('.panel').length === 6,
+check('панелей 7', doc.querySelectorAll('.panel').length === 7,
   'найдено ' + doc.querySelectorAll('.panel').length);
-check('в кнопке «Разделы» все 6 разделов',
-  doc.querySelectorAll('#menuList button').length === 6,
+check('в кнопке «Разделы» все 7 разделов',
+  doc.querySelectorAll('#menuList button').length === 7,
   'найдено ' + doc.querySelectorAll('#menuList button').length);
 check('меню закрыто при открытии',
   !doc.getElementById('menuList').classList.contains('open'), '');
@@ -88,6 +88,29 @@ check('навигация: кнопка «Разделы» в фирменном
 check('навигация: текст в меню компактный',
   /\.menulist button\{[^}]*font-size:13\.5px/.test(src) &&
   /\.menulist button small\{[^}]*font-size:11px/.test(src), '');
+
+
+// ---- шапка: знак, имя, внешняя ссылка ----
+const brand = doc.querySelector('a.brand');
+check('шапка: название ЛазеркатКА',
+  !!brand && /Лазеркат\s*КА/.test(brand.textContent.replace(/\s+/g, ' ')),
+  brand ? brand.textContent.trim().slice(0, 60) : 'блок brand не найден');
+check('шапка: знак встроен как data-URL',
+  !!brand && /^data:image\/png;base64,/.test(
+    (brand.querySelector('img.brand-mark') || {}).src || ''), '');
+check('шапка: ссылка на lasercut.ru открывается безопасно',
+  brand.getAttribute('href') === 'https://lasercut.ru/' &&
+  brand.getAttribute('target') === '_blank' &&
+  /noopener/.test(brand.getAttribute('rel')) &&
+  /noreferrer/.test(brand.getAttribute('rel')),
+  brand.getAttribute('rel'));
+check('шапка: кликабельна только эмблема с названием',
+  doc.querySelectorAll('header a').length === 1,
+  'ссылок в шапке ' + doc.querySelectorAll('header a').length);
+const manifestTxt = fs.readFileSync(path.join(DIST, 'manifest.webmanifest'), 'utf8');
+check('имя приложения в заголовке и манифесте',
+  /ЛазеркатКА/.test(doc.title) && /"short_name":\s*"ЛазеркатКА"/.test(manifestTxt),
+  doc.title + ' | ' + (manifestTxt.match(/"short_name":[^,]*/) || [''])[0]);
 
 // конфигуратор волокна посчитал цену
 const fOut = textOf(doc, '#fOut');
@@ -231,6 +254,46 @@ check('срок: переключение на склад меняет стро�
 win.document.getElementById('kpTerm').value = 'order';
 win.document.getElementById('kpTerm').dispatchEvent(new win.Event('change'));
 
+
+// ---- два варианта ТКП ----
+const kpModeSelNode = doc.getElementById('kpMode');
+check('ТКП: два варианта в списке',
+  !!kpModeSelNode && kpModeSelNode.options.length === 2,
+  kpModeSelNode ? 'вариантов ' + kpModeSelNode.options.length : 'селектор не найден');
+check('ТКП: по умолчанию краткое', kpModeSelNode.value === 'short', kpModeSelNode.value);
+check('ТКП: подсказка объясняет, когда какой брать',
+  /Когда клиент уже всё знает/.test(textOf(doc, '#kpModeHint')),
+  (textOf(doc, '#kpModeHint') || '').slice(0, 90));
+const kpShort = textOf(doc, '#kpPreview');
+check('ТКП краткое: разделов сверх сметы нет',
+  !/Технические характеристики/.test(kpShort) && !/Преимущества/.test(kpShort), '');
+check('ТКП краткое: условия идут вторым разделом',
+  /2\.\s*Условия поставки/.test(textOf(doc, '#kpSecTerms')),
+  textOf(doc, '#kpSecTerms'));
+
+win.document.getElementById('kpMode').value = 'full';
+win.document.getElementById('kpMode').dispatchEvent(new win.Event('change'));
+const kpFull = textOf(doc, '#kpPreview');
+['Что закрывает эта конфигурация', 'Комплектация', 'Технические характеристики',
+  'Как пройдёт запуск', 'Преимущества'].forEach(function (sec) {
+  check('ТКП полное: раздел «' + sec + '»', kpFull.indexOf(sec) >= 0, '');
+});
+check('ТКП полное: характеристики взяты из конфигурации в смете',
+  /1500×3000/.test(kpFull) && /FSCUT3000E/.test(kpFull) && /BLT310/.test(kpFull),
+  kpFull.slice(0, 200));
+check('ТКП полное: предел и рабочий режим разделены',
+  /Предел по таблицам режимов/.test(kpFull) && /запас не менее 30 %/.test(kpFull), '');
+check('ТКП полное: нумерация статических разделов сдвинулась',
+  /7\.\s*Условия поставки/.test(textOf(doc, '#kpSecTerms')) &&
+  /8\.\s*Гарантия и сервис/.test(textOf(doc, '#kpSecService')),
+  textOf(doc, '#kpSecTerms') + ' / ' + textOf(doc, '#kpSecService'));
+check('ТКП полное: преимущества не выдуманы, а из данных',
+  /Raycus серии S-CE/.test(kpFull) && /шести городах/.test(kpFull), '');
+win.document.getElementById('kpMode').value = 'short';
+win.document.getElementById('kpMode').dispatchEvent(new win.Event('change'));
+check('ТКП: возврат к краткому убирает лишние разделы',
+  !/Технические характеристики/.test(textOf(doc, '#kpPreview')), '');
+
 // ---- выгрузка ТКП в файл (.docx): кнопки на месте, пакет собирается ----
 check('файл: кнопка «Скачать ТКП для Word» есть', !!doc.getElementById('btnWord'));
 check('файл: кнопка «Отправить файлом» есть', !!doc.getElementById('btnSend'));
@@ -252,8 +315,8 @@ win.document.getElementById('btnWord').click();
 win.HTMLAnchorElement.prototype.click = origAClick;
 win.Blob = RealBlob;
 
-check('файл: имя с расширением .docx',
-  !!wordName && /^ТКП .*\.docx$/.test(wordName), 'имя «' + wordName + '»');
+check('файл: имя с расширением .docx и вариантом',
+  !!wordName && /^ТКП( краткое)? .*\.docx$/.test(wordName), 'имя «' + wordName + '»');
 check('файл: тип OOXML, а не msword',
   docType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'тип «' + docType + '»');
@@ -497,6 +560,28 @@ check('стабилизатор: добавляется в смету',
   /Стабилизатор Ресанта/.test(doc.getElementById('smetaBody').textContent),
   doc.getElementById('smetaBody').textContent.slice(0, 200));
 
+
+// ---- вкладка «Техника» ----
+const techTxt = doc.getElementById('p-tech').textContent.replace(/\s+/g, ' ');
+check('техника: рабочие толщины и предел разделены',
+  /Рабочие толщины/.test(techTxt) && /Предел по заводским таблицам/.test(techTxt), '');
+check('техника: 3 кВт — 22 мм по стали, 12 кВт — 40 мм',
+  /22 мм/.test(techTxt) && /40 мм/.test(techTxt), '');
+check('техника: оговорка про запас 30 % на месте',
+  /запас(ом)? не менее 30 %/.test(techTxt), '');
+check('техника: серии A, E, S, HARD описаны',
+  /A — компактная/.test(techTxt) && /E — базовая/.test(techTxt) &&
+  /S — лист и трубы/.test(techTxt) && /HARD — верх линейки/.test(techTxt), '');
+check('техника: ответ «почему S дороже» есть',
+  /дороже почти на миллион/.test(techTxt), '');
+check('техника: труборез 220 мм круг и 6 м длина',
+  /220 мм/.test(techTxt) && /6 м/.test(techTxt), '');
+check('техника: фрезерные модели с массами',
+  /92 кг/.test(techTxt) && /2300 кг/.test(techTxt), '');
+check('техника: спорные цифры помечены, а не сглажены',
+  (techTxt.match(/спорят|уточнить/g) || []).length >= 4,
+  'пометок ' + (techTxt.match(/спорят|уточнить/g) || []).length);
+
 // ---- находки прошлого аудита: проверяем, что не вернутся ----
 check('чистота: примечание про компрессор не дублируется',
   (doc.getElementById('p-cfg').textContent.match(/Компрессор нужен для резки/g) || [])
@@ -644,7 +729,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 6,
+  doc2.querySelectorAll('.nojs-title').length === 7,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('2 867 000') >= 0);
 check('пререндер: смета пуста при открытии',

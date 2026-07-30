@@ -94,6 +94,7 @@
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
     { id: 'match', title: 'Подбор по задаче', hint: 'толщина и материал' },
     { id: 'gas', title: 'Газ и владение', hint: 'расход и стоимость' },
+    { id: 'tech', title: 'Техника', hint: 'что режет и что внутри' },
     { id: 'shop', title: 'Готовность цеха', hint: 'блокеры до монтажа' },
     { id: 'data', title: 'Данные', hint: 'прайсы, источники, расхождения' }
   ];
@@ -619,6 +620,27 @@
       state.kp[id] = this.value; save(); renderKP();
     });
   });
+  // ---- вариант ТКП: краткое или полное ----
+  var kpModeSel = fresh('kpMode');
+  APP.kpModes.forEach(function (m) { opt(kpModeSel, m.id, m.title + ' — ' + m.hint); });
+  kpModeSel.value = state.kp.kpMode || APP.kpModeDefault;
+
+  function kpMode() {
+    var id = state.kp.kpMode || APP.kpModeDefault, found = null;
+    APP.kpModes.forEach(function (m) { if (m.id === id) found = m; });
+    return found || APP.kpModes[0];
+  }
+
+  function renderKpModeHint() {
+    var n = $('kpModeHint');
+    if (n) n.textContent = kpMode().when;
+  }
+
+  $('kpMode').addEventListener('change', function () {
+    state.kp.kpMode = this.value; save(); renderKpModeHint(); renderKP();
+  });
+  renderKpModeHint();
+
   // Срок поставки в ТКП: под заказ или из наличия. Формулировки — из данных.
   if (state.kp.kpTerm) $('kpTerm').value = state.kp.kpTerm;
   $('kpTerm').addEventListener('change', function () {
@@ -1034,6 +1056,133 @@
       pctText(T.rate) + ' — ' + esc(lower1(propisyu(T.nds))) +
       '. Доставка в стоимость не включена. Счёт фиксирует цену и наличие на ' +
       APP.invoiceValidDays + ' дней.'));
+
+    // Полный вариант: разделы, которые есть в фирменном шаблоне.
+    // Нумерация продолжает смету, а разделы «Условия» и «Гарантия» лежат
+    // в статике ниже — им номера подставляет тот же счётчик.
+    if (kpMode().id !== 'full') { setStaticSectionNumbers(2, 3); return; }
+    var n = 2;
+    var cfg = fiberInSmeta();
+
+    box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Что закрывает эта конфигурация'));
+    var rows = configRows(cfg);
+    if (rows.length) {
+      box.appendChild(kpPairTable(rows));
+    } else {
+      box.appendChild(el('p', 'kp-propis', 'В смете нет волоконного станка — раздел ' +
+        'заполняется по выбранной конфигурации.'));
+    }
+
+    box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Комплектация'));
+    var inc = el('ul', 'kp-list');
+    APP.kpIncluded.forEach(function (x) { inc.appendChild(el('li', '', esc(x))); });
+    if (cfg) {
+      inc.appendChild(el('li', '', 'Контроллер <b>' + esc(cfg.ctrl) + '</b>, голова <b>' +
+        esc(cfg.head) + '</b>, чиллер ' + esc(cfg.chiller)));
+    }
+    box.appendChild(inc);
+    box.appendChild(el('p', 'kp-propis', esc(APP.kpIncludedNote)));
+
+    box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Технические характеристики'));
+    box.appendChild(kpPairTable(techRows(cfg)));
+    box.appendChild(el('p', 'kp-propis',
+      'Серийные параметры — по карточке модели производителя. Точные характеристики ' +
+      'конкретного исполнения подтверждаются паспортом завода при отгрузке.'));
+
+    box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Как пройдёт запуск'));
+    var steps = el('ol', 'kp-list');
+    APP.kpLaunch.forEach(function (s) {
+      steps.appendChild(el('li', '', '<b>' + esc(s[0]) + '.</b> ' + esc(s[1])));
+    });
+    box.appendChild(steps);
+
+    box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Преимущества'));
+    box.appendChild(kpPairTable(APP.kpAdvantages));
+
+    // статические «Условия поставки» и «Гарантия и сервис» идут следом
+    setStaticSectionNumbers(n, n + 1);
+  }
+
+  // Номера двух статических разделов зависят от варианта ТКП
+  function setStaticSectionNumbers(a, b) {
+    var t1 = $('kpSecTerms'), t2 = $('kpSecService');
+    if (t1) t1.innerHTML = a + '.&nbsp; Условия поставки';
+    if (t2) t2.innerHTML = b + '.&nbsp; Гарантия и сервис';
+  }
+
+  function kpPairTable(rows) {
+    var tb = el('table', 'kp-t');
+    tb.innerHTML = '<tbody>' + rows.map(function (r) {
+      return '<tr><th>' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>';
+    }).join('') + '</tbody>';
+    return tb;
+  }
+
+  // Волоконный станок из сметы: по нему собираются разделы полного ТКП
+  function fiberInSmeta() {
+    var found = null;
+    state.items.forEach(function (it) {
+      if (found || it.type !== 'eq') return;
+      var m = /Wattsan (A|S) (\d{4}) (\d+)W/.exec(it.name);
+      if (!m) return;
+      var kit = APP.fiberKit[m[3]] || {};
+      found = {
+        series: m[1], format: m[2], power: parseInt(m[3], 10),
+        field: APP.fiberFormats[m[2]],
+        table: /сменный стол/.test(it.name),
+        rot: (/rotary (6-\d+)/.exec(it.name) || [])[1] || '',
+        servo: it.sub || '',
+        ctrl: (/rotary/.test(it.name) ? APP.fiberKitRotaryCtrl : kit.ctrl) || '',
+        head: kit.head || '', chiller: kit.chiller || ''
+      };
+    });
+    return found;
+  }
+
+  function configRows(cfg) {
+    if (!cfg) return [];
+    var rows = [
+      ['Рабочее поле', cfg.field + ' мм'],
+      ['Мощность источника', cfg.power + ' Вт'],
+    ];
+    var cut = null;
+    APP.techCutMax.forEach(function (r) {
+      if (parseInt(String(r[0]).replace(/\D/g, ''), 10) === cfg.power) cut = r;
+    });
+    if (cut) {
+      rows.push(['Предел по таблицам режимов',
+        'чёрная сталь ' + cut[1] + ', нержавейка ' + cut[2] + ', алюминий ' + cut[3]]);
+      rows.push(['Рабочий режим',
+        'завод требует запас не менее ' + APP.reservePct + ' % от предела: ' +
+        'на максимуме станок работает лишь короткое время']);
+    }
+    rows.push(['Газ по материалу',
+      'сталь — кислород, нержавейка и алюминий — азот или воздух']);
+    if (cfg.rot) {
+      rows.push(['Труборез (модуль RD)', 'круглая труба до ' +
+        (APP.techRd[0] ? APP.techRd[0][1] : '') + ', квадратная до ' +
+        (APP.techRd[1] ? APP.techRd[1][1] : '') + ', длина до ' +
+        (APP.techRd[2] ? APP.techRd[2][1] : '')]);
+    }
+    if (cfg.table) rows.push(['Сменный стол', 'да, 1650×3215 мм']);
+    if (cfg.servo) rows.push(['Приводы', cfg.servo]);
+    return rows;
+  }
+
+  function techRows(cfg) {
+    var rows = [];
+    if (cfg) {
+      rows.push(['Поле и мощность', cfg.field + ' мм · ' + cfg.power + ' Вт']);
+      rows.push(['Контроллер и голова', cfg.ctrl + ' · ' + cfg.head]);
+      rows.push(['Охлаждение', cfg.chiller]);
+      var col = cfg.series === 'A' ? 1 : 2;
+      APP.techAvsS.forEach(function (r) {
+        if (/Мощность по паспорту|Вес|Сменный стол|Труборез/.test(r[0])) return;
+        rows.push([r[0], r[col]]);
+      });
+    }
+    rows.push(['Соответствие', 'ТР ТС 004/2011, 010/2011, 020/2011']);
+    return rows;
   }
 
   $('btnPrint').addEventListener('click', function () {
@@ -1221,13 +1370,61 @@
         '«Конфигуратор».', { sz: 17, color: GREY }), { space: { after: 120 } });
     }
 
-    // 2 и 3 — таблицы из листа ТКП: тексты берутся из разметки, не дублируются
+    // Полный вариант: те же разделы, что в предпросмотре
+    var secNo = 2;
+    if (kpMode().id === 'full') {
+      var cfg = fiberInSmeta();
+      out += dSection(secNo++, 'Что закрывает эта конфигурация');
+      var cRows = configRows(cfg);
+      if (cRows.length) {
+        out += pairTableRows(cRows);
+      } else {
+        out += DOCX.p(DOCX.run('В смете нет волоконного станка — раздел заполняется ' +
+          'по выбранной конфигурации.', { sz: 17, color: GREY }), { space: { after: 80 } });
+      }
+      out += dGap();
+
+      out += dSection(secNo++, 'Комплектация');
+      APP.kpIncluded.forEach(function (x) {
+        out += DOCX.p(DOCX.run('•  ' + x, { sz: 17 }), { space: { after: 20 } });
+      });
+      if (cfg) {
+        out += DOCX.p(DOCX.run('•  Контроллер ' + cfg.ctrl + ', голова ' + cfg.head +
+          ', чиллер ' + cfg.chiller, { sz: 17 }), { space: { after: 20 } });
+      }
+      out += DOCX.p(DOCX.run(APP.kpIncludedNote, { sz: 15, color: GREY }),
+        { space: { after: 80 } });
+      out += dGap();
+
+      out += dSection(secNo++, 'Технические характеристики');
+      out += pairTableRows(techRows(cfg));
+      out += DOCX.p(DOCX.run('Серийные параметры — по карточке модели производителя. ' +
+        'Точные характеристики конкретного исполнения подтверждаются паспортом ' +
+        'завода при отгрузке.', { sz: 15, color: GREY }), { space: { after: 80 } });
+      out += dGap();
+
+      out += dSection(secNo++, 'Как пройдёт запуск');
+      APP.kpLaunch.forEach(function (s, i) {
+        out += DOCX.p(DOCX.run((i + 1) + '.  ' + s[0] + '. ', { b: true, sz: 17 }) +
+          DOCX.run(s[1], { sz: 17 }), { space: { after: 25 } });
+      });
+      out += dGap();
+
+      out += dSection(secNo++, 'Преимущества');
+      out += pairTableRows(APP.kpAdvantages);
+      out += dGap();
+    }
+
+    // Дальше — таблицы из листа ТКП: тексты берутся из разметки, не дублируются
     function pairs(node) {
       if (!node) return [];
       return Array.prototype.map.call(node.querySelectorAll('tr'), function (tr) {
         var h = tr.querySelector('th'), c = tr.querySelector('td');
         return [h ? h.textContent : '', c ? c.textContent : ''];
       });
+    }
+    function pairTableRows(list) {
+      return pairTable(list.map(function (r) { return [r[0], r[1]]; }));
     }
     function pairTable(list) {
       var g = [3050, W_ALL - 3050];
@@ -1240,9 +1437,10 @@
         ]);
       }), g);
     }
-    var kpTables = d.querySelectorAll('#kpDoc table.kp-t');
-    out += dSection(2, 'Условия поставки') + pairTable(pairs(kpTables[0])) + dGap();
-    out += dSection(3, 'Гарантия и сервис') + pairTable(pairs(kpTables[1])) + dGap();
+    out += dSection(secNo++, 'Условия поставки') +
+      pairTable(pairs(d.getElementById('kpTermsTable'))) + dGap();
+    out += dSection(secNo++, 'Гарантия и сервис') +
+      pairTable(pairs(d.getElementById('kpServiceTable'))) + dGap();
 
     // «Готовы сделать следующий шаг?»
     var cta = d.querySelector('#kpDoc .kp-cta');
@@ -1305,7 +1503,8 @@
     var who = (k.kpClient || 'клиент').replace(/[\\/:*?"<>|]/g, ' ').trim();
     var num = k.kpNum ? ' № ' + k.kpNum : '';
     var when = k.kpDate ? ' от ' + k.kpDate : '';
-    return 'ТКП ' + who + num + when + '.' + ext;
+    var kind = kpMode().id === 'full' ? '' : ' краткое';
+    return 'ТКП' + kind + ' ' + who + num + when + '.' + ext;
   }
 
   var DOCX_MIME =

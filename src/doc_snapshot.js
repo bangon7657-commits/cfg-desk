@@ -49,6 +49,13 @@ set('kpNum', '1207');
 set('kpContact', 'Иван Петров');
 set('kpPhone', '+7 900 000-00-00');
 
+// третий аргумент — вариант ТКП: short или full
+const MODE = process.argv[4] || '';
+if (MODE) {
+  const m = d.getElementById('kpMode');
+  m.value = MODE;
+  m.dispatchEvent(new w.Event('change'));
+}
 if (SUP) {
   d.getElementById('kpSupplier').value = SUP;
   d.getElementById('kpSupplier').dispatchEvent(new w.Event('change'));

@@ -78,6 +78,15 @@ APP = {
     'servoSmall': list(data.SERVO_SMALL),
     'fiberKit': {str(k): v for k, v in data.FIBER_KIT.items()},
     'fiberKitRotaryCtrl': data.FIBER_KIT_ROTARY_CTRL,
+    'kpModes': data.KP_MODES,
+    'kpModeDefault': data.KP_MODE_DEFAULT,
+    'kpLaunch': data.KP_LAUNCH,
+    'kpAdvantages': data.KP_ADVANTAGES,
+    'kpIncluded': data.KP_INCLUDED,
+    'kpIncludedNote': data.KP_INCLUDED_NOTE,
+    'techCutMax': data.TECH_CUT_MAX,
+    'techAvsS': data.TECH_A_VS_S,
+    'techRd': data.TECH_RD,
     'stabilizers': data.STABILIZERS,
     'stabilizerNote': data.STABILIZER_NOTE,
     'compressors': data.COMPRESSORS,
@@ -304,6 +313,29 @@ SERVO_DIFF_TABLE = table(['Формат', 'Bochu дешевле Yaskawa', 'По�
                             else f'от {rub(min(v))} до {rub(max(v))}'), str(len(v))]
                           for f_, v in sorted(_diffs.items())])
 
+# --- вкладка «Техника»: простым языком, но с цифрами из паспортов ---
+TECH_CUT_MAX_TABLE = table(
+    ['Мощность источника', 'Чёрная сталь', 'Нержавейка', 'Алюминий', 'Латунь', 'Медь'],
+    [[f'<b>{esc(r[0])}</b>'] + [esc(x) for x in r[1:]] for r in data.TECH_CUT_MAX])
+TECH_CUT_WORK_TABLE = table(
+    ['Модель', 'Чёрная сталь', 'Нержавейка', 'Алюминий', 'Латунь'],
+    [[f'<b>{esc(r[0])}</b>'] + [esc(x) for x in r[1:]] for r in data.TECH_CUT_WORK])
+TECH_SERIES_HTML = ''.join(
+    f'<div class="advice"><b>{esc(a)}</b><span>{esc(b_)}</span></div>'
+    for a, b_ in data.TECH_SERIES)
+TECH_A_VS_S_TABLE = table(['Узел', 'Серия A (1530A)', 'Серия S (1313S / 1325S / 1530S)'],
+                          [[f'<b>{esc(a)}</b>', esc(b_), esc(c)]
+                           for a, b_, c in data.TECH_A_VS_S])
+TECH_RD_TABLE = table(['Параметр заготовки', 'Значение'],
+                      [[esc(a), f'<b>{esc(v)}</b>'] for a, v in data.TECH_RD])
+TECH_MILL_TABLE = table(['Модель', 'Шпиндель', 'Цанга', 'Охлаждение', 'Ход Z',
+                         'Стойка ЧПУ', 'Масса'],
+                        [[f'<b>{esc(r[0])}</b>'] + [esc(x) for x in r[1:]]
+                         for r in data.TECH_MILL])
+TECH_MILL_MAT_TABLE = table(['Материал', 'A1', 'M1', 'M3'],
+                            [[esc(r[0])] + [esc(x) for x in r[1:]]
+                             for r in data.TECH_MILL_MATERIALS])
+
 STAB_TABLE = table(['Модель', 'Мощность', 'Питание', 'Назначение', 'Цена'],
                    [[f'<b>{esc(s["name"])}</b>', esc(s['power']), esc(s['phase']),
                      'металлорез' if s['for'] == 'fiber' else 'сварка',
@@ -437,6 +469,14 @@ def legal_lines(sup_raw):
     return out
 
 
+# Знак LASERCUT для шапки: фирменная мозаика без текстовой части — текст
+# «ЛазеркатКА» рисуется разметкой, поэтому масштабируется и живёт в теме сайта.
+with open(os.path.join(HERE, 'mark.png'), 'rb') as f:
+    MARK_B64 = base64.b64encode(f.read()).decode('ascii')
+APP_NAME = 'ЛазеркатКА'
+APP_TAGLINE = 'конфигуратор, смета и ТКП'
+SITE_URL = 'https://lasercut.ru/'
+
 KP_HEAD = (
     '<div class="kp-head">'
     f'<img class="kp-logo" src="data:image/png;base64,{LOGO_B64}" '
@@ -544,6 +584,18 @@ repl = {
     '__SERVO_A_NOTE__': esc(data.SERVO_A_NOTE),
     '__COMPRESSOR_TABLE__': COMPRESSOR_TABLE,
     '__STAB_TABLE__': STAB_TABLE,
+    '__TECH_INTRO__': esc(data.TECH_INTRO),
+    '__TECH_CUT_MAX_TABLE__': TECH_CUT_MAX_TABLE,
+    '__TECH_CUT_MAX_NOTE__': esc(data.TECH_CUT_MAX_NOTE),
+    '__TECH_CUT_WORK_TABLE__': TECH_CUT_WORK_TABLE,
+    '__TECH_SERIES__': TECH_SERIES_HTML,
+    '__TECH_A_VS_S_TABLE__': TECH_A_VS_S_TABLE,
+    '__TECH_A_VS_S_ANSWER__': esc(data.TECH_A_VS_S_ANSWER),
+    '__TECH_RD_TABLE__': TECH_RD_TABLE,
+    '__TECH_RD_NOTE__': esc(data.TECH_RD_NOTE),
+    '__TECH_MILL_TABLE__': TECH_MILL_TABLE,
+    '__TECH_MILL_COMMON__': esc(data.TECH_MILL_COMMON),
+    '__TECH_MILL_MAT_TABLE__': TECH_MILL_MAT_TABLE,
     '__STAB_NOTE__': esc(data.STABILIZER_NOTE),
     '__STAB_WELD_NOTE__': esc(data.STABILIZER_WELD_NOTE),
     '__EXTRACTION_TABLE__': EXTRACTION_TABLE,
@@ -560,6 +612,10 @@ repl = {
     '__COMPONENTS_COMMON__': COMPONENTS_COMMON_TABLE,
     '__COMPONENTS_NOTE__': esc(data.COMPONENTS_NOTE),
     '__KP_HEAD__': KP_HEAD,
+    '__MARK__': MARK_B64,
+    '__APP_NAME__': APP_NAME,
+    '__APP_TAGLINE__': APP_TAGLINE,
+    '__SITE_URL__': SITE_URL,
     '__KP_TERMS__': KP_TERMS,
     '__KP_SERVICE__': KP_SERVICE,
     '__KP_NEXT__': KP_NEXT,
@@ -627,8 +683,8 @@ with open(os.path.join(DIST, 'index.html'), 'w', encoding='utf-8') as f:
 # PWA
 # ---------------------------------------------------------------------------
 manifest = {
-    'name': 'Конфигуратор и смета',
-    'short_name': 'Конфигуратор',
+    'name': APP_NAME + ' — конфигуратор и смета',
+    'short_name': APP_NAME,
     'start_url': './index.html',
     'scope': './',
     'display': 'standalone',

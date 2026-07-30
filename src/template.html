@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="googlebot" content="noindex,nofollow">
 <meta name="theme-color" content="#100e0c">
-<title>Конфигуратор и смета</title>
+<title>__APP_NAME__ — конфигуратор, смета и ТКП</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon-180.png">
 <link rel="icon" href="icon-192.png" type="image/png">
@@ -26,7 +26,16 @@
 
 <header>
   <div class="head">
-    <div class="brand">Конфигуратор и смета<small>волокно и фрезерные · внутренний инструмент</small></div>
+    <!-- Знак ведёт на сайт компании: открывается в новой вкладке, referrer не
+         передаётся. Кликабелен только знак с названием, а не вся шапка, чтобы
+         на телефоне случайный тап не уводил из приложения. -->
+    <a class="brand" href="__SITE_URL__" target="_blank" rel="noopener noreferrer"
+       title="Открыть lasercut.ru в новой вкладке">
+      <img class="brand-mark" src="data:image/png;base64,__MARK__" alt="LASERCUT"
+           width="34" height="50">
+      <span class="brand-tx">Лазеркат<b>КА</b>
+        <small>__APP_TAGLINE__ · внутренний инструмент</small></span>
+    </a>
     <div class="head-right">
       <button type="button" class="themebtn" id="themeBtn" aria-pressed="false"
         title="Светлая или тёмная тема">Светлая тема</button>
@@ -405,6 +414,11 @@
         <div><label class="f">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
       </div>
       <div class="row noprint">
+        <div style="flex:2 1 300px"><label class="f">Вариант ТКП</label>
+          <select id="kpMode"></select></div>
+        <div style="flex:3 1 340px" id="kpModeHint" class="muted"></div>
+      </div>
+      <div class="row noprint">
         <div style="flex:2 1 300px"><label class="f">Поставщик в ТКП</label>
           <select id="kpSupplier">__SUPPLIER_OPTIONS__</select></div>
         <div style="flex:0 0 auto;align-self:flex-end">
@@ -438,13 +452,13 @@
       <div class="kp" id="kpDoc">
         __KP_HEAD__
         <div id="kpPreview"></div>
-        <div class="kp-sec">2.&nbsp; Условия поставки</div>
-        <table class="kp-t"><tbody>
+        <div class="kp-sec" id="kpSecTerms">2.&nbsp; Условия поставки</div>
+        <table class="kp-t" id="kpTermsTable"><tbody>
           <tr><th>Срок поставки</th><td id="kpTermVal">__DELIVERY_ORDER_FULL__</td></tr>
           __KP_TERMS__
         </tbody></table>
-        <div class="kp-sec">3.&nbsp; Гарантия и сервис</div>
-        <table class="kp-t"><tbody>__KP_SERVICE__</tbody></table>
+        <div class="kp-sec" id="kpSecService">3.&nbsp; Гарантия и сервис</div>
+        <table class="kp-t" id="kpServiceTable"><tbody>__KP_SERVICE__</tbody></table>
         __KP_NEXT__
         __KP_SIGN__
         __KP_MGR__
@@ -589,6 +603,47 @@
   </details>
 </section>
 
+
+
+<!-- ================= ТЕХНИКА ================= -->
+<span class="nojs-title">Техника простым языком</span>
+<section class="panel" id="p-tech">
+  <p class="lead">__TECH_INTRO__</p>
+
+  <h2>Сколько режет волокно</h2>
+  <div class="card">
+    <h3>Рабочие толщины — то, что говорим клиенту</h3>
+    <div class="scroll">__TECH_CUT_WORK_TABLE__</div>
+    <h3>Предел по заводским таблицам режимов</h3>
+    <div class="scroll">__TECH_CUT_MAX_TABLE__</div>
+    <div class="note alert">__TECH_CUT_MAX_NOTE__</div>
+  </div>
+
+  <h2>Серии волокна: чем отличаются</h2>
+  <div class="card">
+    __TECH_SERIES__
+  </div>
+
+  <h2>Почему S дороже A</h2>
+  <div class="card">
+    <p class="muted">__TECH_A_VS_S_ANSWER__</p>
+    <div class="scroll">__TECH_A_VS_S_TABLE__</div>
+  </div>
+
+  <h2>Труборез RD: что влезает</h2>
+  <div class="card">
+    <div class="scroll">__TECH_RD_TABLE__</div>
+    <div class="note alert">__TECH_RD_NOTE__</div>
+  </div>
+
+  <h2>Фрезерные станки: характеристики по моделям</h2>
+  <div class="card">
+    <div class="scroll">__TECH_MILL_TABLE__</div>
+    <p class="muted">__TECH_MILL_COMMON__</p>
+    <h3>Что берёт по материалам</h3>
+    <div class="scroll">__TECH_MILL_MAT_TABLE__</div>
+  </div>
+</section>
 
 <!-- ================= ГАЗ ================= -->
 <span class="nojs-title">Газ и владение</span>
