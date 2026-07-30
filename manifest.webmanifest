@@ -1,6 +1,6 @@
 {
-  "name": "Конфигуратор и смета",
-  "short_name": "Конфигуратор",
+  "name": "ЛазеркатКА — конфигуратор и смета",
+  "short_name": "ЛазеркатКА",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
