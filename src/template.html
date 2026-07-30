@@ -72,10 +72,14 @@
 <!-- ================= КОНФИГУРАТОР ================= -->
 <span class="nojs-title">Конфигуратор</span>
 <section class="panel active" id="p-cfg">
-  <p class="lead">Волокно — прайс от __DATE_FIBER__, __FIBER_COUNT__.
-    Фрезерные — прайс __DATE_MILLING__, __MILLING_COUNT__.
-    НДС включён. Доставка, ПНР и обучение — сверху. Чиллер тоже сверху,
-    но у металлорезов CWFL уже входит в цену — это единственное исключение.</p>
+  <p class="lead">Четыре категории: волокно по металлу (__FIBER_COUNT__, прайс от
+    __DATE_FIBER__), фрезерные с ЧПУ (__MILLING_COUNT__, прайс __DATE_MILLING__),
+    CO₂ (__CO2_COUNT__, __CO2_DATE__) и маркираторы (__MARKER_COUNT__, прайс
+    __MARKER_DATE__). НДС включён. Доставка, ПНР и обучение — сверху. Чиллер тоже
+    сверху, но у металлорезов CWFL уже входит в цену — единственное исключение.</p>
+  <p class="lead">Порядок работы один и тот же: выбрали станок → «Добавить в смету» →
+    приложение подводит к обвязке → добавили нужное → полоса внизу ведёт в смету.
+    Справа в каждом шаге — «мысли»: техничка, предупреждения и что уточнить.</p>
 
   <div class="step">
     <div class="step-h"><div class="step-n">1</div>
@@ -105,7 +109,10 @@
       <select id="cat">
         <option value="fiber">Волоконный станок по металлу</option>
         <option value="milling">Фрезерный станок с ЧПУ</option>
+        <option value="co2">Лазерный CO₂ станок</option>
+        <option value="marker">Лазерный маркиратор</option>
       </select>
+      <div class="note" id="catFlow"></div>
     </div>
   </div>
 
@@ -132,7 +139,7 @@
           <div style="flex:2 1 340px"><label class="f">Приводы (сервомоторы)</label>
             <select id="fServo"></select></div>
         </div>
-        <div id="servoOut"></div>
+        <div class="think-box" id="servoOut"></div>
         <div class="note">__SERVO_NOTE__</div>
         <div class="note internal">__SERVO_A_NOTE__</div>
       </div>
@@ -164,7 +171,7 @@
         <div style="flex:3 1 340px"><label class="f">Модель</label>
           <select id="kitCompressor"></select></div>
       </div>
-      <div id="compressorOut"></div>
+      <div class="think-box" id="compressorOut"></div>
       <div class="btns noprint">
         <button class="btn" id="compressorAdd">Добавить в смету</button></div>
       <div class="scroll">__COMPRESSOR_TABLE__</div>
@@ -179,7 +186,7 @@
         <div style="flex:3 1 340px"><label class="f">Модель</label>
           <select id="kitExtraction"></select></div>
       </div>
-      <div id="extractionOut"></div>
+      <div class="think-box" id="extractionOut"></div>
       <div class="btns noprint">
         <button class="btn" id="extractionAdd">Добавить в смету</button></div>
       <div class="scroll">__EXTRACTION_TABLE__</div>
@@ -194,7 +201,7 @@
         <div style="flex:3 1 340px"><label class="f">Позиция</label>
           <select id="kitCryo"></select></div>
       </div>
-      <div id="cryoOut"></div>
+      <div class="think-box" id="cryoOut"></div>
       <div class="btns noprint">
         <button class="btn" id="cryoAdd">Добавить в смету</button></div>
       <div class="note">__CRYO_NOTE__</div>
@@ -215,7 +222,7 @@
           <label class="chk"><input type="checkbox" id="stabAll">
             Показать и сварочные</label></div>
       </div>
-      <div id="stabOut"></div>
+      <div class="think-box" id="stabOut"></div>
       <div class="btns noprint">
         <button class="btn" id="stabAdd">Добавить в смету</button></div>
       <div class="note">__STAB_NOTE__</div>
@@ -320,9 +327,134 @@
           </select></div>
         </div>
         <label class="chk"><input type="checkbox" id="thirdParty"> Сторонний станок — коэффициент ×1,2</label>
-        <div id="pnrOut"></div>
+        <div class="think-box" id="pnrOut"></div>
         <div class="btns noprint"><button class="btn sec" id="pnrAdd">Добавить в смету</button></div>
         <div class="note"><b>Общие условия:</b><ul>__PNR_TERMS__</ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CO₂ -->
+  <div id="blkCo2">
+    <div class="step">
+      <div class="step-h"><div class="step-n">3</div>
+        <div class="step-t">Выбор CO₂-станка<small>бренд, затем модель — цены с сайта, __CO2_DATE__</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div><label class="f">Бренд</label><select id="cBrand">
+            <option value="Wattsan">Wattsan</option>
+            <option value="Zerder">Zerder — бюджетный</option></select></div>
+          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="cModel"></select></div>
+        </div>
+        <div id="cOut"></div>
+        <div class="btns noprint"><button class="btn" id="cAdd">Добавить в смету</button>
+          <button class="btn sec" type="button" id="cNext">Дальше: чиллер</button></div>
+        <div class="note">__CO2_NOTE__</div>
+        <div class="note alert">__CO2_SITE_WARNING__</div>
+        <div class="note internal">__CO2_ZERDER_NOTE__</div>
+        <div class="note stop"><b>Чего в источниках нет:</b><ul>__CO2_MISSING__</ul></div>
+      </div>
+    </div>
+
+    <div class="step" id="stepCo2Chiller">
+      <div class="step-h"><div class="step-n">4</div>
+        <div class="step-t">Чиллер<small>в цену CO₂ не входит — считаем отдельной строкой</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="cChiller"></select></div>
+        </div>
+        <div class="think-box" id="cChillerOut"></div>
+        <div class="btns noprint"><button class="btn sec" id="cChillerAdd">Добавить в смету</button></div>
+        <div class="note alert">__CHILLER_NOTE__</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="step-n">5</div>
+        <div class="step-t">Стабилизатор напряжения<small>условие гарантии, а не опция</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="cStab"></select></div>
+        </div>
+        <div class="think-box" id="cStabOut"></div>
+        <div class="btns noprint"><button class="btn sec" id="cStabAdd">Добавить в смету</button></div>
+        <div class="note">Мощность станка по CO₂ в данных не записана, поэтому приложение
+          не проверяет стабилизатор на проходимость: сверяйте по паспорту станка.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="step-n">6</div>
+        <div class="step-t">ПНР и обучение<small>цены по CO₂ в прайсе сервиса нет</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div style="flex:2 1 320px"><label class="f">Услуга</label><select id="cPnr"></select></div>
+        </div>
+        <div class="btns noprint"><button class="btn sec" id="cPnrAdd">Добавить строкой без цены</button></div>
+        <div class="note alert">__PNR_NO_PRICE_NOTE__</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- маркиратор -->
+  <div id="blkMarker">
+    <div class="step">
+      <div class="step-h"><div class="step-n">3</div>
+        <div class="step-t">Выбор маркиратора<small>серия, затем модель — прайс __MARKER_DATE__</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div><label class="f">Серия</label><select id="kSeries"></select></div>
+          <div style="flex:2 1 300px"><label class="f">Модель</label><select id="kModel"></select></div>
+        </div>
+        <div class="row internal">
+          <div><label class="f">Какой ценник берём</label><select id="kMode">
+            <option value="order">Под заказ — завод, __DELIVERY_ORDER__</option>
+            <option value="stock">Из наличия — склад</option></select></div>
+        </div>
+        <div id="kOut"></div>
+        <div class="btns noprint"><button class="btn" id="kAdd">Добавить в смету</button>
+          <button class="btn sec" type="button" id="kNext">Дальше: поворотная ось</button></div>
+        <div class="note">__MARKER_NOTE__</div>
+        <div class="note stop"><b>Чего в прайсе нет:</b><ul>__MARKER_MISSING__</ul></div>
+      </div>
+    </div>
+
+    <div class="step" id="stepMarkRot">
+      <div class="step-h"><div class="step-n">4</div>
+        <div class="step-t">Поворотное устройство<small>подбирается по детали — цен в прайсе нет</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div style="flex:2 1 320px"><label class="f">Тип</label><select id="kRot"></select></div>
+        </div>
+        <div class="think-box" id="kRotOut"></div>
+        <div class="btns noprint"><button class="btn sec" id="kRotAdd">Добавить строкой без цены</button></div>
+        <div class="note alert">__MARKER_ROTARY_NOTE__</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="step-n">5</div>
+        <div class="step-t">Стабилизатор напряжения<small>маркиратор — 220 В, хватает младших моделей</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="kStab"></select></div>
+        </div>
+        <div class="think-box" id="kStabOut"></div>
+        <div class="btns noprint"><button class="btn sec" id="kStabAdd">Добавить в смету</button></div>
+        <div class="note">Потребление маркиратора в данных не записано — приложение
+          не считает запас по мощности за вас.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-h"><div class="step-n">6</div>
+        <div class="step-t">ПНР и обучение<small>цены по маркираторам в прайсе сервиса нет</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div style="flex:2 1 320px"><label class="f">Услуга</label><select id="kPnr"></select></div>
+        </div>
+        <div class="btns noprint"><button class="btn sec" id="kPnrAdd">Добавить строкой без цены</button></div>
+        <div class="note alert">__PNR_NO_PRICE_NOTE_2__</div>
       </div>
     </div>
   </div>
@@ -341,6 +473,20 @@
   <details>
     <summary>Полный прайс: фрезерные с ЧПУ <span class="cnt">__MILLING_COUNT__ · прайс __DATE_MILLING__</span></summary>
     <div class="det-b"><div class="scroll">__MILLING_TABLE__</div></div>
+  </details>
+
+  <details>
+    <summary>Полный прайс: CO₂-станки <span class="cnt">__CO2_COUNT__ · __CO2_DATE__</span></summary>
+    <div class="det-b">
+      <p class="muted">Зачёркнутая цена показана там, где она есть на сайте: это старая
+        цена витрины, считается всегда действующая.</p>
+      <div class="scroll">__CO2_TABLE__</div>
+    </div>
+  </details>
+
+  <details>
+    <summary>Полный прайс: маркираторы <span class="cnt">__MARKER_COUNT__ · прайс __MARKER_DATE__</span></summary>
+    <div class="det-b"><div class="scroll">__MARKER_TABLE__</div></div>
   </details>
 
   <details>
@@ -601,7 +747,7 @@
       <div class="step-t">Отметить, что уже есть<small>незакрытый блокер останавливает выпуск ТКП</small></div></div>
     <div class="step-b">
       <div id="readyList"></div>
-      <div id="readyOut"></div>
+      <div class="think-box" id="readyOut"></div>
     </div>
   </div>
 
@@ -694,7 +840,7 @@
   <div class="step">
     <div class="step-h"><div class="step-n">2</div>
       <div class="step-t">Расход и деньги<small>расход из заводской таблицы, цена — ваша</small></div></div>
-    <div class="step-b"><div id="gasOut"></div></div>
+    <div class="step-b"><div class="think-box" id="gasOut"></div></div>
   </div>
 
   <details>
@@ -769,12 +915,23 @@
     <tr><td>Волокно по металлу</td><td>Прайс «Металлорезы для ОП»</td><td>__DATE_FIBER__</td></tr>
     <tr><td>Фрезерные ЧПУ</td><td>Прайс «Цены фрезерные станки»</td><td>__DATE_MILLING__</td></tr>
     <tr><td>Опции, ПНР, сервис</td><td>«Фрезерное оборудование: номенклатура и цены»</td><td>__DATE_OPTIONS__</td></tr>
+    <tr><td>CO₂-станки</td><td>Витрина сайта lasercut.ru (прайс-файла нет)</td><td>__CO2_DATE_2__</td></tr>
+    <tr><td>Маркираторы</td><td>Прайс «Лазерные маркеры Wattsan»</td><td>__MARKER_DATE_2__</td></tr>
   </tbody></table></div>
   <div class="note alert">Цена ≠ актуальность. Прайсы датированы, наличие меняется ежедневно.
     Перед счётом — сверка с менеджером. Наличие на складе в приложение принципиально
     не заводится.</div>
 </section>
 
+</div>
+
+<!-- Закреплённая полоса итога: сколько позиций и на какую сумму уже набрано.
+     Так менеджер видит результат, не уходя со страницы конфигуратора. -->
+<div class="sumbar" id="sumBar">
+  <div class="sumbar-in">
+    <span class="sumbar-tx" id="sumBarTx"></span>
+    <button class="btn mini" type="button" id="sumBarGo">Перейти в смету</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"><span id="toastText"></span><button type="button" id="toastGo">Открыть смету</button></div>
