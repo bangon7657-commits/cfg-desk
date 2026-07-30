@@ -292,6 +292,43 @@
     toast('Менеджер снова по умолчанию: ' + APP.manager.name);
   });
 
+  // ------------------------------------------------------ боковые «мысли»
+  // Пояснения, предупреждения и техданные уезжают в правую колонку шага:
+  // слева остаётся то, что нужно нажать, справа — то, что нужно знать.
+  // Функция идемпотентна, её можно звать после любой перерисовки.
+  var THINK_SEL = '.note, .calcsteps, .muted, .advice, .miss';
+  function thinkify() {
+    var bodies = d.querySelectorAll('.step-b');
+    for (var i = 0; i < bodies.length; i++) {
+      var b = bodies[i];
+      var side = null, main = null;
+      for (var c = 0; c < b.children.length; c++) {
+        if (b.children[c].className === 'doing') main = b.children[c];
+        if (b.children[c].className === 'think') side = b.children[c];
+      }
+      if (!main) {
+        main = el('div', 'doing');
+        side = el('div', 'think');
+        var kids = [];
+        for (var j = 0; j < b.childNodes.length; j++) kids.push(b.childNodes[j]);
+        kids.forEach(function (n) { main.appendChild(n); });
+        b.appendChild(main); b.appendChild(side);
+      }
+      // Переносим только прямых детей: статические пояснения шага и
+      // контейнеры, помеченные think-box (в них render-функции пишут
+      // техничку). Глубже не лезем — иначе у динамических блоков
+      // вынесло бы содержимое, а перерисовка плодила бы дубли.
+      var kids2 = [];
+      for (var k = 0; k < main.children.length; k++) kids2.push(main.children[k]);
+      kids2.forEach(function (n2) {
+        var cls = ' ' + (n2.className || '') + ' ';
+        var isNote = /\s(note|calcsteps|muted|advice|miss|think-box)\s/.test(cls);
+        if (isNote) side.appendChild(n2);
+      });
+      b.classList.toggle('has-think', side.childNodes.length > 0);
+    }
+  }
+
   // ------------------------------------------------- полные наименования
   // В смете и ТКП позиция должна читаться как товар, а не как артикул из
   // прайса: «A1 6090, 1.5wc» клиент не опознает, «Фрезерный станок WATTSAN
@@ -669,12 +706,260 @@
     addItem(p.name, p.price, 1, 'srv');
   });
 
+  // ------------------------------------------------------- CO₂ и маркиратор
+  // Оба блока устроены одинаково: станок → обвязка по шагам → смета.
+  // Цены CO₂ — с витрины сайта (одна), маркираторы — прайс с двумя ценами.
+  var co2Sel = $('cModel'), kSerSel = $('kSeries'), kModSel = $('kModel');
+
+  function co2List() {
+    var b = $('cBrand').value;
+    return APP.co2.filter(function (r) { return r.brand === b; });
+  }
+  function fillCo2() {
+    var sel = fresh('cModel');
+    co2List().forEach(function (r) { opt(sel, r.name, r.name); });
+    renderCo2();
+  }
+  function co2Pick() {
+    var n = $('cModel').value, found = null;
+    co2List().forEach(function (r) { if (r.name === n) found = r; });
+    return found;
+  }
+  function co2Name(r) {
+    return 'Лазерный станок CO₂ ' + r.brand + ' ' + r.name;
+  }
+  function renderCo2() {
+    var out = fresh('cOut'), r = co2Pick();
+    if (!r) return;
+    var box = el('div', 'pricebox');
+    box.appendChild(el('div', 'pb stock', '<div class="lbl">Цена с сайта</div>' +
+      '<div class="val">' + fmtRub(toCents(r.price)) + ' ₽</div>' +
+      '<div class="sub">розничная, НДС включён</div>'));
+    if (r.was) {
+      box.appendChild(el('div', 'pb', '<div class="lbl">Зачёркнуто на сайте</div>' +
+        '<div class="val">' + fmtRub(toCents(r.was)) + ' ₽</div>' +
+        '<div class="sub">' + (r.was > r.price
+          ? 'выгода ' + fmtRub(toCents(r.was - r.price)) + ' ₽'
+          : 'старая цена ниже действующей — ошибка витрины') + '</div>'));
+    }
+    out.appendChild(box);
+    out.appendChild(el('div', 'muted', 'Поле ' + esc(r.field) + ' мм · трубка ' +
+      esc(r.tube) + ' Вт' + (r.ctrl ? ' · стойка ' + esc(r.ctrl) : '')));
+    out.appendChild(el('div', 'note', 'Сверх цены станка: чиллер, стабилизатор, ' +
+      'ПНР, обучение и доставка. Дальше по шагам.'));
+    thinkify();
+  }
+  $('cBrand').addEventListener('change', function () { fillCo2(); save(); });
+  $('cModel').addEventListener('change', function () { renderCo2(); save(); });
+  $('cAdd').addEventListener('click', function () {
+    var r = co2Pick(); if (!r) return;
+    addItem(co2Name(r), r.price, 1, 'eq', { short: co2Name(r) });
+    goStep('stepCo2Chiller');
+  });
+  $('cNext').addEventListener('click', function () { goStep('stepCo2Chiller'); });
+
+  // чиллер к CO₂
+  (function () {
+    var sel = fresh('cChiller');
+    APP.chillers.forEach(function (c) {
+      opt(sel, c.id, c.name + ' — ' + fmtRub(toCents(c.price)) + ' ₽');
+    });
+  }());
+  function chillerPick() { return kitFind(APP.chillers, $('cChiller').value); }
+  function renderChiller() {
+    var out = fresh('cChillerOut'), c = chillerPick();
+    if (!c) return;
+    out.appendChild(el('div', 'calcsteps', '<div>' + esc(c.kind) + '</div>' +
+      '<div>Цена: <b>' + fmtRub(toCents(c.price)) + ' ₽</b></div>'));
+    thinkify();
+  }
+  $('cChiller').addEventListener('change', renderChiller);
+  $('cChillerAdd').addEventListener('click', function () {
+    var c = chillerPick(); if (!c) return;
+    addItem(c.name, c.price, 1, 'opt');
+  });
+
+  // стабилизатор для CO₂ и маркиратора — из прайса опций, там модели на 220 В
+  function stabOptions() {
+    return APP.options.filter(function (o) {
+      return o.cat === 'Стабилизаторы напряжения';
+    });
+  }
+  function fillStabSel(id) {
+    var sel = fresh(id);
+    stabOptions().forEach(function (o) {
+      opt(sel, o.name, nomOption(o.cat, o.name) + ' — ' + fmtRub(toCents(o.price)) + ' ₽');
+    });
+  }
+  function stabOptPick(id) {
+    var n = $(id).value, found = null;
+    stabOptions().forEach(function (o) { if (o.name === n) found = o; });
+    return found;
+  }
+  function renderStabOpt(selId, outId) {
+    var out = fresh(outId), o = stabOptPick(selId);
+    if (!o) return;
+    out.appendChild(el('div', 'calcsteps', '<div>Цена: <b>' +
+      fmtRub(toCents(o.price)) + ' ₽</b></div><div>' +
+      (/3-ЭМ|380/.test(o.name) ? 'Трёхфазный, 380 В' : 'Однофазный, 220 В') + '</div>'));
+    thinkify();
+  }
+  fillStabSel('cStab');
+  $('cStab').addEventListener('change', function () { renderStabOpt('cStab', 'cStabOut'); });
+  $('cStabAdd').addEventListener('click', function () {
+    var o = stabOptPick('cStab'); if (!o) return;
+    addItem(nomOption(o.cat, o.name), o.price, 1, 'opt');
+  });
+
+  // ПНР без цены: позиция уходит строкой с нулём и явной пометкой
+  function fillPnrNoPrice(selId, kind) {
+    var sel = fresh(selId);
+    APP.pnrNoPrice.forEach(function (p) {
+      if (p['for'] !== kind) return;
+      opt(sel, p.id, p.name + ' — цену уточнить');
+    });
+  }
+  function pnrNoPricePick(selId) {
+    var id = $(selId).value, found = null;
+    APP.pnrNoPrice.forEach(function (p) { if (p.id === id) found = p; });
+    return found;
+  }
+  function addPnrNoPrice(selId) {
+    var p = pnrNoPricePick(selId); if (!p) return;
+    addItem(p.name + ' — цену уточнить у сервиса', 0, 1, 'srv');
+  }
+  fillPnrNoPrice('cPnr', 'co2');
+  $('cPnrAdd').addEventListener('click', function () { addPnrNoPrice('cPnr'); });
+
+  // ---- маркиратор ----
+  (function () {
+    // список чистим: при пререндере скрипт исполняется дважды, иначе серии
+    // задвоятся прямо в выпускном файле
+    var sel = fresh('kSeries'), seen = {};
+    APP.markers.forEach(function (m) {
+      if (seen[m.series]) return;
+      seen[m.series] = 1;
+      opt(sel, m.series, m.series);
+    });
+  }());
+  function markerList() {
+    var s = $('kSeries').value;
+    return APP.markers.filter(function (m) { return m.series === s; });
+  }
+  function fillMarkers() {
+    var sel = fresh('kModel');
+    markerList().forEach(function (m) { opt(sel, m.name, m.name); });
+    renderMarker();
+  }
+  function markerPick() {
+    var n = $('kModel').value, found = null;
+    markerList().forEach(function (m) { if (m.name === n) found = m; });
+    return found;
+  }
+  function markerName(m, mode) {
+    // «Батарея к HT» — аксессуар, а не станок: слово «маркиратор» к ней не идёт
+    var base = /Батарея/i.test(m.name) ? m.name
+      : 'Лазерный маркиратор Wattsan ' + m.name;
+    return base + (mode === 'stock' ? ' (из наличия)' : ' (под заказ)');
+  }
+  function renderMarker() {
+    var out = fresh('kOut'), m = markerPick();
+    if (!m) return;
+    var mode = $('kMode').value;
+    var box = el('div', 'pricebox');
+    box.appendChild(el('div', 'pb' + (mode === 'order' ? ' stock' : ''),
+      '<div class="lbl">Под заказ — завод, ' + esc(APP.deliveryOrder) + '</div>' +
+      '<div class="val">' + fmtRub(toCents(m.order)) + ' ₽</div>' +
+      '<div class="sub">Оплата 50 % + остаток</div>'));
+    box.appendChild(el('div', 'pb' + (mode === 'stock' ? ' stock' : ''),
+      '<div class="lbl">Из наличия — склад</div>' +
+      '<div class="val">' + fmtRub(toCents(m.stock)) + ' ₽</div>' +
+      '<div class="sub">Оплата 100 %</div>'));
+    out.appendChild(box);
+    out.appendChild(el('div', 'muted', (m.watt ? 'Мощность ' + m.watt + ' Вт · ' : '') +
+      'излучатель ' + esc(m.src === '?' ? 'в прайсе не указан' : m.src) +
+      ' · MOPA: ' + (m.mopa ? 'да' : 'нет')));
+    var st = el('div', 'calcsteps internal');
+    st.appendChild(el('div', '', 'Разница: <b>' +
+      fmtRub(toCents(m.stock - m.order)) + ' ₽</b>, это <b>+' +
+      String(Math.round((m.stock - m.order) / m.order * 10000) / 100)
+        .replace('.', ',') + ' %</b> к цене под заказ'));
+    out.appendChild(st);
+    if (m.mopa) {
+      out.appendChild(el('div', 'note', 'MOPA — регулируемая длительность импульса: ' +
+        'цветная маркировка нержавейки, аккуратная работа по пластику.'));
+    }
+    thinkify();
+  }
+  $('kSeries').addEventListener('change', function () { fillMarkers(); save(); });
+  $('kModel').addEventListener('change', function () { renderMarker(); save(); });
+  $('kMode').addEventListener('change', function () { renderMarker(); save(); });
+  $('kAdd').addEventListener('click', function () {
+    var m = markerPick(); if (!m) return;
+    var mode = $('kMode').value;
+    addItem(markerName(m, mode), mode === 'stock' ? m.stock : m.order, 1, 'eq',
+      { short: markerName(m, mode) });
+    goStep('stepMarkRot');
+  });
+  $('kNext').addEventListener('click', function () { goStep('stepMarkRot'); });
+
+  (function () {
+    var sel = fresh('kRot');
+    APP.markerRotary.forEach(function (r) { opt(sel, r.id, r.name); });
+  }());
+  function rotPick() { return kitFind(APP.markerRotary, $('kRot').value); }
+  function renderRot() {
+    var out = fresh('kRotOut'), r = rotPick();
+    if (!r) return;
+    out.appendChild(el('div', 'calcsteps', '<div>Под что: ' + esc(r.note) + '</div>' +
+      '<div>Цена: <b>в прайсе нет</b> — уточнить у сервиса</div>'));
+    thinkify();
+  }
+  $('kRot').addEventListener('change', renderRot);
+  $('kRotAdd').addEventListener('click', function () {
+    var r = rotPick(); if (!r) return;
+    addItem(r.name + ' — цену уточнить у сервиса', 0, 1, 'opt');
+  });
+
+  fillStabSel('kStab');
+  $('kStab').addEventListener('change', function () { renderStabOpt('kStab', 'kStabOut'); });
+  $('kStabAdd').addEventListener('click', function () {
+    var o = stabOptPick('kStab'); if (!o) return;
+    addItem(nomOption(o.cat, o.name), o.price, 1, 'opt');
+  });
+  fillPnrNoPrice('kPnr', 'marker');
+  $('kPnrAdd').addEventListener('click', function () { addPnrNoPrice('kPnr'); });
+
+  // Плавный переход к следующему шагу: пользователь нажал «добавить» —
+  // приложение само подводит его к обвязке, а не оставляет искать глазами.
+  function goStep(id) {
+    var n = $(id);
+    if (!n) return;
+    try { n.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    catch (e) { n.scrollIntoView(); }
+    n.classList.add('step-hi');
+    setTimeout(function () { n.classList.remove('step-hi'); }, 1400);
+  }
+
+  var CAT_FLOW = {
+    fiber: 'Порядок: станок и приводы → цена → обвязка (компрессор, вытяжка, газ) → стабилизатор → смета.',
+    milling: 'Порядок: формат и сборка → цена → опции (чиллер, стойка, аспирация) → ПНР → смета.',
+    co2: 'Порядок: модель → чиллер → стабилизатор → ПНР → смета. Чиллер в цену CO₂ не входит.',
+    marker: 'Порядок: серия и модель → поворотная ось → стабилизатор → ПНР → смета.'
+  };
+
   function switchCat() {
     var c = $('cat').value;
     state.cat = c;
     $('blkFiber').style.display = c === 'fiber' ? '' : 'none';
     $('blkMill').style.display = c === 'milling' ? '' : 'none';
+    $('blkCo2').style.display = c === 'co2' ? '' : 'none';
+    $('blkMarker').style.display = c === 'marker' ? '' : 'none';
+    var fl = $('catFlow');
+    if (fl) fl.textContent = CAT_FLOW[c] || '';
     if (c === 'milling') renderMill();
+    if (c === 'co2') { renderCo2(); renderChiller(); renderStabOpt('cStab', 'cStabOut'); }
+    if (c === 'marker') { renderMarker(); renderRot(); renderStabOpt('kStab', 'kStabOut'); }
     save();
   }
   $('cat').addEventListener('change', switchCat);
@@ -913,9 +1198,24 @@
       gain: listSum - discSum, bez: nds.bez, nds: nds.nds, lines: lines };
   }
 
+  // Полоса итога внизу экрана: видно, что уже набрано, без ухода со страницы
+  function renderSumBar(T) {
+    var bar = $('sumBar');
+    if (!bar) return;
+    var n = state.items.length;
+    if (!n) { bar.classList.remove('show'); return; }
+    var zero = 0;
+    state.items.forEach(function (it) { if (!it.price) zero++; });
+    $('sumBarTx').textContent = plural(n, ['позиция', 'позиции', 'позиций']) +
+      ' на ' + fmtRub(T.total) + ' ₽' +
+      (zero ? ' · ' + plural(zero, ['строка', 'строки', 'строк']) + ' без цены' : '');
+    bar.classList.add('show');
+  }
+
   function renderSmeta() {
     var body = $('smetaBody'); clear(body);
     var T = totals();
+    renderSumBar(T);
     var has = state.items.length > 0;
     $('smetaEmpty').style.display = has ? 'none' : '';
     $('smetaWrap').style.display = has ? '' : 'none';
@@ -2272,6 +2572,15 @@
   renderCryo();
   renderStab();
   renderMgr();
+  fillCo2();
+  fillMarkers();
+  renderChiller();
+  renderStabOpt('cStab', 'cStabOut');
+  renderStabOpt('kStab', 'kStabOut');
+  renderRot();
+  switchCat();
+  thinkify();
+  $('sumBarGo').addEventListener('click', function () { showTab('smeta'); });
   var hash = (location.hash || '').replace('#', '');
   var valid = SECTIONS.map(function (s) { return s.id; });
   showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');
