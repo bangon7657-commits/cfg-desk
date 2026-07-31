@@ -67,14 +67,29 @@ if (STAGE === 2) {
 if (STAGE !== 2) {
 
 check('ошибок JS нет', first.errors.length === 0, first.errors.join(' | '));
-check('в строке вкладок только главная и смета',
-  doc.querySelectorAll('#tabs button').length === 2,
-  'найдено ' + doc.querySelectorAll('#tabs button').length);
+check('в строке вкладок четыре закреплённых раздела',
+  doc.querySelectorAll('#tabs button[data-t]').length === 4,
+  'найдено ' + doc.querySelectorAll('#tabs button[data-t]').length);
+check('вкладки по умолчанию: главная, конфигуратор, смета, письма',
+  ['home', 'build', 'smeta', 'letters'].join(',') ===
+  [...doc.querySelectorAll('#tabs button[data-t]')]
+    .map(b => b.getAttribute('data-t')).join(','),
+  [...doc.querySelectorAll('#tabs button[data-t]')]
+    .map(b => b.getAttribute('data-t')).join(','));
+check('у каждой вкладки есть крестик снятия',
+  doc.querySelectorAll('#tabs button[data-t] .tabx').length === 4, '');
 check('панелей 11', doc.querySelectorAll('.panel').length === 11,
   'найдено ' + doc.querySelectorAll('.panel').length);
 check('в кнопке «Разделы» все 11 разделов',
-  doc.querySelectorAll('#menuList button').length === 11,
-  'найдено ' + doc.querySelectorAll('#menuList button').length);
+  doc.querySelectorAll('#menuList button[data-t]').length === 11,
+  'найдено ' + doc.querySelectorAll('#menuList button[data-t]').length);
+check('в меню у каждого раздела кнопка закрепления',
+  doc.querySelectorAll('#menuList button[data-pin]').length === 11 &&
+  [...doc.querySelectorAll('#menuList button[data-pin]')]
+    .filter(b => b.getAttribute('aria-pressed') === 'true').length === 4, '');
+check('в меню есть счётчик и сброс вкладок',
+  !!doc.getElementById('pinsInfo') &&
+  /Закреплено 4 из 4/.test(doc.getElementById('pinsInfo').textContent), '');
 check('меню закрыто при открытии',
   !doc.getElementById('menuList').classList.contains('open'), '');
 check('навигация: вкладки скруглённые и полупрозрачные',
@@ -86,8 +101,13 @@ check('навигация: кнопка «Разделы» в фирменном
   /\.menubtn\{[^}]*color:var\(--or\)/.test(src) &&
   /\.menubtn:hover\{background:var\(--or\)/.test(src), '');
 check('навигация: текст в меню компактный',
-  /\.menulist button\{[^}]*font-size:13\.5px/.test(src) &&
-  /\.menulist button small\{[^}]*font-size:11px/.test(src), '');
+  /\.menulist \.mrow>button\[data-t\]\{[^}]*font-size:13\.5px/.test(src) &&
+  /\.menulist \.mrow>button\[data-t\] small\{[^}]*font-size:11px/.test(src), '');
+check('навигация: кнопка «Разделы» крупнее в 1.5 раза',
+  /\.menubtn\{[^}]*font-size:20px/.test(src), '');
+check('навигация: строка меню шире колонки текста — меню уходит левее',
+  /\.navinner\{max-width:1560px/.test(src) &&
+  /\.wrap\{max-width:1200px/.test(src), '');
 
 
 // ---- шапка: знак, имя, внешняя ссылка ----
@@ -1279,8 +1299,32 @@ check('подбор: длинный лид убран в свёрнутую сп
 check('главная: плашка без логотипа и рамки',
   !doc.querySelector('#p-home .hero img') && /\.hero\{background:none;border:0/.test(src), '');
 check('навигация: остальные разделы живут в кнопке «Разделы»',
-  doc.querySelectorAll('#menuList button').length === 11 &&
-  doc.querySelectorAll('#tabs button').length === 2, '');
+  doc.querySelectorAll('#menuList button[data-t]').length === 11 &&
+  doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
+
+// ---- настраиваемые вкладки: закрепить, снять, вернуть по умолчанию ----
+const pinBtn = id => doc.querySelector('#menuList button[data-pin="' + id + '"]');
+const tabIds = () => [...doc.querySelectorAll('#tabs button[data-t]')]
+  .map(b => b.getAttribute('data-t')).join(',');
+pinBtn('gas').click();
+check('вкладки: пятую закрепить нельзя, приложение предупреждает',
+  tabIds() === 'home,build,smeta,letters' &&
+  /Уже 4 вкладки/.test(textOf(doc, '#toastText') || ''),
+  tabIds() + ' | ' + textOf(doc, '#toastText'));
+doc.querySelector('#tabs button[data-t="letters"] .tabx').click();
+check('вкладки: крестик снимает вкладку', tabIds() === 'home,build,smeta', tabIds());
+pinBtn('gas').click();
+check('вкладки: звёздочка в меню закрепляет раздел',
+  tabIds() === 'home,build,smeta,gas' &&
+  pinBtn('gas').getAttribute('aria-pressed') === 'true', tabIds());
+check('вкладки: у незакреплённого раздела звёздочка пустая',
+  pinBtn('letters').getAttribute('aria-pressed') === 'false', '');
+doc.getElementById('menuList').querySelector('.mfoot button').click();
+check('вкладки: «Вернуть по умолчанию» возвращает четыре исходных',
+  tabIds() === 'home,build,smeta,letters' &&
+  /Закреплено 4 из 4/.test(doc.getElementById('pinsInfo').textContent), tabIds());
+check('вкладки: значок сметы жив после перерисовки строки',
+  !!doc.getElementById('smetaBadge'), '');
 
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
 // Всё, что натворили проверки, должно быть убрано: файл обязан открываться
@@ -1294,7 +1338,8 @@ doc.getElementById('totals').innerHTML = '';
 doc.getElementById('propis').innerHTML = '';
 doc.getElementById('checkBlock').innerHTML = '';
 doc.getElementById('checkBlock').className = '';
-doc.getElementById('smetaBadge').textContent = '';
+var sb0 = doc.getElementById('smetaBadge');
+if (sb0) sb0.textContent = '';
 doc.getElementById('jsonOut').value = '';
 doc.getElementById('discount').value = '0';
 // предпросмотр ТКП: без этого в файл уезжает КП с позициями из теста
