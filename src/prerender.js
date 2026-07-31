@@ -105,11 +105,9 @@ check('навигация: кнопка «Разделы» в фирменном
 check('навигация: текст в меню компактный',
   /\.menulist \.mrow>button\[data-t\]\{[^}]*font-size:13\.5px/.test(src) &&
   /\.menulist \.mrow>button\[data-t\] small\{[^}]*font-size:11px/.test(src), '');
-check('навигация: кнопка «Разделы» крупнее в 1.5 раза',
-  /\.menubtn\{[^}]*font-size:20px/.test(src), '');
-check('навигация: строка меню шире колонки текста — меню уходит левее',
-  /\.navinner\{max-width:1560px/.test(src) &&
-  /\.wrap\{max-width:1200px/.test(src), '');
+check('навигация: кнопка «Разделы» заметно крупнее вкладок',
+  /\.menubtn\{[^}]*font-size:18px/.test(src) &&
+  /\.navtabs button\{[^}]*font-size:13\.5px/.test(src), '');
 
 
 // ---- шапка: знак, имя, внешняя ссылка ----
@@ -1303,6 +1301,33 @@ check('главная: плашка без логотипа и рамки',
 check('навигация: остальные разделы живут в кнопке «Разделы»',
   doc.querySelectorAll('#menuList button[data-t]').length === 11 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
+
+// ---- v21: шапка без таглайна, кнопка у края, плашка-клятва ----
+check('шапка: под названием только «внутренний инструмент компании»',
+  /^внутренний инструмент компании$/i.test(
+    (doc.querySelector('.brand small').textContent || '').trim()),
+  doc.querySelector('.brand small').textContent);
+check('навигация: строка не ограничена шириной текста, кнопка у левого края',
+  /\.navinner\{max-width:none[^}]*padding:7px 12px 7px 4px/.test(src), '');
+check('навигация: кнопка «Разделы» стала 18 px (−10 %)',
+  /\.menubtn\{[^}]*font-size:18px/.test(src) &&
+  !/\.menubtn\{[^}]*font-size:20px/.test(src), '');
+const oath = doc.getElementById('oath');
+check('главная: плашка-клятва на месте, с лентой и следами',
+  !!oath && oath.querySelectorAll('.oath-band path').length === 4 &&
+  oath.querySelectorAll('.oath-steps ellipse').length === 10, '');
+check('главная: на плашке английская фраза из четырёх строк',
+  [...oath.querySelectorAll('.oath-tx text')].map(t => t.textContent).join(' ') ===
+  'I SOLEMNLY SWEAR THAT I AM UP TO NO GOOD',
+  [...oath.querySelectorAll('.oath-tx text')].map(t => t.textContent).join(' '));
+check('главная: подсказка про шалость появляется при наведении',
+  /Торжественно клянусь, что замышляю только шалость/.test(
+    oath.querySelector('.oath-tip').textContent) &&
+  /Торжественно клянусь/.test(oath.getAttribute('aria-label') || '') &&
+  /\.oath:hover \.oath-tip[^{]*\{[^}]*visibility:visible/.test(src), '');
+check('главная: у плашки нет своего фона — берётся фон страницы',
+  !/\.oath\{[^}]*background/.test(src) &&
+  /@media print\{\.oath\{display:none\}\}/.test(src), '');
 
 // ---- v20: опоры штуками, ПНР от станка, ТКП по типу станка, мысли в смете ----
 menuGo('smeta');
