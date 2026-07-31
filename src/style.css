@@ -188,22 +188,21 @@ a{color:var(--or2)}
   background:var(--or);border-radius:3px;margin-right:10px;vertical-align:-3px}
 .hero h1{margin:0 0 6px;font-size:24px;color:var(--tx)}
 .hero p{margin:0;color:var(--muted);font-size:14px;max-width:64ch;padding-right:210px}
-/* Плашка-шалость. Фон не задан — берётся фон страницы, поэтому плашка не
-   выглядит наклейкой. Лента и следы рисуются цветом текста темы, подсказка
-   всплывает при наведении и при фокусе с клавиатуры. */
+/* Плашка-клятва: лист пергамента с русским текстом и следами. Бумага своя —
+   это и есть смысл картинки, поэтому цвет не берётся из темы; вокруг фона нет,
+   так что плашка не выглядит наклейкой. */
 .hero{position:relative}
-.oath{position:absolute;right:0;top:-2px;width:200px;cursor:default;
-  opacity:.55;transition:opacity .16s, transform .16s}
-.oath:hover,.oath:focus-visible{opacity:1;transform:translateY(-1px);outline:none}
-.oath svg{display:block;width:100%;height:auto;overflow:visible}
-.oath-band path{fill:none;stroke:var(--tx2);stroke-width:1.6;stroke-linejoin:round}
-.oath-curl{fill:none;stroke:var(--tx2);stroke-width:1.6;stroke-linecap:round}
-.oath-steps ellipse{fill:var(--muted);opacity:.75}
-.oath-tx text{fill:var(--tx);font:700 12.5px/1 "Segoe UI",Roboto,system-ui,sans-serif;
-  letter-spacing:.4px}
-.oath:hover .oath-band path,.oath:focus-visible .oath-band path{stroke:var(--or)}
-.oath:hover .oath-curl,.oath:focus-visible .oath-curl{stroke:var(--or)}
-.oath:hover .oath-steps ellipse{fill:var(--or2)}
+.oath{position:absolute;right:0;top:-6px;width:150px;cursor:default;
+  opacity:.9;transition:opacity .16s, transform .16s}
+.oath:hover,.oath:focus-visible{opacity:1;transform:translateY(-2px) rotate(-.6deg);
+  outline:none}
+.oath svg{display:block;width:100%;height:auto}
+.oath-sheet{fill:url(#oathPaper)}
+.oath-edge{fill:none;stroke:#8c7233;stroke-width:1.2;opacity:.75}
+.oath-steps ellipse{fill:#2a2016;opacity:.9}
+.oath-tx text{fill:#2a2016;letter-spacing:.2px;
+  font:700 15px/1 Georgia,"Times New Roman",serif}
+.oath:hover .oath-tx text{fill:#12100c}
 .oath-tip{position:absolute;right:0;top:calc(100% + 8px);width:210px;
   padding:8px 11px;border-radius:11px;border:1px solid var(--or);
   background:var(--bg2);color:var(--tx);font-size:12.5px;line-height:1.4;
@@ -213,11 +212,29 @@ a{color:var(--or2)}
   transform:translateY(0)}
 @media(max-width:900px){
   .hero p{padding-right:0}
-  .oath{position:static;width:168px;margin-top:12px;opacity:.85}
+  .oath{position:static;width:132px;margin-top:12px}
   .oath-tip{position:static;width:auto;opacity:1;visibility:visible;
     transform:none;margin-top:6px;box-shadow:none;display:inline-block}
 }
 @media print{.oath{display:none}}
+
+/* Свёрнутая справка в шаге: заголовок в одну строку, без рамки-плашки */
+.hint-det{margin-top:10px;border:1px solid var(--line);border-radius:10px;
+  background:var(--bg2)}
+.hint-det>summary{cursor:pointer;padding:8px 12px;font-size:13px;color:var(--tx2);
+  list-style:none}
+.hint-det>summary::-webkit-details-marker{display:none}
+.hint-det>summary::before{content:"＋ ";color:var(--or)}
+.hint-det[open]>summary::before{content:"− "}
+.hint-det>summary:hover{color:var(--tx)}
+.hint-det .det-b{padding:0 12px 10px;display:flex;flex-direction:column;gap:8px}
+
+/* Миниатюра письма в правой колонке: лист А4 сжат по ширине колонки */
+.ltrmini{margin-top:10px;border:1px solid var(--line2);border-radius:8px;
+  background:#fff;overflow:hidden;cursor:zoom-in;height:420px}
+.ltrmini-in{width:794px;transform-origin:top left}
+@media(max-width:999px){.ltrmini{height:320px}}
+@media print{.ltrmini,#ltrMiniGo{display:none}}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;
   margin-bottom:18px}
 .tile{display:flex;flex-direction:column;gap:6px;text-align:left;padding:18px;
@@ -778,11 +795,28 @@ body.demo .internal{display:none !important}
 .pills.big{gap:8px}
 .pills.big .pill{font-size:15px;padding:11px 18px;border-radius:24px;font-weight:700}
 /* Конфигурация в диалоге выбора станка */
-.modal-cfg{padding:12px 14px;border-bottom:1px solid var(--line);background:var(--bg3)}
-.modal-cfg .mc-h{font-size:12.5px;color:var(--muted);margin-bottom:8px}
-.modal-cfg .mc-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+/* Фильтры конфигурации: компактная строка, все параметры влезают по ширине */
+.modal-cfg{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--bg3)}
+.modal-cfg .mc-h{font-size:12px;color:var(--muted);margin-bottom:6px}
+.modal-cfg label.f{font-size:11px;margin-bottom:2px}
+.modal-cfg select{padding:5px 8px;font-size:12.5px;border-radius:8px}
+.modal-cfg .mc-req{font-size:11.5px;color:var(--warn);margin:4px 0 0}
+.modal-cfg .btn.mini{padding:4px 10px;font-size:11.5px}
+.modal-cfg .mc-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));
   gap:8px;margin-bottom:8px}
-.modal-cfg .mc-f{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.45}
+.modal-cfg .mc-f{font-size:11.5px;color:var(--muted);margin:6px 0;line-height:1.4}
+/* Параметр прямо в названии позиции: клик открывает список значений */
+.pickrow .seg{font:inherit;font-size:inherit;font-weight:600;padding:0 4px;
+  border:1px dashed var(--line2);border-radius:6px;background:none;
+  color:var(--or2);cursor:pointer;line-height:1.2}
+.pickrow .seg:hover{border-color:var(--or);color:var(--or);background:var(--orbg)}
+.segpop{position:absolute;z-index:60;min-width:150px;padding:5px;border-radius:10px;
+  border:1px solid var(--or);background:var(--bg2);box-shadow:0 12px 28px var(--shadow)}
+.segpop button{display:block;width:100%;text-align:left;font:inherit;font-size:12.5px;
+  padding:6px 9px;border:0;border-radius:7px;background:none;color:var(--tx2);
+  cursor:pointer}
+.segpop button:hover{background:var(--bg3);color:var(--tx)}
+.segpop button.on{color:var(--or);font-weight:700}
 /* Разница цены к базовой конфигурации */
 .pickrow .pp{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .pickrow .pd{font-size:11.5px;font-weight:600}
