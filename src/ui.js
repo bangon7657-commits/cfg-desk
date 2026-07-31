@@ -21,6 +21,10 @@
   }
 
   // первая буква строчной: сумма прописью в середине фразы не должна начинаться с большой
+  // Число вместе со словом: plural отдаёт только форму, а в интерфейсе почти
+  // всегда нужно «3 позиции», а не «позиции». Раньше число терялось.
+  function cnt(n, forms) { return n + ' ' + plural(n, forms); }
+
   function lower1(t) {
     return t ? t.charAt(0).toLowerCase() + t.slice(1) : t;
   }
@@ -291,6 +295,48 @@
     save(); renderMgr();
     toast('Менеджер снова по умолчанию: ' + APP.manager.name);
   });
+
+  // ------------------------------------------------- карточка характеристик
+  // Пары «параметр — значение» как в присланном конфигураторе: слева подпись,
+  // справа значение, снизу примечание об источнике или расхождении.
+  function specCard(node, title, pairs, foot) {
+    var n = typeof node === 'string' ? $(node) : node;
+    if (!n) return;
+    clear(n);
+    if (!pairs || !pairs.length) { n.style.display = 'none'; return; }
+    n.style.display = '';
+    if (title) n.appendChild(el('h4', '', esc(title)));
+    var dl = el('dl');
+    pairs.forEach(function (p) {
+      dl.appendChild(el('dt', '', esc(p[0])));
+      dl.appendChild(el('dd', '', esc(String(p[1]))));
+    });
+    n.appendChild(dl);
+    if (foot) n.appendChild(el('div', 'idx', esc(foot)));
+  }
+
+  // ---------------------------------------------- совпадения в прайсе
+  // Список подходящих строк прайса: видно, из чего выбираем, и одним нажатием
+  // можно взять другую цену — как в присланном примере.
+  function renderMatches(nodeId, rows, onPick) {
+    var n = $(nodeId);
+    if (!n) return;
+    clear(n);
+    if (!rows || !rows.length) { n.style.display = 'none'; return; }
+    n.style.display = '';
+    n.appendChild(el('h3', '', 'Совпадения в прайсе — нажмите, чтобы взять цену'));
+    rows.slice(0, 12).forEach(function (r) {
+      var row = el('div', 'mrow');
+      row.innerHTML = '<span class="nm">' + esc(r.name) + '</span><b>' +
+        (r.price ? fmtRub(toCents(r.price)) + ' ₽' : 'цены нет') + '</b>';
+      row.addEventListener('click', function () { onPick(r); });
+      n.appendChild(row);
+    });
+    if (rows.length > 12) {
+      n.appendChild(el('div', 'muted', 'Показаны первые 12 из ' +
+        cnt(rows.length, ['строки', 'строк'])));
+    }
+  }
 
   // ------------------------------------------------------ боковые «мысли»
   // Пояснения, предупреждения и техданные уезжают в правую колонку шага:
@@ -948,9 +994,146 @@
     marker: 'Порядок: серия и модель → поворотная ось → стабилизатор → ПНР → смета.'
   };
 
+  // ---- полный ряд стабилизаторов с характеристиками ----
+  function stabFullList() {
+    var b = $('cStabBrand').value;
+    return APP.stabsFull.filter(function (s) { return s.b === b; });
+  }
+  function fillStabFull() {
+    var sel = fresh('cStabFull');
+    stabFullList().forEach(function (s) {
+      opt(sel, s.k, s.n + ' — ' + s.kw + ' кВт — ' + fmtRub(toCents(s.p)) + ' ₽');
+    });
+    renderStabFull();
+  }
+  function stabFullPick() {
+    var k = $('cStabFull').value, found = null;
+    APP.stabsFull.forEach(function (s) { if (s.k === k) found = s; });
+    return found;
+  }
+  function renderStabFull() {
+    var s = stabFullPick();
+    if (!s) return;
+    var pairs = (s.d || []).slice();
+    pairs.push(['Цена', fmtRub(toCents(s.p)) + ' ₽']);
+    var foot = 'Источник: ' + s.src +
+      (s.idx ? ' · ' + s.idx : '') +
+      ' · ' + (APP.stabNote[s.b] || '');
+    specCard('cStabSpec', s.n, pairs, foot);
+    thinkify();
+  }
+  (function () {
+    var sel = fresh('cStabBrand');
+    APP.stabBrands.forEach(function (b) { opt(sel, b[0], b[1]); });
+  }());
+  $('cStabBrand').addEventListener('change', function () { fillStabFull(); save(); });
+  $('cStabFull').addEventListener('change', function () { renderStabFull(); save(); });
+  $('cStabFullAdd').addEventListener('click', function () {
+    var s = stabFullPick(); if (!s) return;
+    addItem(s.n, s.p, 1, 'opt', { sub: 'источник: ' + s.src });
+  });
+
+  // ---- аспирация BELMASH: полный ряд, цена = розница × 1,2 ----
+  function aspList() { return APP.aspiration; }
+  function aspPickModel() {
+    var k = $('aspModel').value, found = null;
+    aspList().forEach(function (a) { if (a.k === k) found = a; });
+    return found;
+  }
+  function aspPrice(a) {
+    // ×1,2 к рознице, округление до 10 ₽ — правило присланного конфигуратора
+    return Math.round(a.p * APP.aspMarkup / 10) * 10;
+  }
+  function fillAsp() {
+    var sel = fresh('aspModel');
+    aspList().forEach(function (a) {
+      opt(sel, a.k, a.n + ' — ' + a.q + ' м³/ч — ' + fmtRub(toCents(aspPrice(a))) + ' ₽');
+    });
+    fillAspVolt();
+  }
+  function fillAspVolt() {
+    var a = aspPickModel(), sel = fresh('aspVolt');
+    if (!a) return;
+    (a.v || [220]).forEach(function (v) { opt(sel, String(v), v + ' В'); });
+    renderAsp();
+  }
+  function renderAsp() {
+    var a = aspPickModel();
+    if (!a) return;
+    var v = $('aspVolt').value || String((a.v || [220])[0]);
+    var pairs = [
+      ['Производительность', a.q + ' м³/ч'],
+      ['Мощность', a.w + ' Вт'],
+      ['Патрубков', a.np + ' × ' + a.dp + ' мм'],
+      ['Фильтрация', a.f + ' мкм · ' + a.fe],
+      ['Мешок', a.bag + ' л'],
+      ['Шум', a.db + ' дБ'],
+      ['Масса', a.kg + ' кг'],
+      ['Питание', v + ' В'],
+      ['Артикул', (a.art && a.art[v]) || '—'],
+      ['Розница производителя', fmtRub(toCents(a.p)) + ' ₽'],
+      ['Цена в смету (×1,2)', fmtRub(toCents(aspPrice(a))) + ' ₽']
+    ];
+    var idxKeys = Object.keys(APP.idxNotes || {}).filter(function (key) {
+      return new RegExp('(^|[^A-Z])' + key + '($|[^A-Z])').test(a.n);
+    });
+    var foot = idxKeys.length
+      ? idxKeys.map(function (k) { return k + ' — ' + APP.idxNotes[k]; }).join(' · ')
+      : 'Индексов в названии нет.';
+    specCard('aspSpec', a.n, pairs, foot);
+    thinkify();
+  }
+  $('aspModel').addEventListener('change', function () { fillAspVolt(); save(); });
+  $('aspVolt').addEventListener('change', function () { renderAsp(); save(); });
+  $('aspAdd').addEventListener('click', function () {
+    var a = aspPickModel(); if (!a) return;
+    var v = $('aspVolt').value || '220';
+    addItem('Пылеулавливающий агрегат ' + a.n + ' (' + v + ' В)', aspPrice(a), 1, 'opt',
+      { sub: 'розница ' + fmtRub(toCents(a.p)) + ' ₽ × 1,2' });
+  });
+
+  // ---- своя позиция ----
+  $('freeAdd').addEventListener('click', function () {
+    var name = ($('freeName').value || '').trim();
+    if (!name) { toast('Впишите наименование своей позиции'); return; }
+    var raw = String($('freePrice').value || '0').replace(/\s| /g, '').replace(',', '.');
+    var v = parseFloat(raw);
+    if (!(v >= 0)) v = 0;
+    addItem(name, v, 1, $('freeType').value || 'eq');
+    $('freeName').value = ''; $('freePrice').value = '';
+  });
+
+  // ---- таблетки категорий ----
+  var CAT_LABELS = [['fiber', 'Волокно по металлу'], ['milling', 'Фрезерный ЧПУ'],
+    ['co2', 'CO₂'], ['marker', 'Маркиратор']];
+  (function () {
+    var box = fresh('catPills');
+    CAT_LABELS.forEach(function (c) {
+      var b = el('button', 'pill', esc(c[1]));
+      b.type = 'button';
+      b.setAttribute('data-cat', c[0]);
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', function () {
+        $('cat').value = c[0];
+        switchCat();
+      });
+      box.appendChild(b);
+    });
+  }());
+  function markPills() {
+    var cur = $('cat').value;
+    var bs = $('catPills').querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) {
+      var on = bs[i].getAttribute('data-cat') === cur;
+      bs[i].className = on ? 'pill on' : 'pill';
+      bs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+  }
+
   function switchCat() {
     var c = $('cat').value;
     state.cat = c;
+    markPills();
     $('blkFiber').style.display = c === 'fiber' ? '' : 'none';
     $('blkMill').style.display = c === 'milling' ? '' : 'none';
     $('blkCo2').style.display = c === 'co2' ? '' : 'none';
@@ -960,7 +1143,54 @@
     if (c === 'milling') renderMill();
     if (c === 'co2') { renderCo2(); renderChiller(); renderStabOpt('cStab', 'cStabOut'); }
     if (c === 'marker') { renderMarker(); renderRot(); renderStabOpt('kStab', 'kStabOut'); }
+    thinkify();
     save();
+  }
+
+  // ---- совпадения в прайсе по каждой категории ----
+  function matchesFiber() {
+    var f = $('fFormat').value, sv = servoNow();
+    var idx = fiberSrc(sv.price_from), rows = [];
+    Object.keys(idx[f] || {}).map(Number).sort(function (a, b) { return a - b; })
+      .forEach(function (p) {
+        var r = idx[f][p];
+        rows.push({ name: nomFiber('S', f, p), price: r.base, power: String(p) });
+      });
+    return rows;
+  }
+  function matchesMill() {
+    var f = $('mFormat').value, mode = $('priceMode').value;
+    return APP.milling.filter(function (r) { return r.format === f; })
+      .map(function (r) {
+        return { name: nomMill(r.name), price: mode === 'stock' ? r.stock : r.order,
+          cfg: r.name };
+      });
+  }
+  function matchesCo2() {
+    return co2List().map(function (r) {
+      return { name: co2Name(r), price: r.price, model: r.name };
+    });
+  }
+  function matchesMarker() {
+    var mode = $('kMode').value;
+    return markerList().map(function (m) {
+      return { name: markerName(m, mode), price: mode === 'stock' ? m.stock : m.order,
+        model: m.name };
+    });
+  }
+  function renderAllMatches() {
+    renderMatches('fMatches', matchesFiber(), function (r) {
+      $('fPower').value = r.power; renderFiber(); renderServo(); renderAllMatches(); save();
+    });
+    renderMatches('mMatches', matchesMill(), function (r) {
+      $('mConfig').value = r.cfg; renderMill(); renderAllMatches(); save();
+    });
+    renderMatches('cMatches', matchesCo2(), function (r) {
+      $('cModel').value = r.model; renderCo2(); renderAllMatches(); save();
+    });
+    renderMatches('kMatches', matchesMarker(), function (r) {
+      $('kModel').value = r.model; renderMarker(); renderAllMatches(); save();
+    });
   }
   $('cat').addEventListener('change', switchCat);
 
@@ -1206,16 +1436,68 @@
     if (!n) { bar.classList.remove('show'); return; }
     var zero = 0;
     state.items.forEach(function (it) { if (!it.price) zero++; });
-    $('sumBarTx').textContent = plural(n, ['позиция', 'позиции', 'позиций']) +
+    $('sumBarTx').textContent = cnt(n, ['позиция', 'позиции']) +
       ' на ' + fmtRub(T.total) + ' ₽' +
-      (zero ? ' · ' + plural(zero, ['строка', 'строки', 'строк']) + ' без цены' : '');
+      (zero ? ' · ' + cnt(zero, ['строка', 'строк']) + ' без цены' : '');
     bar.classList.add('show');
+  }
+
+  // ------------------------------------------------- спецификация справа
+  // Зеркало сметы прямо в конфигураторе: видно, что уже набрано, и можно
+  // выбросить лишнюю строку, не уходя с экрана подбора.
+  function specText(T) {
+    var lines = [];
+    T.lines.forEach(function (L) {
+      lines.push(L.item.name + ' — ' + L.item.qty + ' шт × ' + fmt(L.unit) +
+        ' ₽ = ' + fmt(L.line) + ' ₽');
+    });
+    lines.push('');
+    lines.push('Итого: ' + fmt(T.total) + ' ₽, в т. ч. НДС ' + pctText(T.rate) +
+      ' — ' + fmt(T.nds) + ' ₽');
+    if (T.gain) lines.push('Скидка к прайсу: ' + fmt(T.gain) + ' ₽');
+    return lines.join('\n');
+  }
+  function renderSpec(T) {
+    var body = $('specBody');
+    if (!body) return;
+    clear(body);
+    var has = state.items.length > 0;
+    $('specEmpty').style.display = has ? 'none' : '';
+    $('specTable').style.display = has ? '' : 'none';
+    $('specCnt').textContent = has
+      ? cnt(state.items.length, ['позиция', 'позиции']) : '';
+    T.lines.forEach(function (L) {
+      var tr = d.createElement('tr');
+      tr.innerHTML = '<td>' + esc(L.item.short || L.item.name) +
+        (L.item.qty > 1 ? ' <span class="muted">× ' + L.item.qty + '</span>' : '') +
+        '</td><td class="num">' + (L.line ? fmtRub(L.line) + ' ₽' : '—') +
+        '</td><td class="noprint"><button class="xbtn" type="button" ' +
+        'aria-label="убрать позицию">×</button></td>';
+      tr.querySelector('button').addEventListener('click', function () {
+        var i = state.items.indexOf(L.item);
+        if (i >= 0) state.items.splice(i, 1);
+        save(); renderSmeta();
+      });
+      body.appendChild(tr);
+    });
+    var tot = $('specTotals'); clear(tot);
+    if (!has) { $('specOut').value = ''; return; }
+    function line(k, v, cls) {
+      var n = el('div', cls || '');
+      n.innerHTML = '<span>' + k + '</span><span>' + v + '</span>';
+      tot.appendChild(n);
+    }
+    if (T.gain) line('Скидка', '−' + fmtRub(T.gain) + ' ₽', 'gain');
+    line('в т. ч. НДС ' + pctText(T.rate), fmtRub(T.nds) + ' ₽');
+    line('Итого', fmtRub(T.total) + ' ₽', 'big');
+    $('specOut').value = specText(T);
   }
 
   function renderSmeta() {
     var body = $('smetaBody'); clear(body);
     var T = totals();
     renderSumBar(T);
+    renderSpec(T);
     var has = state.items.length > 0;
     $('smetaEmpty').style.display = has ? 'none' : '';
     $('smetaWrap').style.display = has ? '' : 'none';
@@ -2570,8 +2852,34 @@
   renderCompressor();
   renderExtraction();
   renderCryo();
+  $('specGo').addEventListener('click', function () { showTab('smeta'); });
+  $('specCopy').addEventListener('click', function () {
+    var ta = $('specOut');
+    if (!ta.value) { toast('Спецификация пуста'); return; }
+    ta.select();
+    var ok = false;
+    try { ok = d.execCommand('copy'); } catch (e) { ok = false; }
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(ta.value).then(function () {
+        toast('Спецификация скопирована');
+      }, function () { toast('Скопируйте текст вручную — поле уже выделено'); });
+      return;
+    }
+    toast(ok ? 'Спецификация скопирована'
+      : 'Скопируйте текст вручную — поле уже выделено');
+  });
+  $('specClear').addEventListener('click', function () {
+    if (!state.items.length) return;
+    var n = state.items.length;
+    state.items = [];
+    save(); renderSmeta();
+    toast('Убрано из сметы: ' + cnt(n, ['позиция', 'позиции']));
+  });
+
   renderStab();
   renderMgr();
+  fillStabFull();
+  fillAsp();
   fillCo2();
   fillMarkers();
   renderChiller();
@@ -2579,6 +2887,7 @@
   renderStabOpt('kStab', 'kStabOut');
   renderRot();
   switchCat();
+  renderAllMatches();
   thinkify();
   $('sumBarGo').addEventListener('click', function () { showTab('smeta'); });
   var hash = (location.hash || '').replace('#', '');
