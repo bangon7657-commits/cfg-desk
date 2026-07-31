@@ -92,7 +92,9 @@ body.demo .demo-banner{display:flex;gap:14px;align-items:center;justify-content:
 nav{display:none;background:var(--bg2);border-bottom:1px solid var(--line);
   position:sticky;top:63px;z-index:29}
 body.js nav{display:block}
-.navinner{max-width:1200px;margin:0 auto;padding:7px 12px;display:flex;gap:9px;
+/* Строка навигации шире колонки контента (1200): кнопка «Разделы» уходит
+   левее текста, и раскрытое меню ложится в свободное поле, а не на статью. */
+.navinner{max-width:1560px;margin:0 auto;padding:7px 12px;display:flex;gap:12px;
   align-items:center}
 .navtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px 0;
   flex:1 1 auto}
@@ -111,36 +113,55 @@ body.js nav{display:block}
 
 /* кнопка «Разделы» — фирменный оранжевый блок с меню */
 .navmenu{position:relative;flex:0 0 auto}
-.menubtn{font:inherit;font-size:13.5px;font-weight:700;padding:6px 14px 6px 32px;
-  border-radius:16px;cursor:pointer;border:1px solid var(--or);
+/* Кнопка «Разделы» крупнее прежней в 1.5 раза: 13.5 → 20 px, отступы и
+   иконка-гамбургер выросли пропорционально. */
+.menubtn{font:inherit;font-size:20px;font-weight:700;padding:9px 21px 9px 48px;
+  border-radius:22px;cursor:pointer;border:1px solid var(--or);
   background:color-mix(in srgb, var(--or) 16%, transparent);color:var(--or);
   position:relative;line-height:1.25;white-space:nowrap}
-.menubtn::before{content:"";position:absolute;left:12px;top:50%;
-  width:13px;height:2px;background:var(--or);border-radius:2px;
-  box-shadow:0 -4px 0 var(--or), 0 4px 0 var(--or);transform:translateY(-1px)}
+.menubtn::before{content:"";position:absolute;left:18px;top:50%;
+  width:20px;height:3px;background:var(--or);border-radius:2px;
+  box-shadow:0 -6px 0 var(--or), 0 6px 0 var(--or);transform:translateY(-1px)}
 .menubtn:hover{background:var(--or);color:var(--onor)}
 .menubtn:hover::before{background:var(--onor);
-  box-shadow:0 -4px 0 var(--onor), 0 4px 0 var(--onor)}
+  box-shadow:0 -6px 0 var(--onor), 0 6px 0 var(--onor)}
 .menulist{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:40;
-  min-width:228px;padding:6px;border-radius:13px;border:1px solid var(--line2);
-  background:color-mix(in srgb, var(--bg2) 94%, transparent);
+  min-width:288px;padding:6px;border-radius:13px;border:1px solid var(--line2);
+  background:color-mix(in srgb, var(--bg2) 97%, transparent);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   box-shadow:0 12px 32px var(--shadow)}
 .menulist.open{display:block}
-.menulist button{display:block;width:100%;font:inherit;font-size:13.5px;
-  text-align:left;padding:7px 11px;border:0;border-radius:9px;background:none;
-  color:var(--tx2);cursor:pointer;line-height:1.3}
-.menulist button:hover{background:var(--bg3);color:var(--tx)}
-.menulist button[aria-selected="true"]{color:var(--or);font-weight:700;
+/* строка меню: слева переход в раздел, справа кнопка-закрепление во вкладки */
+.menulist .mrow{display:flex;align-items:stretch;gap:2px;border-radius:9px}
+.menulist .mrow:hover{background:var(--bg3)}
+.menulist .mrow>button[data-t]{display:block;flex:1 1 auto;font:inherit;
+  font-size:13.5px;text-align:left;padding:7px 11px;border:0;border-radius:9px;
+  background:none;color:var(--tx2);cursor:pointer;line-height:1.3}
+.menulist .mrow>button[data-t]:hover{color:var(--tx)}
+.menulist .mrow>button[aria-selected="true"]{color:var(--or);font-weight:700;
   background:var(--orbg)}
-.menulist button small{display:block;font-size:11px;color:var(--muted);
-  font-weight:400;margin-top:1px}
+.menulist .mrow>button[data-t] small{display:block;font-size:11px;
+  color:var(--muted);font-weight:400;margin-top:1px}
+.pinbtn{flex:0 0 auto;width:34px;border:0;border-radius:9px;background:none;
+  color:var(--muted);cursor:pointer;font:inherit;font-size:16px;line-height:1}
+.pinbtn:hover{background:var(--bg4);color:var(--or)}
+.pinbtn[aria-pressed="true"]{color:var(--or)}
+.menulist .mfoot{display:flex;gap:6px;align-items:center;
+  border-top:1px solid var(--line);margin-top:5px;padding:6px 8px 2px}
+.menulist .mfoot span{font-size:11px;color:var(--muted);flex:1 1 auto}
+.menulist .mfoot button{font:inherit;font-size:11.5px;padding:4px 9px;
+  border:1px solid var(--line2);border-radius:8px;background:none;
+  color:var(--tx2);cursor:pointer}
+.menulist .mfoot button:hover{border-color:var(--or2);color:var(--tx)}
+/* крестик снятия вкладки — виден при наведении и всегда на тач-экранах */
+.navtabs button .tabx{font-size:14px;line-height:1;opacity:.45;margin-left:1px}
+.navtabs button:hover .tabx{opacity:1}
 @media(max-width:560px){
-  .navinner{padding:6px 10px;gap:7px}
+  .navinner{padding:6px 10px;gap:8px}
   .navtabs button{font-size:13px;padding:6px 11px}
-  .menubtn{font-size:13px;padding:6px 12px 6px 29px}
-  .menubtn::before{left:11px;width:12px}
-  .menulist{min-width:min(74vw, 300px)}
+  .menubtn{font-size:17px;padding:8px 15px 8px 40px}
+  .menubtn::before{left:15px;width:17px}
+  .menulist{min-width:min(80vw, 320px)}
 }
 .badge{background:var(--or);color:var(--onor);font-size:12px;font-weight:700;
   min-width:20px;padding:1px 6px;border-radius:10px;line-height:1.5}
@@ -798,12 +819,11 @@ body.demo .internal{display:none !important}
          Строка вкладок — только частые: так на телефоне не нужно листать. -->
     <div class="navmenu">
       <button type="button" class="menubtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Подбор и цены</button>
-      <div class="menulist" id="menuList" role="menu"><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Главная</span><small>три инструмента менеджера</small></button><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" data-t="cfg" role="menuitem" aria-selected="true"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" data-t="smeta" role="menuitem" aria-selected="false"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" data-t="match" role="menuitem" aria-selected="false"><span>Подбор по задаче</span><small>толщина и материал</small></button><button type="button" data-t="gas" role="menuitem" aria-selected="false"><span>Газ и владение</span><small>расход и стоимость</small></button><button type="button" data-t="tech" role="menuitem" aria-selected="false"><span>Техника</span><small>что режет и что внутри</small></button><button type="button" data-t="shop" role="menuitem" aria-selected="false"><span>Готовность цеха</span><small>блокеры до монтажа</small></button><button type="button" data-t="data" role="menuitem" aria-selected="false"><span>Данные</span><small>прайсы, источники, расхождения</small></button></div>
+      <div class="menulist" id="menuList" role="menu"><div class="mrow"><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Главная</span><small>три инструмента менеджера</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="cfg" role="menuitem" aria-selected="true"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="smeta" role="menuitem" aria-selected="false"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="match" role="menuitem" aria-selected="false"><span>Подбор по задаче</span><small>толщина и материал</small></button><button type="button" class="pinbtn" data-pin="match" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="gas" role="menuitem" aria-selected="false"><span>Газ и владение</span><small>расход и стоимость</small></button><button type="button" class="pinbtn" data-pin="gas" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="tech" role="menuitem" aria-selected="false"><span>Техника</span><small>что режет и что внутри</small></button><button type="button" class="pinbtn" data-pin="tech" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="shop" role="menuitem" aria-selected="false"><span>Готовность цеха</span><small>блокеры до монтажа</small></button><button type="button" class="pinbtn" data-pin="shop" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="data" role="menuitem" aria-selected="false"><span>Данные</span><small>прайсы, источники, расхождения</small></button><button type="button" class="pinbtn" data-pin="data" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 4</span><button type="button">Вернуть по умолчанию</button></div></div>
     </div>
-    <div class="navtabs" id="tabs">
-      <button data-t="home" aria-selected="false">Главная </button>
-      <button data-t="smeta" aria-selected="false">Смета и ТКП <span class="badge" id="smetaBadge"></span></button>
-    </div>
+    <!-- Строка вкладок собирается скриптом из закреплённых разделов: до
+         четырёх, выбор и снятие — через меню «Разделы» и крестик на вкладке. -->
+    <div class="navtabs" id="tabs"><button type="button" data-t="home" aria-selected="false"><span>Главная</span><span class="tabx" data-x="home" title="Убрать вкладку «Главная»">×</span></button><button type="button" data-t="build" aria-selected="false"><span>Конфигуратор</span><span class="tabx" data-x="build" title="Убрать вкладку «Конфигуратор»">×</span></button><button type="button" data-t="smeta" aria-selected="false"><span>Смета и ТКП</span><span class="badge" id="smetaBadge"></span><span class="tabx" data-x="smeta" title="Убрать вкладку «Смета и ТКП»">×</span></button><button type="button" data-t="letters" aria-selected="false"><span>Письма</span><span class="tabx" data-x="letters" title="Убрать вкладку «Письма»">×</span></button></div>
   </div>
 </nav>
 
@@ -2544,7 +2564,9 @@ var DOCX = (function () {
     // письма: шаблон, наше юрлицо, правки текста. Данные клиента тут не лежат.
     ltr: { tpl: '', sup: '', ceo: '', head: '', vals: {}, bodies: {} },
     // расчёт зарплаты
-    zp: null
+    zp: null,
+    // закреплённые вкладки в строке навигации (до четырёх)
+    pins: ['home', 'build', 'smeta', 'letters']
   };
   // Значения по умолчанию для зарплаты вынесены в функцию: их же берёт «Сбросить»
   function zpDefaults() {
@@ -2598,6 +2620,8 @@ var DOCX = (function () {
       }
       if (!state.build.slots || typeof state.build.slots !== 'object') state.build.slots = {};
       if (!Array.isArray(state.build.saved)) state.build.saved = [];
+      // черновики до версии 19 не знали про настраиваемые вкладки
+      if (!Array.isArray(state.pins)) state.pins = ['home', 'build', 'smeta', 'letters'];
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
   if (!state.zp || typeof state.zp !== 'object') state.zp = zpDefaults();
@@ -2632,21 +2656,99 @@ var DOCX = (function () {
     { id: 'shop', title: 'Готовность цеха', hint: 'блокеры до монтажа' },
     { id: 'data', title: 'Данные', hint: 'прайсы, источники, расхождения' }
   ];
-  var tabs = $('tabs').querySelectorAll('button');
-  // подписи вкладок берём из SECTIONS: иначе переименование раздела меняло
-  // бы только надпись в меню, а строка вкладок оставалась со старым текстом
-  for (var ti = 0; ti < tabs.length; ti++) {
-    var tid = tabs[ti].getAttribute('data-t');
-    SECTIONS.forEach(function (s) {
-      if (s.id !== tid) return;
-      var badge = tabs[ti].querySelector('.badge');
-      tabs[ti].textContent = s.title + ' ';
-      if (badge) tabs[ti].appendChild(badge);
+  var PINS_MAX = 4;
+  var PINS_DEF = ['home', 'build', 'smeta', 'letters'];
+  var curTab = 'cfg';
+  function secTitle(id) {
+    var t = id;
+    SECTIONS.forEach(function (s) { if (s.id === id) t = s.title; });
+    return t;
+  }
+  // Закреплённые вкладки: только существующие разделы, без повторов, до четырёх
+  function pins() {
+    var out = [], ids = SECTIONS.map(function (s) { return s.id; });
+    (Array.isArray(state.pins) ? state.pins : PINS_DEF).forEach(function (id) {
+      if (ids.indexOf(id) >= 0 && out.indexOf(id) < 0 && out.length < PINS_MAX) out.push(id);
     });
+    return out;
+  }
+  function tabBtns() { return $('tabs').querySelectorAll('button[data-t]'); }
+  // Строка вкладок собирается из закреплённых разделов. Значок сметы живёт
+  // внутри своей вкладки, поэтому код сметы проверяет его наличие.
+  function renderTabs() {
+    var box = fresh('tabs'), cur = curTab;
+    pins().forEach(function (id) {
+      var b = d.createElement('button');
+      b.type = 'button';
+      b.setAttribute('data-t', id);
+      b.setAttribute('aria-selected', id === cur ? 'true' : 'false');
+      var nm = d.createElement('span');
+      nm.textContent = secTitle(id);
+      b.appendChild(nm);
+      if (id === 'smeta') {
+        var bd = d.createElement('span');
+        bd.className = 'badge'; bd.id = 'smetaBadge';
+        bd.textContent = state.items.length ? String(state.items.length) : '';
+        b.appendChild(bd);
+      }
+      var x = d.createElement('span');
+      x.className = 'tabx';
+      x.setAttribute('data-x', id);
+      x.title = 'Убрать вкладку «' + secTitle(id) + '»';
+      x.textContent = '×';
+      b.appendChild(x);
+      b.addEventListener('click', function (e) {
+        if (e.target && e.target.getAttribute('data-x')) { unpin(id); return; }
+        showTab(id);
+      });
+      box.appendChild(b);
+    });
+    if (!pins().length) {
+      var hint = d.createElement('span');
+      hint.className = 'muted';
+      hint.style.fontSize = '12px';
+      hint.textContent = 'Вкладок нет — закрепите разделы в меню';
+      box.appendChild(hint);
+    }
+  }
+  function setPins(list) {
+    state.pins = list.slice(0, PINS_MAX);
+    save();
+    renderTabs();
+    renderMenuPins();
+    markTab(curTab);
+  }
+  function unpin(id) {
+    setPins(pins().filter(function (p) { return p !== id; }));
+    toast('Вкладка «' + secTitle(id) + '» убрана');
+  }
+  function pinToggle(id) {
+    var p = pins();
+    if (p.indexOf(id) >= 0) { unpin(id); return; }
+    if (p.length >= PINS_MAX) {
+      toast('Уже ' + PINS_MAX + ' вкладки — сначала уберите лишнюю');
+      return;
+    }
+    setPins(p.concat([id]));
+    toast('Вкладка «' + secTitle(id) + '» закреплена');
+  }
+  function renderMenuPins() {
+    var p = pins();
+    var bs = $('menuList').querySelectorAll('button[data-pin]');
+    for (var i = 0; i < bs.length; i++) {
+      var on = p.indexOf(bs[i].getAttribute('data-pin')) >= 0;
+      bs[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+      bs[i].textContent = on ? '★' : '☆';
+      bs[i].title = on ? 'Убрать из строки вкладок' : 'Закрепить вкладкой';
+    }
+    var f = $('pinsInfo');
+    if (f) f.textContent = 'Закреплено ' + p.length + ' из ' + PINS_MAX;
   }
 
   var menuList = fresh('menuList');
   SECTIONS.forEach(function (s) {
+    var row = d.createElement('div');
+    row.className = 'mrow';
     var b = d.createElement('button');
     b.type = 'button';
     b.setAttribute('data-t', s.id);
@@ -2656,8 +2758,33 @@ var DOCX = (function () {
       showTab(s.id);
       closeMenu();
     });
-    menuList.appendChild(b);
+    var pb = d.createElement('button');
+    pb.type = 'button';
+    pb.className = 'pinbtn';
+    pb.setAttribute('data-pin', s.id);
+    pb.setAttribute('aria-pressed', 'false');
+    pb.textContent = '☆';
+    pb.addEventListener('click', function (e) {
+      e.stopPropagation();
+      pinToggle(s.id);
+    });
+    row.appendChild(b);
+    row.appendChild(pb);
+    menuList.appendChild(row);
   });
+  var mfoot = d.createElement('div');
+  mfoot.className = 'mfoot';
+  mfoot.innerHTML = '<span id="pinsInfo"></span>';
+  var reset = d.createElement('button');
+  reset.type = 'button';
+  reset.textContent = 'Вернуть по умолчанию';
+  reset.addEventListener('click', function (e) {
+    e.stopPropagation();
+    setPins(PINS_DEF.slice());
+    toast('Вкладки: ' + PINS_DEF.map(secTitle).join(', '));
+  });
+  mfoot.appendChild(reset);
+  menuList.appendChild(mfoot);
 
   window.addEventListener('hashchange', function () {
     var h = (location.hash || '').replace('#', '');
@@ -2683,24 +2810,26 @@ var DOCX = (function () {
     if (e.key === 'Escape') closeMenu();
   });
 
-  function showTab(name) {
-    for (var i = 0; i < tabs.length; i++) {
-      tabs[i].setAttribute('aria-selected',
-        tabs[i].getAttribute('data-t') === name ? 'true' : 'false');
+  // Подсветка активного раздела вынесена отдельно: её же зовёт перерисовка
+  // строки вкладок после закрепления или снятия
+  function markTab(name) {
+    var tb = tabBtns();
+    for (var i = 0; i < tb.length; i++) {
+      tb[i].setAttribute('aria-selected',
+        tb[i].getAttribute('data-t') === name ? 'true' : 'false');
     }
-    var mi = $('menuList').querySelectorAll('button');
+    var mi = $('menuList').querySelectorAll('button[data-t]');
     for (var k = 0; k < mi.length; k++) {
       mi[k].setAttribute('aria-selected',
         mi[k].getAttribute('data-t') === name ? 'true' : 'false');
     }
     // Кнопка показывает, где мы находимся, если раздела нет в строке вкладок
-    var inTabs = false;
-    for (var t = 0; t < tabs.length; t++) {
-      if (tabs[t].getAttribute('data-t') === name) inTabs = true;
-    }
-    var title = name;
-    SECTIONS.forEach(function (s) { if (s.id === name) title = s.title; });
-    $('menuBtn').textContent = inTabs ? 'Разделы' : title;
+    var inTabs = pins().indexOf(name) >= 0;
+    $('menuBtn').textContent = inTabs ? 'Разделы' : secTitle(name);
+  }
+  function showTab(name) {
+    curTab = name;
+    markTab(name);
     var panels = d.querySelectorAll('.panel');
     for (var j = 0; j < panels.length; j++) {
       panels[j].classList.toggle('active', panels[j].id === 'p-' + name);
@@ -2714,9 +2843,8 @@ var DOCX = (function () {
     d.documentElement.scrollTop = 0;
     d.body.scrollTop = 0;
   }
-  for (var t = 0; t < tabs.length; t++) {
-    tabs[t].addEventListener('click', function () { showTab(this.getAttribute('data-t')); });
-  }
+  renderTabs();
+  renderMenuPins();
 
   /* Высота шапки зависит от переносов текста, поэтому прибиваем вкладки
      не к жёстким 63px из CSS, а к фактической высоте шапки. */
@@ -4027,7 +4155,9 @@ var DOCX = (function () {
     var has = state.items.length > 0;
     $('smetaEmpty').style.display = has ? 'none' : '';
     $('smetaWrap').style.display = has ? '' : 'none';
-    $('smetaBadge').textContent = has ? String(state.items.length) : '';
+    // значок живёт во вкладке «Смета и ТКП», а её могли снять из строки
+    var sBadge = $('smetaBadge');
+    if (sBadge) sBadge.textContent = has ? String(state.items.length) : '';
 
     T.lines.forEach(function (L, i) {
       var tr = d.createElement('tr');
