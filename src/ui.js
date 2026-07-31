@@ -55,7 +55,9 @@
     // приводы серии S и выбранная обвязка волокна
     servo: '', kit: { compressor: '', extraction: '', cryo: '', stab: '' },
     // имя и контакты менеджера сделки: пустые поля = менеджер из данных
-    mgr: {}
+    mgr: {},
+    // сборка комплекта по слотам: тип, содержимое слотов, сохранённые сборки
+    build: { kind: 'fiber', slots: {}, saved: [], reqOnly: false }
   };
   try {
     // v1 → v2: подхватываем черновик, сохранённый прошлой версией, и переносим его
@@ -80,6 +82,12 @@
       }
       // черновики до версии 13 не знали про своего менеджера
       if (!state.mgr || typeof state.mgr !== 'object') state.mgr = {};
+      // черновики до версии 16 не знали про сборку по слотам
+      if (!state.build || typeof state.build !== 'object') {
+        state.build = { kind: 'fiber', slots: {}, saved: [], reqOnly: false };
+      }
+      if (!state.build.slots || typeof state.build.slots !== 'object') state.build.slots = {};
+      if (!Array.isArray(state.build.saved)) state.build.saved = [];
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
 
@@ -98,6 +106,7 @@
   // Один источник истины: SECTIONS. Из него строится меню, по нему же
   // проверяется хеш в адресе.
   var SECTIONS = [
+    { id: 'build', title: 'Сборка', hint: 'слоты комплекта и проверка' },
     { id: 'cfg', title: 'Конфигуратор', hint: 'станок, обвязка, цена' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
     { id: 'match', title: 'Подбор по задаче', hint: 'толщина и материал' },
@@ -2875,6 +2884,763 @@
     save(); renderSmeta();
     toast('Убрано из сметы: ' + cnt(n, ['позиция', 'позиции']));
   });
+
+  // =====================================================================
+  //                            СБОРКА КОМПЛЕКТА
+  // Слоты вместо длинной простыни шагов: у каждого узла своё место,
+  // обязательные помечены, лишние для категории не показываются.
+  // Выбор позиции — из тех же прайсов, что и в конфигураторе.
+  // =====================================================================
+  var BUILD_KINDS = [
+    { id: 'fiber', title: 'Волоконный по металлу',
+      note: 'В цену станка входят контроллер FSCUT, голова BLT и чиллер CWFL. ' +
+        'Компрессор, вытяжка, газ, стабилизатор и ПНР — отдельные слоты.' },
+    { id: 'milling', title: 'Фрезерный с ЧПУ',
+      note: 'Чиллер нужен при водяном охлаждении шпинделя. Вакуумный стол требует ' +
+        '380 В. Аспирация и виброопоры влияют на качество и ресурс.' },
+    { id: 'co2', title: 'Лазерный CO₂',
+      note: 'Чиллер в цену не входит и обязателен. Цены CO₂ — розница с витрины сайта.' },
+    { id: 'marker', title: 'Маркиратор',
+      note: 'Питание 220 В, чиллер не нужен. Поворотная ось и ПНР — по цене к сервису.' }
+  ];
+
+  // Источники позиций для слотов. Каждый возвращает единый вид:
+  // { name, price, sub, meta } — meta нужна проверке совместимости.
+  function srcFiber() {
+    var out = [];
+    APP.fiberOrder.forEach(function (f) {
+      Object.keys(fiberIdx[f] || {}).map(Number).sort(function (a, b) { return a - b; })
+        .forEach(function (p) {
+          out.push({ name: nomFiber('S', f, p), price: fiberIdx[f][p].base,
+            sub: 'поле ' + APP.fiberFormats[f] + ' мм · приводы Yaskawa',
+            meta: { kind: 'fiber', format: f, power: p, volts: 380 } });
+        });
+    });
+    APP.fiberA.forEach(function (r) {
+      out.push({ name: nomFiber('A', r.format, r.power), price: r.price,
+        sub: 'серия A · поле ' + APP.fiberFormats[r.format] + ' мм',
+        meta: { kind: 'fiber', format: r.format, power: r.power, volts: 380 } });
+    });
+    return out;
+  }
+  function srcMill() {
+    return APP.milling.map(function (r) {
+      return { name: nomMill(r.name), price: r.order,
+        sub: 'шпиндель ' + r.kw + ' кВт · ' + r.cool + ' · стойка ' + r.ctrl +
+          (r.vac ? ' · вакуумный стол' : ''),
+        meta: { kind: 'milling', kw: r.kw, cool: r.cool, vac: r.vac,
+          format: r.format, volts: r.vac ? 380 : 220 } };
+    });
+  }
+  function srcCo2() {
+    return APP.co2.map(function (r) {
+      return { name: co2Name(r), price: r.price,
+        sub: 'поле ' + r.field + ' мм · трубка ' + r.tube + ' Вт',
+        meta: { kind: 'co2', tube: r.tube, volts: 220 } };
+    });
+  }
+  function srcMarker() {
+    return APP.markers.filter(function (m) { return !/Батарея/i.test(m.name); })
+      .map(function (m) {
+        return { name: markerName(m, 'order'), price: m.order,
+          sub: 'серия ' + m.series + (m.watt ? ' · ' + m.watt + ' Вт' : '') +
+            ' · MOPA: ' + (m.mopa ? 'да' : 'нет'),
+          meta: { kind: 'marker', watt: m.watt, volts: 220 } };
+      });
+  }
+  function srcStab() {
+    var out = APP.stabsFull.map(function (s) {
+      return { name: s.n, price: s.p,
+        sub: s.kw + ' кВт · ' + (s.ph === 1 ? '1 фаза, 220 В' : '3 фазы, 380 В') +
+          ' · ' + s.src,
+        meta: { watt: s.kw * 1000, phase: s.ph, spec: s.d, idx: s.idx, src: s.src } };
+    });
+    stabOptions().forEach(function (o) {
+      var w = parseInt(String(o.name).replace(/\D+/g, '').slice(0, 6), 10) || 0;
+      out.push({ name: nomOption(o.cat, o.name), price: o.price,
+        sub: 'из прайса опций LASERCUT',
+        meta: { watt: w, phase: /3-ЭМ|380/.test(o.name) ? 3 : 1 } });
+    });
+    return out;
+  }
+  function srcCompressor() {
+    return APP.compressors.map(function (c) {
+      return { name: c.name, price: c.price,
+        sub: c.bar + ' бар · ' + c.lmin + ' л/мин · ' + c.kw + ' кВт · ресивер ' +
+          c.tank + ' л',
+        meta: { bar: c.bar, lmin: c.lmin, tank: c.tank } };
+    });
+  }
+  function srcExtraction() {
+    return APP.extraction.map(function (e) {
+      return { name: e.name, price: e.price,
+        sub: e.flow + ' м³/ч · ' + e.kw + ' кВт · патрубок ' + e.port,
+        meta: { flow: e.flow } };
+    });
+  }
+  function srcCryo() {
+    return APP.cryo.map(function (c) {
+      return { name: c.name, price: c.price, sub: c.flow + ' нм³/ч · ' + c.src,
+        meta: { flow: c.flow } };
+    });
+  }
+  function srcChiller() {
+    return APP.chillersFull.map(function (c) {
+      return { name: 'Чиллер ' + c.n, price: c.p || 0,
+        sub: (c.kwMin ? 'шпиндель ' + c.kwMin + '–' + c.kwMax + ' кВт · ' : '') +
+          (c.p ? c.src : 'цены нет — уточнить'),
+        meta: { kwMin: c.kwMin, kwMax: c.kwMax, priced: !!c.p, spec: c.d } };
+    });
+  }
+  function srcAspiration() {
+    return APP.aspiration.map(function (a) {
+      return { name: 'Пылеулавливающий агрегат ' + a.n, price: aspPrice(a),
+        sub: a.q + ' м³/ч · ' + a.w + ' Вт · фильтр ' + a.f + ' мкм · ' + a.db + ' дБ',
+        meta: { flow: a.q, volts: (a.v || [220])[0] } };
+    });
+  }
+  function srcOptCat(cat) {
+    return APP.options.filter(function (o) { return o.cat === cat; })
+      .map(function (o) {
+        return { name: nomOption(o.cat, o.name), price: o.price, sub: cat, meta: {} };
+      });
+  }
+  function srcRotary() {
+    return APP.markerRotary.map(function (r) {
+      return { name: r.name, price: 0, sub: r.note + ' · цены в прайсе нет',
+        meta: { noPrice: true } };
+    });
+  }
+  function srcPnrMill() {
+    var out = [];
+    APP.pnrGroups.forEach(function (g) {
+      if (g.pnr) {
+        out.push({ name: 'Пусконаладочные работы — ' + g.n, price: g.pnr,
+          sub: 'выезд ' + g.d + ' дн.' + (g.eduIncl ? ' · обучение включено' : ''),
+          meta: { group: g.k, days: g.d } });
+      }
+      if (g.both) {
+        out.push({ name: 'Пусконаладочные работы и обучение — ' + g.n, price: g.both,
+          sub: 'пакет · выезд ' + g.d + ' дн.', meta: { group: g.k, days: g.d } });
+      }
+      if (g.edu) {
+        out.push({ name: 'Обучение оператора — ' + g.n, price: g.edu,
+          sub: 'отдельной услугой', meta: { group: g.k } });
+      }
+    });
+    return out;
+  }
+  function srcPnrNoPrice(kind) {
+    return APP.pnrNoPrice.filter(function (p) { return p['for'] === kind; })
+      .map(function (p) {
+        return { name: p.name + ' — цену уточнить у сервиса', price: 0,
+          sub: 'в прайсе сервиса этой категории нет', meta: { noPrice: true } };
+      });
+  }
+  function srcFree() { return []; }   // слот заполняется руками
+
+  // Описание слотов по категориям: id, подпись, обязательность, источник
+  var BUILD_SLOTS = {
+    fiber: [
+      ['machine', 'Станок', true, srcFiber],
+      ['stab', 'Стабилизатор напряжения', true, srcStab],
+      ['compressor', 'Компрессор', false, srcCompressor],
+      ['extraction', 'Дымоуловитель (ФВУ)', false, srcExtraction],
+      ['cryo', 'Источник газа (криоцилиндр)', false, srcCryo],
+      ['pnr', 'ПНР и обучение', false, function () { return srcPnrNoPrice('co2'); }],
+      ['delivery', 'Доставка и прочее', false, srcFree]
+    ],
+    milling: [
+      ['machine', 'Станок', true, srcMill],
+      ['stab', 'Стабилизатор напряжения', true, srcStab],
+      ['chiller', 'Чиллер', false, srcChiller],
+      ['sensor', 'Датчик высоты инструмента', false,
+        function () { return srcOptCat('Датчики высоты инструмента'); }],
+      ['vibro', 'Виброопоры', false, function () { return srcOptCat('Виброопоры'); }],
+      ['asp', 'Аспирация', false, srcAspiration],
+      ['ctrl', 'Стойка ЧПУ отдельной позицией', false,
+        function () { return srcOptCat('DSP-контроллеры'); }],
+      ['pnr', 'ПНР и обучение', false, srcPnrMill],
+      ['delivery', 'Доставка и прочее', false, srcFree]
+    ],
+    co2: [
+      ['machine', 'Станок', true, srcCo2],
+      ['chiller', 'Чиллер', true, srcChiller],
+      ['stab', 'Стабилизатор напряжения', true, srcStab],
+      ['extraction', 'Вытяжка (ФВУ)', false, srcExtraction],
+      ['compressor', 'Компрессор воздуха', false, srcCompressor],
+      ['pnr', 'ПНР и обучение', false, function () { return srcPnrNoPrice('co2'); }],
+      ['delivery', 'Доставка и прочее', false, srcFree]
+    ],
+    marker: [
+      ['machine', 'Маркиратор', true, srcMarker],
+      ['stab', 'Стабилизатор напряжения', false, srcStab],
+      ['rotary', 'Поворотное устройство', false, srcRotary],
+      ['extraction', 'Вытяжка (ФВУ)', false, srcExtraction],
+      ['pnr', 'ПНР и обучение', false, function () { return srcPnrNoPrice('marker'); }],
+      ['delivery', 'Доставка и прочее', false, srcFree]
+    ]
+  };
+  var SLOT_SHORT = { machine: 'СТАНОК', stab: 'СТАБ', compressor: 'КОМПР',
+    extraction: 'ФВУ', cryo: 'ГАЗ', chiller: 'ЧИЛЛЕР', sensor: 'ДАТЧИК',
+    vibro: 'ОПОРЫ', asp: 'АСПИР', ctrl: 'ЧПУ', rotary: 'ОСЬ', pnr: 'ПНР',
+    delivery: 'ДОСТАВКА' };
+
+  function buildKind() { return state.build.kind || 'fiber'; }
+  function buildSlots() { return BUILD_SLOTS[buildKind()] || BUILD_SLOTS.fiber; }
+  function slotDef(id) {
+    var found = null;
+    buildSlots().forEach(function (s) { if (s[0] === id) found = s; });
+    return found;
+  }
+  function slotItems() { return state.build.slots[buildKind()] || {}; }
+  function setSlot(id, item) {
+    if (!state.build.slots[buildKind()]) state.build.slots[buildKind()] = {};
+    if (item) state.build.slots[buildKind()][id] = item;
+    else delete state.build.slots[buildKind()][id];
+    save(); renderBuild();
+  }
+
+  // ---- диалог выбора позиции ----
+  var pickState = { slot: '', rows: [] };
+  function openPick(slotId) {
+    var def = slotDef(slotId);
+    if (!def) return;
+    pickState.slot = slotId;
+    pickState.rows = def[3]();
+    $('pickTitle').textContent = def[1] + ' — выбор позиции';
+    $('pickSearch').value = '';
+    $('pickModal').classList.add('open');
+    renderPick();
+    try { $('pickSearch').focus(); } catch (e) {}
+  }
+  function closePick() { $('pickModal').classList.remove('open'); }
+  function renderPick() {
+    var q = ($('pickSearch').value || '').trim().toLowerCase();
+    var sort = $('pickSort').value;
+    var rows = pickState.rows.filter(function (r) {
+      return !q || r.name.toLowerCase().indexOf(q) >= 0 ||
+        (r.sub || '').toLowerCase().indexOf(q) >= 0;
+    });
+    if (sort === 'asc') rows = rows.slice().sort(function (a, b) { return a.price - b.price; });
+    if (sort === 'desc') rows = rows.slice().sort(function (a, b) { return b.price - a.price; });
+    $('pickCnt').textContent = cnt(rows.length, ['позиция', 'позиции']);
+    var box = fresh('pickList');
+    if (!rows.length) {
+      box.appendChild(el('div', 'empty small',
+        pickState.rows.length
+          ? 'Ничего не найдено. Уберите часть запроса.'
+          : 'В этом слоте нет позиций с ценой — впишите её вручную кнопкой «Своя позиция».'));
+      return;
+    }
+    rows.slice(0, 200).forEach(function (r) {
+      var row = el('div', 'pickrow');
+      row.innerHTML = '<div class="pn"><b>' + esc(r.name) + '</b>' +
+        (r.sub ? '<span class="muted">' + esc(r.sub) + '</span>' : '') + '</div>' +
+        '<div class="pp">' + (r.price ? fmtRub(toCents(r.price)) + ' ₽'
+          : '<span class="muted">цену уточнить</span>') + '</div>';
+      var b = el('button', 'btn mini', 'Выбрать');
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        setSlot(pickState.slot, { name: r.name, price: r.price, sub: r.sub || '',
+          meta: r.meta || {} });
+        closePick();
+        toast('В слот «' + slotDef(pickState.slot)[1] + '»: ' +
+          (r.name.length > 40 ? r.name.slice(0, 40) + '…' : r.name));
+      });
+      row.appendChild(b);
+      box.appendChild(row);
+    });
+    if (rows.length > 200) {
+      box.appendChild(el('div', 'muted small', 'Показаны первые 200 из ' +
+        cnt(rows.length, ['позиции', 'позиций']) + ' — уточните поиск'));
+    }
+  }
+  $('pickClose').addEventListener('click', closePick);
+  $('pickSearch').addEventListener('input', renderPick);
+  $('pickSort').addEventListener('change', renderPick);
+  $('pickModal').addEventListener('click', function (e) {
+    if (e.target === $('pickModal')) closePick();
+  });
+  d.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && $('pickModal').classList.contains('open')) closePick();
+  });
+
+  // ---- проверка сборки ----
+  // Считаем то, что можно проверить по данным, и честно говорим, чего в данных нет.
+  function buildCheckList() {
+    var it = slotItems(), kind = buildKind(), out = [];
+    var machine = it.machine;
+    if (!machine) {
+      out.push(['stop', 'Станок не выбран — без него комплект не считается.']);
+      return out;
+    }
+    buildSlots().forEach(function (s) {
+      if (s[2] && !it[s[0]]) {
+        out.push(['stop', 'Обязательный слот «' + s[1] + '» пуст.']);
+      }
+    });
+    // стабилизатор: мощность и фаза
+    if (it.stab) {
+      var needW = 0;
+      if (kind === 'fiber') needW = stabNeedWatt();
+      var w = (it.stab.meta || {}).watt || 0;
+      if (needW && w && w < needW) {
+        out.push(['stop', 'Стабилизатор ' + fmtRub(toCents(w)).replace(',00', '') +
+          ' Вт не проходит: карта готовности требует от ' +
+          fmtRub(toCents(needW)).replace(',00', '') + ' Вт. Работа без подходящего ' +
+          'стабилизатора снимает гарантию.']);
+      } else if (needW && w) {
+        out.push(['ok', 'Стабилизатор проходит по мощности: ' +
+          fmtRub(toCents(w)).replace(',00', '') + ' Вт против требуемых ' +
+          fmtRub(toCents(needW)).replace(',00', '') + ' Вт.']);
+      }
+      var mv = (machine.meta || {}).volts;
+      var ph = (it.stab.meta || {}).phase;
+      if (mv === 380 && ph === 1) {
+        out.push(['stop', 'Станку нужен ввод 380 В, а стабилизатор однофазный.']);
+      }
+      if (mv === 220 && ph === 3) {
+        out.push(['warn', 'Станок на 220 В, стабилизатор трёхфазный — проверьте, ' +
+          'что в цеху есть 380 В и это оправдано.']);
+      }
+      if (!needW) {
+        out.push(['warn', 'Потребление этого станка в данных не записано — ' +
+          'мощность стабилизатора приложение не проверяет, сверьте по паспорту.']);
+      }
+    }
+    // чиллер
+    if (kind === 'milling') {
+      var kw = (machine.meta || {}).kw || 0;
+      var water = (machine.meta || {}).cool === 'водяное';
+      if (water && !it.chiller) {
+        out.push(['warn', 'Шпиндель с водяным охлаждением, а чиллер не выбран — ' +
+          'без него станок работать не должен.']);
+      }
+      if (it.chiller && it.chiller.meta && it.chiller.meta.kwMin) {
+        var c = it.chiller.meta;
+        if (kw && (kw < c.kwMin || kw > c.kwMax)) {
+          out.push(['warn', 'Чиллер рассчитан на шпиндель ' + c.kwMin + '–' + c.kwMax +
+            ' кВт, у станка ' + kw + ' кВт. Диапазоны — рекомендация производителя, ' +
+            'а не наш прайс: подтвердите у сервиса.']);
+        } else if (kw) {
+          out.push(['ok', 'Чиллер попадает в диапазон по шпинделю (' + c.kwMin + '–' +
+            c.kwMax + ' кВт).']);
+        }
+      }
+      if (!water && it.chiller) {
+        out.push(['warn', 'У станка воздушное охлаждение шпинделя — чиллер, скорее ' +
+          'всего, лишний.']);
+      }
+      if ((machine.meta || {}).vac) {
+        out.push(['warn', 'Вакуумный стол — питание 380 В: это надо учесть в ' +
+          'подготовке цеха и в стабилизаторе.']);
+      }
+    }
+    if (kind === 'fiber' && it.chiller) {
+      out.push(['warn', 'У металлореза чиллер CWFL входит в цену станка — ' +
+        'вторая единица обычно не нужна.']);
+    }
+    // компрессор против расхода воздуха
+    if (it.compressor) {
+      var lmin = (it.compressor.meta || {}).lmin || 0;
+      var maxM3 = APP.airDemand.max;                 // м³/ч на верхней толщине
+      var needL = Math.round(maxM3 * 1000 / 60 * 1.25);
+      if (lmin && lmin < needL) {
+        out.push(['warn', 'Компрессор ' + lmin + ' л/мин: верх таблицы расхода (' +
+          APP.airDemand.maxLabel + ', ' + String(maxM3).replace('.', ',') +
+          ' м³/ч) с запасом 25 % требует около ' + needL + ' л/мин.']);
+      } else if (lmin) {
+        out.push(['ok', 'Компрессор закрывает таблицу расхода с запасом.']);
+      }
+      var tank = (it.compressor.meta || {}).tank || 0;
+      if (tank && tank < APP.minTankL) {
+        out.push(['warn', 'Ресивер ' + tank + ' л меньше рекомендованных ' +
+          APP.minTankL + ' л.']);
+      }
+    }
+    // ПНР под формат станка
+    if (kind === 'milling' && it.pnr && it.pnr.meta && it.pnr.meta.group) {
+      var fmt = (machine.meta || {}).format || '';
+      var g = it.pnr.meta.group;
+      var okGroup = (g === 'mini' && (fmt === '0404' || fmt === '0609')) ||
+        (g === '6090' && fmt === '6090') || (g === '1313' && fmt === '1313') ||
+        (g === '1616' && fmt === '1616') || (g === '1325' && fmt === '1325') ||
+        (g === '2030' && (fmt === '2030' || fmt === '2040')) ||
+        g === 'm3' || g === 's4' || g === 'rd' || g === 'miniCab';
+      if (!okGroup) {
+        out.push(['warn', 'Группа ПНР не совпадает с форматом станка (' + fmt +
+          ') — сверьте строку прайса.']);
+      }
+    }
+    // позиции без цены
+    var zero = [];
+    Object.keys(it).forEach(function (k) { if (!it[k].price) zero.push(slotDef(k)[1]); });
+    if (zero.length) {
+      out.push(['warn', 'Без цены: ' + zero.join(', ') +
+        '. В смете эти строки уйдут нулём — поставьте сумму руками.']);
+    }
+    return out;
+  }
+
+  function buildTotals() {
+    var it = slotItems(), rate = parseInt($('ndsRate').value, 10) || APP.ndsDefault * 10;
+    var sum = 0, rows = [];
+    buildSlots().forEach(function (s) {
+      var v = it[s[0]];
+      if (!v) return;
+      var cents = toCents(v.price || 0);
+      sum += cents;
+      rows.push({ slot: s[0], label: s[1], item: v, cents: cents });
+    });
+    var nds = ndsIznutri(sum, rate);
+    return { rows: rows, total: sum, rate: rate, nds: nds.nds, bez: nds.bez };
+  }
+
+  function buildText(T) {
+    var lines = ['Комплект: ' + (BUILD_KINDS.filter(function (k) {
+      return k.id === buildKind(); })[0] || {}).title];
+    T.rows.forEach(function (r) {
+      lines.push(r.label + ': ' + r.item.name + ' — ' +
+        (r.cents ? fmt(r.cents) + ' ₽' : 'цену уточнить'));
+    });
+    lines.push('');
+    lines.push('Итого: ' + fmt(T.total) + ' ₽, в т. ч. НДС ' + pctText(T.rate) +
+      ' — ' + fmt(T.nds) + ' ₽');
+    lines.push('Гарантия ' + APP.guarantee.label + ' · поставка под заказ ' +
+      APP.deliveryOrder);
+    return lines.join('\n');
+  }
+
+  function renderBuild() {
+    var it = slotItems(), reqOnly = $('buildReqOnly').checked;
+    var kindDef = BUILD_KINDS.filter(function (k) { return k.id === buildKind(); })[0] ||
+      BUILD_KINDS[0];
+    $('buildKindTitle').textContent = kindDef.title;
+    $('buildKindNote').textContent = kindDef.note;
+    var bs = $('buildKinds').querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) {
+      var on = bs[i].getAttribute('data-kind') === buildKind();
+      bs[i].className = on ? 'pill on' : 'pill';
+      bs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+    // слоты
+    var box = fresh('buildSlots');
+    buildSlots().forEach(function (s) {
+      var id = s[0], label = s[1], req = s[2], v = it[id];
+      if (reqOnly && !req && !v) return;
+      var row = el('div', 'slot' + (v ? ' filled' : '') + (req ? ' req' : ''));
+      var head = el('div', 'slot-h');
+      head.innerHTML = '<b>' + esc(label) + (req ? ' <span class="star">*</span>' : '') +
+        '</b><span class="muted">' + (v ? '' : cnt(s[3]().length, ['позиция', 'позиций'])) +
+        '</span>';
+      row.appendChild(head);
+      var body = el('div', 'slot-b');
+      if (v) {
+        body.innerHTML = '<div class="slot-n"><b>' + esc(v.name) + '</b>' +
+          (v.sub ? '<span class="muted">' + esc(v.sub) + '</span>' : '') + '</div>' +
+          '<div class="slot-p">' + (v.price ? fmtRub(toCents(v.price)) + ' ₽'
+            : '<span class="muted">цену уточнить</span>') + '</div>';
+      } else {
+        body.innerHTML = '<div class="slot-n muted">Слот пуст</div><div class="slot-p"></div>';
+      }
+      var btns = el('div', 'slot-a noprint');
+      var addB = el('button', 'btn mini' + (v ? ' sec' : ''), v ? 'Заменить' : 'Добавить');
+      addB.type = 'button';
+      addB.setAttribute('data-slot', id);
+      addB.addEventListener('click', function () { openPick(id); });
+      btns.appendChild(addB);
+      if (id === 'delivery' || (v && v.price === 0) || id === 'pnr') {
+        var handB = el('button', 'btn mini sec', 'Своя позиция');
+        handB.type = 'button';
+        handB.addEventListener('click', function () {
+          var nm = prompt('Наименование позиции для слота «' + label + '»',
+            (v && v.name) || '');
+          if (nm === null) return;
+          nm = String(nm).trim();
+          if (!nm) return;
+          var pr = prompt('Цена в рублях (0 — уточняется)', v ? String(v.price) : '0');
+          if (pr === null) return;
+          var num = parseFloat(String(pr).replace(/\s| /g, '').replace(',', '.'));
+          if (!(num >= 0)) num = 0;
+          setSlot(id, { name: nm, price: num, sub: 'вписано вручную', meta: {} });
+        });
+        btns.appendChild(handB);
+      }
+      if (v) {
+        var delB = el('button', 'btn mini danger', 'Убрать');
+        delB.type = 'button';
+        delB.addEventListener('click', function () { setSlot(id, null); });
+        btns.appendChild(delB);
+      }
+      row.appendChild(body);
+      row.appendChild(btns);
+      box.appendChild(row);
+    });
+
+    // полоса заполнения
+    var fill = fresh('buildFill'), done = 0;
+    buildSlots().forEach(function (s) {
+      var v = it[s[0]];
+      if (v) done++;
+      var chip = el('span', 'chip' + (v ? ' on' : '') + (s[2] ? ' req' : ''),
+        esc(SLOT_SHORT[s[0]] || s[1]));
+      chip.setAttribute('title', s[1] + (v ? ': ' + v.name : ': пусто'));
+      fill.appendChild(chip);
+    });
+    $('buildFillCnt').textContent = done + ' из ' + buildSlots().length;
+
+    // итог
+    var T = buildTotals();
+    var body2 = fresh('buildBody');
+    var has = T.rows.length > 0;
+    $('buildEmpty').style.display = has ? 'none' : '';
+    $('buildTable').style.display = has ? '' : 'none';
+    $('buildCnt').textContent = has ? cnt(T.rows.length, ['позиция', 'позиции']) : '';
+    T.rows.forEach(function (r) {
+      var tr = d.createElement('tr');
+      tr.innerHTML = '<td>' + esc(r.label) + '<br><span class="muted">' +
+        esc(r.item.name) + '</span></td><td class="num">' +
+        (r.cents ? fmtRub(r.cents) + ' ₽' : '—') + '</td>';
+      body2.appendChild(tr);
+    });
+    var tot = fresh('buildTotals');
+    if (has) {
+      function line(k, v, cls) {
+        var n = el('div', cls || '');
+        n.innerHTML = '<span>' + k + '</span><span>' + v + '</span>';
+        tot.appendChild(n);
+      }
+      line('в т. ч. НДС ' + pctText(T.rate), fmtRub(T.nds) + ' ₽');
+      line('Итого', fmtRub(T.total) + ' ₽', 'big');
+      $('buildOut').value = buildText(T);
+    } else {
+      $('buildOut').value = '';
+    }
+
+    // проверка
+    var chk = fresh('buildCheck');
+    var list = buildCheckList();
+    var bad = list.filter(function (x) { return x[0] === 'stop'; }).length;
+    var warn = list.filter(function (x) { return x[0] === 'warn'; }).length;
+    var head2 = el('div', 'chk-h' + (bad ? ' bad' : (warn ? ' warn' : ' ok')));
+    head2.textContent = bad ? 'Сборка не годится: ' + cnt(bad, ['ошибка', 'ошибки'])
+      : (warn ? 'Сборка считается, есть ' + cnt(warn, ['замечание', 'замечания'])
+        : 'Проверка пройдена, замечаний нет');
+    chk.appendChild(head2);
+    list.forEach(function (x) {
+      chk.appendChild(el('div', 'chk-i ' + x[0], esc(x[1])));
+    });
+    thinkify();
+  }
+
+  // ---- типовые комплекты ----
+  function renderTemplates() {
+    var box = fresh('buildTemplates');
+    var kind = buildKind();
+    var tpls = BUILD_TPL.filter(function (t) { return t.kind === kind; });
+    if (!tpls.length) {
+      box.appendChild(el('div', 'muted small', 'Для этой категории типовых нет.'));
+      return;
+    }
+    tpls.forEach(function (t) {
+      var row = el('div', 'tplrow');
+      var sum = 0;
+      var items = t.pick();
+      Object.keys(items).forEach(function (k) { sum += toCents(items[k].price || 0); });
+      row.innerHTML = '<div class="pn"><b>' + esc(t.title) + '</b>' +
+        '<span class="muted">' + esc(t.hint) + '</span></div>' +
+        '<div class="pp">' + fmtRub(sum) + ' ₽</div>';
+      var b = el('button', 'btn mini sec', 'В слоты');
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        state.build.slots[kind] = items;
+        save(); renderBuild();
+        toast('Подставлен типовой комплект: ' + t.title);
+      });
+      row.appendChild(b);
+      box.appendChild(row);
+    });
+  }
+  function pickByName(rows, re) {
+    var found = null;
+    rows.forEach(function (r) { if (!found && re.test(r.name)) found = r; });
+    return found;
+  }
+  function slotItem(r) {
+    return r ? { name: r.name, price: r.price, sub: r.sub || '', meta: r.meta || {} } : null;
+  }
+  var BUILD_TPL = [
+    { kind: 'fiber', title: 'Волокно 1530, 3 кВт — под ключ',
+      hint: 'станок, стабилизатор 30 кВт, компрессор 16 бар, ФВУ, криоцилиндр',
+      pick: function () {
+        var o = {};
+        o.machine = slotItem(pickByName(srcFiber(), /S 1530 3000 Вт/));
+        o.stab = slotItem(pickByName(srcStab(), /АСН-30000\/3-ЭМ/));
+        o.compressor = slotItem(pickByName(srcCompressor(), /ESC-20X/));
+        o.extraction = slotItem(pickByName(srcExtraction(), /PA-6000CT/));
+        o.cryo = slotItem(pickByName(srcCryo(), /DPL-210/));
+        Object.keys(o).forEach(function (k) { if (!o[k]) delete o[k]; });
+        return o;
+      } },
+    { kind: 'fiber', title: 'Волокно 1530, 6 кВт с труборезом',
+      hint: 'станок с rotary, стабилизатор 60 кВт под планку 50 кВт, компрессор 22 кВт',
+      pick: function () {
+        var o = {};
+        o.machine = slotItem(pickByName(srcFiber(), /S 1530 6000 Вт/));
+        o.stab = slotItem(pickByName(srcStab(), /АСН-60000\/3-ЭМ/));
+        o.compressor = slotItem(pickByName(srcCompressor(), /ESC-30X/));
+        o.extraction = slotItem(pickByName(srcExtraction(), /PA-6000CT/));
+        Object.keys(o).forEach(function (k) { if (!o[k]) delete o[k]; });
+        return o;
+      } },
+    { kind: 'milling', title: 'Фрезер A1 1313 — рабочий минимум',
+      hint: 'станок, стабилизатор, чиллер, датчик высоты, виброопоры',
+      pick: function () {
+        var o = {};
+        o.machine = slotItem(pickByName(srcMill(), /A1 1313, 2\.2wc/));
+        o.stab = slotItem(pickByName(srcStab(), /Ресанта-8000\/1-Ц|АСН-8000\/1-Ц/));
+        o.chiller = slotItem(pickByName(srcChiller(), /CW-3000/));
+        o.sensor = slotItem(pickByName(srcOptCat('Датчики высоты инструмента'), /нажимной/i));
+        o.vibro = slotItem(pickByName(srcOptCat('Виброопоры'), /Виброопора/));
+        o.pnr = slotItem(pickByName(srcPnrMill(), /работы и обучение — A1 \/ M1 1313/));
+        Object.keys(o).forEach(function (k) { if (!o[k]) delete o[k]; });
+        return o;
+      } },
+    { kind: 'co2', title: 'CO₂ 1290 ST — витрина и реклама',
+      hint: 'станок, чиллер CW-5200, стабилизатор, вытяжка',
+      pick: function () {
+        var o = {};
+        o.machine = slotItem(pickByName(srcCo2(), /1290 ST/));
+        o.chiller = slotItem(pickByName(srcChiller(), /CW-5200/));
+        o.stab = slotItem(pickByName(srcStab(), /Ресанта-8000\/1-Ц|АСН-8000\/1-Ц/));
+        o.extraction = slotItem(pickByName(srcExtraction(), /PA-6000CT/));
+        Object.keys(o).forEach(function (k) { if (!o[k]) delete o[k]; });
+        return o;
+      } },
+    { kind: 'marker', title: 'Маркиратор FL TT 30 Вт — цех',
+      hint: 'маркиратор, стабилизатор 220 В, поворотная ось',
+      pick: function () {
+        var o = {};
+        o.machine = slotItem(pickByName(srcMarker(), /FL TT R30/));
+        o.stab = slotItem(pickByName(srcStab(), /Ресанта-5000\/1-Ц|АСН-5000\/1-Ц/));
+        o.rotary = slotItem(pickByName(srcRotary(), /кулачковое/));
+        Object.keys(o).forEach(function (k) { if (!o[k]) delete o[k]; });
+        return o;
+      } }
+  ];
+
+  // ---- сохранённые сборки ----
+  function renderSaved() {
+    var box = fresh('buildSaved');
+    var list = state.build.saved || [];
+    if (!list.length) {
+      box.appendChild(el('div', 'muted small', 'Сохранённых сборок пока нет.'));
+      return;
+    }
+    list.forEach(function (rec, i) {
+      var row = el('div', 'tplrow');
+      var n = Object.keys(rec.slots || {}).length;
+      row.innerHTML = '<div class="pn"><b>' + esc(rec.name) + '</b>' +
+        '<span class="muted">' + esc(rec.kindTitle) + ' · ' +
+        cnt(n, ['позиция', 'позиции']) + ' · ' + esc(rec.date) + '</span></div>' +
+        '<div class="pp">' + fmtRub(rec.total || 0) + ' ₽</div>';
+      var b = el('button', 'btn mini sec', 'Открыть');
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        state.build.kind = rec.kind;
+        state.build.slots[rec.kind] = JSON.parse(JSON.stringify(rec.slots));
+        save(); renderBuild(); renderTemplates();
+        toast('Открыта сборка: ' + rec.name);
+      });
+      var x = el('button', 'btn mini danger', 'Удалить');
+      x.type = 'button';
+      x.addEventListener('click', function () {
+        state.build.saved.splice(i, 1);
+        save(); renderSaved();
+      });
+      row.appendChild(b); row.appendChild(x);
+      box.appendChild(row);
+    });
+  }
+  $('buildSave').addEventListener('click', function () {
+    var name = ($('buildName').value || '').trim();
+    if (!name) { toast('Впишите название сборки'); return; }
+    var it = slotItems();
+    if (!Object.keys(it).length) { toast('Слоты пусты — сохранять нечего'); return; }
+    var T = buildTotals();
+    var kindDef = BUILD_KINDS.filter(function (k) { return k.id === buildKind(); })[0];
+    if (!state.build.saved) state.build.saved = [];
+    state.build.saved.unshift({ name: name, kind: buildKind(),
+      kindTitle: kindDef.title, slots: JSON.parse(JSON.stringify(it)),
+      total: T.total, date: new Date().toLocaleDateString('ru-RU') });
+    state.build.saved = state.build.saved.slice(0, 20);
+    $('buildName').value = '';
+    save(); renderSaved();
+    toast('Сборка сохранена в этом браузере: ' + name);
+  });
+
+  $('buildToSmeta').addEventListener('click', function () {
+    var T = buildTotals();
+    if (!T.rows.length) { toast('Слоты пусты'); return; }
+    var n = 0;
+    T.rows.forEach(function (r) {
+      var type = r.slot === 'pnr' ? 'srv' : (r.slot === 'machine' ? 'eq' : 'opt');
+      if (r.slot === 'delivery') type = 'srv';
+      addItem(r.item.name, r.item.price || 0, 1, type);
+      n++;
+    });
+    toast('Перенесено в смету: ' + cnt(n, ['позиция', 'позиции']));
+    showTab('smeta');
+  });
+  $('buildCopy').addEventListener('click', function () {
+    var ta = $('buildOut');
+    if (!ta.value) { toast('Слоты пусты'); return; }
+    ta.select();
+    var ok = false;
+    try { ok = d.execCommand('copy'); } catch (e) { ok = false; }
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(ta.value).then(function () {
+        toast('Комплект скопирован');
+      }, function () { toast('Скопируйте текст вручную — поле выделено'); });
+      return;
+    }
+    toast(ok ? 'Комплект скопирован' : 'Скопируйте текст вручную — поле выделено');
+  });
+  $('buildPrint').addEventListener('click', function () {
+    var p = $('p-build');
+    p.classList.add('printme');
+    try { window.print(); } finally {
+      setTimeout(function () { p.classList.remove('printme'); }, 300);
+    }
+  });
+  $('buildReset').addEventListener('click', function () {
+    if (!Object.keys(slotItems()).length) return;
+    state.build.slots[buildKind()] = {};
+    save(); renderBuild();
+    toast('Слоты очищены');
+  });
+  $('buildReqOnly').addEventListener('change', function () {
+    state.build.reqOnly = this.checked; save(); renderBuild();
+  });
+  (function () {
+    var box = fresh('buildKinds');
+    BUILD_KINDS.forEach(function (k) {
+      var b = el('button', 'pill', esc(k.title));
+      b.type = 'button';
+      b.setAttribute('data-kind', k.id);
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', function () {
+        state.build.kind = k.id;
+        save(); renderBuild(); renderTemplates();
+      });
+      box.appendChild(b);
+    });
+  }());
+  if (state.build.reqOnly) $('buildReqOnly').checked = true;
+  renderBuild();
+  renderTemplates();
+  renderSaved();
 
   renderStab();
   renderMgr();
