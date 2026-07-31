@@ -92,9 +92,10 @@ body.demo .demo-banner{display:flex;gap:14px;align-items:center;justify-content:
 nav{display:none;background:var(--bg2);border-bottom:1px solid var(--line);
   position:sticky;top:63px;z-index:29}
 body.js nav{display:block}
-/* Строка навигации шире колонки контента (1200): кнопка «Разделы» уходит
-   левее текста, и раскрытое меню ложится в свободное поле, а не на статью. */
-.navinner{max-width:1560px;margin:0 auto;padding:7px 12px;display:flex;gap:12px;
+/* Кнопка «Разделы» прижата к самому левому краю окна: строка навигации не
+   ограничена шириной колонки текста, слева почти нет отступа. Раскрытое меню
+   ложится в поле у края, а не на статью. */
+.navinner{max-width:none;margin:0;padding:7px 12px 7px 4px;display:flex;gap:12px;
   align-items:center}
 .navtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px 0;
   flex:1 1 auto}
@@ -113,15 +114,14 @@ body.js nav{display:block}
 
 /* кнопка «Разделы» — фирменный оранжевый блок с меню */
 .navmenu{position:relative;flex:0 0 auto}
-/* Кнопка «Разделы» крупнее прежней в 1.5 раза: 13.5 → 20 px, отступы и
-   иконка-гамбургер выросли пропорционально. */
-.menubtn{font:inherit;font-size:20px;font-weight:700;padding:9px 21px 9px 48px;
-  border-radius:22px;cursor:pointer;border:1px solid var(--or);
+/* Размер кнопки: было 20 px, стало 18 px — на 10 % меньше. */
+.menubtn{font:inherit;font-size:18px;font-weight:700;padding:8px 19px 8px 43px;
+  border-radius:20px;cursor:pointer;border:1px solid var(--or);
   background:color-mix(in srgb, var(--or) 16%, transparent);color:var(--or);
   position:relative;line-height:1.25;white-space:nowrap}
-.menubtn::before{content:"";position:absolute;left:18px;top:50%;
-  width:20px;height:3px;background:var(--or);border-radius:2px;
-  box-shadow:0 -6px 0 var(--or), 0 6px 0 var(--or);transform:translateY(-1px)}
+.menubtn::before{content:"";position:absolute;left:16px;top:50%;
+  width:18px;height:3px;background:var(--or);border-radius:2px;
+  box-shadow:0 -5px 0 var(--or), 0 5px 0 var(--or);transform:translateY(-1px)}
 .menubtn:hover{background:var(--or);color:var(--onor)}
 .menubtn:hover::before{background:var(--onor);
   box-shadow:0 -6px 0 var(--onor), 0 6px 0 var(--onor)}
@@ -157,10 +157,10 @@ body.js nav{display:block}
 .navtabs button .tabx{font-size:14px;line-height:1;opacity:.45;margin-left:1px}
 .navtabs button:hover .tabx{opacity:1}
 @media(max-width:560px){
-  .navinner{padding:6px 10px;gap:8px}
+  .navinner{padding:6px 8px 6px 3px;gap:8px}
   .navtabs button{font-size:13px;padding:6px 11px}
-  .menubtn{font-size:17px;padding:8px 15px 8px 40px}
-  .menubtn::before{left:15px;width:17px}
+  .menubtn{font-size:15.5px;padding:7px 14px 7px 36px}
+  .menubtn::before{left:13px;width:16px}
   .menulist{min-width:min(80vw, 320px)}
 }
 .badge{background:var(--or);color:var(--onor);font-size:12px;font-weight:700;
@@ -198,7 +198,37 @@ a{color:var(--or2)}
 .hero h1::before{content:"";display:inline-block;width:6px;height:22px;
   background:var(--or);border-radius:3px;margin-right:10px;vertical-align:-3px}
 .hero h1{margin:0 0 6px;font-size:24px;color:var(--tx)}
-.hero p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+.hero p{margin:0;color:var(--muted);font-size:14px;max-width:64ch;padding-right:210px}
+/* Плашка-шалость. Фон не задан — берётся фон страницы, поэтому плашка не
+   выглядит наклейкой. Лента и следы рисуются цветом текста темы, подсказка
+   всплывает при наведении и при фокусе с клавиатуры. */
+.hero{position:relative}
+.oath{position:absolute;right:0;top:-2px;width:200px;cursor:default;
+  opacity:.55;transition:opacity .16s, transform .16s}
+.oath:hover,.oath:focus-visible{opacity:1;transform:translateY(-1px);outline:none}
+.oath svg{display:block;width:100%;height:auto;overflow:visible}
+.oath-band path{fill:none;stroke:var(--tx2);stroke-width:1.6;stroke-linejoin:round}
+.oath-curl{fill:none;stroke:var(--tx2);stroke-width:1.6;stroke-linecap:round}
+.oath-steps ellipse{fill:var(--muted);opacity:.75}
+.oath-tx text{fill:var(--tx);font:700 12.5px/1 "Segoe UI",Roboto,system-ui,sans-serif;
+  letter-spacing:.4px}
+.oath:hover .oath-band path,.oath:focus-visible .oath-band path{stroke:var(--or)}
+.oath:hover .oath-curl,.oath:focus-visible .oath-curl{stroke:var(--or)}
+.oath:hover .oath-steps ellipse{fill:var(--or2)}
+.oath-tip{position:absolute;right:0;top:calc(100% + 8px);width:210px;
+  padding:8px 11px;border-radius:11px;border:1px solid var(--or);
+  background:var(--bg2);color:var(--tx);font-size:12.5px;line-height:1.4;
+  box-shadow:0 10px 26px var(--shadow);opacity:0;visibility:hidden;
+  transform:translateY(-4px);transition:.16s;z-index:20}
+.oath:hover .oath-tip,.oath:focus-visible .oath-tip{opacity:1;visibility:visible;
+  transform:translateY(0)}
+@media(max-width:900px){
+  .hero p{padding-right:0}
+  .oath{position:static;width:168px;margin-top:12px;opacity:.85}
+  .oath-tip{position:static;width:auto;opacity:1;visibility:visible;
+    transform:none;margin-top:6px;box-shadow:none;display:inline-block}
+}
+@media print{.oath{display:none}}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;
   margin-bottom:18px}
 .tile{display:flex;flex-direction:column;gap:6px;text-align:left;padding:18px;
@@ -803,7 +833,7 @@ body.demo .internal{display:none !important}
     <a class="brand" href="https://lasercut.ru/" target="_blank" rel="noopener noreferrer" title="Открыть lasercut.ru в новой вкладке">
       <img class="brand-mark" src="data:image/png;base64,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" alt="LASERCUT" width="34" height="50">
       <span class="brand-tx">Лазеркат<b>КА</b>
-        <small>конфигуратор, смета и ТКП · внутренний инструмент</small></span>
+        <small>внутренний инструмент компании</small></span>
     </a>
     <div class="head-right">
       <button type="button" class="themebtn" id="themeBtn" aria-pressed="false" title="Светлая или тёмная тема">Светлая тема</button>
@@ -841,6 +871,38 @@ body.demo .internal{display:none !important}
     <p>Три инструмента: подобрать оборудование и выпустить ТКП, напечатать письмо
       или уведомление, посчитать зарплату. Всё считается в браузере, ничего
       не уходит на сервер.</p>
+    <!-- Плашка-шалость: лента со следами, при наведении подсказка. Фон
+         прозрачный, чернила и бумага берутся из переменных темы. -->
+    <div class="oath" id="oath" tabindex="0" role="img" aria-label="Торжественно клянусь, что замышляю только шалость">
+      <svg viewBox="0 0 260 150" aria-hidden="true" focusable="false">
+        <g class="oath-steps">
+          <ellipse cx="24" cy="26" rx="4.4" ry="6.2" transform="rotate(-18 24 26)"></ellipse>
+          <ellipse cx="40" cy="46" rx="4.4" ry="6.2" transform="rotate(-12 40 46)"></ellipse>
+          <ellipse cx="30" cy="70" rx="4.2" ry="6" transform="rotate(-6 30 70)"></ellipse>
+          <ellipse cx="46" cy="92" rx="4.2" ry="6" transform="rotate(4 46 92)"></ellipse>
+          <ellipse cx="36" cy="116" rx="4" ry="5.8" transform="rotate(10 36 116)"></ellipse>
+          <ellipse cx="222" cy="30" rx="4.4" ry="6.2" transform="rotate(14 222 30)"></ellipse>
+          <ellipse cx="208" cy="52" rx="4.4" ry="6.2" transform="rotate(8 208 52)"></ellipse>
+          <ellipse cx="220" cy="76" rx="4.2" ry="6" transform="rotate(2 220 76)"></ellipse>
+          <ellipse cx="204" cy="98" rx="4.2" ry="6" transform="rotate(-6 204 98)"></ellipse>
+          <ellipse cx="216" cy="120" rx="4" ry="5.8" transform="rotate(-12 216 120)"></ellipse>
+        </g>
+        <path class="oath-curl" d="M86 20 C64 12 56 30 70 38 C80 44 92 38 92 28"></path>
+        <g class="oath-band">
+          <path d="M74 30 h112 l-9 11 h-112 z"></path>
+          <path d="M66 52 h120 l-9 11 h-120 z"></path>
+          <path d="M74 74 h112 l-9 11 h-112 z"></path>
+          <path d="M60 96 h126 l-9 11 h-126 z"></path>
+        </g>
+        <g class="oath-tx">
+          <text x="130" y="39" text-anchor="middle">I SOLEMNLY</text>
+          <text x="126" y="61" text-anchor="middle">SWEAR THAT</text>
+          <text x="130" y="83" text-anchor="middle">I AM UP</text>
+          <text x="123" y="105" text-anchor="middle">TO NO GOOD</text>
+        </g>
+      </svg>
+      <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
+    </div>
   </div>
   <div class="tiles">
     <button class="tile" type="button" data-go="build">
