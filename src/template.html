@@ -60,13 +60,7 @@
     </div>
     <div class="navtabs" id="tabs">
       <button data-t="home" aria-selected="true">Главная</button>
-      <button data-t="build" aria-selected="false">Конфигуратор</button>
-      <button data-t="letters" aria-selected="false">Письма</button>
-      <button data-t="zp" aria-selected="false">Зарплата</button>
-      <button data-t="cfg" aria-selected="false">Подбор и цены</button>
       <button data-t="smeta" aria-selected="false">Смета и ТКП <span class="badge" id="smetaBadge"></span></button>
-      <button data-t="match" aria-selected="false">Подбор по задаче</button>
-      <button data-t="gas" aria-selected="false">Газ и владение</button>
     </div>
   </div>
 </nav>
@@ -77,8 +71,6 @@
 <span class="nojs-title">Главная</span>
 <section class="panel active" id="p-home">
   <div class="hero">
-    <img class="hero-logo" src="data:image/png;base64,__LOGO_WIDE__" alt="LASERCUT"
-         width="300" height="70">
     <h1>Рабочий стол менеджера</h1>
     <p>Три инструмента: подобрать оборудование и выпустить ТКП, напечатать письмо
       или уведомление, посчитать зарплату. Всё считается в браузере, ничего
@@ -119,9 +111,8 @@
   <div class="bhead">
     <div>
       <h1 class="btitle">Письма и уведомления</h1>
-      <p class="lead">__LETTER_NOTE__</p>
     </div>
-    <div class="pills" id="ltrPills" role="tablist" aria-label="Шаблон письма"></div>
+    <div class="pills big" id="ltrPills" role="tablist" aria-label="Шаблон письма"></div>
   </div>
 
   <div class="cfggrid">
@@ -136,7 +127,7 @@
           <input type="text" id="ltrCeo" placeholder="подставится из реквизитов"></div>
       </div>
       <div id="ltrFields"></div>
-      <div class="note" id="ltrPrivacy">__LETTER_PRIVACY__</div>
+      <div class="note small" id="ltrPrivacy">__LETTER_PRIVACY__</div>
     </div>
 
     <div class="card">
@@ -150,10 +141,13 @@
         Если поле пустое, в тексте останется прочерк — заполните вручную.</div>
     </div>
 
-    <div class="card">
-      <div class="cardhead"><h2>Как это работает</h2></div>
-      <ol class="howto" id="ltrHowto"></ol>
-    </div>
+    <details class="card">
+      <summary>Как это работает и что с данными клиента</summary>
+      <div class="det-b">
+        <ol class="howto" id="ltrHowto"></ol>
+        <div class="note small">__LETTER_NOTE_2__</div>
+      </div>
+    </details>
   </div>
 
   <aside class="cfgside">
@@ -171,7 +165,7 @@
   </aside>
   </div>
 
-  <div class="step ltrstep">
+  <div class="step ltrstep printkeep">
     <div class="step-b">
       <div class="ltrpage" id="ltrPage"></div>
     </div>
@@ -304,7 +298,7 @@
     </div>
   </div>
 
-  <aside class="cfgside">
+  <aside class="cfgside printkeep">
     <div class="card spec-card">
       <div class="cardhead"><h2>На руки</h2>
         <span class="spec-cnt" id="zpRateCnt"></span></div>
@@ -406,41 +400,26 @@
 <!-- ================= КОНФИГУРАТОР ================= -->
 <span class="nojs-title">Конфигуратор</span>
 <section class="panel" id="p-cfg">
-  <p class="lead">Четыре категории: волокно по металлу (__FIBER_COUNT__, прайс от
-    __DATE_FIBER__), фрезерные с ЧПУ (__MILLING_COUNT__, прайс __DATE_MILLING__),
-    CO₂ (__CO2_COUNT__, __CO2_DATE__) и маркираторы (__MARKER_COUNT__, прайс
-    __MARKER_DATE__). НДС включён. Доставка, ПНР и обучение — сверху. Чиллер тоже
-    сверху, но у металлорезов CWFL уже входит в цену — единственное исключение.</p>
-  <p class="lead">Порядок работы один и тот же: выбрали станок → «Добавить в смету» →
-    приложение подводит к обвязке → добавили нужное → полоса внизу ведёт в смету.
-    Справа в каждом шаге — «мысли»: техничка, предупреждения и что уточнить.</p>
+  <div class="cfghead">
+    <h1 class="btitle">Подбор и цены</h1>
+    <label class="chk small"><input type="checkbox" id="cfgHints"> Показывать пояснения и техничку</label>
+  </div>
+  <details class="card" id="cfgAbout">
+    <summary>Что здесь есть и откуда цены</summary>
+    <div class="det-b">
+      <p class="muted small">Волокно по металлу — __FIBER_COUNT__, прайс от __DATE_FIBER__.
+        Фрезерные с ЧПУ — __MILLING_COUNT__, прайс __DATE_MILLING__. CO₂ — __CO2_COUNT__,
+        __CO2_DATE__. Маркираторы — __MARKER_COUNT__, прайс __MARKER_DATE__. НДС включён.
+        Доставка, ПНР и обучение — сверху. У металлорезов чиллер CWFL уже в цене.</p>
+      <p class="muted small">__UPLIFT_NOTE__</p>
+    </div>
+  </details>
 
 <div class="cfggrid">
 <div class="cfgmain">
 
   <div class="step">
     <div class="step-h"><div class="step-n">1</div>
-      <div class="step-t">Менеджер сделки<small>подставляется в подпись ТКП и в файл Word</small></div></div>
-    <div class="step-b">
-      <div class="row">
-        <div style="flex:2 1 240px"><label class="f">Имя и фамилия</label>
-          <input type="text" id="mgrName" placeholder="__MGR_NAME__"></div>
-        <div><label class="f">Должность</label>
-          <input type="text" id="mgrRole" placeholder="__MGR_ROLE__"></div>
-      </div>
-      <div class="row">
-        <div><label class="f">Телефон</label>
-          <input type="text" id="mgrPhone" placeholder="__MGR_PHONE__"></div>
-        <div><label class="f">Почта</label>
-          <input type="text" id="mgrEmail" placeholder="__MGR_EMAIL__"></div>
-      </div>
-      <div class="note" id="mgrOut"></div>
-      <button class="btn mini sec" type="button" id="mgrReset">Вернуть менеджера по умолчанию</button>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="step-n">2</div>
       <div class="step-t">Категория оборудования<small>дальше поля меняются под выбранную категорию</small></div></div>
     <div class="step-b">
       <div class="pills" id="catPills" role="tablist" aria-label="Категория оборудования"></div>
@@ -457,7 +436,7 @@
   <!-- волокно -->
   <div id="blkFiber">
     <div class="step">
-      <div class="step-h"><div class="step-n">3</div>
+      <div class="step-h"><div class="step-n">2</div>
         <div class="step-t">Конфигурация волоконного станка<small>серия, формат, мощность, модули</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -484,7 +463,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">4</div>
+      <div class="step-h"><div class="step-n">3</div>
         <div class="step-t">Цена и что входит<small>НДС включён, подготовка цеха — сверху</small></div></div>
       <div class="step-b">
         <div id="fOut"></div>
@@ -503,7 +482,7 @@
     <p class="lead">Компрессор, дымоуловитель и криоцилиндр — из коммерческих
       предложений поставщиков, цены с НДС. Добавляются в ту же смету.</p>
 <div class="step">
-    <div class="step-h"><div class="step-n">5</div>
+    <div class="step-h"><div class="step-n">4</div>
       <div class="step-t">Компрессор<small>для резки воздухом и пневматики станка</small></div></div>
     <div class="step-b">
       <div class="row">
@@ -518,7 +497,7 @@
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="step-n">6</div>
+    <div class="step-h"><div class="step-n">5</div>
       <div class="step-t">Дымоуловитель<small>вытяжка в комплекте станка есть, но фильтрации у неё нет</small></div></div>
     <div class="step-b">
       <div class="row">
@@ -533,7 +512,7 @@
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="step-n">7</div>
+    <div class="step-h"><div class="step-n">6</div>
       <div class="step-t">Криоцилиндр вместо баллонов<small>когда азота нужно много</small></div></div>
     <div class="step-b">
       <div class="row">
@@ -551,7 +530,7 @@
   </div>
 
   <div class="step">
-    <div class="step-h"><div class="step-n">8</div>
+    <div class="step-h"><div class="step-n">7</div>
       <div class="step-t">Стабилизатор напряжения<small>условие гарантии, а не опция</small></div></div>
     <div class="step-b">
       <div class="row">
@@ -618,7 +597,7 @@
   <!-- фрезерный -->
   <div id="blkMill">
     <div class="step">
-      <div class="step-h"><div class="step-n">3</div>
+      <div class="step-h"><div class="step-n">2</div>
         <div class="step-t">Конфигурация фрезерного станка<small>формат поля, затем конкретная сборка</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -634,7 +613,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">4</div>
+      <div class="step-h"><div class="step-n">3</div>
         <div class="step-t">Цена<small>две цены рядом: под заказ и из наличия</small></div></div>
       <div class="step-b">
         <div id="mOut"></div>
@@ -644,7 +623,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">5</div>
+      <div class="step-h"><div class="step-n">4</div>
         <div class="step-t">Опции и доп. оборудование<small>прайс от __DATE_OPTIONS__ · по CO₂ и маркерам аналога нет</small></div></div>
       <div class="step-b">
         <div id="mOptions"></div>
@@ -653,7 +632,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">6</div>
+      <div class="step-h"><div class="step-n">5</div>
         <div class="step-t">ПНР и обучение<small>платные услуги — не обещать как бесплатное преимущество</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -674,7 +653,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">7</div>
+      <div class="step-h"><div class="step-n">6</div>
         <div class="step-t">Аспирация BELMASH<small>полный ряд с характеристиками · розница ×1,2</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -693,7 +672,7 @@
   <!-- CO₂ -->
   <div id="blkCo2">
     <div class="step">
-      <div class="step-h"><div class="step-n">3</div>
+      <div class="step-h"><div class="step-n">2</div>
         <div class="step-t">Выбор CO₂-станка<small>бренд, затем модель — цены с сайта, __CO2_DATE__</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -714,7 +693,7 @@
     </div>
 
     <div class="step" id="stepCo2Chiller">
-      <div class="step-h"><div class="step-n">4</div>
+      <div class="step-h"><div class="step-n">3</div>
         <div class="step-t">Чиллер<small>в цену CO₂ не входит — считаем отдельной строкой</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -727,7 +706,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">5</div>
+      <div class="step-h"><div class="step-n">4</div>
         <div class="step-t">Стабилизатор напряжения<small>условие гарантии, а не опция</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -748,7 +727,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">6</div>
+      <div class="step-h"><div class="step-n">5</div>
         <div class="step-t">ПНР и обучение<small>цены по CO₂ в прайсе сервиса нет</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -763,7 +742,7 @@
   <!-- маркиратор -->
   <div id="blkMarker">
     <div class="step">
-      <div class="step-h"><div class="step-n">3</div>
+      <div class="step-h"><div class="step-n">2</div>
         <div class="step-t">Выбор маркиратора<small>серия, затем модель — прайс __MARKER_DATE__</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -785,7 +764,7 @@
     </div>
 
     <div class="step" id="stepMarkRot">
-      <div class="step-h"><div class="step-n">4</div>
+      <div class="step-h"><div class="step-n">3</div>
         <div class="step-t">Поворотное устройство<small>подбирается по детали — цен в прайсе нет</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -798,7 +777,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">5</div>
+      <div class="step-h"><div class="step-n">4</div>
         <div class="step-t">Стабилизатор напряжения<small>маркиратор — 220 В, хватает младших моделей</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -812,7 +791,7 @@
     </div>
 
     <div class="step">
-      <div class="step-h"><div class="step-n">6</div>
+      <div class="step-h"><div class="step-n">5</div>
         <div class="step-t">ПНР и обучение<small>цены по маркираторам в прайсе сервиса нет</small></div></div>
       <div class="step-b">
         <div class="row">
@@ -847,6 +826,23 @@
 </div><!-- /cfgmain -->
 
 <aside class="cfgside">
+  <div class="card mgr-card">
+    <div class="cardhead"><h2>Менеджер сделки</h2>
+      <button class="btn mini sec" type="button" id="mgrReset">По умолчанию</button></div>
+    <div class="row tight">
+      <div><label class="f">Имя и фамилия</label>
+        <input type="text" id="mgrName" placeholder="__MGR_NAME__"></div>
+      <div><label class="f">Должность</label>
+        <input type="text" id="mgrRole" placeholder="__MGR_ROLE__"></div>
+    </div>
+    <div class="row tight">
+      <div><label class="f">Телефон</label>
+        <input type="text" id="mgrPhone" placeholder="__MGR_PHONE__"></div>
+      <div><label class="f">Почта</label>
+        <input type="text" id="mgrEmail" placeholder="__MGR_EMAIL__"></div>
+    </div>
+    <div class="note small" id="mgrOut"></div>
+  </div>
   <div class="card spec-card">
     <div class="cardhead">
       <h2>Спецификация</h2>
@@ -1351,6 +1347,7 @@
       <b id="pickTitle">Выбор позиции</b>
       <button class="xbtn" type="button" id="pickClose" aria-label="закрыть">×</button>
     </div>
+    <div class="modal-cfg" id="pickCfg"></div>
     <div class="modal-f">
       <input type="search" id="pickSearch" placeholder="Поиск по названию">
       <select id="pickSort">
