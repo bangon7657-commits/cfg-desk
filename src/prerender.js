@@ -67,8 +67,8 @@ if (STAGE === 2) {
 if (STAGE !== 2) {
 
 check('ошибок JS нет', first.errors.length === 0, first.errors.join(' | '));
-check('в строке вкладок 8 частых разделов',
-  doc.querySelectorAll('#tabs button').length === 8,
+check('в строке вкладок только главная и смета',
+  doc.querySelectorAll('#tabs button').length === 2,
   'найдено ' + doc.querySelectorAll('#tabs button').length);
 check('панелей 11', doc.querySelectorAll('.panel').length === 11,
   'найдено ' + doc.querySelectorAll('.panel').length);
@@ -115,8 +115,8 @@ check('имя приложения в заголовке и манифесте',
 // конфигуратор волокна посчитал цену
 const fOut = textOf(doc, '#fOut');
 check('волокно: цена отрисована', fOut && /\d/.test(fOut), (fOut || '').slice(0, 90));
-check('волокно: S 1530 3000W = 2 867 000 ₽',
-  fOut && fOut.indexOf('2 867 000') >= 0, (fOut || '').slice(0, 120));
+check('волокно: S 1530 3000W = 3 010 400 ₽',
+  fOut && fOut.indexOf('3 010 400') >= 0, (fOut || '').slice(0, 120));
 
 // порядок форматов не должен ломаться из-за числовых ключей объекта
 const mFmts = Array.from(doc.querySelectorAll('#mFormat option')).map(o => o.value);
@@ -129,7 +129,7 @@ check('волокно: порядок форматов', fFmts.join(',') === '15
 
 // фрезерный посчитал две цены
 const mOut = textOf(doc, '#mOut');
-check('фрезерный: две цены', mOut && /225 000/.test(mOut) && /249 800/.test(mOut),
+check('фрезерный: две цены с наценкой', mOut && /236 300/.test(mOut) && /262 300/.test(mOut),
   (mOut || '').slice(0, 120));
 
 // подбор мощности и подбор фрезерного
@@ -159,8 +159,8 @@ const rows = doc.querySelectorAll('table tbody tr').length;
 check('строк в статических таблицах больше 250', rows > 250, 'найдено ' + rows);
 
 // прайс попал в файл целиком
-check('волокно: 10 237 000 ₽ в прайсе', src.indexOf('10 237 000') >= 0);
-check('фрезерные: 2 207 900 ₽ в прайсе', src.indexOf('2 207 900') >= 0);
+check('волокно: 10 748 900 ₽ в прайсе', src.indexOf('10 748 900') >= 0);
+check('фрезерные: 2 318 300 ₽ в прайсе', src.indexOf('2 318 300') >= 0);
 check('нет незаменённых плейсхолдеров', !/__[A-Z_]+__/.test(src),
   (src.match(/__[A-Z_]+__/g) || []).join(','));
 check('нет внешних скриптов', !/<script[^>]+src=/i.test(src));
@@ -184,9 +184,9 @@ const propis = textOf(doc, '#propis');
 const checkBlock = textOf(doc, '#checkBlock');
 check('смета: позиция добавилась', doc.querySelectorAll('#smetaBody tr').length === 1,
   'строк ' + doc.querySelectorAll('#smetaBody tr').length);
-check('смета: скидка 5 % от 2 867 000 = 2 723 650',
-  totals && totals.indexOf('2 723 650,00') >= 0, (totals || '').slice(0, 200));
-check('смета: выгода 143 350', totals && totals.indexOf('143 350,00') >= 0);
+check('смета: скидка 5 % от 3 010 400 = 2 859 880',
+  totals && totals.indexOf('2 859 880,00') >= 0, (totals || '').slice(0, 200));
+check('смета: выгода 150 520', totals && totals.indexOf('150 520,00') >= 0);
 check('смета: сумма прописью есть', propis && /рубл/.test(propis),
   (propis || '').slice(0, 120));
 check('смета: сходимость подтверждена',
@@ -212,7 +212,7 @@ check('печать: предпросмотр лежит внутри .kpstep',
   !!(kpStep && kpStep.querySelector('#kpPreview')),
   'предпросмотр вне .kpstep — на печать уйдёт пустой лист');
 check('печать: правило скрытия соседей на месте',
-  src.indexOf('.printme>*:not(.kpstep)') >= 0,
+  src.indexOf('.printme>*:not(.kpstep):not(.printkeep)') >= 0,
   'в CSS нет .printme>*:not(.kpstep)');
 
 // ---- фирменное оформление печатного листа (мастер-шаблон lasercut-kp) ----
@@ -347,7 +347,7 @@ check('файл: document.xml читается и закрыт',
   docXml.indexOf('<w:body>') >= 0 && /<\/w:document>$/.test(docXml),
   docXml.slice(0, 80));
 check('файл: итог совпадает с предпросмотром',
-  docXml.indexOf('2 723 650,00') >= 0 && docXml.indexOf('ИТОГО к оплате') >= 0, '');
+  docXml.indexOf('2 859 880,00') >= 0 && docXml.indexOf('ИТОГО к оплате') >= 0, '');
 check('файл: сумма прописью внутри',
   /Сумма прописью/.test(docXml) && /рубл/.test(docXml), '');
 check('файл: срок поставки 80 раб. дней',
@@ -440,22 +440,22 @@ function setServo(id) {
   return textOf(doc, '#fOut');
 }
 const priceYaPlus = setServo('yaskawa_plus');
-check('приводы: усиленный Yaskawa = 2 867 000 + 85 000',
-  priceYaPlus.indexOf('2 952 000') >= 0, priceYaPlus.slice(0, 140));
+check('приводы: усиленный Yaskawa = 3 095 400 = 3 010 400 + 85 000',
+  priceYaPlus.indexOf('3 095 400') >= 0, priceYaPlus.slice(0, 140));
 const priceBo = setServo('bochu_std');
 check('приводы: Bochu стандарт берёт цену из второго прайса',
-  priceBo.indexOf('2 669 000') >= 0, priceBo.slice(0, 140));
+  priceBo.indexOf('2 802 500') >= 0, priceBo.slice(0, 140));
 check('приводы: разница прайсов показана расчётом',
   /дешевле Yaskawa/.test(priceBo), priceBo.slice(0, 220));
 const priceBoPlus = setServo('bochu_plus');
-check('приводы: Bochu усиленный = 2 669 000 + 20 000',
-  priceBoPlus.indexOf('2 689 000') >= 0, priceBoPlus.slice(0, 140));
+check('приводы: Bochu усиленный = 2 802 500 + 20 000',
+  priceBoPlus.indexOf('2 822 500') >= 0, priceBoPlus.slice(0, 140));
 // у крупных форматов надбавка Bochu другая: 40 000
 win.document.getElementById('fFormat').value = '2060';
 win.document.getElementById('fFormat').dispatchEvent(new win.Event('change'));
 const priceBig = textOf(doc, '#fOut');
-check('приводы: на 2060 надбавка Bochu 40 000 (3 422 000 + 40 000)',
-  priceBig.indexOf('3 462 000') >= 0, priceBig.slice(0, 160));
+check('приводы: на 2060 надбавка Bochu 40 000 (3 593 100 + 40 000)',
+  priceBig.indexOf('3 633 100') >= 0, priceBig.slice(0, 160));
 const svBig = textOf(doc, '#servoOut');
 check('приводы: у крупного формата свои мощности осей',
   /2×3,9 кВт/.test(svBig), (svBig || '').slice(0, 140));
@@ -680,7 +680,7 @@ check('цена: строка помечена как правленная вр�
 // стоять в строке вместо прежней цены прайса
 check('цена: итог пересчитан от новой цены',
   /950 000,48/.test(textOf(doc, '#smetaBody')) &&
-  !/2 867 000,00/.test(textOf(doc, '#smetaBody')),
+  !/3 010 400,00/.test(textOf(doc, '#smetaBody')),
   textOf(doc, '#smetaBody').slice(0, 200));
 check('цена: сходимость итога и НДС не нарушена',
   /Сходится/.test(textOf(doc, '#checkBlock')) ||
@@ -917,7 +917,7 @@ check('спецификация: кнопка очистки опустошае�
   doc.getElementById('specEmpty').style.display === '', '');
 
 // ---- сборка комплекта по слотам (модель конфигуратора Regard) ----
-win.document.querySelector('#tabs button[data-t="build"]').click();
+win.document.querySelector('#menuList button[data-t="build"]').click();
 check('сборка: панель открывается вкладкой',
   doc.getElementById('p-build').classList.contains('active'), '');
 const kinds = doc.querySelectorAll('#buildKinds button');
@@ -1133,7 +1133,7 @@ check('письма: сказано, что данные клиента не с�
   /не сохраняются/.test(textOf(doc, '#ltrPrivacy')), '');
 
 // зарплата
-win.document.querySelector('#tabs button[data-t="zp"]').click();
+win.document.querySelector('#menuList button[data-t="zp"]').click();
 check('зарплата: панель открылась и период показан',
   doc.getElementById('p-zp').classList.contains('active') &&
   /\d{4}/.test(textOf(doc, '#zpPeriod')), textOf(doc, '#zpPeriod'));
@@ -1193,6 +1193,94 @@ check('зарплата: текст расчёта собран',
   doc.getElementById('zpOut').value.slice(0, 80));
 check('зарплата: предупреждение про производственный календарь есть',
   /производственн/.test(textOf(doc, '#zpNormWarn')), '');
+
+// ---- наценка, конфигурация станка в диалоге, печать и файл письма ----
+check('наценка: цены станков на 5 % выше прайса',
+  /на 5 % выше прайса/.test(src) && /"base": 3010400/.test(src.replace(/\s+/g, ' ')) ||
+  /3010400/.test(src), '');
+check('наценка: обвязка и опции остались по прайсу',
+  /"price": 8490/.test(src) && /"price": 630000/.test(src), '');
+
+doc.querySelector('#menuList button[data-t="build"]').click();
+doc.querySelector('#buildKinds button[data-kind="milling"]').click();
+doc.querySelector('#buildSlots .slot .btn[data-slot="machine"]').click();
+const cfgSels = doc.querySelectorAll('#pickCfg select');
+check('конфигурация: в диалоге станка есть выбор параметров',
+  cfgSels.length >= 4, 'селекторов ' + cfgSels.length);
+const cfgLabels = textOf(doc, '#pickCfg');
+check('конфигурация: шпиндель, стойка, двигатели и стол',
+  /Шпиндель/.test(cfgLabels) && /Система управления/.test(cfgLabels) &&
+  /Двигатели/.test(cfgLabels) && /Стол/.test(cfgLabels), cfgLabels.slice(0, 160));
+const rowsAll = doc.querySelectorAll('#pickList .pickrow').length;
+check('конфигурация: разница цены к базовой показана',
+  doc.querySelectorAll('#pickList .pd').length > 0,
+  'строк с разницей ' + doc.querySelectorAll('#pickList .pd').length);
+// фильтр по вакуумному столу сужает список
+const tableSel = Array.from(cfgSels).filter(sel =>
+  Array.from(sel.options).some(o => /Вакуумный/.test(o.value)))[0];
+tableSel.value = 'Вакуумный (VAC)';
+tableSel.dispatchEvent(new win.Event('change'));
+const rowsVac = doc.querySelectorAll('#pickList .pickrow').length;
+check('конфигурация: фильтр по столу сужает список',
+  rowsVac > 0 && rowsVac < rowsAll, 'было ' + rowsAll + ', стало ' + rowsVac);
+check('конфигурация: в отборе только вакуумные столы',
+  Array.from(doc.querySelectorAll('#pickList .pickrow')).every(r =>
+    /вакуумный/i.test(r.textContent)), '');
+doc.querySelector('#pickCfg .btn').click();
+check('конфигурация: сброс возвращает полный список',
+  doc.querySelectorAll('#pickList .pickrow').length === rowsAll, '');
+doc.getElementById('pickClose').click();
+
+// печать письма: лист не должен скрываться правилом печати
+doc.querySelector('#menuList button[data-t="letters"]').click();
+check('письма: лист помечен как печатаемый',
+  !!doc.querySelector('#p-letters > .ltrstep.printkeep'), '');
+check('письма: правило печати оставляет и ТКП, и лист письма',
+  src.indexOf('.printme>*:not(.kpstep):not(.printkeep)') >= 0, '');
+check('письма: пояснение убрано из шапки, кнопки шаблонов крупные',
+  !doc.querySelector('#p-letters > .bhead p.lead') &&
+  doc.getElementById('ltrPills').className.indexOf('big') >= 0 &&
+  /\.pills\.big \.pill\{font-size:15px/.test(src), '');
+// .docx: подменяем создание ссылки и ловим Blob
+let docxBlob = null, docxName = '';
+const realCreate = win.URL.createObjectURL;
+win.URL.createObjectURL = function (b) { docxBlob = b; return 'blob:test'; };
+win.URL.revokeObjectURL = function () {};
+const realClick = win.HTMLAnchorElement.prototype.click;
+win.HTMLAnchorElement.prototype.click = function () { docxName = this.download || ''; };
+doc.getElementById('ltrDocx').click();
+win.HTMLAnchorElement.prototype.click = realClick;
+win.URL.createObjectURL = realCreate;
+check('письма: файл .docx собирается без ошибки', !!docxBlob,
+  textOf(doc, '#toastText'));
+check('письма: у файла верное имя и тип',
+  /^Письмо — .+\.docx$/.test(docxName) &&
+  !!docxBlob && String(docxBlob.type || '').indexOf('wordprocessingml') >= 0 &&
+  docxBlob.size > 8000,
+  docxName + ' | тип ' + (docxBlob ? String(docxBlob.type) : 'нет blob'));
+check('письма: в тосте нет сообщения об ошибке',
+  !/Не удалось/.test(textOf(doc, '#toastText') || ''), textOf(doc, '#toastText'));
+
+// подбор и цены: подсказки скрыты, менеджер справа
+doc.querySelector('#menuList button[data-t="cfg"]').click();
+check('подбор: пояснения скрыты по умолчанию',
+  !doc.getElementById('p-cfg').classList.contains('hints') &&
+  /#p-cfg \.think,#p-cfg \.note:not\(\.stop\)\{display:none\}/.test(src), '');
+check('подбор: тумблер включает пояснения',
+  (() => { const t = win.document.getElementById('cfgHints');
+    t.checked = true; t.dispatchEvent(new win.Event('change'));
+    const on = doc.getElementById('p-cfg').classList.contains('hints');
+    t.checked = false; t.dispatchEvent(new win.Event('change'));
+    return on; })(), '');
+check('подбор: менеджер сделки в правой колонке',
+  !!doc.querySelector('#p-cfg .cfgside .mgr-card #mgrName'), '');
+check('подбор: длинный лид убран в свёрнутую справку',
+  !!doc.getElementById('cfgAbout') && !doc.querySelector('#p-cfg > p.lead'), '');
+check('главная: плашка без логотипа и рамки',
+  !doc.querySelector('#p-home .hero img') && /\.hero\{background:none;border:0/.test(src), '');
+check('навигация: остальные разделы живут в кнопке «Разделы»',
+  doc.querySelectorAll('#menuList button').length === 11 &&
+  doc.querySelectorAll('#tabs button').length === 2, '');
 
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
 // Всё, что натворили проверки, должно быть убрано: файл обязан открываться
@@ -1308,7 +1396,7 @@ check('пререндер: контент читается без скрипто
 check('пререндер: заголовки для режима без JS на месте',
   doc2.querySelectorAll('.nojs-title').length === 11,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
-check('пререндер: цены всё ещё в файле', outSrc.indexOf('2 867 000') >= 0);
+check('пререндер: цены всё ещё в файле', outSrc.indexOf('3 010 400') >= 0);
 check('пререндер: смета пуста при открытии',
   doc2.querySelectorAll('#smetaBody tr').length === 0,
   'строк ' + doc2.querySelectorAll('#smetaBody tr').length);
