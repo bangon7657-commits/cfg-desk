@@ -20,22 +20,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Применить патч из _apply, если есть
+      - name: Применить патч из _apply
         run: |
           shopt -s nullglob
           parts=(_apply/*.part*)
           if [ ${#parts[@]} -gt 0 ]; then
-            echo "частей патча: ${#parts[@]}"
-            cat _apply/*.part* | tr -d '\n' | base64 -d | xz -d > /tmp/p.patch
+            echo "частей: ${#parts[@]}"
+            cat _apply/*.part* > /tmp/p.xz
+            xz -d -c /tmp/p.xz > /tmp/p.patch
             git apply --binary -p1 /tmp/p.patch
             rm -f _apply/*.part*
+            echo "патч применён"
           fi
-          for f in _apply/*.b64; do
-            echo "патч: $f"
-            base64 -d "$f" | xz -d > /tmp/p.patch
-            git apply --binary -p1 /tmp/p.patch
-            rm -f "$f"
-          done
       - name: Собрать сайт
         run: |
           cd src
