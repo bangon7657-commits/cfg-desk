@@ -67,13 +67,13 @@ if (STAGE === 2) {
 if (STAGE !== 2) {
 
 check('ошибок JS нет', first.errors.length === 0, first.errors.join(' | '));
-check('в строке вкладок 5 частых разделов',
-  doc.querySelectorAll('#tabs button').length === 5,
+check('в строке вкладок 8 частых разделов',
+  doc.querySelectorAll('#tabs button').length === 8,
   'найдено ' + doc.querySelectorAll('#tabs button').length);
-check('панелей 8', doc.querySelectorAll('.panel').length === 8,
+check('панелей 11', doc.querySelectorAll('.panel').length === 11,
   'найдено ' + doc.querySelectorAll('.panel').length);
-check('в кнопке «Разделы» все 8 разделов',
-  doc.querySelectorAll('#menuList button').length === 8,
+check('в кнопке «Разделы» все 11 разделов',
+  doc.querySelectorAll('#menuList button').length === 11,
   'найдено ' + doc.querySelectorAll('#menuList button').length);
 check('меню закрыто при открытии',
   !doc.getElementById('menuList').classList.contains('open'), '');
@@ -374,7 +374,7 @@ check('поставщик: по умолчанию СТАНКОПРОМ',
   !!supSel && supSel.value === 'stankoprom', supSel ? supSel.value : '');
 const legalTxt0 = doc.getElementById('kpLegal').textContent.replace(/\s+/g, ' ');
 check('поставщик: статика и скрипт дают одни реквизиты',
-  legalTxt0.indexOf('ИНН/КПП 7811692637 / 781001001') >= 0 &&
+  legalTxt0.indexOf('ИНН/КПП 7811692637 / 781101001') >= 0 &&
   legalTxt0.indexOf('Греков Евгений Валерьевич') >= 0, legalTxt0.slice(0, 120));
 win.document.getElementById('kpSupplier').value = 'lasercut_td';
 win.document.getElementById('kpSupplier').dispatchEvent(new win.Event('change'));
@@ -1052,6 +1052,148 @@ check('сборка: в ней нет корзины, оплаты и консу
   (doc.getElementById('p-build').textContent
     .match(/В корзину|Купить|консультаци|Перезвоните/i) || [''])[0]);
 
+// ---- главная, письма, зарплата ----
+win.document.querySelector('#tabs button[data-t="home"]').click();
+check('главная: три плитки-инструмента',
+  doc.querySelectorAll('#p-home .tile').length === 3,
+  'плиток ' + doc.querySelectorAll('#p-home .tile').length);
+check('главная: у плиток есть переходы',
+  ['build', 'letters', 'zp'].every(k =>
+    !!doc.querySelector('#p-home .tile[data-go="' + k + '"]')), '');
+check('главная: карта разделов построена',
+  doc.querySelectorAll('#homeMap .maprow').length >= 8,
+  'строк ' + doc.querySelectorAll('#homeMap .maprow').length);
+doc.querySelector('#p-home .tile[data-go="letters"]').click();
+check('главная: плитка открывает письма',
+  doc.getElementById('p-letters').classList.contains('active'), '');
+
+// письма
+check('письма: четыре шаблона',
+  doc.querySelectorAll('#ltrPills button').length === 4,
+  'шаблонов ' + doc.querySelectorAll('#ltrPills button').length);
+check('письма: поля шаблона построены',
+  doc.querySelectorAll('#ltrFields input').length >= 10,
+  'полей ' + doc.querySelectorAll('#ltrFields input').length);
+check('письма: поля клиента помечены и пунктирные',
+  doc.querySelectorAll('#ltrFields .clientfield').length >= 4 &&
+  /\.clientfield input\{border-style:dashed/.test(src),
+  'помечено ' + doc.querySelectorAll('#ltrFields .clientfield').length);
+check('письма: на бланке фирменный логотип',
+  /^data:image\/png;base64,/.test((doc.querySelector('#ltrPage .lp-logo') || {}).src || ''), '');
+check('письма: в шапке наше юрлицо и его реквизиты',
+  /СТАНКОПРОМ/.test(textOf(doc, '#ltrPage .lp-co')) &&
+  /7811692637/.test(textOf(doc, '#ltrPage .lp-co')),
+  textOf(doc, '#ltrPage .lp-co').slice(0, 120));
+check('письма: КПП в бланке из ЕГРЮЛ',
+  /781101001/.test(textOf(doc, '#ltrPage .lp-co')), '');
+check('письма: директор Инфо-Сервиса из ЕГРЮЛ',
+  /Гладченко Владимир Александрович/.test(src), '');
+// заполняем поля и проверяем подстановки
+win.document.getElementById('lf_fromName').value = 'Иванов Иван Иванович';
+win.document.getElementById('lf_fromName').dispatchEvent(new win.Event('input'));
+win.document.getElementById('lf_sum').value = '279500';
+win.document.getElementById('lf_sum').dispatchEvent(new win.Event('input'));
+win.document.getElementById('lf_docDate').value = '2026-07-31';
+win.document.getElementById('lf_docDate').dispatchEvent(new win.Event('input'));
+const lpTxt = textOf(doc, '#ltrPage');
+check('письма: сумма подставлена цифрами и прописью',
+  /279 500,00 ₽/.test(lpTxt) && /Двести семьдесят девять тысяч пятьсот/.test(lpTxt),
+  lpTxt.slice(0, 200));
+check('письма: дата по-русски',
+  /31 июля 2026 г\./.test(lpTxt), (lpTxt.match(/\d+ \S+ 2026 г\./) || [''])[0]);
+check('письма: имя плательщика попало в бланк',
+  /Иванов Иван Иванович/.test(lpTxt), '');
+check('письма: обращение к руководителю на месте',
+  /Уважаемый Греков Евгений Валерьевич/.test(lpTxt), lpTxt.slice(0, 160));
+// правка текста
+win.document.getElementById('ltrBody').value = 'Свой текст письма для проверки.';
+win.document.getElementById('ltrBody').dispatchEvent(new win.Event('input'));
+check('письма: правка текста видна на бланке',
+  /Свой текст письма для проверки/.test(textOf(doc, '#ltrPage')), '');
+win.document.getElementById('ltrReset').click();
+check('письма: сброс возвращает шаблон',
+  !/Свой текст письма для проверки/.test(textOf(doc, '#ltrPage')) &&
+  /Гражданским кодексом/.test(textOf(doc, '#ltrPage')), '');
+// смена шаблона
+doc.querySelector('#ltrPills button[data-tpl="offset"]').click();
+check('письма: перезачёт меняет заголовок и поля',
+  /перезачёте оплаты/i.test(textOf(doc, '#ltrPage')), textOf(doc, '#ltrPage').slice(0, 120));
+doc.querySelector('#ltrPills button[data-tpl="official"]').click();
+check('письма: официальное письмо пишем мы',
+  /подтверждает/.test(textOf(doc, '#ltrPage')) &&
+  !/Уважаемый Греков/.test(textOf(doc, '#ltrPage')), '');
+doc.querySelector('#ltrPills button[data-tpl="refund"]').click();
+// приватность
+// «переносы» в тексте про календарь содержат «носов» — сверяем по границам слова
+const CLIENT_RE = /(^|[^А-Яа-яЁё])(Антонова|Носов|Гафаров|Коптев|Карпет|Клячина)([^А-Яа-яЁё]|$)/i;
+check('письма: реквизиты клиентов из бланков в приложение не попали',
+  !CLIENT_RE.test(src) && !/40817810|744401743132|100200378554|920151159689/.test(src),
+  (src.match(CLIENT_RE) || [''])[0]);
+check('письма: сказано, что данные клиента не сохраняются',
+  /не сохраняются/.test(textOf(doc, '#ltrPrivacy')), '');
+
+// зарплата
+win.document.querySelector('#tabs button[data-t="zp"]').click();
+check('зарплата: панель открылась и период показан',
+  doc.getElementById('p-zp').classList.contains('active') &&
+  /\d{4}/.test(textOf(doc, '#zpPeriod')), textOf(doc, '#zpPeriod'));
+check('зарплата: строки расчёта построены',
+  doc.querySelectorAll('#zpBody tr').length >= 1,
+  'строк ' + doc.querySelectorAll('#zpBody tr').length);
+check('зарплата: на руки посчитано',
+  /₽/.test(textOf(doc, '#zpHero')) && /На руки/.test(textOf(doc, '#zpTotals')),
+  textOf(doc, '#zpHero').slice(0, 90));
+// контрольный расчёт: оклад 100 000 грязными, норма 20 дн, отработано 20
+['zpSalary:100000', 'zpNormDays:20', 'zpNormHours:160', 'zpWorked:20',
+  'zpBonus:0', 'zpPenalty:0', 'zpOther:0', 'zpNdfl:13', 'zpInternal:9']
+  .forEach(pair => {
+    const [id, v] = pair.split(':');
+    const n = win.document.getElementById(id);
+    n.value = v;
+    n.dispatchEvent(new win.Event('input'));
+  });
+const zpTot = textOf(doc, '#zpTotals');
+check('зарплата: НДФЛ 13 % от 100 000 = 13 000',
+  /13 000,00/.test(textOf(doc, '#zpBody')), textOf(doc, '#zpBody').slice(-160));
+check('зарплата: внутренний налог 9 % = 9 000',
+  /9 000,00/.test(textOf(doc, '#zpBody')), '');
+check('зарплата: на руки 78 000',
+  /78 000,00/.test(zpTot), zpTot);
+// «чистыми» разворачивается обратно
+win.document.getElementById('zpMode').value = 'net';
+win.document.getElementById('zpMode').dispatchEvent(new win.Event('change'));
+check('зарплата: оклад «на руки» разворачивается в начисленный',
+  /128 205,13/.test(textOf(doc, '#zpBody')) || /128 205/.test(textOf(doc, '#zpTotals')),
+  textOf(doc, '#zpTotals'));
+win.document.getElementById('zpMode').value = 'gross';
+win.document.getElementById('zpMode').dispatchEvent(new win.Event('change'));
+// больничный: первые три дня работодатель, остальное СФР
+['zpSickDays:10', 'zpSickDaily:2000', 'zpSickYears:8'].forEach(pair => {
+  const [id, v] = pair.split(':');
+  const n = win.document.getElementById(id);
+  n.value = v; n.dispatchEvent(new win.Event('input'));
+});
+check('зарплата: три дня больничного платит работодатель',
+  /3 дн\. от работодателя \(100 %/.test(textOf(doc, '#zpBody')),
+  textOf(doc, '#zpBody').slice(-200));
+check('зарплата: остальные дни больничного показаны как СФР',
+  /Больничный от СФР/.test(textOf(doc, '#zpTotals')), textOf(doc, '#zpTotals'));
+['zpSickDays:0', 'zpSickDaily:0'].forEach(pair => {
+  const [id, v] = pair.split(':');
+  const n = win.document.getElementById(id);
+  n.value = v; n.dispatchEvent(new win.Event('input'));
+});
+check('зарплата: кнопка нормы по будням работает',
+  (() => { win.document.getElementById('zpFillNorm').click();
+    return Number(doc.getElementById('zpNormDays').value) >= 20; })(),
+  'дней ' + doc.getElementById('zpNormDays').value);
+check('зарплата: текст расчёта собран',
+  /Начислено:/.test(doc.getElementById('zpOut').value) &&
+  /На руки:/.test(doc.getElementById('zpOut').value),
+  doc.getElementById('zpOut').value.slice(0, 80));
+check('зарплата: предупреждение про производственный календарь есть',
+  /производственн/.test(textOf(doc, '#zpNormWarn')), '');
+
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
 // Всё, что натворили проверки, должно быть убрано: файл обязан открываться
 // чистым. Забытый след один раз уже уезжал в выпуск — теперь список полный,
@@ -1080,16 +1222,18 @@ doc.getElementById('saveDot').textContent = '';
 // поля шапки ТКП, заполненные проверками
 ['kpClient', 'kpInn', 'kpNum', 'kpContact', 'kpPhone', 'kpNote', 'kpDate', 'kpTitle',
   'mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail', 'freeName', 'freePrice', 'specOut',
-  'buildName', 'buildOut', 'pickSearch']
+  'buildName', 'buildOut', 'pickSearch', 'ltrHead', 'ltrBody', 'ltrCeo', 'zpOut']
   .forEach(id => { const n = doc.getElementById(id); if (n) n.value = ''; });
 // правая спецификация: в выпуске смета пуста, значит и она пустая
 ['specBody', 'specTotals', 'buildBody', 'buildTotals', 'buildCheck', 'pickList',
-  'buildSaved'].forEach(id => {
+  'buildSaved', 'ltrFields', 'ltrPage', 'zpBody', 'zpTotals', 'zpHero',
+  'zpNormWarn'].forEach(id => {
   const n = doc.getElementById(id); if (n) n.innerHTML = '';
 });
 const specCntNode = doc.getElementById('specCnt');
 if (specCntNode) specCntNode.textContent = '';
-['specCnt', 'buildCnt', 'buildFillCnt', 'pickCnt'].forEach(id => {
+['specCnt', 'buildCnt', 'buildFillCnt', 'pickCnt', 'ltrPageCnt', 'ltrTitle',
+  'ltrHint', 'zpPeriod', 'zpRateCnt'].forEach(id => {
   const n = doc.getElementById(id); if (n) n.textContent = '';
 });
 const pickModalNode = doc.getElementById('pickModal');
@@ -1162,7 +1306,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 8,
+  doc2.querySelectorAll('.nojs-title').length === 11,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('2 867 000') >= 0);
 check('пререндер: смета пуста при открытии',
