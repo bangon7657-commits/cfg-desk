@@ -11,13 +11,18 @@
     return n;
   }
   // согласование существительного с числом: 1,5 баллона / 5 баллонов
+  // Три формы: 1 позиция · 2 позиции · 5 позиций. Если передали две формы,
+  // вторая работает и как «мало», и как «много» — прежнее поведение.
   function plural(n, forms) {
+    var few = forms.length > 2 ? forms[1] : forms[0];
+    var many = forms.length > 2 ? forms[2] : forms[1];
     var whole = Math.floor(n);
-    if (n !== whole) return forms[0];          // дробное — всегда «баллона»
+    if (n !== whole) return few;               // дробное — «2,5 баллона»
     var m = whole % 100;
-    if (m >= 11 && m <= 19) return forms[1];
+    if (m >= 11 && m <= 19) return many;
     m = whole % 10;
-    return (m >= 2 && m <= 4) || m === 1 ? forms[0] : forms[1];
+    if (m === 1) return forms[0];
+    return (m >= 2 && m <= 4) ? few : many;
   }
 
   // первая буква строчной: сумма прописью в середине фразы не должна начинаться с большой
@@ -485,7 +490,7 @@
     });
     if (rows.length > 12) {
       n.appendChild(el('div', 'muted', 'Показаны первые 12 из ' +
-        cnt(rows.length, ['строки', 'строк'])));
+        cnt(rows.length, ['строка', 'строки', 'строк'])));
     }
   }
 
@@ -495,7 +500,9 @@
   // Функция идемпотентна, её можно звать после любой перерисовки.
   var THINK_SEL = '.note, .calcsteps, .muted, .advice, .miss';
   function thinkify() {
-    var bodies = d.querySelectorAll('.step-b');
+    // В смете и ТКП боковая колонка мешает читать таблицу — там пояснения
+    // остаются в потоке под шагом.
+    var bodies = d.querySelectorAll('.panel:not(#p-smeta) .step-b');
     for (var i = 0; i < bodies.length; i++) {
       var b = bodies[i];
       var side = null, main = null;
@@ -833,12 +840,18 @@
         var row = el('div', 'chk');
         row.innerHTML = '<span style="flex:1">' + esc(o.name) + ' — <b style="color:var(--or)">' +
           fmtRub(toCents(o.price)) + ' ₽</b></span>';
-        var qty = el('input');
-        qty.type = 'number'; qty.min = '1'; qty.max = '20'; qty.value = '1';
-        qty.style.width = '68px'; qty.style.padding = '6px 8px';
+        var qty = el('select');
+        qty.style.width = '84px'; qty.style.padding = '6px 8px';
         if (/Виброопор/i.test(c)) {
+          // опоры продаются комплектом под станок: 4/6/8/10 шт
+          APP.vibroQtyChoices.forEach(function (n4) {
+            opt(qty, String(n4), n4 + ' шт');
+          });
           var f = $('mFormat').value;
-          if (APP.vibroQty[f]) qty.value = APP.vibroQty[f];
+          qty.value = String(APP.vibroQty[f] || 4);
+        } else {
+          for (var qi = 1; qi <= 20; qi++) opt(qty, String(qi), String(qi));
+          qty.value = '1';
         }
         var btn = el('button', 'btn mini sec', 'В смету');
         btn.type = 'button';
@@ -1587,9 +1600,9 @@
     if (!n) { bar.classList.remove('show'); return; }
     var zero = 0;
     state.items.forEach(function (it) { if (!it.price) zero++; });
-    $('sumBarTx').textContent = cnt(n, ['позиция', 'позиции']) +
+    $('sumBarTx').textContent = cnt(n, ['позиция', 'позиции', 'позиций']) +
       ' на ' + fmtRub(T.total) + ' ₽' +
-      (zero ? ' · ' + cnt(zero, ['строка', 'строк']) + ' без цены' : '');
+      (zero ? ' · ' + cnt(zero, ['строка', 'строки', 'строк']) + ' без цены' : '');
     bar.classList.add('show');
   }
 
@@ -1616,7 +1629,7 @@
     $('specEmpty').style.display = has ? 'none' : '';
     $('specTable').style.display = has ? '' : 'none';
     $('specCnt').textContent = has
-      ? cnt(state.items.length, ['позиция', 'позиции']) : '';
+      ? cnt(state.items.length, ['позиция', 'позиции', 'позиций']) : '';
     T.lines.forEach(function (L) {
       var tr = d.createElement('tr');
       tr.innerHTML = '<td>' + esc(L.item.short || L.item.name) +
@@ -1901,29 +1914,27 @@
     // в статике ниже — им номера подставляет тот же счётчик.
     if (kpMode().id !== 'full') { setStaticSectionNumbers(2, 3); return; }
     var n = 2;
-    var cfg = fiberInSmeta();
+    // разделы собираются по станку из сметы: фрезер, CO₂, маркиратор, волокно
+    var mach = machineInSmeta();
 
     box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Что закрывает эта конфигурация'));
-    var rows = configRows(cfg);
+    var rows = kindConfigRows(mach);
     if (rows.length) {
       box.appendChild(kpPairTable(rows));
     } else {
-      box.appendChild(el('p', 'kp-propis', 'В смете нет волоконного станка — раздел ' +
+      box.appendChild(el('p', 'kp-propis', 'В смете нет станка — раздел ' +
         'заполняется по выбранной конфигурации.'));
     }
 
-    box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Комплектация'));
-    var inc = el('ul', 'kp-list');
-    APP.kpIncluded.forEach(function (x) { inc.appendChild(el('li', '', esc(x))); });
-    if (cfg) {
-      inc.appendChild(el('li', '', 'Контроллер <b>' + esc(cfg.ctrl) + '</b>, голова <b>' +
-        esc(cfg.head) + '</b>, чиллер ' + esc(cfg.chiller)));
-    }
+    box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Комплектация' +
+      (mach ? ' — ' + esc(mach.title) : '')));
+    var incl = kindIncluded(mach), inc = el('ul', 'kp-list');
+    incl.list.forEach(function (x) { inc.appendChild(el('li', '', esc(x))); });
     box.appendChild(inc);
-    box.appendChild(el('p', 'kp-propis', esc(APP.kpIncludedNote)));
+    box.appendChild(el('p', 'kp-propis', esc(incl.note)));
 
     box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Технические характеристики'));
-    box.appendChild(kpPairTable(techRows(cfg)));
+    box.appendChild(kpPairTable(kindTechRows(mach)));
     box.appendChild(el('p', 'kp-propis',
       'Серийные параметры — по карточке модели производителя. Точные характеристики ' +
       'конкретного исполнения подтверждаются паспортом завода при отгрузке.'));
@@ -1936,7 +1947,7 @@
     box.appendChild(steps);
 
     box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Преимущества'));
-    box.appendChild(kpPairTable(APP.kpAdvantages));
+    box.appendChild(kpPairTable(kindAdvantages(mach)));
 
     // статические «Условия поставки» и «Гарантия и сервис» идут следом
     setStaticSectionNumbers(n, n + 1);
@@ -1981,6 +1992,141 @@
     return found;
   }
 
+  // Станок из сметы для полного ТКП. Раньше разделы всегда собирались по
+  // волокну, и в КП на фрезер уезжала чужая комплектация с преимуществами
+  // про волоконный источник. Теперь тип определяется по наименованию.
+  function machineInSmeta() {
+    var fib = fiberInSmeta();
+    if (fib) return { kind: 'fiber', title: 'волоконный станок по металлу', cfg: fib };
+    var found = null;
+    state.items.forEach(function (it) {
+      if (found || it.type !== 'eq') return;
+      if (/Фрезерный станок/i.test(it.name)) {
+        found = { kind: 'milling', title: 'фрезерный станок с ЧПУ', name: it.name };
+      } else if (/Лазерный станок CO₂/i.test(it.name)) {
+        found = { kind: 'co2', title: 'лазерный CO₂-станок', name: it.name };
+      } else if (/маркиратор/i.test(it.name)) {
+        found = { kind: 'marker', title: 'лазерный маркиратор', name: it.name };
+      }
+    });
+    return found;
+  }
+  // Строка таблицы характеристик фрезера: ищем модель в TECH_MILL по
+  // совпадению «серия + формат», иначе — по формату
+  function millTechRow(name) {
+    var s = String(name || ''), hit = null;
+    APP.techMill.forEach(function (r) {
+      if (hit) return;
+      var key = String(r[0]);
+      if (new RegExp('\\b' + key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\s*\/\s*/g, '|') + '\\b', 'i').test(s)) hit = r;
+    });
+    if (!hit) {
+      APP.techMill.forEach(function (r) {
+        if (hit) return;
+        var f = (/(\d{4})/.exec(String(r[0])) || [])[1];
+        if (f && new RegExp('\\b' + f + '\\b').test(s)) hit = r;
+      });
+    }
+    return hit;
+  }
+  // Охлаждение шпинделя надёжнее читать из шифра модели (2.2wc / 6.0ac),
+  // чем из таблицы: там у части строк стоит «—»
+  function millCooling(name) {
+    var s2 = String(name || '');
+    if (/\d\s*wc/i.test(s2)) return 'водяное';
+    if (/\d\s*ac/i.test(s2)) return 'воздушное';
+    return '';
+  }
+  // Пустые и неподтверждённые значения в КП клиенту не показываем
+  function firmRows(rows) {
+    return rows.filter(function (r) {
+      var v = String(r[1] === undefined || r[1] === null ? '' : r[1]).trim();
+      return v && v !== '—' && !/^уточнить$/i.test(v) && !/^—/.test(v);
+    });
+  }
+  function millFormat(name) {
+    var f = (/\b(0404|0609|6090|1313|1325|1616|1625|1630|2030|2040|2060)\b/
+      .exec(String(name || '')) || [])[1] || '';
+    return f;
+  }
+  // «Что закрывает эта конфигурация» по типу станка
+  function kindConfigRows(m) {
+    if (!m) return [];
+    if (m.kind === 'fiber') return configRows(m.cfg);
+    var rows = [];
+    if (m.kind === 'milling') {
+      var f = millFormat(m.name), tr2 = millTechRow(m.name);
+      if (APP.millFields[f]) rows.push(['Рабочее поле', APP.millFields[f] + ' мм']);
+      if (tr2) {
+        rows.push(['Шпиндель', tr2[1]]);
+        rows.push(['Охлаждение шпинделя', millCooling(m.name) || tr2[3]]);
+        rows.push(['Ход по Z', tr2[4]]);
+      }
+      if (/VAC/i.test(m.name)) rows.push(['Стол', 'вакуумный (VAC), питание 380 В']);
+      else rows.push(['Стол', 'профильный (Т-паз), питание 220 В']);
+      rows = firmRows(rows);
+      APP.millMaterials.forEach(function (r) {
+        // столбцы таблицы: A1 · M1 · M3 — берём тот, что соответствует серии
+        var col = /M3/i.test(m.name) ? 3 : (/M1|M2/i.test(m.name) ? 2 : 1);
+        rows.push([r[0], r[col]]);
+      });
+      return rows;
+    }
+    if (m.kind === 'co2') {
+      rows.push(['Материалы', 'фанера, МДФ, дерево, акрил, кожа, ткань, картон, ' +
+        'резина, пластик']);
+      rows.push(['Чего не берёт', 'металл (кроме NC-C — до 1,5 мм) и ПВХ-плёнку']);
+      rows.push(['Охлаждение', 'водяное, чиллер S&A по мощности трубки']);
+      return rows;
+    }
+    rows.push(['Назначение', 'маркировка и гравировка по металлу и части пластиков']);
+    rows.push(['Обвязка', 'поворотное устройство и вытяжка — отдельными позициями']);
+    return rows;
+  }
+  // Комплектация по типу станка
+  function kindIncluded(m) {
+    if (!m) return { list: [], note: APP.kpIncludedNote };
+    if (m.kind === 'fiber') {
+      var list = APP.kpIncluded.slice();
+      var c = m.cfg;
+      if (c) {
+        list.push('Контроллер ' + c.ctrl + ', голова ' + c.head + ', чиллер ' + c.chiller);
+      }
+      return { list: list, note: APP.kpIncludedNote };
+    }
+    return { list: (APP.kpIncludedByKind[m.kind] || []).slice(),
+      note: APP.kpIncludedKindNote[m.kind] || APP.kpIncludedNote };
+  }
+  // Технические характеристики по типу станка
+  function kindTechRows(m) {
+    if (!m) return techRows(null);
+    if (m.kind === 'fiber') return techRows(m.cfg);
+    var rows = [['Модель', m.name]];
+    if (m.kind === 'milling') {
+      var tr3 = millTechRow(m.name);
+      if (tr3) {
+        rows.push(['Шпиндель', tr3[1]]);
+        rows.push(['Цанга', tr3[2]]);
+        rows.push(['Охлаждение', millCooling(m.name) || tr3[3]]);
+        rows.push(['Ход по Z', tr3[4]]);
+        rows.push(['Стойка ЧПУ', tr3[5]]);
+        rows.push(['Масса', tr3[6]]);
+      }
+      rows.push(['Механика', 'привод X и Y — кривозубая рейка, Z — ШВП, ' +
+        'направляющие Hiwin 20, смазка ручная']);
+    }
+    rows.push(['Соответствие', 'ТР ТС 004/2011, 010/2011, 020/2011']);
+    return firmRows(rows);
+  }
+  // Преимущества: две строки говорят про волоконный источник — в ТКП на
+  // фрезер, CO₂ или маркиратор они не идут
+  function kindAdvantages(m) {
+    var kind = m ? m.kind : 'fiber';
+    return APP.kpAdvantages.filter(function (r) {
+      return kind === 'fiber' || APP.kpAdvFiberOnly.indexOf(r[0]) < 0;
+    });
+  }
   function configRows(cfg) {
     if (!cfg) return [];
     var rows = [
@@ -2215,31 +2361,28 @@
     // Полный вариант: те же разделы, что в предпросмотре
     var secNo = 2;
     if (kpMode().id === 'full') {
-      var cfg = fiberInSmeta();
+      var mach = machineInSmeta();
       out += dSection(secNo++, 'Что закрывает эта конфигурация');
-      var cRows = configRows(cfg);
+      var cRows = kindConfigRows(mach);
       if (cRows.length) {
         out += pairTableRows(cRows);
       } else {
-        out += DOCX.p(DOCX.run('В смете нет волоконного станка — раздел заполняется ' +
+        out += DOCX.p(DOCX.run('В смете нет станка — раздел заполняется ' +
           'по выбранной конфигурации.', { sz: 17, color: GREY }), { space: { after: 80 } });
       }
       out += dGap();
 
-      out += dSection(secNo++, 'Комплектация');
-      APP.kpIncluded.forEach(function (x) {
+      out += dSection(secNo++, 'Комплектация' + (mach ? ' — ' + mach.title : ''));
+      var incl = kindIncluded(mach);
+      incl.list.forEach(function (x) {
         out += DOCX.p(DOCX.run('•  ' + x, { sz: 17 }), { space: { after: 20 } });
       });
-      if (cfg) {
-        out += DOCX.p(DOCX.run('•  Контроллер ' + cfg.ctrl + ', голова ' + cfg.head +
-          ', чиллер ' + cfg.chiller, { sz: 17 }), { space: { after: 20 } });
-      }
-      out += DOCX.p(DOCX.run(APP.kpIncludedNote, { sz: 15, color: GREY }),
+      out += DOCX.p(DOCX.run(incl.note, { sz: 15, color: GREY }),
         { space: { after: 80 } });
       out += dGap();
 
       out += dSection(secNo++, 'Технические характеристики');
-      out += pairTableRows(techRows(cfg));
+      out += pairTableRows(kindTechRows(mach));
       out += DOCX.p(DOCX.run('Серийные параметры — по карточке модели производителя. ' +
         'Точные характеристики конкретного исполнения подтверждаются паспортом ' +
         'завода при отгрузке.', { sz: 15, color: GREY }), { space: { after: 80 } });
@@ -2253,7 +2396,7 @@
       out += dGap();
 
       out += dSection(secNo++, 'Преимущества');
-      out += pairTableRows(APP.kpAdvantages);
+      out += pairTableRows(kindAdvantages(mach));
       out += dGap();
     }
 
@@ -2828,7 +2971,7 @@
     out.appendChild(el('div', 'note',
       'Один баллон 40 л даёт ' + String(perCyl).replace('.', ',') + ' м³ газа, ' +
       'значит на максимальном расходе этот криоцилиндр заменяет около ' +
-      String(cyls).replace('.', ',') + ' ' + plural(cyls, ['баллона', 'баллонов']) +
+      String(cyls).replace('.', ',') + ' ' + plural(cyls, ['баллон', 'баллона', 'баллонов']) +
       ' в час непрерывной резки.'));
   }
 
@@ -3037,7 +3180,7 @@
     var n = state.items.length;
     state.items = [];
     save(); renderSmeta();
-    toast('Убрано из сметы: ' + cnt(n, ['позиция', 'позиции']));
+    toast('Убрано из сметы: ' + cnt(n, ['позиция', 'позиции', 'позиций']));
   });
 
   // =====================================================================
@@ -3764,7 +3907,48 @@
         meta: { noPrice: true } };
     });
   }
+  // Группа прайса сервиса по модели фрезера: правила лежат в данных,
+  // поэтому ПНР подтягивается к станку сам и выбирать модель дважды не нужно
+  function millPnrGroup(name) {
+    var s = String(name || ''), hit = '';
+    APP.pnrGroupRules.forEach(function (r) {
+      if (hit) return;
+      if (new RegExp(r[0], 'i').test(s)) hit = r[1];
+    });
+    return hit;
+  }
+  function pnrGroupById(k) {
+    var g = null;
+    APP.pnrGroups.forEach(function (x) { if (x.k === k) g = x; });
+    return g;
+  }
+  // Позиция ПНР по группе станка и виду работ из APP.pnrKinds
+  function pnrItem(groupKey, kindKey) {
+    var g = pnrGroupById(groupKey);
+    if (!g) return null;
+    var kd = null;
+    APP.pnrKinds.forEach(function (x) { if (x.k === kindKey) kd = x; });
+    if (!kd) return null;
+    var price = g[kindKey];
+    if (!price) return null;
+    return { name: kd.nom + ' — ' + g.n, price: price,
+      sub: kindKey === 'edu' ? 'отдельной услугой'
+        : 'выезд ' + g.d + ' дн.' + (g.eduIncl ? ' · обучение включено' : ''),
+      meta: { group: g.k, kind: kindKey, days: g.d } };
+  }
   function srcPnrMill() {
+    // если станок в слоте уже выбран, показываем только его группу:
+    // менеджеру остаётся выбрать вид работ, а не искать модель в списке
+    var mach = (slotItems().machine || {}).name || '';
+    var gk = millPnrGroup(mach);
+    if (gk && pnrGroupById(gk)) {
+      var only = [];
+      APP.pnrKinds.forEach(function (kd) {
+        var it = pnrItem(gk, kd.k);
+        if (it) only.push(it);
+      });
+      if (only.length) return only;
+    }
     var out = [];
     APP.pnrGroups.forEach(function (g) {
       if (g.pnr) {
@@ -3847,10 +4031,33 @@
     return found;
   }
   function slotItems() { return state.build.slots[buildKind()] || {}; }
+  // Слоты, где позиция считается штуками: виброопоры ставят комплектом
+  var QTY_SLOTS = { vibro: true };
+  function slotQty(v) {
+    var q = parseInt((v || {}).qty, 10);
+    return q > 0 ? Math.min(99, q) : 1;
+  }
+  function setSlotQty(id, q) {
+    var box = state.build.slots[buildKind()];
+    if (!box || !box[id]) return;
+    box[id].qty = Math.max(1, Math.min(99, parseInt(q, 10) || 1));
+    save(); renderBuild();
+  }
+  // Количество опор по формату станка из слота: прайс задаёт его для 6090…2040
+  function vibroDefaultQty() {
+    var m = slotItems().machine;
+    var f = m && m.meta ? m.meta.format : '';
+    return APP.vibroQty[f] || 4;
+  }
   function setSlot(id, item) {
     if (!state.build.slots[buildKind()]) state.build.slots[buildKind()] = {};
-    if (item) state.build.slots[buildKind()][id] = item;
-    else delete state.build.slots[buildKind()][id];
+    if (item) {
+      // опоры сразу берут количество по формату станка, дальше меняется кнопками
+      if (QTY_SLOTS[id] && !item.qty) item.qty = vibroDefaultQty();
+      state.build.slots[buildKind()][id] = item;
+    } else {
+      delete state.build.slots[buildKind()][id];
+    }
     save(); renderBuild();
   }
 
@@ -3978,7 +4185,7 @@
     }
     if (sort === 'asc') rows = rows.slice().sort(function (a, b) { return a.price - b.price; });
     if (sort === 'desc') rows = rows.slice().sort(function (a, b) { return b.price - a.price; });
-    $('pickCnt').textContent = cnt(rows.length, ['позиция', 'позиции']);
+    $('pickCnt').textContent = cnt(rows.length, ['позиция', 'позиции', 'позиций']);
     var box = fresh('pickList');
     if (!rows.length) {
       box.appendChild(el('div', 'empty small',
@@ -4013,7 +4220,7 @@
     });
     if (rows.length > 200) {
       box.appendChild(el('div', 'muted small', 'Показаны первые 200 из ' +
-        cnt(rows.length, ['позиции', 'позиций']) + ' — уточните поиск'));
+        cnt(rows.length, ['позиция', 'позиции', 'позиций']) + ' — уточните поиск'));
     }
   }
   $('pickClose').addEventListener('click', closePick);
@@ -4149,9 +4356,11 @@
     buildSlots().forEach(function (s) {
       var v = it[s[0]];
       if (!v) return;
-      var cents = toCents(v.price || 0);
+      // у слотов со штучными позициями (виброопоры) цена умножается на количество
+      var q = slotQty(v);
+      var cents = toCents(v.price || 0) * q;
       sum += cents;
-      rows.push({ slot: s[0], label: s[1], item: v, cents: cents });
+      rows.push({ slot: s[0], label: s[1], item: v, qty: q, cents: cents });
     });
     var nds = ndsIznutri(sum, rate);
     return { rows: rows, total: sum, rate: rate, nds: nds.nds, bez: nds.bez };
@@ -4161,7 +4370,8 @@
     var lines = ['Комплект: ' + (BUILD_KINDS.filter(function (k) {
       return k.id === buildKind(); })[0] || {}).title];
     T.rows.forEach(function (r) {
-      lines.push(r.label + ': ' + r.item.name + ' — ' +
+      lines.push(r.label + ': ' + r.item.name +
+        ((r.qty || 1) > 1 ? ' × ' + r.qty + ' шт' : '') + ' — ' +
         (r.cents ? fmt(r.cents) + ' ₽' : 'цену уточнить'));
     });
     lines.push('');
@@ -4192,17 +4402,60 @@
       var row = el('div', 'slot' + (v ? ' filled' : '') + (req ? ' req' : ''));
       var head = el('div', 'slot-h');
       head.innerHTML = '<b>' + esc(label) + (req ? ' <span class="star">*</span>' : '') +
-        '</b><span class="muted">' + (v ? '' : cnt(s[3]().length, ['позиция', 'позиций'])) +
+        '</b><span class="muted">' + (v ? '' : cnt(s[3]().length, ['позиция', 'позиции', 'позиций'])) +
         '</span>';
       row.appendChild(head);
       var body = el('div', 'slot-b');
       if (v) {
+        var q = slotQty(v), sumC = toCents(v.price || 0) * q;
         body.innerHTML = '<div class="slot-n"><b>' + esc(v.name) + '</b>' +
-          (v.sub ? '<span class="muted">' + esc(v.sub) + '</span>' : '') + '</div>' +
-          '<div class="slot-p">' + (v.price ? fmtRub(toCents(v.price)) + ' ₽'
+          (v.sub ? '<span class="muted">' + esc(v.sub) + '</span>' : '') +
+          (QTY_SLOTS[id] && q > 1 ? '<span class="muted">' + q + ' шт × ' +
+            fmtRub(toCents(v.price || 0)) + ' ₽</span>' : '') + '</div>' +
+          '<div class="slot-p">' + (v.price ? fmtRub(sumC) + ' ₽'
             : '<span class="muted">цену уточнить</span>') + '</div>';
       } else {
         body.innerHTML = '<div class="slot-n muted">Слот пуст</div><div class="slot-p"></div>';
+      }
+      // Количество для штучных слотов: типовые комплекты опор 4/6/8/10
+      var extras = [];
+      if (QTY_SLOTS[id] && v) {
+        var qrow = el('div', 'slot-q noprint');
+        qrow.appendChild(el('span', 'muted', 'Количество'));
+        APP.vibroQtyChoices.forEach(function (n3) {
+          var qb = el('button', 'pill sm' + (slotQty(v) === n3 ? ' on' : ''), n3 + ' шт');
+          qb.type = 'button';
+          qb.setAttribute('data-qty', String(n3));
+          qb.addEventListener('click', function () { setSlotQty(id, n3); });
+          qrow.appendChild(qb);
+        });
+        extras.push(qrow);
+      }
+      // ПНР у фрезеров тянется к станку: модель уже известна, выбираем вид работ
+      if (id === 'pnr' && buildKind() === 'milling') {
+        var mach2 = it.machine, gk2 = millPnrGroup((mach2 || {}).name || '');
+        var prow = el('div', 'slot-q noprint');
+        if (!mach2) {
+          prow.appendChild(el('span', 'muted', 'Сначала выберите станок — ' +
+            'цена ПНР подтянется по его модели'));
+        } else if (!gk2) {
+          prow.appendChild(el('span', 'muted', 'Для этой модели строки в прайсе ' +
+            'сервиса нет — цену уточнить'));
+        } else {
+          prow.appendChild(el('span', 'muted', pnrGroupById(gk2).n));
+          APP.pnrKinds.forEach(function (kd) {
+            var pi = pnrItem(gk2, kd.k);
+            if (!pi) return;
+            var on = v && v.meta && v.meta.kind === kd.k && v.meta.group === gk2;
+            var pb2 = el('button', 'pill sm' + (on ? ' on' : ''),
+              kd.label + ' · ' + fmtRub(toCents(pi.price)) + ' ₽');
+            pb2.type = 'button';
+            pb2.setAttribute('data-pnr', kd.k);
+            pb2.addEventListener('click', function () { setSlot('pnr', pi); });
+            prow.appendChild(pb2);
+          });
+        }
+        extras.push(prow);
       }
       var btns = el('div', 'slot-a noprint');
       var addB = el('button', 'btn mini' + (v ? ' sec' : ''), v ? 'Заменить' : 'Добавить');
@@ -4234,6 +4487,7 @@
         btns.appendChild(delB);
       }
       row.appendChild(body);
+      extras.forEach(function (x) { row.appendChild(x); });
       row.appendChild(btns);
       box.appendChild(row);
     });
@@ -4256,7 +4510,7 @@
     var has = T.rows.length > 0;
     $('buildEmpty').style.display = has ? 'none' : '';
     $('buildTable').style.display = has ? '' : 'none';
-    $('buildCnt').textContent = has ? cnt(T.rows.length, ['позиция', 'позиции']) : '';
+    $('buildCnt').textContent = has ? cnt(T.rows.length, ['позиция', 'позиции', 'позиций']) : '';
     T.rows.forEach(function (r) {
       var tr = d.createElement('tr');
       tr.innerHTML = '<td>' + esc(r.label) + '<br><span class="muted">' +
@@ -4284,8 +4538,8 @@
     var bad = list.filter(function (x) { return x[0] === 'stop'; }).length;
     var warn = list.filter(function (x) { return x[0] === 'warn'; }).length;
     var head2 = el('div', 'chk-h' + (bad ? ' bad' : (warn ? ' warn' : ' ok')));
-    head2.textContent = bad ? 'Сборка не годится: ' + cnt(bad, ['ошибка', 'ошибки'])
-      : (warn ? 'Сборка считается, есть ' + cnt(warn, ['замечание', 'замечания'])
+    head2.textContent = bad ? 'Сборка не годится: ' + cnt(bad, ['ошибка', 'ошибки', 'ошибок'])
+      : (warn ? 'Сборка считается, есть ' + cnt(warn, ['замечание', 'замечания', 'замечаний'])
         : 'Проверка пройдена, замечаний нет');
     chk.appendChild(head2);
     list.forEach(function (x) {
@@ -4403,7 +4657,7 @@
       var n = Object.keys(rec.slots || {}).length;
       row.innerHTML = '<div class="pn"><b>' + esc(rec.name) + '</b>' +
         '<span class="muted">' + esc(rec.kindTitle) + ' · ' +
-        cnt(n, ['позиция', 'позиции']) + ' · ' + esc(rec.date) + '</span></div>' +
+        cnt(n, ['позиция', 'позиции', 'позиций']) + ' · ' + esc(rec.date) + '</span></div>' +
         '<div class="pp">' + fmtRub(rec.total || 0) + ' ₽</div>';
       var b = el('button', 'btn mini sec', 'Открыть');
       b.type = 'button';
@@ -4447,10 +4701,10 @@
     T.rows.forEach(function (r) {
       var type = r.slot === 'pnr' ? 'srv' : (r.slot === 'machine' ? 'eq' : 'opt');
       if (r.slot === 'delivery') type = 'srv';
-      addItem(r.item.name, r.item.price || 0, 1, type);
+      addItem(r.item.name, r.item.price || 0, r.qty || 1, type);
       n++;
     });
-    toast('Перенесено в смету: ' + cnt(n, ['позиция', 'позиции']));
+    toast('Перенесено в смету: ' + cnt(n, ['позиция', 'позиции', 'позиций']));
     showTab('smeta');
   });
   $('buildCopy').addEventListener('click', function () {
