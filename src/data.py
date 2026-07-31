@@ -1415,3 +1415,52 @@ PNR_NO_PRICE = [
 PNR_NO_PRICE_NOTE = ('В прайсе сервиса ПНР и обучение есть только по фрезерным '
                      'станкам. Для CO₂ и маркираторов цену запрашивают у сервиса: '
                      'позиция добавится в смету с нулём, сумму поставьте руками.')
+
+
+# ---------------------------------------------------------------------------
+# Наценка на станки. Решение от 31.07.2026: цены всех станков поднимаются
+# на 5 % к прайсу с округлением до 100 ₽ вверх при половине. Поднимаются
+# ТОЛЬКО станки: волокно (A, S, S-Bochu), фрезерные, CO₂, маркираторы.
+# Обвязка, опции, стабилизаторы, чиллеры, аспирация, ПНР и сервис остаются
+# по прайсу — их цены дают поставщики, и наценка там считается отдельно.
+# Исходные значения выше в файле не тронуты: множитель применяется здесь,
+# чтобы всегда было видно, что именно к ним прибавлено.
+# ---------------------------------------------------------------------------
+PRICE_UPLIFT_PCT = 5
+PRICE_UPLIFT_NOTE = (
+    'Цены станков в приложении на 5 % выше прайса — это решение по наценке '
+    'от 31.07.2026, округление до 100 ₽. Обвязка, опции и услуги идут по прайсу.')
+
+
+def _uplift(value):
+    """+5 % с округлением до 100 ₽ (половина — вверх)."""
+    if not value:
+        return value
+    from decimal import Decimal as _D, ROUND_HALF_UP as _HU
+    hundreds = (_D(value) * _D(100 + PRICE_UPLIFT_PCT) / _D(100) / _D(100)
+                ).quantize(_D('1'), rounding=_HU)
+    return int(hundreds) * 100
+
+
+# Копии до наценки: verify.py проверяет правила прайса (+11 % «из наличия»)
+# и контрольную сумму именно по ним, иначе наценка выглядела бы как порча данных.
+import copy as _copy
+FIBER_A_BASE = dict(FIBER_A)
+FIBER_S_BASE = _copy.deepcopy(FIBER_S)
+FIBER_S_BOCHU_BASE = _copy.deepcopy(FIBER_S_BOCHU)
+MILLING_BASE = list(MILLING)
+CO2_BASE = list(CO2)
+MARKERS_BASE = list(MARKERS)
+
+FIBER_A = {k: _uplift(v) for k, v in FIBER_A.items()}
+for _cfg in list(FIBER_S.values()) + list(FIBER_S_BOCHU.values()):
+    _cfg['base'] = _uplift(_cfg['base'])
+    _cfg['table'] = _uplift(_cfg['table'])
+    _cfg['rot'] = {k: _uplift(v) for k, v in _cfg['rot'].items()}
+    _cfg['table_rot'] = {k: _uplift(v) for k, v in _cfg['table_rot'].items()}
+MILLING = [(f, n, kw, c, ct, v, _uplift(o), _uplift(s))
+           for f, n, kw, c, ct, v, o, s in MILLING]
+CO2 = [(b, n, fl, t, ctrl, _uplift(w), _uplift(p))
+       for b, n, fl, t, ctrl, w, p in CO2]
+MARKERS = [(s, n, sr, w, m, _uplift(o), _uplift(st))
+           for s, n, sr, w, m, o, st in MARKERS]
