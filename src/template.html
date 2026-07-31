@@ -59,7 +59,8 @@
       <div class="menulist" id="menuList" role="menu"></div>
     </div>
     <div class="navtabs" id="tabs">
-      <button data-t="cfg" aria-selected="true">Конфигуратор</button>
+      <button data-t="build" aria-selected="true">Сборка</button>
+      <button data-t="cfg" aria-selected="false">Конфигуратор</button>
       <button data-t="smeta" aria-selected="false">Смета и ТКП <span class="badge" id="smetaBadge"></span></button>
       <button data-t="match" aria-selected="false">Подбор по задаче</button>
       <button data-t="gas" aria-selected="false">Газ и владение</button>
@@ -69,9 +70,88 @@
 
 <div class="wrap">
 
+<!-- ================= СБОРКА ================= -->
+<span class="nojs-title">Сборка</span>
+<section class="panel active" id="p-build">
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Сборка комплекта</h1>
+      <p class="lead">Слоты вместо длинных шагов: станок и обвязка по местам, обязательные
+        помечены звёздочкой. Внизу видно, что уже заполнено, справа — стоимость и
+        проверка сборки на нестыковки.</p>
+    </div>
+    <div class="pills" id="buildKinds" role="tablist" aria-label="Тип комплекта"></div>
+  </div>
+
+  <div class="cfggrid">
+  <div class="cfgmain">
+    <div class="card">
+      <div class="cardhead">
+        <h2 id="buildKindTitle">Комплект</h2>
+        <label class="chk small"><input type="checkbox" id="buildReqOnly">
+          Только обязательные слоты</label>
+      </div>
+      <div id="buildSlots"></div>
+      <div class="note" id="buildKindNote"></div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><h2>Заполнение</h2>
+        <span class="spec-cnt" id="buildFillCnt"></span></div>
+      <div class="fillbar" id="buildFill"></div>
+      <div class="note small">Серое — слот пустой, залитое — позиция выбрана.
+        Обязательные слоты обведены.</div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><h2>Типовые комплекты</h2></div>
+      <p class="muted small">Собраны из наших же прайсов. Нажатие подставляет позиции
+        в слоты — дальше правится как обычно.</p>
+      <div id="buildTemplates"></div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><h2>Мои сборки</h2></div>
+      <div class="row">
+        <div style="flex:2 1 260px"><label class="f">Название</label>
+          <input type="text" id="buildName" placeholder="Волокно 1530 6 кВт под ключ"></div>
+        <div style="align-self:end"><button class="btn sec" type="button" id="buildSave">Сохранить</button></div>
+      </div>
+      <div id="buildSaved"></div>
+      <div class="note small">Сборки лежат только в этом браузере, на сервер ничего
+        не уходит. Очистка данных браузера их удалит.</div>
+    </div>
+  </div>
+
+  <aside class="cfgside">
+    <div class="card spec-card">
+      <div class="cardhead">
+        <h2>Итог комплекта</h2>
+        <span class="spec-cnt" id="buildCnt"></span>
+      </div>
+      <div id="buildEmpty" class="empty small">Слоты пусты. Начните со станка —
+        он открывает остальные слоты.</div>
+      <table class="spec" id="buildTable"><tbody id="buildBody"></tbody></table>
+      <div class="spec-tot" id="buildTotals"></div>
+      <div id="buildCheck"></div>
+      <div class="btns noprint">
+        <button class="btn mini" type="button" id="buildToSmeta">Перенести в смету</button>
+        <button class="btn mini sec" type="button" id="buildCopy">Скопировать текстом</button>
+        <button class="btn mini sec" type="button" id="buildPrint">Печать</button>
+        <button class="btn mini sec" type="button" id="buildReset">Сбросить слоты</button>
+      </div>
+      <textarea id="buildOut" class="specout" readonly aria-label="комплект текстом"></textarea>
+      <div class="note small">Гарантия __GUARANTEE__. Срок поставки под заказ —
+        __DELIVERY_ORDER__, из наличия — __DELIVERY_STOCK__. Доставка и ПНР считаются
+        отдельными слотами, в цену станка не входят.</div>
+    </div>
+  </aside>
+  </div>
+</section>
+
 <!-- ================= КОНФИГУРАТОР ================= -->
 <span class="nojs-title">Конфигуратор</span>
-<section class="panel active" id="p-cfg">
+<section class="panel" id="p-cfg">
   <p class="lead">Четыре категории: волокно по металлу (__FIBER_COUNT__, прайс от
     __DATE_FIBER__), фрезерные с ЧПУ (__MILLING_COUNT__, прайс __DATE_MILLING__),
     CO₂ (__CO2_COUNT__, __CO2_DATE__) и маркираторы (__MARKER_COUNT__, прайс
@@ -1007,6 +1087,26 @@
   <div class="sumbar-in">
     <span class="sumbar-tx" id="sumBarTx"></span>
     <button class="btn mini" type="button" id="sumBarGo">Перейти в смету</button>
+  </div>
+</div>
+
+<!-- Выбор позиции в слот: поиск, сортировка, характеристики -->
+<div class="modal" id="pickModal" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
+  <div class="modal-box">
+    <div class="modal-h">
+      <b id="pickTitle">Выбор позиции</b>
+      <button class="xbtn" type="button" id="pickClose" aria-label="закрыть">×</button>
+    </div>
+    <div class="modal-f">
+      <input type="search" id="pickSearch" placeholder="Поиск по названию">
+      <select id="pickSort">
+        <option value="name">По названию</option>
+        <option value="asc">Сначала дешёвые</option>
+        <option value="desc">Сначала дорогие</option>
+      </select>
+      <span class="muted small" id="pickCnt"></span>
+    </div>
+    <div class="modal-b" id="pickList"></div>
   </div>
 </div>
 
