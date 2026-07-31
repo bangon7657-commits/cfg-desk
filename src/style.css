@@ -162,10 +162,9 @@ a{color:var(--or2)}
 .step-t{font-size:16.5px;font-weight:700;color:var(--tx)}
 .step-t small{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:1px}
 /* ---------------- Главная: три плитки ---------------- */
-.hero{background:linear-gradient(160deg,color-mix(in srgb,var(--or) 22%,var(--bg2)),var(--bg2));
-  border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
-.hero-logo{display:block;height:auto;max-width:300px;margin-bottom:12px;
-  background:#fff;border-radius:6px;padding:6px 10px}
+.hero{background:none;border:0;padding:6px 0 2px;margin-bottom:14px}
+.hero h1::before{content:"";display:inline-block;width:6px;height:22px;
+  background:var(--or);border-radius:3px;margin-right:10px;vertical-align:-3px}
 .hero h1{margin:0 0 6px;font-size:24px;color:var(--tx)}
 .hero p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;
@@ -648,7 +647,7 @@ body.demo .internal{display:none !important}
   /* Печатаем только шаг с ТКП. Сам .kp лежит глубже — .kpstep > .step-b > .kp,
      поэтому скрывать надо соседей шага, а не всех прямых детей панели:
      иначе вместе с ними скрывается и предок предпросмотра, и лист уходит пустым. */
-  .printme>*:not(.kpstep){display:none !important}
+  .printme>*:not(.kpstep):not(.printkeep){display:none !important}
   .printme>.kpstep{display:block !important;border:0;background:none;margin:0;overflow:visible}
   .kpstep>.step-h{display:none !important}
   .kpstep>.step-b{padding:0 !important}
@@ -719,3 +718,30 @@ body.demo .internal{display:none !important}
   .kp-to{grid-template-columns:1fr}
   .kp-to div{border-right:0}
 }
+
+/* Крупные кнопки-шаблоны: их надо видеть сразу */
+.pills.big{gap:8px}
+.pills.big .pill{font-size:15px;padding:11px 18px;border-radius:24px;font-weight:700}
+/* Конфигурация в диалоге выбора станка */
+.modal-cfg{padding:12px 14px;border-bottom:1px solid var(--line);background:var(--bg3)}
+.modal-cfg .mc-h{font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.modal-cfg .mc-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:8px;margin-bottom:8px}
+.modal-cfg .mc-f{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.45}
+/* Разница цены к базовой конфигурации */
+.pickrow .pp{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.pickrow .pd{font-size:11.5px;font-weight:600}
+.pickrow .pd.up{color:var(--bad)}
+.pickrow .pd.dn{color:var(--ok)}
+.pickrow .pd.same{color:var(--muted);font-weight:400}
+/* Карточка менеджера в правой колонке подбора */
+.mgr-card .row.tight{gap:8px;margin-bottom:8px}
+.mgr-card .row.tight>div{flex:1 1 130px}
+.mgr-card input{padding:7px 9px;font-size:13.5px}
+.cfghead{display:flex;gap:14px;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;margin:6px 0 12px}
+.cfghead .btitle{margin:0}
+/* Пояснения в подборе скрыты, пока не включён тумблер */
+#p-cfg .think,#p-cfg .note:not(.stop){display:none}
+#p-cfg.hints .think,#p-cfg.hints .note{display:block}
+#p-cfg.hints .think{display:flex}
