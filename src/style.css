@@ -11,6 +11,10 @@
   --head:linear-gradient(180deg,#1c1713,#141110);
   --onor:#180d04; --onok:#08170c; --onwarn:#241700; --onbad:#ffffff;
   --shadow:rgba(0,0,0,.45);
+  /* иконка календаря для полей с датой — рисуем маской, цвет берём из темы */
+  --cal-ico:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 2v2H5.5A2.5 2.5 0 0 0 3 6.5v13A2.5 2.5 0 0 0 5.5 22h13a2.5 2.5 0 0 0 2.5-2.5v-13A2.5 2.5 0 0 0 18.5 4H17V2h-2v2H9V2H7zm-1.5 8h13v9.5a.5.5 0 0 1-.5.5h-12a.5.5 0 0 1-.5-.5V10zm2 2v2h3v-2h-3zm5 0v2h3v-2h-3z"/></svg>');
+  /* стрелка-указатель для подсказки на плитках шаблонов писем */
+  --down-ico:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M11 2h2v13.2l4.9-4.9 1.4 1.4L12 19l-7.3-7.3 1.4-1.4 4.9 4.9z"/></svg>');
 }
 html[data-theme="light"]{
   --bg:#f6f4f1; --bg2:#ffffff; --bg3:#f1ece6; --bg4:#e7e0d8;
@@ -190,9 +194,9 @@ a{color:var(--or2)}
 .hero p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
 /* Плашка-клятва: обработанный рисунок как маска — бумага убрана, цвет чернил
    даёт CSS, поэтому она живёт и в тёмной, и в светлой теме. Место — правый
-   нижний угол окна; блок лежит внутри главной, так что на других вкладках
-   его нет. */
-.oath{position:fixed;right:18px;bottom:18px;width:132px;z-index:26;
+   нижний угол окна, приподнята над краем; блок лежит вне панелей, поэтому
+   видна на каждой вкладке. */
+.oath{position:fixed;right:18px;bottom:56px;width:132px;z-index:26;
   color:var(--tx2);opacity:.6;cursor:default;
   transition:opacity .16s, transform .16s, color .16s}
 .oath:hover,.oath:focus-visible{opacity:1;color:var(--or);
@@ -208,7 +212,7 @@ a{color:var(--or2)}
 .oath:hover .oath-tip,.oath:focus-visible .oath-tip{opacity:1;visibility:visible;
   transform:translateY(0)}
 @media(max-width:900px){
-  .oath{width:104px;right:10px;bottom:10px;opacity:.5}
+  .oath{width:104px;right:10px;bottom:48px;opacity:.5}
   .oath-tip{width:190px}
 }
 @media print{.oath{display:none}}
@@ -226,8 +230,27 @@ a{color:var(--or2)}
 
 /* Миниатюра письма в правой колонке: лист А4 сжат по ширине колонки */
 /* Группы шаблонов писем: узкие пилюли над крупными плитками */
-.ltrgroups{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.ltrgroups{display:flex;flex-direction:column;gap:14px;align-items:flex-end}
 @media(max-width:900px){.ltrgroups{align-items:flex-start}}
+/* После выбора группы над плитками шаблонов на пару секунд всплывают стрелки:
+   подсказка, что выбирать дальше. Стрелки появляются по очереди. */
+.pill.point{position:relative}
+.pill.point::before{content:'';position:absolute;left:50%;bottom:calc(100% + 3px);
+  width:15px;height:15px;margin-left:-7.5px;background-color:var(--or);
+  -webkit-mask:var(--down-ico) center/contain no-repeat;
+  mask:var(--down-ico) center/contain no-repeat;
+  animation:pointjump .82s ease-in-out 6 both;
+  animation-delay:var(--point-delay,0s);pointer-events:none}
+@keyframes pointjump{
+  0%{opacity:0;transform:translateY(-9px)}
+  25%{opacity:1;transform:translateY(-1px)}
+  55%{opacity:1;transform:translateY(-6px)}
+  100%{opacity:0;transform:translateY(-2px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .pill.point::before{animation:pointfade 3s linear 1 both}
+  @keyframes pointfade{0%,85%{opacity:1}100%{opacity:0}}
+}
 /* Кадровый бланк: адресат и «от кого» справа, пояснения мелким шрифтом */
 .lp-addr.staff{display:block;text-align:right}
 .lp-addr.staff .lp-to{margin-bottom:14px}
@@ -482,10 +505,31 @@ table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabul
 /* ---------- поля ---------- */
 label.f{display:block;font-size:12.5px;color:var(--or2);margin:12px 0 5px;
   text-transform:uppercase;letter-spacing:.7px;font-weight:600}
-select,input[type=text],input[type=number],textarea{width:100%;font:inherit;font-size:15.5px;
-  padding:11px 12px;border:1px solid var(--line2);border-radius:7px;
+select,input[type=text],input[type=number],input[type=date],textarea{width:100%;font:inherit;
+  font-size:15.5px;padding:11px 12px;border:1px solid var(--line2);border-radius:7px;
   background:var(--bg4);color:var(--tx)}
 select{cursor:pointer}
+/* Поля с датой: тот же корпус, что у остальных полей, своя иконка календаря
+   в акцентном цвете и всплывающий календарь браузера под тему приложения */
+input[type=date]{cursor:pointer;color-scheme:dark;min-height:45px}
+html[data-theme="light"] input[type=date]{color-scheme:light}
+input[type=date]:hover{border-color:var(--or)}
+input[type=date]::-webkit-datetime-edit{color:var(--tx);padding:0}
+input[type=date]::-webkit-datetime-edit-text{color:var(--muted);padding:0 3px}
+input[type=date]::-webkit-datetime-edit-year-field:focus,
+input[type=date]::-webkit-datetime-edit-month-field:focus,
+input[type=date]::-webkit-datetime-edit-day-field:focus{background:var(--or);
+  color:var(--onor);border-radius:4px;outline:0}
+input[type=date]::-webkit-calendar-picker-indicator{width:19px;height:19px;margin:0;
+  padding:0;cursor:pointer;opacity:.8;background-color:var(--or);
+  -webkit-mask:var(--cal-ico) center/contain no-repeat;
+  mask:var(--cal-ico) center/contain no-repeat}
+input[type=date]:hover::-webkit-calendar-picker-indicator,
+input[type=date]:focus::-webkit-calendar-picker-indicator{opacity:1}
+/* Подзаголовок внутри карточки: раньше эти блоки прятались за плюсиком */
+.cardsub{margin:18px 0 2px;padding-top:13px;border-top:1px solid var(--line);
+  font-size:12.5px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;
+  color:var(--or)}
 select:focus,input:focus,textarea:focus{outline:0;border-color:var(--or);
   box-shadow:0 0 0 3px rgba(255,122,24,.22)}
 input::placeholder{color:var(--muted);opacity:.85}

@@ -106,15 +106,16 @@
     <div id="homeMap"></div>
   </div>
 
-  <!-- Плашка-клятва в правом нижнем углу: обработанный рисунок как маска,
-       цвет берётся из темы. Живёт внутри главной, поэтому на других вкладках
-       её нет; в печать не идёт. -->
-  <div class="oath" id="oath" tabindex="0" role="img"
-    aria-label="Торжественно клянусь, что замышляю только шалость">
-    <div class="oath-scan" id="oathScan"></div>
-    <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
-  </div>
 </section>
+
+<!-- Плашка-клятва в правом нижнем углу: обработанный рисунок как маска,
+     цвет берётся из темы. Лежит вне панелей, поэтому видна на каждой вкладке;
+     в печать не идёт. -->
+<div class="oath" id="oath" tabindex="0" role="img"
+  aria-label="Торжественно клянусь, что замышляю только шалость">
+  <div class="oath-scan" id="oathScan"></div>
+  <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
+</div>
 
 <!-- ================= ПИСЬМА ================= -->
 <span class="nojs-title">Письма</span>
@@ -124,7 +125,7 @@
       <h1 class="btitle">Письма и уведомления</h1>
     </div>
     <div class="ltrgroups">
-      <div class="pills" id="ltrGroups" role="tablist" aria-label="Группа шаблонов"></div>
+      <div class="pills big" id="ltrGroups" role="tablist" aria-label="Группа шаблонов"></div>
       <div class="pills big" id="ltrPills" role="tablist" aria-label="Шаблон письма"></div>
     </div>
   </div>
@@ -229,33 +230,40 @@
         <button class="btn mini sec" type="button" id="zpFillNorm">Заполнить по будням Пн–Пт</button>
       </div>
       <div id="zpNormWarn"></div>
+      <div class="cardsub">Аванс</div>
+      <div class="row">
+        <div><label class="f">Отработано дней с 1 по 15</label>
+          <input type="text" id="zpHalfDays" inputmode="decimal"></div>
+        <div><label class="f">Аванс выплачен суммой, ₽</label>
+          <input type="text" id="zpAdvManual" inputmode="decimal"
+            placeholder="пусто — считать по дням"></div>
+      </div>
+      <div class="btns noprint">
+        <button class="btn mini sec" type="button" id="zpHalfAuto">Посчитать будни 1–15</button>
+      </div>
     </div>
 
     <div class="card">
-      <div class="cardhead"><h2>Бонус и удержания</h2></div>
+      <div class="cardhead"><h2>Надбавки и удержания</h2></div>
       <div class="row">
         <div><label class="f">Бонус, ₽</label><input type="text" id="zpBonus" inputmode="decimal"></div>
+        <div><label class="f">Дежурство, ₽</label>
+          <input type="text" id="zpDuty" inputmode="decimal"></div>
         <div><label class="f">Штраф, ₽</label><input type="text" id="zpPenalty" inputmode="decimal"></div>
-        <div><label class="f">Прочие удержания, ₽</label>
-          <input type="text" id="zpOther" inputmode="decimal"></div>
       </div>
-      <details>
-        <summary>Переработки и работа в выходные</summary>
-        <div class="det-b">
-          <div class="row">
-            <div><label class="f">Сверхурочные ×1,5, ч</label>
-              <input type="text" id="zpOt15" inputmode="decimal"></div>
-            <div><label class="f">Сверхурочные ×2, ч</label>
-              <input type="text" id="zpOt20" inputmode="decimal"></div>
-            <div><label class="f">Часы в выходные и праздники</label>
-              <input type="text" id="zpHolH" inputmode="decimal"></div>
-          </div>
-          <label class="chk"><input type="checkbox" id="zpHolOver">
-            Часы в выходные отработаны сверх месячной нормы — доплата ×2</label>
-          <div class="note small">Сверхурочные — статья 152 ТК РФ, выходные и
-            праздники — статья 153 ТК РФ.</div>
-        </div>
-      </details>
+      <div class="cardsub">Переработки и работа в выходные</div>
+      <div class="row">
+        <div><label class="f">Сверхурочные ×1,5, ч</label>
+          <input type="text" id="zpOt15" inputmode="decimal"></div>
+        <div><label class="f">Сверхурочные ×2, ч</label>
+          <input type="text" id="zpOt20" inputmode="decimal"></div>
+        <div><label class="f">Часы в выходные и праздники</label>
+          <input type="text" id="zpHolH" inputmode="decimal"></div>
+      </div>
+      <label class="chk"><input type="checkbox" id="zpHolOver">
+        Часы в выходные отработаны сверх месячной нормы — доплата ×2</label>
+      <div class="note small">Сверхурочные — статья 152 ТК РФ, выходные и
+        праздники — статья 153 ТК РФ.</div>
       <details>
         <summary>Отпуск и больничный</summary>
         <div class="det-b">
@@ -286,21 +294,6 @@
           <div class="note small">Отпускные: заработок за 12 месяцев ÷ 12 ÷ 29,3.
             Больничный: заработок за 2 года ÷ 730, процент по стажу — 8 лет и более
             100 %, от 5 до 8 лет 80 %, меньше 5 лет 60 %.</div>
-        </div>
-      </details>
-      <details>
-        <summary>Аванс</summary>
-        <div class="det-b">
-          <div class="row">
-            <div><label class="f">Отработано дней с 1 по 15</label>
-              <input type="text" id="zpHalfDays" inputmode="decimal"></div>
-            <div><label class="f">Аванс выплачен суммой, ₽</label>
-              <input type="text" id="zpAdvManual" inputmode="decimal"
-                placeholder="пусто — считать по дням"></div>
-          </div>
-          <div class="btns noprint">
-            <button class="btn mini sec" type="button" id="zpHalfAuto">Посчитать будни 1–15</button>
-          </div>
         </div>
       </details>
       <details>

@@ -81,7 +81,7 @@
       dd.setDate(dd.getDate() + 1);
     }
     return { month: m, year: y, mode: 'gross', salary: APP.zp.salary,
-      normDays: wd, normHours: wd * 8, worked: wd, bonus: 0, penalty: 0, other: 0,
+      normDays: wd, normHours: wd * 8, worked: wd, bonus: 0, penalty: 0, duty: 0,
       ot15: 0, ot20: 0, holH: 0, holOver: false, vacDays: 0, vacDaily: 0,
       vacEarn: '', sickDays: 0, sickDaily: 0, sickEarn: '', sickYears: 8,
       halfDays: '', advManual: '', ndfl: APP.zp.ndflRate,
@@ -127,6 +127,10 @@
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
   if (!state.zp || typeof state.zp !== 'object') state.zp = zpDefaults();
+  // до версии 26 в зарплате было удержание «прочие», теперь вместо него
+  // доплата «дежурство» — знак другой, поэтому сумму не переносим
+  if (state.zp.duty === undefined) state.zp.duty = 0;
+  if (state.zp.other !== undefined) delete state.zp.other;
   if (!state.ltr || typeof state.ltr !== 'object') {
     state.ltr = { tpl: '', sup: '', ceo: '', head: '', vals: {}, bodies: {} };
   }
@@ -3329,6 +3333,25 @@
   function ltrTplsOfGroup(gid) {
     return APP.letterTemplates.filter(function (t) { return ltrGroupOf(t) === gid; });
   }
+  // После выбора группы над каждой плиткой шаблона на пару секунд всплывает
+  // стрелка — видно, что выбирать дальше. Стрелки появляются по очереди.
+  var ltrPointTimer = null;
+  function pointToTpls() {
+    var bs = $('ltrPills').querySelectorAll('button');
+    if (!bs.length) return;
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].classList.add('point');
+      bs[i].style.setProperty('--point-delay', (i * 0.12).toFixed(2) + 's');
+    }
+    if (ltrPointTimer) clearTimeout(ltrPointTimer);
+    ltrPointTimer = setTimeout(function () {
+      var ps = $('ltrPills').querySelectorAll('button.point');
+      for (var j = 0; j < ps.length; j++) {
+        ps[j].classList.remove('point');
+        ps[j].style.removeProperty('--point-delay');
+      }
+    }, 3200);
+  }
   function renderLtrPills() {
     var pl = fresh('ltrPills'), gid = ltrGrp();
     ltrTplsOfGroup(gid).forEach(function (t) {
@@ -3525,7 +3548,8 @@
     var bs = $('ltrPills').querySelectorAll('button');
     for (var i = 0; i < bs.length; i++) {
       var on = bs[i].getAttribute('data-tpl') === tpl.id;
-      bs[i].className = on ? 'pill on' : 'pill';
+      var pt = bs[i].classList.contains('point') ? ' point' : '';
+      bs[i].className = (on ? 'pill on' : 'pill') + pt;
       bs[i].setAttribute('aria-selected', on ? 'true' : 'false');
     }
     if ($('ltrHead').value !== ltrHeadText()) $('ltrHead').value = ltrHeadText();
@@ -3549,6 +3573,7 @@
         var first = ltrTplsOfGroup(g.id)[0];
         if (first) { state.ltr.tpl = first.id; state.ltr.head = ''; }
         save(); renderLtrPills(); renderLtrFields(); renderLtr();
+        pointToTpls();
       });
       gr.appendChild(gb);
     });
@@ -3728,7 +3753,7 @@
     'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
   var ZP_FIELDS = {
     zpSalary: 'salary', zpNormDays: 'normDays', zpNormHours: 'normHours',
-    zpWorked: 'worked', zpBonus: 'bonus', zpPenalty: 'penalty', zpOther: 'other',
+    zpWorked: 'worked', zpBonus: 'bonus', zpPenalty: 'penalty', zpDuty: 'duty',
     zpOt15: 'ot15', zpOt20: 'ot20', zpHolH: 'holH', zpVacDays: 'vacDays',
     zpVacDaily: 'vacDaily', zpVacEarn: 'vacEarn', zpSickDays: 'sickDays',
     zpSickDaily: 'sickDaily', zpSickEarn: 'sickEarn', zpSickYears: 'sickYears',
@@ -3804,12 +3829,13 @@
     add('Больничный, ' + sickEmpDays + ' дн. от работодателя (' + pct + ' % по стажу)',
       fmt(sDaily) + ' × ' + pct + ' % × ' + sickEmpDays, sickEmployer);
     add('Бонус', 'введён вручную', toCents(num(z.bonus)));
+    add('Дежурство', 'введено вручную', toCents(num(z.duty)));
     var accrued = 0;
     lines.forEach(function (l) { accrued += l.cents; });
     var ndfl = divHalfUp(accrued * nRate, 1000);
     var internal = divHalfUp(accrued * iRate, 1000);
-    var penalty = toCents(num(z.penalty)), other = toCents(num(z.other));
-    var deductions = ndfl + internal + penalty + other;
+    var penalty = toCents(num(z.penalty));
+    var deductions = ndfl + internal + penalty;
     var net = accrued - deductions;
     var advGross, advNdfl, advInternal, advNet;
     if (String(z.advManual || '').trim() !== '') {
@@ -3825,7 +3851,7 @@
     }
     return { salaryFull: salaryFull, dayRate: dayRate, hourRate: hourRate,
       lines: lines, accrued: accrued, ndfl: ndfl, internal: internal,
-      penalty: penalty, other: other, deductions: deductions, net: net,
+      penalty: penalty, deductions: deductions, net: net,
       sickSfr: sickSfr, sickSfrDays: sickSfrDays, advNet: advNet,
       rest: net - advNet, nRate: nRate, iRate: iRate,
       effective: accrued ? divHalfUp(deductions * 1000, accrued) : 0 };
@@ -3837,7 +3863,6 @@
     out.push('НДФЛ ' + pctText(T.nRate) + ': −' + fmt(T.ndfl) + ' ₽');
     out.push('Внутренний налог ' + pctText(T.iRate) + ': −' + fmt(T.internal) + ' ₽');
     if (T.penalty) out.push('Штраф: −' + fmt(T.penalty) + ' ₽');
-    if (T.other) out.push('Прочие удержания: −' + fmt(T.other) + ' ₽');
     out.push('На руки: ' + fmt(T.net) + ' ₽');
     if (T.advNet) {
       out.push('Аванс: ' + fmt(T.advNet) + ' ₽, остаток к выплате: ' + fmt(T.rest) + ' ₽');
@@ -3866,7 +3891,7 @@
       body.appendChild(tr);
     });
     [['НДФЛ ' + pctText(T.nRate), T.ndfl], ['Внутренний налог ' + pctText(T.iRate), T.internal],
-      ['Штраф', T.penalty], ['Прочие удержания', T.other]].forEach(function (r) {
+      ['Штраф', T.penalty]].forEach(function (r) {
       if (!r[1]) return;
       var tr = d.createElement('tr');
       tr.innerHTML = '<td>' + esc(r[0]) + '</td><td class="num minus">−' +

@@ -22,6 +22,10 @@
   --head:linear-gradient(180deg,#1c1713,#141110);
   --onor:#180d04; --onok:#08170c; --onwarn:#241700; --onbad:#ffffff;
   --shadow:rgba(0,0,0,.45);
+  /* иконка календаря для полей с датой — рисуем маской, цвет берём из темы */
+  --cal-ico:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 2v2H5.5A2.5 2.5 0 0 0 3 6.5v13A2.5 2.5 0 0 0 5.5 22h13a2.5 2.5 0 0 0 2.5-2.5v-13A2.5 2.5 0 0 0 18.5 4H17V2h-2v2H9V2H7zm-1.5 8h13v9.5a.5.5 0 0 1-.5.5h-12a.5.5 0 0 1-.5-.5V10zm2 2v2h3v-2h-3zm5 0v2h3v-2h-3z"/></svg>');
+  /* стрелка-указатель для подсказки на плитках шаблонов писем */
+  --down-ico:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M11 2h2v13.2l4.9-4.9 1.4 1.4L12 19l-7.3-7.3 1.4-1.4 4.9 4.9z"/></svg>');
 }
 html[data-theme="light"]{
   --bg:#f6f4f1; --bg2:#ffffff; --bg3:#f1ece6; --bg4:#e7e0d8;
@@ -201,9 +205,9 @@ a{color:var(--or2)}
 .hero p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
 /* Плашка-клятва: обработанный рисунок как маска — бумага убрана, цвет чернил
    даёт CSS, поэтому она живёт и в тёмной, и в светлой теме. Место — правый
-   нижний угол окна; блок лежит внутри главной, так что на других вкладках
-   его нет. */
-.oath{position:fixed;right:18px;bottom:18px;width:132px;z-index:26;
+   нижний угол окна, приподнята над краем; блок лежит вне панелей, поэтому
+   видна на каждой вкладке. */
+.oath{position:fixed;right:18px;bottom:56px;width:132px;z-index:26;
   color:var(--tx2);opacity:.6;cursor:default;
   transition:opacity .16s, transform .16s, color .16s}
 .oath:hover,.oath:focus-visible{opacity:1;color:var(--or);
@@ -219,7 +223,7 @@ a{color:var(--or2)}
 .oath:hover .oath-tip,.oath:focus-visible .oath-tip{opacity:1;visibility:visible;
   transform:translateY(0)}
 @media(max-width:900px){
-  .oath{width:104px;right:10px;bottom:10px;opacity:.5}
+  .oath{width:104px;right:10px;bottom:48px;opacity:.5}
   .oath-tip{width:190px}
 }
 @media print{.oath{display:none}}
@@ -237,8 +241,27 @@ a{color:var(--or2)}
 
 /* Миниатюра письма в правой колонке: лист А4 сжат по ширине колонки */
 /* Группы шаблонов писем: узкие пилюли над крупными плитками */
-.ltrgroups{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.ltrgroups{display:flex;flex-direction:column;gap:14px;align-items:flex-end}
 @media(max-width:900px){.ltrgroups{align-items:flex-start}}
+/* После выбора группы над плитками шаблонов на пару секунд всплывают стрелки:
+   подсказка, что выбирать дальше. Стрелки появляются по очереди. */
+.pill.point{position:relative}
+.pill.point::before{content:'';position:absolute;left:50%;bottom:calc(100% + 3px);
+  width:15px;height:15px;margin-left:-7.5px;background-color:var(--or);
+  -webkit-mask:var(--down-ico) center/contain no-repeat;
+  mask:var(--down-ico) center/contain no-repeat;
+  animation:pointjump .82s ease-in-out 6 both;
+  animation-delay:var(--point-delay,0s);pointer-events:none}
+@keyframes pointjump{
+  0%{opacity:0;transform:translateY(-9px)}
+  25%{opacity:1;transform:translateY(-1px)}
+  55%{opacity:1;transform:translateY(-6px)}
+  100%{opacity:0;transform:translateY(-2px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .pill.point::before{animation:pointfade 3s linear 1 both}
+  @keyframes pointfade{0%,85%{opacity:1}100%{opacity:0}}
+}
 /* Кадровый бланк: адресат и «от кого» справа, пояснения мелким шрифтом */
 .lp-addr.staff{display:block;text-align:right}
 .lp-addr.staff .lp-to{margin-bottom:14px}
@@ -493,10 +516,31 @@ table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabul
 /* ---------- поля ---------- */
 label.f{display:block;font-size:12.5px;color:var(--or2);margin:12px 0 5px;
   text-transform:uppercase;letter-spacing:.7px;font-weight:600}
-select,input[type=text],input[type=number],textarea{width:100%;font:inherit;font-size:15.5px;
-  padding:11px 12px;border:1px solid var(--line2);border-radius:7px;
+select,input[type=text],input[type=number],input[type=date],textarea{width:100%;font:inherit;
+  font-size:15.5px;padding:11px 12px;border:1px solid var(--line2);border-radius:7px;
   background:var(--bg4);color:var(--tx)}
 select{cursor:pointer}
+/* Поля с датой: тот же корпус, что у остальных полей, своя иконка календаря
+   в акцентном цвете и всплывающий календарь браузера под тему приложения */
+input[type=date]{cursor:pointer;color-scheme:dark;min-height:45px}
+html[data-theme="light"] input[type=date]{color-scheme:light}
+input[type=date]:hover{border-color:var(--or)}
+input[type=date]::-webkit-datetime-edit{color:var(--tx);padding:0}
+input[type=date]::-webkit-datetime-edit-text{color:var(--muted);padding:0 3px}
+input[type=date]::-webkit-datetime-edit-year-field:focus,
+input[type=date]::-webkit-datetime-edit-month-field:focus,
+input[type=date]::-webkit-datetime-edit-day-field:focus{background:var(--or);
+  color:var(--onor);border-radius:4px;outline:0}
+input[type=date]::-webkit-calendar-picker-indicator{width:19px;height:19px;margin:0;
+  padding:0;cursor:pointer;opacity:.8;background-color:var(--or);
+  -webkit-mask:var(--cal-ico) center/contain no-repeat;
+  mask:var(--cal-ico) center/contain no-repeat}
+input[type=date]:hover::-webkit-calendar-picker-indicator,
+input[type=date]:focus::-webkit-calendar-picker-indicator{opacity:1}
+/* Подзаголовок внутри карточки: раньше эти блоки прятались за плюсиком */
+.cardsub{margin:18px 0 2px;padding-top:13px;border-top:1px solid var(--line);
+  font-size:12.5px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;
+  color:var(--or)}
 select:focus,input:focus,textarea:focus{outline:0;border-color:var(--or);
   box-shadow:0 0 0 3px rgba(255,122,24,.22)}
 input::placeholder{color:var(--muted);opacity:.85}
@@ -949,14 +993,15 @@ body.demo .internal{display:none !important}
     <div id="homeMap"><div class="maprow"><b>Конфигуратор</b><span class="muted">слоты комплекта и проверка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Письма</b><span class="muted">возврат, платежи, официальные</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Зарплата</b><span class="muted">оклад, переработки, налоги</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Подбор и цены</b><span class="muted">станок, обвязка, техничка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Смета и ТКП</b><span class="muted">позиции, скидки, файл</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Подбор по задаче</b><span class="muted">толщина и материал</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Газ и владение</b><span class="muted">расход и стоимость</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Техника</b><span class="muted">что режет и что внутри</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Готовность цеха</b><span class="muted">блокеры до монтажа</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Данные</b><span class="muted">прайсы, источники, расхождения</span><button class="btn mini sec" type="button">Открыть</button></div></div>
   </div>
 
-  <!-- Плашка-клятва в правом нижнем углу: обработанный рисунок как маска,
-       цвет берётся из темы. Живёт внутри главной, поэтому на других вкладках
-       её нет; в печать не идёт. -->
-  <div class="oath" id="oath" tabindex="0" role="img" aria-label="Торжественно клянусь, что замышляю только шалость">
-    <div class="oath-scan" id="oathScan" style="--oath-img: url(&quot;data:image/webp;base64,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&quot;);"></div>
-    <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
-  </div>
 </section>
+
+<!-- Плашка-клятва в правом нижнем углу: обработанный рисунок как маска,
+     цвет берётся из темы. Лежит вне панелей, поэтому видна на каждой вкладке;
+     в печать не идёт. -->
+<div class="oath" id="oath" tabindex="0" role="img" aria-label="Торжественно клянусь, что замышляю только шалость">
+  <div class="oath-scan" id="oathScan" style="--oath-img: url(&quot;data:image/webp;base64,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&quot;);"></div>
+  <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
+</div>
 
 <!-- ================= ПИСЬМА ================= -->
 <span class="nojs-title">Письма</span>
@@ -966,8 +1011,8 @@ body.demo .internal{display:none !important}
       <h1 class="btitle">Письма и уведомления</h1>
     </div>
     <div class="ltrgroups">
-      <div class="pills" id="ltrGroups" role="tablist" aria-label="Группа шаблонов"><button class="pill on" type="button" data-grp="client" role="tab" aria-selected="true">Письма по оплатам</button><button class="pill" type="button" data-grp="staff" role="tab" aria-selected="false">Кадровые документы</button></div>
-      <div class="pills big" id="ltrPills" role="tablist" aria-label="Шаблон письма"><button class="pill on" type="button" data-tpl="refund" role="tab" aria-selected="true">Возврат ошибочного платежа</button><button class="pill" type="button" data-tpl="purpose" role="tab" aria-selected="false">Уточнение назначения платежа</button><button class="pill" type="button" data-tpl="offset" role="tab" aria-selected="false">Перезачёт оплаты</button><button class="pill" type="button" data-tpl="official" role="tab" aria-selected="false">Официальное письмо</button></div>
+      <div class="pills big" id="ltrGroups" role="tablist" aria-label="Группа шаблонов"><button class="pill on" type="button" data-grp="client" role="tab" aria-selected="true">Письма по оплатам</button><button class="pill" type="button" data-grp="staff" role="tab" aria-selected="false">Кадровые документы</button></div>
+      <div class="pills big" id="ltrPills" role="tablist" aria-label="Шаблон письма"><button class="pill on point" type="button" data-tpl="refund" role="tab" aria-selected="true" style="--point-delay: 0.00s;">Возврат ошибочного платежа</button><button class="pill point" type="button" data-tpl="purpose" role="tab" aria-selected="false" style="--point-delay: 0.12s;">Уточнение назначения платежа</button><button class="pill point" type="button" data-tpl="offset" role="tab" aria-selected="false" style="--point-delay: 0.24s;">Перезачёт оплаты</button><button class="pill point" type="button" data-tpl="official" role="tab" aria-selected="false" style="--point-delay: 0.36s;">Официальное письмо</button></div>
     </div>
   </div>
 
@@ -1071,33 +1116,39 @@ body.demo .internal{display:none !important}
         <button class="btn mini sec" type="button" id="zpFillNorm">Заполнить по будням Пн–Пт</button>
       </div>
       <div id="zpNormWarn"></div>
+      <div class="cardsub">Аванс</div>
+      <div class="row">
+        <div><label class="f">Отработано дней с 1 по 15</label>
+          <input type="text" id="zpHalfDays" inputmode="decimal"></div>
+        <div><label class="f">Аванс выплачен суммой, ₽</label>
+          <input type="text" id="zpAdvManual" inputmode="decimal" placeholder="пусто — считать по дням"></div>
+      </div>
+      <div class="btns noprint">
+        <button class="btn mini sec" type="button" id="zpHalfAuto">Посчитать будни 1–15</button>
+      </div>
     </div>
 
     <div class="card">
-      <div class="cardhead"><h2>Бонус и удержания</h2></div>
+      <div class="cardhead"><h2>Надбавки и удержания</h2></div>
       <div class="row">
         <div><label class="f">Бонус, ₽</label><input type="text" id="zpBonus" inputmode="decimal"></div>
+        <div><label class="f">Дежурство, ₽</label>
+          <input type="text" id="zpDuty" inputmode="decimal"></div>
         <div><label class="f">Штраф, ₽</label><input type="text" id="zpPenalty" inputmode="decimal"></div>
-        <div><label class="f">Прочие удержания, ₽</label>
-          <input type="text" id="zpOther" inputmode="decimal"></div>
       </div>
-      <details>
-        <summary>Переработки и работа в выходные</summary>
-        <div class="det-b">
-          <div class="row">
-            <div><label class="f">Сверхурочные ×1,5, ч</label>
-              <input type="text" id="zpOt15" inputmode="decimal"></div>
-            <div><label class="f">Сверхурочные ×2, ч</label>
-              <input type="text" id="zpOt20" inputmode="decimal"></div>
-            <div><label class="f">Часы в выходные и праздники</label>
-              <input type="text" id="zpHolH" inputmode="decimal"></div>
-          </div>
-          <label class="chk"><input type="checkbox" id="zpHolOver">
-            Часы в выходные отработаны сверх месячной нормы — доплата ×2</label>
-          <div class="note small">Сверхурочные — статья 152 ТК РФ, выходные и
-            праздники — статья 153 ТК РФ.</div>
-        </div>
-      </details>
+      <div class="cardsub">Переработки и работа в выходные</div>
+      <div class="row">
+        <div><label class="f">Сверхурочные ×1,5, ч</label>
+          <input type="text" id="zpOt15" inputmode="decimal"></div>
+        <div><label class="f">Сверхурочные ×2, ч</label>
+          <input type="text" id="zpOt20" inputmode="decimal"></div>
+        <div><label class="f">Часы в выходные и праздники</label>
+          <input type="text" id="zpHolH" inputmode="decimal"></div>
+      </div>
+      <label class="chk"><input type="checkbox" id="zpHolOver">
+        Часы в выходные отработаны сверх месячной нормы — доплата ×2</label>
+      <div class="note small">Сверхурочные — статья 152 ТК РФ, выходные и
+        праздники — статья 153 ТК РФ.</div>
       <details>
         <summary>Отпуск и больничный</summary>
         <div class="det-b">
@@ -1128,20 +1179,6 @@ body.demo .internal{display:none !important}
           <div class="note small">Отпускные: заработок за 12 месяцев ÷ 12 ÷ 29,3.
             Больничный: заработок за 2 года ÷ 730, процент по стажу — 8 лет и более
             100 %, от 5 до 8 лет 80 %, меньше 5 лет 60 %.</div>
-        </div>
-      </details>
-      <details>
-        <summary>Аванс</summary>
-        <div class="det-b">
-          <div class="row">
-            <div><label class="f">Отработано дней с 1 по 15</label>
-              <input type="text" id="zpHalfDays" inputmode="decimal"></div>
-            <div><label class="f">Аванс выплачен суммой, ₽</label>
-              <input type="text" id="zpAdvManual" inputmode="decimal" placeholder="пусто — считать по дням"></div>
-          </div>
-          <div class="btns noprint">
-            <button class="btn mini sec" type="button" id="zpHalfAuto">Посчитать будни 1–15</button>
-          </div>
         </div>
       </details>
       <details>
@@ -2691,7 +2728,7 @@ var DOCX = (function () {
       dd.setDate(dd.getDate() + 1);
     }
     return { month: m, year: y, mode: 'gross', salary: APP.zp.salary,
-      normDays: wd, normHours: wd * 8, worked: wd, bonus: 0, penalty: 0, other: 0,
+      normDays: wd, normHours: wd * 8, worked: wd, bonus: 0, penalty: 0, duty: 0,
       ot15: 0, ot20: 0, holH: 0, holOver: false, vacDays: 0, vacDaily: 0,
       vacEarn: '', sickDays: 0, sickDaily: 0, sickEarn: '', sickYears: 8,
       halfDays: '', advManual: '', ndfl: APP.zp.ndflRate,
@@ -2737,6 +2774,10 @@ var DOCX = (function () {
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
   if (!state.zp || typeof state.zp !== 'object') state.zp = zpDefaults();
+  // до версии 26 в зарплате было удержание «прочие», теперь вместо него
+  // доплата «дежурство» — знак другой, поэтому сумму не переносим
+  if (state.zp.duty === undefined) state.zp.duty = 0;
+  if (state.zp.other !== undefined) delete state.zp.other;
   if (!state.ltr || typeof state.ltr !== 'object') {
     state.ltr = { tpl: '', sup: '', ceo: '', head: '', vals: {}, bodies: {} };
   }
@@ -5939,6 +5980,25 @@ var DOCX = (function () {
   function ltrTplsOfGroup(gid) {
     return APP.letterTemplates.filter(function (t) { return ltrGroupOf(t) === gid; });
   }
+  // После выбора группы над каждой плиткой шаблона на пару секунд всплывает
+  // стрелка — видно, что выбирать дальше. Стрелки появляются по очереди.
+  var ltrPointTimer = null;
+  function pointToTpls() {
+    var bs = $('ltrPills').querySelectorAll('button');
+    if (!bs.length) return;
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].classList.add('point');
+      bs[i].style.setProperty('--point-delay', (i * 0.12).toFixed(2) + 's');
+    }
+    if (ltrPointTimer) clearTimeout(ltrPointTimer);
+    ltrPointTimer = setTimeout(function () {
+      var ps = $('ltrPills').querySelectorAll('button.point');
+      for (var j = 0; j < ps.length; j++) {
+        ps[j].classList.remove('point');
+        ps[j].style.removeProperty('--point-delay');
+      }
+    }, 3200);
+  }
   function renderLtrPills() {
     var pl = fresh('ltrPills'), gid = ltrGrp();
     ltrTplsOfGroup(gid).forEach(function (t) {
@@ -6135,7 +6195,8 @@ var DOCX = (function () {
     var bs = $('ltrPills').querySelectorAll('button');
     for (var i = 0; i < bs.length; i++) {
       var on = bs[i].getAttribute('data-tpl') === tpl.id;
-      bs[i].className = on ? 'pill on' : 'pill';
+      var pt = bs[i].classList.contains('point') ? ' point' : '';
+      bs[i].className = (on ? 'pill on' : 'pill') + pt;
       bs[i].setAttribute('aria-selected', on ? 'true' : 'false');
     }
     if ($('ltrHead').value !== ltrHeadText()) $('ltrHead').value = ltrHeadText();
@@ -6159,6 +6220,7 @@ var DOCX = (function () {
         var first = ltrTplsOfGroup(g.id)[0];
         if (first) { state.ltr.tpl = first.id; state.ltr.head = ''; }
         save(); renderLtrPills(); renderLtrFields(); renderLtr();
+        pointToTpls();
       });
       gr.appendChild(gb);
     });
@@ -6338,7 +6400,7 @@ var DOCX = (function () {
     'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
   var ZP_FIELDS = {
     zpSalary: 'salary', zpNormDays: 'normDays', zpNormHours: 'normHours',
-    zpWorked: 'worked', zpBonus: 'bonus', zpPenalty: 'penalty', zpOther: 'other',
+    zpWorked: 'worked', zpBonus: 'bonus', zpPenalty: 'penalty', zpDuty: 'duty',
     zpOt15: 'ot15', zpOt20: 'ot20', zpHolH: 'holH', zpVacDays: 'vacDays',
     zpVacDaily: 'vacDaily', zpVacEarn: 'vacEarn', zpSickDays: 'sickDays',
     zpSickDaily: 'sickDaily', zpSickEarn: 'sickEarn', zpSickYears: 'sickYears',
@@ -6414,12 +6476,13 @@ var DOCX = (function () {
     add('Больничный, ' + sickEmpDays + ' дн. от работодателя (' + pct + ' % по стажу)',
       fmt(sDaily) + ' × ' + pct + ' % × ' + sickEmpDays, sickEmployer);
     add('Бонус', 'введён вручную', toCents(num(z.bonus)));
+    add('Дежурство', 'введено вручную', toCents(num(z.duty)));
     var accrued = 0;
     lines.forEach(function (l) { accrued += l.cents; });
     var ndfl = divHalfUp(accrued * nRate, 1000);
     var internal = divHalfUp(accrued * iRate, 1000);
-    var penalty = toCents(num(z.penalty)), other = toCents(num(z.other));
-    var deductions = ndfl + internal + penalty + other;
+    var penalty = toCents(num(z.penalty));
+    var deductions = ndfl + internal + penalty;
     var net = accrued - deductions;
     var advGross, advNdfl, advInternal, advNet;
     if (String(z.advManual || '').trim() !== '') {
@@ -6435,7 +6498,7 @@ var DOCX = (function () {
     }
     return { salaryFull: salaryFull, dayRate: dayRate, hourRate: hourRate,
       lines: lines, accrued: accrued, ndfl: ndfl, internal: internal,
-      penalty: penalty, other: other, deductions: deductions, net: net,
+      penalty: penalty, deductions: deductions, net: net,
       sickSfr: sickSfr, sickSfrDays: sickSfrDays, advNet: advNet,
       rest: net - advNet, nRate: nRate, iRate: iRate,
       effective: accrued ? divHalfUp(deductions * 1000, accrued) : 0 };
@@ -6447,7 +6510,6 @@ var DOCX = (function () {
     out.push('НДФЛ ' + pctText(T.nRate) + ': −' + fmt(T.ndfl) + ' ₽');
     out.push('Внутренний налог ' + pctText(T.iRate) + ': −' + fmt(T.internal) + ' ₽');
     if (T.penalty) out.push('Штраф: −' + fmt(T.penalty) + ' ₽');
-    if (T.other) out.push('Прочие удержания: −' + fmt(T.other) + ' ₽');
     out.push('На руки: ' + fmt(T.net) + ' ₽');
     if (T.advNet) {
       out.push('Аванс: ' + fmt(T.advNet) + ' ₽, остаток к выплате: ' + fmt(T.rest) + ' ₽');
@@ -6476,7 +6538,7 @@ var DOCX = (function () {
       body.appendChild(tr);
     });
     [['НДФЛ ' + pctText(T.nRate), T.ndfl], ['Внутренний налог ' + pctText(T.iRate), T.internal],
-      ['Штраф', T.penalty], ['Прочие удержания', T.other]].forEach(function (r) {
+      ['Штраф', T.penalty]].forEach(function (r) {
       if (!r[1]) return;
       var tr = d.createElement('tr');
       tr.innerHTML = '<td>' + esc(r[0]) + '</td><td class="num minus">−' +

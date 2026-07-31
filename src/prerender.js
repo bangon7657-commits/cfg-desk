@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 25', /const CACHE = 'cfg-v25'/.test(swTxt),
+check('кеш: версия поднята до 26', /const CACHE = 'cfg-v26'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1178,7 +1178,7 @@ check('зарплата: на руки посчитано',
   textOf(doc, '#zpHero').slice(0, 90));
 // контрольный расчёт: оклад 100 000 грязными, норма 20 дн, отработано 20
 ['zpSalary:100000', 'zpNormDays:20', 'zpNormHours:160', 'zpWorked:20',
-  'zpBonus:0', 'zpPenalty:0', 'zpOther:0', 'zpNdfl:13', 'zpInternal:9']
+  'zpBonus:0', 'zpPenalty:0', 'zpDuty:0', 'zpNdfl:13', 'zpInternal:9']
   .forEach(pair => {
     const [id, v] = pair.split(':');
     const n = win.document.getElementById(id);
@@ -1192,6 +1192,37 @@ check('зарплата: внутренний налог 9 % = 9 000',
   /9 000,00/.test(textOf(doc, '#zpBody')), '');
 check('зарплата: на руки 78 000',
   /78 000,00/.test(zpTot), zpTot);
+// ---- v26: дежурство как доплата, аванс в карточке оклада, без плюсиков ----
+const zpPanel = doc.getElementById('p-zp');
+check('зарплата: плюсиков у переработок и надбавок больше нет',
+  !Array.from(zpPanel.querySelectorAll('summary')).some(x =>
+    /Переработки|Бонус|удержани/i.test(x.textContent)),
+  Array.from(zpPanel.querySelectorAll('summary')).map(x => x.textContent).join(' | '));
+check('зарплата: часы переработок видны сразу, без раскрытия',
+  !!doc.getElementById('zpOt15') && !doc.getElementById('zpOt15').closest('details'), '');
+check('зарплата: аванс переехал в карточку оклада',
+  !!doc.getElementById('zpHalfDays') &&
+  !doc.getElementById('zpHalfDays').closest('details') &&
+  doc.getElementById('zpHalfDays').closest('.card') ===
+    doc.getElementById('zpNormDays').closest('.card'), '');
+check('зарплата: вместо прочих удержаний поле «Дежурство»',
+  !doc.getElementById('zpOther') && !!doc.getElementById('zpDuty') &&
+  /Дежурство/.test(doc.getElementById('zpDuty').closest('div').textContent) &&
+  !/Прочие удержания/.test(zpPanel.textContent), '');
+(function () {
+  const duty = win.document.getElementById('zpDuty');
+  duty.value = '5000';
+  duty.dispatchEvent(new win.Event('input'));
+  const body = textOf(doc, '#zpBody'), tot = textOf(doc, '#zpTotals');
+  check('зарплата: дежурство прибавляется к начислению, а не вычитается',
+    /Дежурство/.test(body) && !/−5 000/.test(body) && /105 000,00/.test(tot),
+    tot.slice(0, 120));
+  check('зарплата: налоги считаются и с дежурства',
+    /13 650,00/.test(body) && /9 450,00/.test(body) && /81 900,00/.test(tot),
+    body.slice(-200));
+  duty.value = '0';
+  duty.dispatchEvent(new win.Event('input'));
+}());
 // «чистыми» разворачивается обратно
 win.document.getElementById('zpMode').value = 'net';
 win.document.getElementById('zpMode').dispatchEvent(new win.Event('change'));
@@ -1270,6 +1301,24 @@ check('письма: лист помечен как печатаемый',
   !!doc.querySelector('#p-letters > .ltrstep.printkeep'), '');
 check('письма: правило печати оставляет и ТКП, и лист письма',
   src.indexOf('.printme>*:not(.kpstep):not(.printkeep)') >= 0, '');
+// ---- v26: поля с датой оформлены как остальные поля приложения ----
+check('даты: поле даты живёт в общем правиле полей',
+  /select,input\[type=text\],input\[type=number\],input\[type=date\],textarea\{/
+    .test(src.replace(/\s+/g, m => m.indexOf('\n') >= 0 ? '' : ' ')) ||
+  /input\[type=date\],textarea\{/.test(src.replace(/\s+/g, '')), '');
+check('даты: своя иконка календаря в цвете темы',
+  /--cal-ico:url/.test(src) &&
+  /calendar-picker-indicator\{[^}]*background-color:var\(--or\)/
+    .test(src.replace(/\s+/g, '')), '');
+check('даты: всплывающий календарь браузера подстраивается под тему',
+  /input\[type=date\]\{[^}]*color-scheme:dark/.test(src.replace(/\s+/g, '')) &&
+  /html\[data-theme="light"\]input\[type=date\]\{color-scheme:light\}/
+    .test(src.replace(/\s+/g, '')), '');
+(function () {
+  const dates = doc.querySelectorAll('#p-letters input[type=date]');
+  check('даты: в письмах есть поля с датой и они не текстовые',
+    dates.length >= 1, 'полей даты ' + dates.length);
+}());
 check('письма: пояснение убрано из шапки, кнопки шаблонов крупные',
   !doc.querySelector('#p-letters > .bhead p.lead') &&
   doc.getElementById('ltrPills').className.indexOf('big') >= 0 &&
@@ -1323,10 +1372,24 @@ check('письма: две группы шаблонов',
   [...doc.querySelectorAll('#ltrGroups button')].map(b => b.textContent).join('|'));
 check('письма: в первой группе четыре письма по оплатам',
   doc.querySelectorAll('#ltrPills button').length === 4, '');
+check('письма: кнопки групп такого же размера, как плитки шаблонов',
+  doc.getElementById('ltrGroups').className.indexOf('big') >= 0 &&
+  doc.getElementById('ltrPills').className.indexOf('big') >= 0, '');
 doc.querySelector('#ltrGroups button[data-grp="staff"]').click();
 check('письма: в кадровой группе семь документов',
   doc.querySelectorAll('#ltrPills button').length === 7,
   [...doc.querySelectorAll('#ltrPills button')].map(b => b.textContent).join('|'));
+check('письма: после выбора группы на плитках всплывают стрелки',
+  [...doc.querySelectorAll('#ltrPills button')].every(b =>
+    b.classList.contains('point')) &&
+  /\.pill\.point::before\{/.test(src) && /@keyframes pointjump/.test(src) &&
+  /--down-ico:url/.test(src),
+  'со стрелками ' + doc.querySelectorAll('#ltrPills button.point').length);
+check('письма: стрелки появляются по очереди, а не разом',
+  [...doc.querySelectorAll('#ltrPills button')].map(b =>
+    b.style.getPropertyValue('--point-delay')).join(',').indexOf('0.12s') >= 0,
+  [...doc.querySelectorAll('#ltrPills button')].map(b =>
+    b.style.getPropertyValue('--point-delay')).join(','));
 const lfSet = (id, v) => {
   const n = doc.getElementById('lf_' + id);
   if (n) { n.value = v; n.dispatchEvent(new win.Event('input')); }
@@ -1465,11 +1528,14 @@ check('главная: рисунок подставлен маской, цве�
   /base64/.test(doc.getElementById('oathScan').getAttribute('style') || '') &&
   /\.oath-scan\{[^}]*background-color:currentColor/.test(src) &&
   /\.oath-scan\{[^}]*mask:var\(--oath-img\)/.test(src), '');
-check('главная: плашка стоит в правом нижнем углу',
-  /\.oath\{position:fixed;right:18px;bottom:18px/.test(src.replace(/\s+/g, '')) ||
-  /\.oath\{position:fixed;[^}]*right:18px;[^}]*bottom:18px/.test(src), '');
-check('главная: плашка живёт внутри главной панели',
-  oath.closest('#p-home') === doc.getElementById('p-home'), '');
+check('главная: плашка приподнята над правым нижним углом',
+  /\.oath\{position:fixed;right:18px;bottom:56px/.test(src.replace(/\s+/g, '')) ||
+  /\.oath\{position:fixed;[^}]*right:18px;[^}]*bottom:56px/.test(src), '');
+check('плашка видна на каждой вкладке — лежит вне панелей',
+  !oath.closest('.panel') &&
+  oath.parentNode === doc.querySelector('.wrap'), oath.parentNode.className);
+check('плашка на мобильном тоже приподнята',
+  /\.oath\{width:104px;right:10px;bottom:48px/.test(src.replace(/\s+/g, '')), '');
 check('главная: подсказка про шалость появляется при наведении',
   /Торжественно клянусь, что замышляю только шалость/.test(
     oath.querySelector('.oath-tip').textContent) &&
