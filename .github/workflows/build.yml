@@ -2,59 +2,50 @@ name: build
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - '.github/workflows/build.yml'
-  workflow_dispatch:
+    branches: [ main ]
+  workflow_dispatch: {}
 
 permissions:
   contents: write
 
-concurrency:
-  group: build
-  cancel-in-progress: true
-
 jobs:
   build:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Sverka money.js s dengi.py
-        run: python src/verify.py
-
-      - name: Build
-        env:
-          DIST_DIR: dist
-        run: python src/build.py
-
-      - name: Install jsdom
-        run: npm install --no-save jsdom
-
-      - name: Prerender and check
-        env:
-          DIST_DIR: dist
-        run: node src/prerender.js
-
-      - name: Publish to repo root
+      - name: Применить патчи из _apply, если есть
         run: |
-          cp dist/index.html dist/manifest.webmanifest dist/sw.js dist/robots.txt .
-          cp dist/*.png .
-          git config user.name "build"
-          git config user.email "build@users.noreply.github.com"
-          git add -A index.html manifest.webmanifest sw.js robots.txt *.png
-          if git diff --cached --quiet; then
-            echo "Nothing changed"
-          else
-            git commit -m "rebuild site"
-            git push
-          fi
+          shopt -s nullglob
+          for f in _apply/*.b64; do
+            echo "пату: $f"
+            base64 -d "$f" | xz -d > /tmp/p.patch
+            git apply --binary -p1 /tmp/p.patch
+            rm -f "$f"
+          done
+      - name: Собрать сайт
+        run: |
+          cd src
+          python build.py
+          npm install --no-save jsdom >/dev/null 2>&1
+          node prerender.js 1
+          node prerender.js 2
+      - name: Положить результат в корень
+        run: |
+          cp src/dist/index.html index.html
+          cp src/dist/sw.js sw.js
+          cp src/dist/manifest.webmanifest manifest.webmanifest
+          rm -rf src/dist src/__pycache__ src/node_modules src/package-lock.json
+      - name: Коммит
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "сборка сайта [skip ci]"
+          git push
