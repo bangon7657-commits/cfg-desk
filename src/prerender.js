@@ -127,6 +127,17 @@ check('шапка: ссылка на lasercut.ru открывается безо
 check('шапка: кликабельна только эмблема с названием',
   doc.querySelectorAll('header a').length === 1,
   'ссылок в шапке ' + doc.querySelectorAll('header a').length);
+const swTxt = fs.readFileSync(path.join(DIST, 'sw.js'), 'utf8');
+check('кеш: страница берётся сначала из сети',
+  /isPage\(e\.request\)/.test(swTxt) &&
+  /if \(isPage\(e\.request\)\) \{\s*\n\s*e\.respondWith\(\s*\n\s*fetch\(e\.request\)/.test(swTxt),
+  swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
+check('кеш: остальные файлы сначала из кеша',
+  /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
+check('кеш: версия поднята до 25', /const CACHE = 'cfg-v25'/.test(swTxt),
+  (swTxt.match(/cfg-v\d+/) || [''])[0]);
+check('кеш: чужие домены не перехватываются',
+  /url\.origin !== self\.location\.origin/.test(swTxt), '');
 const manifestTxt = fs.readFileSync(path.join(DIST, 'manifest.webmanifest'), 'utf8');
 check('имя приложения в заголовке и манифесте',
   /ЛазеркатКА/.test(doc.title) && /"short_name":\s*"ЛазеркатКА"/.test(manifestTxt),
@@ -1467,6 +1478,19 @@ check('главная: подсказка про шалость появляет
 check('главная: вокруг плашки нет подложки, в печать не идёт',
   !/\.oath\{[^}]*background:/.test(src) &&
   /@media print\{\.oath\{display:none\}\}/.test(src), '');
+const oathB64 = ((doc.getElementById('oathScan').getAttribute('style') || '')
+  .match(/base64,([A-Za-z0-9+/=]+)/) || ['', ''])[1];
+const oathBin = Buffer.from(oathB64, 'base64');
+let oathW = 0, oathH = 0;
+if (oathBin.slice(12, 16).toString() === 'VP8L') {
+  const bits = oathBin.readUInt32LE(21);
+  oathW = (bits & 0x3fff) + 1;
+  oathH = ((bits >> 14) & 0x3fff) + 1;
+}
+check('главная: рисунок плашки 400 px по ширине',
+  oathW === 400 && oathH === 492, oathW + 'x' + oathH);
+check('главная: рисунок плашки не раздувает файл',
+  oathBin.length < 12000, 'байт ' + oathBin.length);
 
 // ---- v20: опоры штуками, ПНР от станка, ТКП по типу станка, мысли в смете ----
 menuGo('smeta');
