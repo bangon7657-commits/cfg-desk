@@ -199,22 +199,21 @@ a{color:var(--or2)}
   background:var(--or);border-radius:3px;margin-right:10px;vertical-align:-3px}
 .hero h1{margin:0 0 6px;font-size:24px;color:var(--tx)}
 .hero p{margin:0;color:var(--muted);font-size:14px;max-width:64ch;padding-right:210px}
-/* Плашка-шалость. Фон не задан — берётся фон страницы, поэтому плашка не
-   выглядит наклейкой. Лента и следы рисуются цветом текста темы, подсказка
-   всплывает при наведении и при фокусе с клавиатуры. */
+/* Плашка-клятва: лист пергамента с русским текстом и следами. Бумага своя —
+   это и есть смысл картинки, поэтому цвет не берётся из темы; вокруг фона нет,
+   так что плашка не выглядит наклейкой. */
 .hero{position:relative}
-.oath{position:absolute;right:0;top:-2px;width:200px;cursor:default;
-  opacity:.55;transition:opacity .16s, transform .16s}
-.oath:hover,.oath:focus-visible{opacity:1;transform:translateY(-1px);outline:none}
-.oath svg{display:block;width:100%;height:auto;overflow:visible}
-.oath-band path{fill:none;stroke:var(--tx2);stroke-width:1.6;stroke-linejoin:round}
-.oath-curl{fill:none;stroke:var(--tx2);stroke-width:1.6;stroke-linecap:round}
-.oath-steps ellipse{fill:var(--muted);opacity:.75}
-.oath-tx text{fill:var(--tx);font:700 12.5px/1 "Segoe UI",Roboto,system-ui,sans-serif;
-  letter-spacing:.4px}
-.oath:hover .oath-band path,.oath:focus-visible .oath-band path{stroke:var(--or)}
-.oath:hover .oath-curl,.oath:focus-visible .oath-curl{stroke:var(--or)}
-.oath:hover .oath-steps ellipse{fill:var(--or2)}
+.oath{position:absolute;right:0;top:-6px;width:150px;cursor:default;
+  opacity:.9;transition:opacity .16s, transform .16s}
+.oath:hover,.oath:focus-visible{opacity:1;transform:translateY(-2px) rotate(-.6deg);
+  outline:none}
+.oath svg{display:block;width:100%;height:auto}
+.oath-sheet{fill:url(#oathPaper)}
+.oath-edge{fill:none;stroke:#8c7233;stroke-width:1.2;opacity:.75}
+.oath-steps ellipse{fill:#2a2016;opacity:.9}
+.oath-tx text{fill:#2a2016;letter-spacing:.2px;
+  font:700 15px/1 Georgia,"Times New Roman",serif}
+.oath:hover .oath-tx text{fill:#12100c}
 .oath-tip{position:absolute;right:0;top:calc(100% + 8px);width:210px;
   padding:8px 11px;border-radius:11px;border:1px solid var(--or);
   background:var(--bg2);color:var(--tx);font-size:12.5px;line-height:1.4;
@@ -224,11 +223,29 @@ a{color:var(--or2)}
   transform:translateY(0)}
 @media(max-width:900px){
   .hero p{padding-right:0}
-  .oath{position:static;width:168px;margin-top:12px;opacity:.85}
+  .oath{position:static;width:132px;margin-top:12px}
   .oath-tip{position:static;width:auto;opacity:1;visibility:visible;
     transform:none;margin-top:6px;box-shadow:none;display:inline-block}
 }
 @media print{.oath{display:none}}
+
+/* Свёрнутая справка в шаге: заголовок в одну строку, без рамки-плашки */
+.hint-det{margin-top:10px;border:1px solid var(--line);border-radius:10px;
+  background:var(--bg2)}
+.hint-det>summary{cursor:pointer;padding:8px 12px;font-size:13px;color:var(--tx2);
+  list-style:none}
+.hint-det>summary::-webkit-details-marker{display:none}
+.hint-det>summary::before{content:"＋ ";color:var(--or)}
+.hint-det[open]>summary::before{content:"− "}
+.hint-det>summary:hover{color:var(--tx)}
+.hint-det .det-b{padding:0 12px 10px;display:flex;flex-direction:column;gap:8px}
+
+/* Миниатюра письма в правой колонке: лист А4 сжат по ширине колонки */
+.ltrmini{margin-top:10px;border:1px solid var(--line2);border-radius:8px;
+  background:#fff;overflow:hidden;cursor:zoom-in;height:420px}
+.ltrmini-in{width:794px;transform-origin:top left}
+@media(max-width:999px){.ltrmini{height:320px}}
+@media print{.ltrmini,#ltrMiniGo{display:none}}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;
   margin-bottom:18px}
 .tile{display:flex;flex-direction:column;gap:6px;text-align:left;padding:18px;
@@ -789,11 +806,28 @@ body.demo .internal{display:none !important}
 .pills.big{gap:8px}
 .pills.big .pill{font-size:15px;padding:11px 18px;border-radius:24px;font-weight:700}
 /* Конфигурация в диалоге выбора станка */
-.modal-cfg{padding:12px 14px;border-bottom:1px solid var(--line);background:var(--bg3)}
-.modal-cfg .mc-h{font-size:12.5px;color:var(--muted);margin-bottom:8px}
-.modal-cfg .mc-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+/* Фильтры конфигурации: компактная строка, все параметры влезают по ширине */
+.modal-cfg{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--bg3)}
+.modal-cfg .mc-h{font-size:12px;color:var(--muted);margin-bottom:6px}
+.modal-cfg label.f{font-size:11px;margin-bottom:2px}
+.modal-cfg select{padding:5px 8px;font-size:12.5px;border-radius:8px}
+.modal-cfg .mc-req{font-size:11.5px;color:var(--warn);margin:4px 0 0}
+.modal-cfg .btn.mini{padding:4px 10px;font-size:11.5px}
+.modal-cfg .mc-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));
   gap:8px;margin-bottom:8px}
-.modal-cfg .mc-f{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.45}
+.modal-cfg .mc-f{font-size:11.5px;color:var(--muted);margin:6px 0;line-height:1.4}
+/* Параметр прямо в названии позиции: клик открывает список значений */
+.pickrow .seg{font:inherit;font-size:inherit;font-weight:600;padding:0 4px;
+  border:1px dashed var(--line2);border-radius:6px;background:none;
+  color:var(--or2);cursor:pointer;line-height:1.2}
+.pickrow .seg:hover{border-color:var(--or);color:var(--or);background:var(--orbg)}
+.segpop{position:absolute;z-index:60;min-width:150px;padding:5px;border-radius:10px;
+  border:1px solid var(--or);background:var(--bg2);box-shadow:0 12px 28px var(--shadow)}
+.segpop button{display:block;width:100%;text-align:left;font:inherit;font-size:12.5px;
+  padding:6px 9px;border:0;border-radius:7px;background:none;color:var(--tx2);
+  cursor:pointer}
+.segpop button:hover{background:var(--bg3);color:var(--tx)}
+.segpop button.on{color:var(--or);font-weight:700}
 /* Разница цены к базовой конфигурации */
 .pickrow .pp{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .pickrow .pd{font-size:11.5px;font-weight:600}
@@ -874,31 +908,36 @@ body.demo .internal{display:none !important}
     <!-- Плашка-шалость: лента со следами, при наведении подсказка. Фон
          прозрачный, чернила и бумага берутся из переменных темы. -->
     <div class="oath" id="oath" tabindex="0" role="img" aria-label="Торжественно клянусь, что замышляю только шалость">
-      <svg viewBox="0 0 260 150" aria-hidden="true" focusable="false">
+      <svg viewBox="0 0 200 250" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="oathPaper" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#e8d5a8"></stop>
+            <stop offset="55%" stop-color="#d8c08a"></stop>
+            <stop offset="100%" stop-color="#c2a468"></stop>
+          </linearGradient>
+        </defs>
+        <path class="oath-sheet" d="M14 8 h172 v234 h-172 z"></path>
+        <path class="oath-edge" d="M14 8 q10 8 0 16 q10 8 0 16 q10 8 0 16 q10 8 0 16
+          q10 8 0 16 q10 8 0 16 q10 8 0 16 q10 8 0 16 q10 8 0 16 q10 8 0 16
+          q10 8 0 16 q10 8 0 16 q10 8 0 16 q10 8 0 18 h172 q-10 -8 0 -16
+          q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16
+          q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16
+          q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -18 z"></path>
         <g class="oath-steps">
-          <ellipse cx="24" cy="26" rx="4.4" ry="6.2" transform="rotate(-18 24 26)"></ellipse>
-          <ellipse cx="40" cy="46" rx="4.4" ry="6.2" transform="rotate(-12 40 46)"></ellipse>
-          <ellipse cx="30" cy="70" rx="4.2" ry="6" transform="rotate(-6 30 70)"></ellipse>
-          <ellipse cx="46" cy="92" rx="4.2" ry="6" transform="rotate(4 46 92)"></ellipse>
-          <ellipse cx="36" cy="116" rx="4" ry="5.8" transform="rotate(10 36 116)"></ellipse>
-          <ellipse cx="222" cy="30" rx="4.4" ry="6.2" transform="rotate(14 222 30)"></ellipse>
-          <ellipse cx="208" cy="52" rx="4.4" ry="6.2" transform="rotate(8 208 52)"></ellipse>
-          <ellipse cx="220" cy="76" rx="4.2" ry="6" transform="rotate(2 220 76)"></ellipse>
-          <ellipse cx="204" cy="98" rx="4.2" ry="6" transform="rotate(-6 204 98)"></ellipse>
-          <ellipse cx="216" cy="120" rx="4" ry="5.8" transform="rotate(-12 216 120)"></ellipse>
-        </g>
-        <path class="oath-curl" d="M86 20 C64 12 56 30 70 38 C80 44 92 38 92 28"></path>
-        <g class="oath-band">
-          <path d="M74 30 h112 l-9 11 h-112 z"></path>
-          <path d="M66 52 h120 l-9 11 h-120 z"></path>
-          <path d="M74 74 h112 l-9 11 h-112 z"></path>
-          <path d="M60 96 h126 l-9 11 h-126 z"></path>
+          <ellipse cx="34" cy="34" rx="5" ry="7" transform="rotate(-16 34 34)"></ellipse>
+          <ellipse cx="50" cy="52" rx="5" ry="7" transform="rotate(-8 50 52)"></ellipse>
+          <ellipse cx="166" cy="40" rx="5" ry="7" transform="rotate(16 166 40)"></ellipse>
+          <ellipse cx="152" cy="58" rx="5" ry="7" transform="rotate(8 152 58)"></ellipse>
+          <ellipse cx="44" cy="196" rx="5" ry="7" transform="rotate(6 44 196)"></ellipse>
+          <ellipse cx="58" cy="214" rx="5" ry="7" transform="rotate(12 58 214)"></ellipse>
+          <ellipse cx="158" cy="200" rx="5" ry="7" transform="rotate(-10 158 200)"></ellipse>
+          <ellipse cx="144" cy="218" rx="5" ry="7" transform="rotate(-16 144 218)"></ellipse>
         </g>
         <g class="oath-tx">
-          <text x="130" y="39" text-anchor="middle">I SOLEMNLY</text>
-          <text x="126" y="61" text-anchor="middle">SWEAR THAT</text>
-          <text x="130" y="83" text-anchor="middle">I AM UP</text>
-          <text x="123" y="105" text-anchor="middle">TO NO GOOD</text>
+          <text x="100" y="106" text-anchor="middle">Торжественно</text>
+          <text x="100" y="132" text-anchor="middle">клянусь,</text>
+          <text x="100" y="158" text-anchor="middle">что замышляю</text>
+          <text x="100" y="184" text-anchor="middle">только шалость.</text>
         </g>
       </svg>
       <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
@@ -989,6 +1028,11 @@ body.demo .internal{display:none !important}
       </div>
       <div class="note small">Печать даёт лист А4 с фирменной шапкой и полями
         по ГОСТ: слева 30 мм, справа 15 мм.</div>
+      <!-- Живая миниатюра бланка: обновляется вместе с текстом слева. -->
+      <div class="ltrmini" id="ltrMini" title="Открыть лист во всю ширину">
+        <div class="ltrmini-in" id="ltrMiniIn" style="transform: scale(0.453);"><div class="ltrpage"><div class="lp-head"><img src="data:image/png;base64,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" alt="LASERCUT" class="lp-logo"><div class="lp-co"><b>ООО «СТАНКОПРОМ»</b><span>Юр. лицо: ООО «СТАНКОПРОМ» · ИНН/КПП 7811692637 / 781101001 · ОГРН/ОКПО 1187847125465 / 28428219</span><span>Руководитель: Греков Евгений Валерьевич</span><span>Р/счёт: 40702810555000034390 · Северо-Западный банк ПАО Сбербанк · БИК 044030653 · К/счёт 30101810500000000653</span><span>Юр. адрес: 192019, г. Санкт-Петербург, Глухоозёрское шоссе, д. 12, литера Ж, помещ. 1-Н, офисы 1, 2, 3</span><span>Факт. адрес: 196105, г. Санкт-Петербург, Витебский пр-кт, д. 11, литера А, помещ. 1-Н, ком. 101 (адрес из мастер-шаблона ТКП)</span><span>Соцсети: vk.com/lasercut_ru · youtube.com/user/lasercutru</span></div></div><div class="lp-addr"><div class="lp-to"><b>Генеральный директор ООО «СТАНКОПРОМ»</b><br>Греков Евгений Валерьевич<br><span class="muted">ИНН 7811692637 / КПП 781101001</span></div><div class="lp-from"><b>От:</b> Иванов Иван Иванович</div></div><h2 class="lp-h">Просьба о возврате ошибочно перечисленных денежных средств</h2><div class="lp-body"><p>Уважаемый Греков Евгений Валерьевич!</p><p>— с расчётного счёта — был ошибочно перечислен платёж на счёт ООО «СТАНКОПРОМ» на сумму 279 500,00 ₽ (Двести семьдесят девять тысяч пятьсот рублей 00 копеек). Платёжное поручение № — от —.</p><p>Платёж совершён ошибочно: реквизиты получателя, указанные в документе-основании (счёт № — от —), не соответствуют действительным реквизитам контрагента.</p><p>В соответствии с Гражданским кодексом РФ и договором на расчётно-кассовое обслуживание прошу вернуть ошибочно перечисленную сумму в полном объёме, включая удержанные комиссии банка, и зачислить её на расчётный счёт.</p><p>Реквизиты для возврата:</p><p>Получатель: Иванов Иван Иванович</p><p>Номер счёта: —</p><p>Валюта счёта: российский рубль (RUB)</p><p>Банк получателя: —</p><p>БИК: —</p><p>Корреспондентский счёт: —</p></div><div class="lp-sign"><span>31 июля 2026 г.</span><span class="lp-line"> <span class="lp-blank">&nbsp;</span></span></div></div></div>
+      </div>
+      <button class="btn mini sec noprint" type="button" id="ltrMiniGo">Лист во всю ширину</button>
     </div>
   </aside>
   </div>
@@ -1759,12 +1803,18 @@ body.demo .internal{display:none !important}
           <div class="muted" style="padding-top:10px">5 % → 2 % → 1 %. Не начинать с максимума.
             Максимум в приложении — 30 %.</div></div>
       </div>
-      <div class="note">Скидка по умолчанию идёт на оборудование и опции.
-        ПНР и обучение — платные услуги по прайсу, они по умолчанию без скидки.
-        Нужна скидка и на услуги — поставьте её в строке сметы вручную.</div>
-      <div class="note internal">Счёт фиксирует цену и наличие на 5 дней.
-        Срок действия ТКП — 15 дней. Оплата в ТКП печатается так:
-        100 % предоплата (возможна схема 50/50 по согласованию); безнал с НДС; для юрлиц — рассрочка, кредит, лизинг. Работа по 44-ФЗ и 223-ФЗ</div>
+      <!-- Пояснения занимали место над таблицей: убраны в свёрнутую справку. -->
+      <details class="hint-det" id="smetaHints">
+        <summary>Правила скидки и сроки — справка</summary>
+        <div class="det-b">
+          <div class="note">Скидка по умолчанию идёт на оборудование и опции.
+            ПНР и обучение — платные услуги по прайсу, они по умолчанию без скидки.
+            Нужна скидка и на услуги — поставьте её в строке сметы вручную.</div>
+          <div class="note internal">Счёт фиксирует цену и наличие на 5 дней.
+            Срок действия ТКП — 15 дней. Оплата в ТКП печатается так:
+            100 % предоплата (возможна схема 50/50 по согласованию); безнал с НДС; для юрлиц — рассрочка, кредит, лизинг. Работа по 44-ФЗ и 223-ФЗ</div>
+        </div>
+      </details>
     </div>
   </div>
 
@@ -2174,7 +2224,7 @@ body.demo .internal{display:none !important}
       <b id="pickTitle">Виброопоры — выбор позиции</b>
       <button class="xbtn" type="button" id="pickClose" aria-label="закрыть">×</button>
     </div>
-    <div class="modal-cfg" id="pickCfg"></div>
+    <!-- Поиск идёт сразу под заголовком: им пользуются чаще фильтров. -->
     <div class="modal-f">
       <input type="search" id="pickSearch" placeholder="Поиск по названию">
       <select id="pickSort">
@@ -2184,6 +2234,7 @@ body.demo .internal{display:none !important}
       </select>
       <span class="muted small" id="pickCnt"></span>
     </div>
+    <div class="modal-cfg" id="pickCfg"></div>
     <div class="modal-b" id="pickList"></div>
   </div>
 </div>
@@ -5935,6 +5986,24 @@ var DOCX = (function () {
       '  (подпись)');
     return out.join('\n');
   }
+  // Живая миниатюра бланка в правой колонке: копия готового листа, сжатая по
+  // ширине колонки. Клик — прокрутка к полноразмерному листу ниже.
+  function renderLtrMini() {
+    var box = $('ltrMini'), inner = $('ltrMiniIn'), page = $('ltrPage');
+    if (!box || !inner || !page) return;
+    inner.innerHTML = '<div class="ltrpage">' + page.innerHTML + '</div>';
+    var w = box.clientWidth || 360;
+    var k = Math.max(0.35, Math.min(1, w / 794));
+    inner.style.transform = 'scale(' + k.toFixed(3) + ')';
+    var cnt2 = $('ltrPageCnt');
+    if (cnt2) cnt2.textContent = 'масштаб ' + Math.round(k * 100) + ' %';
+  }
+  function ltrMiniGo() {
+    var page = $('ltrPage');
+    if (!page) return;
+    try { page.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    catch (e) { d.documentElement.scrollTop = page.offsetTop; }
+  }
   function renderLtr() {
     var tpl = ltrTpl();
     $('ltrTitle').textContent = tpl.title;
@@ -5948,6 +6017,7 @@ var DOCX = (function () {
     if ($('ltrHead').value !== ltrHeadText()) $('ltrHead').value = ltrHeadText();
     if ($('ltrBody').value !== ltrBodyText()) $('ltrBody').value = ltrBodyText();
     renderLtrPage();
+    renderLtrMini();
     thinkify();
   }
   (function () {
@@ -6069,6 +6139,9 @@ var DOCX = (function () {
     }
   });
   if (state.ltr.ceo) $('ltrCeo').value = state.ltr.ceo;
+  $('ltrMini').addEventListener('click', ltrMiniGo);
+  $('ltrMiniGo').addEventListener('click', ltrMiniGo);
+  window.addEventListener('resize', renderLtrMini);
   renderLtrFields();
   renderLtr();
 
@@ -6659,6 +6732,18 @@ var DOCX = (function () {
       ['mopa', 'MOPA', function (r) { return r.meta.mopa ? 'да' : 'нет'; }]
     ]
   };
+  // Вариантов сверх прайса в файле цен нет, но менеджеру они нужны: показываем
+  // их с пометкой «по запросу» и цену станка не подменяем выдуманной.
+  var PICK_REQ = {
+    milling: {
+      motor: ['Серводвигатели (по запросу)', 'Шаговые Yako (по запросу)'],
+      table: ['С СОЖ — ванна охлаждения (по запросу)']
+    }
+  };
+  function reqVals(key) {
+    return ((PICK_REQ[buildKind()] || {})[key] || []);
+  }
+  function isReqVal(key, v) { return reqVals(key).indexOf(v) >= 0; }
   function pickCfgDefs() {
     if (pickState.slot !== 'machine') return [];
     return PICK_CFG[buildKind()] || [];
@@ -6667,8 +6752,8 @@ var DOCX = (function () {
     var box = fresh('pickCfg'), defs = pickCfgDefs();
     if (!defs.length) { box.style.display = 'none'; return; }
     box.style.display = '';
-    box.appendChild(el('div', 'mc-h', 'Конфигурация — меняйте параметры, цена ' +
-      'пересчитается по прайсу'));
+    box.appendChild(el('div', 'mc-h', 'Конфигурация: параметры меняются, ' +
+      'цена пересчитывается по прайсу'));
     var row = el('div', 'mc-row');
     defs.forEach(function (d) {
       var key = d[0], label = d[1], get = d[2];
@@ -6677,15 +6762,20 @@ var DOCX = (function () {
         var v = get(r);
         if (v && vals.indexOf(v) < 0) vals.push(v);
       });
-      if (vals.length < 2) return;
+      var extra = reqVals(key);
+      if (vals.length < 2 && !extra.length) return;
       var cell = el('div');
       cell.appendChild(el('label', 'f', esc(label)));
       var sel = el('select');
       opt(sel, '', 'любая');
       vals.forEach(function (v) { opt(sel, v, v); });
+      extra.forEach(function (v) { opt(sel, v, v); });
       sel.value = pickState.cfg[key] || '';
       sel.addEventListener('change', function () {
         pickState.cfg[key] = this.value;
+        // перерисовываем и сам блок: иначе сводка отбора и предупреждение
+        // о вариантах «по запросу» оставались от прошлого состояния
+        renderPickCfg();
         renderPick();
       });
       cell.appendChild(sel);
@@ -6697,9 +6787,20 @@ var DOCX = (function () {
       if (pickState.cfg[d[0]]) chosen.push(d[1] + ': ' + pickState.cfg[d[0]]);
     });
     box.appendChild(el('div', 'mc-f', chosen.length
-      ? 'Отбор: ' + esc(chosen.join(' · ')) + '. Разница в цене считается от ' +
-        'выбранной позиции слота или самой дешёвой в отборе.'
+      ? 'Отбор: ' + esc(chosen.join(' · ')) + '. Разница в цене — от позиции ' +
+        'слота или самой дешёвой в отборе.'
       : 'Фильтры не заданы — показан весь список.'));
+    // выбранные «запросные» варианты: список не сужаем, но говорим прямо
+    var reqChosen = [];
+    defs.forEach(function (d) {
+      var v = pickState.cfg[d[0]];
+      if (v && isReqVal(d[0], v)) reqChosen.push(d[1] + ': ' + v);
+    });
+    if (reqChosen.length) {
+      box.appendChild(el('div', 'mc-req', 'В прайсе этого нет: ' +
+        esc(reqChosen.join(' · ')) + '. Цену уточнить у поставщика — в позицию ' +
+        'уйдёт пометка «по запросу», стоимость станка не меняется.'));
+    }
     var reset = el('button', 'btn mini sec', 'Сбросить конфигурацию');
     reset.type = 'button';
     reset.addEventListener('click', function () {
@@ -6715,6 +6816,7 @@ var DOCX = (function () {
       var ok = true;
       defs.forEach(function (d) {
         var want = pickState.cfg[d[0]];
+        if (want && isReqVal(d[0], want)) return;   // варианта нет в прайсе
         if (want && d[2](r) !== want) ok = false;
       });
       return ok;
@@ -6736,7 +6838,74 @@ var DOCX = (function () {
     renderPick();
     try { $('pickSearch').focus(); } catch (e) {}
   }
-  function closePick() { $('pickModal').classList.remove('open'); }
+  function closePick() { $('pickModal').classList.remove('open'); closeSegPop(); }
+  // Разметка названия: куски вида «1.5wc», «A11 + Leadshine», «VAC» становятся
+  // кнопками — по ним меняют шпиндель, стойку и стол, не листая список
+  var SEG_RULES = [
+    [/^\d+(?:[.,]\d+)?\s*(?:wc|ac)$/i, 'kw'],
+    [/^(NC8|NC|A11|A18|Syntec)(\s*\+\s*\w+)?$/i, 'ctrl'],
+    [/^VAC$/i, 'table']
+  ];
+  function segKeyFor(part) {
+    var key = '';
+    SEG_RULES.forEach(function (rl) {
+      if (!key && rl[0].test(part.trim())) key = rl[1];
+    });
+    return key;
+  }
+  function nameWithSegs(r) {
+    if (pickState.slot !== 'machine' || buildKind() !== 'milling') return esc(r.name);
+    var parts = String(r.name).split(',');
+    return parts.map(function (part, i) {
+      var key = i ? segKeyFor(part) : '';
+      if (!key) return esc(part);
+      return ' <button type="button" class="seg" data-key="' + key + '" title="' +
+        'Сменить параметр">' + esc(part.trim()) + '</button>';
+    }).join(',');
+  }
+  var segPop = null;
+  function closeSegPop() {
+    if (segPop && segPop.parentNode) segPop.parentNode.removeChild(segPop);
+    segPop = null;
+  }
+  function openSegPop(btn, key) {
+    closeSegPop();
+    var defs = pickCfgDefs(), def = null;
+    defs.forEach(function (d) { if (d[0] === key) def = d; });
+    if (!def) return;
+    var vals = [];
+    pickState.rows.forEach(function (r) {
+      var v = def[2](r);
+      if (v && vals.indexOf(v) < 0) vals.push(v);
+    });
+    reqVals(key).forEach(function (v) { vals.push(v); });
+    segPop = el('div', 'segpop');
+    var cur = pickState.cfg[key] || '';
+    var head = el('div', 'muted');
+    head.style.cssText = 'font-size:11px;padding:2px 9px 4px';
+    head.textContent = def[1];
+    segPop.appendChild(head);
+    var any = el('button', cur ? '' : 'on', 'любой');
+    any.type = 'button';
+    any.addEventListener('click', function () {
+      delete pickState.cfg[key];
+      closeSegPop(); renderPickCfg(); renderPick();
+    });
+    segPop.appendChild(any);
+    vals.forEach(function (v) {
+      var b2 = el('button', cur === v ? 'on' : '', v);
+      b2.type = 'button';
+      b2.addEventListener('click', function () {
+        pickState.cfg[key] = v;
+        closeSegPop(); renderPickCfg(); renderPick();
+      });
+      segPop.appendChild(b2);
+    });
+    var row = btn.closest ? btn.closest('.pickrow') : null;
+    (row || $('pickList')).appendChild(segPop);
+    segPop.style.left = Math.max(0, btn.offsetLeft - 8) + 'px';
+    segPop.style.top = (btn.offsetTop + 22) + 'px';
+  }
   function renderPick() {
     var q = ($('pickSearch').value || '').trim().toLowerCase();
     var sort = $('pickSort').value;
@@ -6765,24 +6934,44 @@ var DOCX = (function () {
     }
     rows.slice(0, 200).forEach(function (r) {
       var row = el('div', 'pickrow');
+      row.style.position = 'relative';
       var cents = toCents(r.price || 0);
       var diff = base && cents ? cents - base : 0;
       var diffTx = diff
         ? '<span class="pd ' + (diff > 0 ? 'up' : 'dn') + '">' +
           (diff > 0 ? '+' : '−') + fmtRub(Math.abs(diff)) + ' ₽</span>'
         : (base && cents ? '<span class="pd same">без изменения</span>' : '');
-      row.innerHTML = '<div class="pn"><b>' + esc(r.name) + '</b>' +
+      row.innerHTML = '<div class="pn"><b>' + nameWithSegs(r) + '</b>' +
         (r.sub ? '<span class="muted">' + esc(r.sub) + '</span>' : '') + '</div>' +
         '<div class="pp">' + (r.price ? fmtRub(cents) + ' ₽'
           : '<span class="muted">цену уточнить</span>') + diffTx + '</div>';
+      // параметры в самом названии: клик по «1.5wc» или «VAC» открывает список
+      var segs = row.querySelectorAll('button.seg');
+      for (var sg = 0; sg < segs.length; sg++) {
+        segs[sg].addEventListener('click', function (e) {
+          e.stopPropagation();
+          openSegPop(this, this.getAttribute('data-key'));
+        });
+      }
       var b = el('button', 'btn mini', 'Выбрать');
       b.type = 'button';
       b.addEventListener('click', function () {
-        setSlot(pickState.slot, { name: r.name, price: r.price, sub: r.sub || '',
+        // выбранные варианты «по запросу» дописываются в наименование:
+        // цену прайса они не меняют, но менеджер и клиент видят их в смете
+        var extra = [];
+        pickCfgDefs().forEach(function (d) {
+          var v = pickState.cfg[d[0]];
+          if (v && isReqVal(d[0], v)) {
+            extra.push(d[1].toLowerCase() + ': ' + v.replace(/\s*\(по запросу\)/i, ''));
+          }
+        });
+        var nm = r.name + (extra.length ? ' + ' + extra.join(' + ') + ' (по запросу)' : '');
+        setSlot(pickState.slot, { name: nm, price: r.price,
+          sub: (r.sub || '') + (extra.length ? ' · доплата за исполнение по запросу' : ''),
           meta: r.meta || {} });
         closePick();
         toast('В слот «' + slotDef(pickState.slot)[1] + '»: ' +
-          (r.name.length > 40 ? r.name.slice(0, 40) + '…' : r.name));
+          (nm.length > 40 ? nm.slice(0, 40) + '…' : nm));
       });
       row.appendChild(b);
       box.appendChild(row);
