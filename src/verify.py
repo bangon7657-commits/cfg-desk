@@ -21,14 +21,14 @@ import data  # noqa: E402
 def all_prices():
     """Все цены из прайса — на них и проверяем, а не на выдуманных числах."""
     out = []
-    for price in data.FIBER_A.values():
+    for price in data.FIBER_A_BASE.values():
         out.append(price)
-    for cfg in data.FIBER_S.values():
+    for cfg in data.FIBER_S_BASE.values():
         out.append(cfg['base'])
         out.append(cfg['table'])
         out.extend(cfg['rot'].values())
         out.extend(cfg['table_rot'].values())
-    for row in data.MILLING:
+    for row in data.MILLING_BASE:
         out.append(row[6])
         out.append(row[7])
     for _, _, price in data.OPTIONS:
@@ -117,11 +117,11 @@ print('--- Проверка самих данных ---')
 
 # Наценка на фрезерных: гипотеза «+11 % с округлением до 100 ₽»
 bad = []
-for fmt_, name, kw, cool, ctrl, vac, order, stock in data.MILLING:
+for fmt_, name, kw, cool, ctrl, vac, order, stock in data.MILLING_BASE:
     r100 = int((Decimal(order) * Decimal('1.11') / 100).quantize(Decimal('1'), ROUND_HALF_UP)) * 100
     if r100 != stock:
         bad.append((name, order, stock, r100))
-print(f'Фрезерных позиций: {len(data.MILLING)}')
+print(f'Фрезерных позиций: {len(data.MILLING_BASE)}')
 if bad:
     print(f'Отклонений от правила «+11 %, округление до 100 ₽»: {len(bad)}')
     for b in bad[:10]:
@@ -131,18 +131,18 @@ print('Правило «+11 % с округлением до 100 ₽» подт�
 
 # Количество конфигураций
 n_fiber = len(data.FIBER_A) + sum(2 + len(c['rot']) + len(c['table_rot'])
-                                 for c in data.FIBER_S.values())
+                                 for c in data.FIBER_S_BASE.values())
 print(f'Конфигураций волокна: {n_fiber} (в источнике заявлено 122)')
-print(f'Конфигураций фрезерных: {len(data.MILLING)} (в источнике заявлено 85)')
+print(f'Конфигураций фрезерных: {len(data.MILLING_BASE)} (в источнике заявлено 85)')
 assert n_fiber == 122, n_fiber
-assert len(data.MILLING) == 85, len(data.MILLING)
+assert len(data.MILLING_BASE) == 85, len(data.MILLING_BASE)
 
 # Пакетная скидка: стол+ось против стола и оси по отдельности
 print()
 print('--- Пакетная скидка на стол + ось ---')
 mismatch = 0
 undeclared = {}
-for (fmt_, power), cfg in sorted(data.FIBER_S.items()):
+for (fmt_, power), cfg in sorted(data.FIBER_S_BASE.items()):
     exp = data.BUNDLE_DISCOUNT.get(fmt_)
     for rot, price in sorted(cfg['table_rot'].items()):
         sep = cfg['table'] + (cfg['rot'][rot] - cfg['base'])
@@ -162,10 +162,10 @@ print(f'Форматов без заявленной пакетной скидк
 # ---- Второй прайс: приводы Bochu S9 ----
 print()
 print('--- Прайс Bochu: состав и разница с Yaskawa ---')
-assert set(data.FIBER_S_BOCHU) == set(data.FIBER_S), 'наборы конфигураций разошлись'
+assert set(data.FIBER_S_BOCHU_BASE) == set(data.FIBER_S_BASE), 'наборы конфигураций разошлись'
 bo_sum, bo_count, diffs = 0, 0, []
-for key, c in sorted(data.FIBER_S.items()):
-    b = data.FIBER_S_BOCHU[key]
+for key, c in sorted(data.FIBER_S_BASE.items()):
+    b = data.FIBER_S_BOCHU_BASE[key]
     assert set(b['rot']) == set(c['rot']) and set(b['table_rot']) == set(c['table_rot']), key
     pairs = [(c['base'], b['base']), (c['table'], b['table'])]
     pairs += [(c['rot'][r], b['rot'][r]) for r in c['rot']]
@@ -244,10 +244,10 @@ print()
 print('--- Контрольная сумма прайса ---')
 tot = 0
 cnt = 0
-for v in data.FIBER_A.values():
+for v in data.FIBER_A_BASE.values():
     tot += v
     cnt += 1
-for c in data.FIBER_S.values():
+for c in data.FIBER_S_BASE.values():
     tot += c['base'] + c['table']
     cnt += 2
     for v in c['rot'].values():
@@ -256,7 +256,7 @@ for c in data.FIBER_S.values():
     for v in c['table_rot'].values():
         tot += v
         cnt += 1
-for r in data.MILLING:
+for r in data.MILLING_BASE:
     tot += r[6] + r[7]
     cnt += 2
 for _, _, p in data.OPTIONS:
