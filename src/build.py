@@ -14,6 +14,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 import data
 import reference as ref
+import wattsan as wt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DIST = os.environ.get('DIST_DIR') or os.path.join(HERE, 'dist')
@@ -133,6 +134,19 @@ APP = {
     'chillerNote': data.CHILLER_NOTE,
     'pnrNoPrice': data.PNR_NO_PRICE,
     'pnrNoPriceNote': data.PNR_NO_PRICE_NOTE,
+    # Расширенные справочники допоборудования с характеристиками
+    'stabsFull': wt.STABS_FULL,
+    'stabBrands': wt.STAB_BRANDS,
+    'stabNote': wt.STAB_NOTE,
+    'chillersFull': wt.CHILLERS_FULL,
+    'chCommon': wt.CH_COMMON,
+    'aspiration': wt.ASPIRATION,
+    'aspMarkup': 1.2,
+    'idxNotes': wt.IDX_NOTES,
+    'pnrGroups': wt.PNR_GROUPS,
+    'brushes': wt.BRUSHES,
+    'spindles': wt.SPINDLES,
+    'millSeries': wt.SERIES,
     'vibroQty': data.VIBRO_QTY,
     'pnr': [{'model': m, 'days': d, 'pnr': p, 'plus1': p1, 'plus2': p2,
              'training': t, 'package': pk}
@@ -712,6 +726,8 @@ repl = {
     '__PNR_NO_PRICE_NOTE__': esc(data.PNR_NO_PRICE_NOTE),
     '__PNR_NO_PRICE_NOTE_2__': esc(data.PNR_NO_PRICE_NOTE),
     '__CO2_DATE_2__': esc(data.CO2_DATE),
+    '__CO2_DATE_3__': esc(data.CO2_DATE),
+    '__MARKER_DATE_3__': esc(data.MARKER_DATE),
     '__MARKER_DATE_2__': esc(data.MARKER_DATE),
     '__DATE_FIBER__': data.PRICE_DATES['fiber'],
     '__DATE_MILLING__': data.PRICE_DATES['milling'],
