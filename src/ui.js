@@ -3366,6 +3366,24 @@
       '  (подпись)');
     return out.join('\n');
   }
+  // Живая миниатюра бланка в правой колонке: копия готового листа, сжатая по
+  // ширине колонки. Клик — прокрутка к полноразмерному листу ниже.
+  function renderLtrMini() {
+    var box = $('ltrMini'), inner = $('ltrMiniIn'), page = $('ltrPage');
+    if (!box || !inner || !page) return;
+    inner.innerHTML = '<div class="ltrpage">' + page.innerHTML + '</div>';
+    var w = box.clientWidth || 360;
+    var k = Math.max(0.35, Math.min(1, w / 794));
+    inner.style.transform = 'scale(' + k.toFixed(3) + ')';
+    var cnt2 = $('ltrPageCnt');
+    if (cnt2) cnt2.textContent = 'масштаб ' + Math.round(k * 100) + ' %';
+  }
+  function ltrMiniGo() {
+    var page = $('ltrPage');
+    if (!page) return;
+    try { page.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    catch (e) { d.documentElement.scrollTop = page.offsetTop; }
+  }
   function renderLtr() {
     var tpl = ltrTpl();
     $('ltrTitle').textContent = tpl.title;
@@ -3379,6 +3397,7 @@
     if ($('ltrHead').value !== ltrHeadText()) $('ltrHead').value = ltrHeadText();
     if ($('ltrBody').value !== ltrBodyText()) $('ltrBody').value = ltrBodyText();
     renderLtrPage();
+    renderLtrMini();
     thinkify();
   }
   (function () {
@@ -3500,6 +3519,9 @@
     }
   });
   if (state.ltr.ceo) $('ltrCeo').value = state.ltr.ceo;
+  $('ltrMini').addEventListener('click', ltrMiniGo);
+  $('ltrMiniGo').addEventListener('click', ltrMiniGo);
+  window.addEventListener('resize', renderLtrMini);
   renderLtrFields();
   renderLtr();
 
@@ -4090,6 +4112,18 @@
       ['mopa', 'MOPA', function (r) { return r.meta.mopa ? 'да' : 'нет'; }]
     ]
   };
+  // Вариантов сверх прайса в файле цен нет, но менеджеру они нужны: показываем
+  // их с пометкой «по запросу» и цену станка не подменяем выдуманной.
+  var PICK_REQ = {
+    milling: {
+      motor: ['Серводвигатели (по запросу)', 'Шаговые Yako (по запросу)'],
+      table: ['С СОЖ — ванна охлаждения (по запросу)']
+    }
+  };
+  function reqVals(key) {
+    return ((PICK_REQ[buildKind()] || {})[key] || []);
+  }
+  function isReqVal(key, v) { return reqVals(key).indexOf(v) >= 0; }
   function pickCfgDefs() {
     if (pickState.slot !== 'machine') return [];
     return PICK_CFG[buildKind()] || [];
@@ -4098,8 +4132,8 @@
     var box = fresh('pickCfg'), defs = pickCfgDefs();
     if (!defs.length) { box.style.display = 'none'; return; }
     box.style.display = '';
-    box.appendChild(el('div', 'mc-h', 'Конфигурация — меняйте параметры, цена ' +
-      'пересчитается по прайсу'));
+    box.appendChild(el('div', 'mc-h', 'Конфигурация: параметры меняются, ' +
+      'цена пересчитывается по прайсу'));
     var row = el('div', 'mc-row');
     defs.forEach(function (d) {
       var key = d[0], label = d[1], get = d[2];
@@ -4108,15 +4142,20 @@
         var v = get(r);
         if (v && vals.indexOf(v) < 0) vals.push(v);
       });
-      if (vals.length < 2) return;
+      var extra = reqVals(key);
+      if (vals.length < 2 && !extra.length) return;
       var cell = el('div');
       cell.appendChild(el('label', 'f', esc(label)));
       var sel = el('select');
       opt(sel, '', 'любая');
       vals.forEach(function (v) { opt(sel, v, v); });
+      extra.forEach(function (v) { opt(sel, v, v); });
       sel.value = pickState.cfg[key] || '';
       sel.addEventListener('change', function () {
         pickState.cfg[key] = this.value;
+        // перерисовываем и сам блок: иначе сводка отбора и предупреждение
+        // о вариантах «по запросу» оставались от прошлого состояния
+        renderPickCfg();
         renderPick();
       });
       cell.appendChild(sel);
@@ -4128,9 +4167,20 @@
       if (pickState.cfg[d[0]]) chosen.push(d[1] + ': ' + pickState.cfg[d[0]]);
     });
     box.appendChild(el('div', 'mc-f', chosen.length
-      ? 'Отбор: ' + esc(chosen.join(' · ')) + '. Разница в цене считается от ' +
-        'выбранной позиции слота или самой дешёвой в отборе.'
+      ? 'Отбор: ' + esc(chosen.join(' · ')) + '. Разница в цене — от позиции ' +
+        'слота или самой дешёвой в отборе.'
       : 'Фильтры не заданы — показан весь список.'));
+    // выбранные «запросные» варианты: список не сужаем, но говорим прямо
+    var reqChosen = [];
+    defs.forEach(function (d) {
+      var v = pickState.cfg[d[0]];
+      if (v && isReqVal(d[0], v)) reqChosen.push(d[1] + ': ' + v);
+    });
+    if (reqChosen.length) {
+      box.appendChild(el('div', 'mc-req', 'В прайсе этого нет: ' +
+        esc(reqChosen.join(' · ')) + '. Цену уточнить у поставщика — в позицию ' +
+        'уйдёт пометка «по запросу», стоимость станка не меняется.'));
+    }
     var reset = el('button', 'btn mini sec', 'Сбросить конфигурацию');
     reset.type = 'button';
     reset.addEventListener('click', function () {
@@ -4146,6 +4196,7 @@
       var ok = true;
       defs.forEach(function (d) {
         var want = pickState.cfg[d[0]];
+        if (want && isReqVal(d[0], want)) return;   // варианта нет в прайсе
         if (want && d[2](r) !== want) ok = false;
       });
       return ok;
@@ -4167,7 +4218,74 @@
     renderPick();
     try { $('pickSearch').focus(); } catch (e) {}
   }
-  function closePick() { $('pickModal').classList.remove('open'); }
+  function closePick() { $('pickModal').classList.remove('open'); closeSegPop(); }
+  // Разметка названия: куски вида «1.5wc», «A11 + Leadshine», «VAC» становятся
+  // кнопками — по ним меняют шпиндель, стойку и стол, не листая список
+  var SEG_RULES = [
+    [/^\d+(?:[.,]\d+)?\s*(?:wc|ac)$/i, 'kw'],
+    [/^(NC8|NC|A11|A18|Syntec)(\s*\+\s*\w+)?$/i, 'ctrl'],
+    [/^VAC$/i, 'table']
+  ];
+  function segKeyFor(part) {
+    var key = '';
+    SEG_RULES.forEach(function (rl) {
+      if (!key && rl[0].test(part.trim())) key = rl[1];
+    });
+    return key;
+  }
+  function nameWithSegs(r) {
+    if (pickState.slot !== 'machine' || buildKind() !== 'milling') return esc(r.name);
+    var parts = String(r.name).split(',');
+    return parts.map(function (part, i) {
+      var key = i ? segKeyFor(part) : '';
+      if (!key) return esc(part);
+      return ' <button type="button" class="seg" data-key="' + key + '" title="' +
+        'Сменить параметр">' + esc(part.trim()) + '</button>';
+    }).join(',');
+  }
+  var segPop = null;
+  function closeSegPop() {
+    if (segPop && segPop.parentNode) segPop.parentNode.removeChild(segPop);
+    segPop = null;
+  }
+  function openSegPop(btn, key) {
+    closeSegPop();
+    var defs = pickCfgDefs(), def = null;
+    defs.forEach(function (d) { if (d[0] === key) def = d; });
+    if (!def) return;
+    var vals = [];
+    pickState.rows.forEach(function (r) {
+      var v = def[2](r);
+      if (v && vals.indexOf(v) < 0) vals.push(v);
+    });
+    reqVals(key).forEach(function (v) { vals.push(v); });
+    segPop = el('div', 'segpop');
+    var cur = pickState.cfg[key] || '';
+    var head = el('div', 'muted');
+    head.style.cssText = 'font-size:11px;padding:2px 9px 4px';
+    head.textContent = def[1];
+    segPop.appendChild(head);
+    var any = el('button', cur ? '' : 'on', 'любой');
+    any.type = 'button';
+    any.addEventListener('click', function () {
+      delete pickState.cfg[key];
+      closeSegPop(); renderPickCfg(); renderPick();
+    });
+    segPop.appendChild(any);
+    vals.forEach(function (v) {
+      var b2 = el('button', cur === v ? 'on' : '', v);
+      b2.type = 'button';
+      b2.addEventListener('click', function () {
+        pickState.cfg[key] = v;
+        closeSegPop(); renderPickCfg(); renderPick();
+      });
+      segPop.appendChild(b2);
+    });
+    var row = btn.closest ? btn.closest('.pickrow') : null;
+    (row || $('pickList')).appendChild(segPop);
+    segPop.style.left = Math.max(0, btn.offsetLeft - 8) + 'px';
+    segPop.style.top = (btn.offsetTop + 22) + 'px';
+  }
   function renderPick() {
     var q = ($('pickSearch').value || '').trim().toLowerCase();
     var sort = $('pickSort').value;
@@ -4196,24 +4314,44 @@
     }
     rows.slice(0, 200).forEach(function (r) {
       var row = el('div', 'pickrow');
+      row.style.position = 'relative';
       var cents = toCents(r.price || 0);
       var diff = base && cents ? cents - base : 0;
       var diffTx = diff
         ? '<span class="pd ' + (diff > 0 ? 'up' : 'dn') + '">' +
           (diff > 0 ? '+' : '−') + fmtRub(Math.abs(diff)) + ' ₽</span>'
         : (base && cents ? '<span class="pd same">без изменения</span>' : '');
-      row.innerHTML = '<div class="pn"><b>' + esc(r.name) + '</b>' +
+      row.innerHTML = '<div class="pn"><b>' + nameWithSegs(r) + '</b>' +
         (r.sub ? '<span class="muted">' + esc(r.sub) + '</span>' : '') + '</div>' +
         '<div class="pp">' + (r.price ? fmtRub(cents) + ' ₽'
           : '<span class="muted">цену уточнить</span>') + diffTx + '</div>';
+      // параметры в самом названии: клик по «1.5wc» или «VAC» открывает список
+      var segs = row.querySelectorAll('button.seg');
+      for (var sg = 0; sg < segs.length; sg++) {
+        segs[sg].addEventListener('click', function (e) {
+          e.stopPropagation();
+          openSegPop(this, this.getAttribute('data-key'));
+        });
+      }
       var b = el('button', 'btn mini', 'Выбрать');
       b.type = 'button';
       b.addEventListener('click', function () {
-        setSlot(pickState.slot, { name: r.name, price: r.price, sub: r.sub || '',
+        // выбранные варианты «по запросу» дописываются в наименование:
+        // цену прайса они не меняют, но менеджер и клиент видят их в смете
+        var extra = [];
+        pickCfgDefs().forEach(function (d) {
+          var v = pickState.cfg[d[0]];
+          if (v && isReqVal(d[0], v)) {
+            extra.push(d[1].toLowerCase() + ': ' + v.replace(/\s*\(по запросу\)/i, ''));
+          }
+        });
+        var nm = r.name + (extra.length ? ' + ' + extra.join(' + ') + ' (по запросу)' : '');
+        setSlot(pickState.slot, { name: nm, price: r.price,
+          sub: (r.sub || '') + (extra.length ? ' · доплата за исполнение по запросу' : ''),
           meta: r.meta || {} });
         closePick();
         toast('В слот «' + slotDef(pickState.slot)[1] + '»: ' +
-          (r.name.length > 40 ? r.name.slice(0, 40) + '…' : r.name));
+          (nm.length > 40 ? nm.slice(0, 40) + '…' : nm));
       });
       row.appendChild(b);
       box.appendChild(row);
