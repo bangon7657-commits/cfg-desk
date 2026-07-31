@@ -59,8 +59,11 @@
       <div class="menulist" id="menuList" role="menu"></div>
     </div>
     <div class="navtabs" id="tabs">
-      <button data-t="build" aria-selected="true">Сборка</button>
-      <button data-t="cfg" aria-selected="false">Конфигуратор</button>
+      <button data-t="home" aria-selected="true">Главная</button>
+      <button data-t="build" aria-selected="false">Конфигуратор</button>
+      <button data-t="letters" aria-selected="false">Письма</button>
+      <button data-t="zp" aria-selected="false">Зарплата</button>
+      <button data-t="cfg" aria-selected="false">Подбор и цены</button>
       <button data-t="smeta" aria-selected="false">Смета и ТКП <span class="badge" id="smetaBadge"></span></button>
       <button data-t="match" aria-selected="false">Подбор по задаче</button>
       <button data-t="gas" aria-selected="false">Газ и владение</button>
@@ -70,9 +73,260 @@
 
 <div class="wrap">
 
+<!-- ================= ГЛАВНАЯ ================= -->
+<span class="nojs-title">Главная</span>
+<section class="panel active" id="p-home">
+  <div class="hero">
+    <img class="hero-logo" src="data:image/png;base64,__LOGO_WIDE__" alt="LASERCUT"
+         width="300" height="70">
+    <h1>Рабочий стол менеджера</h1>
+    <p>Три инструмента: подобрать оборудование и выпустить ТКП, напечатать письмо
+      или уведомление, посчитать зарплату. Всё считается в браузере, ничего
+      не уходит на сервер.</p>
+  </div>
+  <div class="tiles">
+    <button class="tile" type="button" data-go="build">
+      <span class="tile-n">1</span>
+      <span class="tile-t">Конфигуратор и КП</span>
+      <span class="tile-d">Слоты комплекта, проверка сборки, смета и ТКП в Word.
+        Из конфигуратора — кнопка «Перенести в смету».</span>
+      <span class="tile-a">Открыть конфигуратор →</span>
+    </button>
+    <button class="tile" type="button" data-go="letters">
+      <span class="tile-n">2</span>
+      <span class="tile-t">Письма и уведомления</span>
+      <span class="tile-d">Возврат платежа, уточнение назначения, перезачёт,
+        официальное письмо. Текст правится, печать и .docx на фирменном бланке.</span>
+      <span class="tile-a">Открыть письма →</span>
+    </button>
+    <button class="tile" type="button" data-go="zp">
+      <span class="tile-n">3</span>
+      <span class="tile-t">Расчёт зарплаты</span>
+      <span class="tile-d">Оклад по дням, переработки, выходные, отпуск, больничный,
+        аванс, НДФЛ и внутренний налог. Печать расчёта.</span>
+      <span class="tile-a">Открыть расчёт →</span>
+    </button>
+  </div>
+  <div class="card">
+    <div class="cardhead"><h2>Что где лежит</h2></div>
+    <div id="homeMap"></div>
+  </div>
+</section>
+
+<!-- ================= ПИСЬМА ================= -->
+<span class="nojs-title">Письма</span>
+<section class="panel" id="p-letters">
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Письма и уведомления</h1>
+      <p class="lead">__LETTER_NOTE__</p>
+    </div>
+    <div class="pills" id="ltrPills" role="tablist" aria-label="Шаблон письма"></div>
+  </div>
+
+  <div class="cfggrid">
+  <div class="cfgmain">
+    <div class="card">
+      <div class="cardhead"><h2 id="ltrTitle">Шаблон</h2>
+        <span class="spec-cnt" id="ltrHint"></span></div>
+      <div class="row">
+        <div style="flex:2 1 300px"><label class="f">Наше юрлицо — адресат письма</label>
+          <select id="ltrSupplier"></select></div>
+        <div style="flex:2 1 260px"><label class="f">Руководитель в шапке</label>
+          <input type="text" id="ltrCeo" placeholder="подставится из реквизитов"></div>
+      </div>
+      <div id="ltrFields"></div>
+      <div class="note" id="ltrPrivacy">__LETTER_PRIVACY__</div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><h2>Текст письма</h2>
+        <button class="btn mini sec" type="button" id="ltrReset">Вернуть шаблонный текст</button></div>
+      <label class="f" for="ltrHead">Заголовок</label>
+      <input type="text" id="ltrHead">
+      <label class="f" for="ltrBody" style="margin-top:10px">Тело письма — правится свободно</label>
+      <textarea id="ltrBody" class="bodyarea" spellcheck="true"></textarea>
+      <div class="note small">Подстановки вида {sum_rub} заменяются при печати.
+        Если поле пустое, в тексте останется прочерк — заполните вручную.</div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><h2>Как это работает</h2></div>
+      <ol class="howto" id="ltrHowto"></ol>
+    </div>
+  </div>
+
+  <aside class="cfgside">
+    <div class="card spec-card">
+      <div class="cardhead"><h2>Предпросмотр</h2>
+        <span class="spec-cnt" id="ltrPageCnt"></span></div>
+      <div class="btns noprint">
+        <button class="btn mini" type="button" id="ltrPrint">Печать</button>
+        <button class="btn mini sec" type="button" id="ltrDocx">Скачать .docx</button>
+        <button class="btn mini sec" type="button" id="ltrCopy">Скопировать текстом</button>
+      </div>
+      <div class="note small">Печать даёт лист А4 с фирменной шапкой и полями
+        по ГОСТ: слева 30 мм, справа 15 мм.</div>
+    </div>
+  </aside>
+  </div>
+
+  <div class="step ltrstep">
+    <div class="step-b">
+      <div class="ltrpage" id="ltrPage"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ЗАРПЛАТА ================= -->
+<span class="nojs-title">Зарплата</span>
+<section class="panel" id="p-zp">
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Расчёт зарплаты</h1>
+      <p class="lead">Оклад делится по рабочим дням месяца, сверху — переработки,
+        выходные, отпускные и больничный. Удержания: НДФЛ и внутренний налог
+        компании, оба от полной начисленной суммы.</p>
+    </div>
+    <span class="pill on" id="zpPeriod"></span>
+  </div>
+
+  <div class="cfggrid">
+  <div class="cfgmain">
+    <div class="card">
+      <div class="cardhead"><h2>Оклад и норма месяца</h2></div>
+      <div class="row">
+        <div><label class="f">Оклад за полный месяц, ₽</label>
+          <input type="text" id="zpSalary" inputmode="decimal"></div>
+        <div><label class="f">Оклад указан</label><select id="zpMode">
+          <option value="gross">Грязными — до налогов</option>
+          <option value="net">Чистыми — на руки</option></select></div>
+        <div><label class="f">Месяц</label><select id="zpMonth"></select></div>
+      </div>
+      <div class="row">
+        <div><label class="f">Норма рабочих дней</label>
+          <input type="text" id="zpNormDays" inputmode="numeric"></div>
+        <div><label class="f">Норма часов</label>
+          <input type="text" id="zpNormHours" inputmode="numeric"></div>
+        <div><label class="f">Отработано дней</label>
+          <input type="text" id="zpWorked" inputmode="decimal"></div>
+      </div>
+      <div class="btns noprint">
+        <button class="btn mini sec" type="button" id="zpFillNorm">Заполнить по будням Пн–Пт</button>
+      </div>
+      <div id="zpNormWarn"></div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><h2>Бонус и удержания</h2></div>
+      <div class="row">
+        <div><label class="f">Бонус, ₽</label><input type="text" id="zpBonus" inputmode="decimal"></div>
+        <div><label class="f">Штраф, ₽</label><input type="text" id="zpPenalty" inputmode="decimal"></div>
+        <div><label class="f">Прочие удержания, ₽</label>
+          <input type="text" id="zpOther" inputmode="decimal"></div>
+      </div>
+      <details>
+        <summary>Переработки и работа в выходные</summary>
+        <div class="det-b">
+          <div class="row">
+            <div><label class="f">Сверхурочные ×1,5, ч</label>
+              <input type="text" id="zpOt15" inputmode="decimal"></div>
+            <div><label class="f">Сверхурочные ×2, ч</label>
+              <input type="text" id="zpOt20" inputmode="decimal"></div>
+            <div><label class="f">Часы в выходные и праздники</label>
+              <input type="text" id="zpHolH" inputmode="decimal"></div>
+          </div>
+          <label class="chk"><input type="checkbox" id="zpHolOver">
+            Часы в выходные отработаны сверх месячной нормы — доплата ×2</label>
+          <div class="note small">Сверхурочные — статья 152 ТК РФ, выходные и
+            праздники — статья 153 ТК РФ.</div>
+        </div>
+      </details>
+      <details>
+        <summary>Отпуск и больничный</summary>
+        <div class="det-b">
+          <div class="row">
+            <div><label class="f">Дней отпуска</label>
+              <input type="text" id="zpVacDays" inputmode="numeric"></div>
+            <div><label class="f">Средний дневной, ₽</label>
+              <input type="text" id="zpVacDaily" inputmode="decimal"></div>
+            <div><label class="f">Заработок за 12 мес., ₽</label>
+              <input type="text" id="zpVacEarn" inputmode="decimal" placeholder="÷ 12 ÷ 29,3"></div>
+          </div>
+          <div class="row">
+            <div><label class="f">Дней больничного</label>
+              <input type="text" id="zpSickDays" inputmode="numeric"></div>
+            <div><label class="f">Средний дневной, ₽</label>
+              <input type="text" id="zpSickDaily" inputmode="decimal"></div>
+            <div><label class="f">Заработок за 2 года, ₽</label>
+              <input type="text" id="zpSickEarn" inputmode="decimal" placeholder="÷ 730"></div>
+          </div>
+          <div class="row">
+            <div><label class="f">Страховой стаж, лет</label>
+              <input type="text" id="zpSickYears" inputmode="numeric"></div>
+          </div>
+          <div class="btns noprint">
+            <button class="btn mini sec" type="button" id="zpVacCalc">Средний дневной для отпуска</button>
+            <button class="btn mini sec" type="button" id="zpSickCalc">Средний дневной для больничного</button>
+          </div>
+          <div class="note small">Отпускные: заработок за 12 месяцев ÷ 12 ÷ 29,3.
+            Больничный: заработок за 2 года ÷ 730, процент по стажу — 8 лет и более
+            100 %, от 5 до 8 лет 80 %, меньше 5 лет 60 %.</div>
+        </div>
+      </details>
+      <details>
+        <summary>Аванс</summary>
+        <div class="det-b">
+          <div class="row">
+            <div><label class="f">Отработано дней с 1 по 15</label>
+              <input type="text" id="zpHalfDays" inputmode="decimal"></div>
+            <div><label class="f">Аванс выплачен суммой, ₽</label>
+              <input type="text" id="zpAdvManual" inputmode="decimal"
+                placeholder="пусто — считать по дням"></div>
+          </div>
+          <div class="btns noprint">
+            <button class="btn mini sec" type="button" id="zpHalfAuto">Посчитать будни 1–15</button>
+          </div>
+        </div>
+      </details>
+      <details>
+        <summary>Ставки налогов</summary>
+        <div class="det-b">
+          <div class="row">
+            <div><label class="f">НДФЛ, %</label>
+              <input type="text" id="zpNdfl" inputmode="decimal"></div>
+            <div><label class="f">Внутренний налог компании, %</label>
+              <input type="text" id="zpInternal" inputmode="decimal"></div>
+          </div>
+          <div class="note small">__ZP_NOTE__</div>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <aside class="cfgside">
+    <div class="card spec-card">
+      <div class="cardhead"><h2>На руки</h2>
+        <span class="spec-cnt" id="zpRateCnt"></span></div>
+      <div class="zphero" id="zpHero"></div>
+      <table class="spec" id="zpTable"><tbody id="zpBody"></tbody></table>
+      <div class="spec-tot" id="zpTotals"></div>
+      <div class="btns noprint">
+        <button class="btn mini" type="button" id="zpPrint">Печать расчёта</button>
+        <button class="btn mini sec" type="button" id="zpCopy">Скопировать текстом</button>
+        <button class="btn mini sec" type="button" id="zpReset">Сбросить</button>
+      </div>
+      <textarea id="zpOut" class="specout" readonly aria-label="расчёт текстом"></textarea>
+      <div class="note small">Расчёт справочный: производственный календарь,
+        праздники и переносы подставляются вручную.</div>
+    </div>
+  </aside>
+  </div>
+</section>
+
 <!-- ================= СБОРКА ================= -->
 <span class="nojs-title">Сборка</span>
-<section class="panel active" id="p-build">
+<section class="panel" id="p-build">
   <div class="bhead">
     <div>
       <h1 class="btitle">Сборка комплекта</h1>
