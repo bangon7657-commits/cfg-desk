@@ -810,9 +810,111 @@ check('мысли: CSS даёт две колонки на широком экр
 // Полоса итога
 check('итог: полоса показана и считает позиции',
   doc.getElementById('sumBar').className.indexOf('show') >= 0 &&
-  /позици/.test(textOf(doc, '#sumBarTx')), textOf(doc, '#sumBarTx'));
+  /^\d+ позици/.test(textOf(doc, '#sumBarTx')), textOf(doc, '#sumBarTx'));
 check('итог: в полосе видно строки без цены',
   /без цены/.test(textOf(doc, '#sumBarTx')), textOf(doc, '#sumBarTx'));
+
+// ---- модель присланного конфигуратора: таблетки, совпадения, спецификация ----
+check('конфигуратор: две колонки, справа спецификация',
+  !!doc.querySelector('.cfggrid > .cfgmain') && !!doc.querySelector('.cfggrid > .cfgside') &&
+  /\.cfggrid\{display:grid/.test(src), '');
+const pills = doc.querySelectorAll('#catPills button');
+check('конфигуратор: таблетки категорий построены', pills.length === 4,
+  'таблеток ' + pills.length);
+check('конфигуратор: активная таблетка совпадает с категорией',
+  doc.querySelector('#catPills button.on') &&
+  doc.querySelector('#catPills button.on').getAttribute('data-cat') ===
+    doc.getElementById('cat').value,
+  (doc.querySelector('#catPills button.on') || {}).textContent || 'нет активной');
+// таблетка переключает категорию так же, как селект
+doc.querySelector('#catPills button[data-cat="co2"]').click();
+check('конфигуратор: таблетка переключает блок',
+  doc.getElementById('cat').value === 'co2' &&
+  doc.getElementById('blkCo2').style.display === '', '');
+
+check('совпадения: список цен построен у всех четырёх категорий',
+  ['fMatches', 'mMatches', 'cMatches', 'kMatches'].every(id =>
+    doc.querySelectorAll('#' + id + ' .mrow').length > 0),
+  ['fMatches', 'mMatches', 'cMatches', 'kMatches']
+    .map(id => id + ':' + doc.querySelectorAll('#' + id + ' .mrow').length).join(' '));
+const co2Rows = doc.querySelectorAll('#cMatches .mrow');
+check('совпадения: показаны не больше 12 строк', co2Rows.length <= 12,
+  'строк ' + co2Rows.length);
+// клик по совпадению меняет модель и цену
+const before2 = textOf(doc, '#cOut');
+doc.querySelectorAll('#cMatches .mrow')[2].click();
+check('совпадения: нажатие подставляет другую модель',
+  textOf(doc, '#cOut') !== before2, (textOf(doc, '#cOut') || '').slice(0, 90));
+
+// полный ряд стабилизаторов с характеристиками
+check('стабилизаторы: полный ряд 34 модели в данных',
+  (src.match(/"b": "resanta"/g) || []).length === 22 &&
+  (src.match(/"b": "shtyl"/g) || []).length === 12, '');
+const stabOpts = doc.getElementById('cStabFull').options.length;
+check('стабилизаторы: в списке 22 модели Ресанты', stabOpts === 22, 'вариантов ' + stabOpts);
+check('стабилизаторы: карточка характеристик заполнена',
+  doc.querySelectorAll('#cStabSpec dt').length >= 8 &&
+  /Артикул/.test(textOf(doc, '#cStabSpec')),
+  (textOf(doc, '#cStabSpec') || '').slice(0, 120));
+check('стабилизаторы: указан источник цены',
+  /resanta\.ru/.test(textOf(doc, '#cStabSpec')), '');
+win.document.getElementById('cStabFullAdd').click();
+check('стабилизаторы: модель из полного ряда уходит в смету',
+  /Ресанта АСН-3000\/1-Ц/.test(doc.getElementById('smetaBody').textContent),
+  doc.getElementById('smetaBody').textContent.slice(0, 120));
+
+// аспирация BELMASH
+const aspOpts = doc.getElementById('aspModel').options.length;
+check('аспирация: 15 моделей BELMASH', aspOpts === 15, 'вариантов ' + aspOpts);
+check('аспирация: карточка показывает расход и фильтрацию',
+  /м³\/ч/.test(textOf(doc, '#aspSpec')) && /мкм/.test(textOf(doc, '#aspSpec')),
+  (textOf(doc, '#aspSpec') || '').slice(0, 120));
+check('аспирация: видно и розницу, и цену со множителем',
+  /Розница производителя/.test(textOf(doc, '#aspSpec')) &&
+  /×1,2/.test(textOf(doc, '#aspSpec')), '');
+win.document.getElementById('aspAdd').click();
+check('аспирация: позиция уходит в смету с полным именем',
+  /Пылеулавливающий агрегат BELMASH/.test(doc.getElementById('smetaBody').textContent), '');
+
+// своя позиция
+win.document.getElementById('freeName').value = 'Доставка до Екатеринбурга';
+win.document.getElementById('freePrice').value = '48 500';
+win.document.getElementById('freeType').value = 'srv';
+win.document.getElementById('freeAdd').click();
+check('своя позиция: свободная строка попала в смету',
+  /Доставка до Екатеринбурга/.test(doc.getElementById('smetaBody').textContent) &&
+  /48 500,00/.test(doc.getElementById('smetaBody').textContent),
+  doc.getElementById('smetaBody').textContent.slice(-140));
+check('своя позиция: поля очищены после добавления',
+  doc.getElementById('freeName').value === '' &&
+  doc.getElementById('freePrice').value === '', '');
+
+// спецификация справа
+check('спецификация: строки зеркалят смету',
+  doc.querySelectorAll('#specBody tr').length === doc.querySelectorAll('#smetaBody tr').length,
+  'спец ' + doc.querySelectorAll('#specBody tr').length + ' смета ' +
+    doc.querySelectorAll('#smetaBody tr').length);
+check('спецификация: итог и НДС посчитаны',
+  /Итого/.test(textOf(doc, '#specTotals')) && /НДС/.test(textOf(doc, '#specTotals')),
+  textOf(doc, '#specTotals'));
+check('спецификация: текст для копирования собран',
+  /Итого:/.test(doc.getElementById('specOut').value) &&
+  /Доставка до Екатеринбурга/.test(doc.getElementById('specOut').value),
+  doc.getElementById('specOut').value.slice(0, 100));
+const specCntTx = textOf(doc, '#specCnt');
+check('спецификация: счётчик позиций согласован со сметой',
+  specCntTx && specCntTx.indexOf(String(doc.querySelectorAll('#smetaBody tr').length)) === 0,
+  specCntTx + ' против ' + doc.querySelectorAll('#smetaBody tr').length);
+// удаление строки из спецификации
+const specRowsBefore = doc.querySelectorAll('#specBody tr').length;
+doc.querySelector('#specBody .xbtn').click();
+check('спецификация: крестик убирает строку',
+  doc.querySelectorAll('#specBody tr').length === specRowsBefore - 1 &&
+  doc.querySelectorAll('#smetaBody tr').length === specRowsBefore - 1, '');
+win.document.getElementById('specClear').click();
+check('спецификация: кнопка очистки опустошает смету',
+  doc.querySelectorAll('#smetaBody tr').length === 0 &&
+  doc.getElementById('specEmpty').style.display === '', '');
 
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
 // Всё, что натворили проверки, должно быть убрано: файл обязан открываться
@@ -841,8 +943,14 @@ if (toastNode) {
 doc.getElementById('saveDot').textContent = '';
 // поля шапки ТКП, заполненные проверками
 ['kpClient', 'kpInn', 'kpNum', 'kpContact', 'kpPhone', 'kpNote', 'kpDate', 'kpTitle',
-  'mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail']
+  'mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail', 'freeName', 'freePrice', 'specOut']
   .forEach(id => { const n = doc.getElementById(id); if (n) n.value = ''; });
+// правая спецификация: в выпуске смета пуста, значит и она пустая
+['specBody', 'specTotals'].forEach(id => {
+  const n = doc.getElementById(id); if (n) n.innerHTML = '';
+});
+const specCntNode = doc.getElementById('specCnt');
+if (specCntNode) specCntNode.textContent = '';
 doc.querySelectorAll('#supBox input').forEach(n => { n.value = ''; });
 const supBoxNode = doc.getElementById('supBox');
 if (supBoxNode) supBoxNode.removeAttribute('open');
