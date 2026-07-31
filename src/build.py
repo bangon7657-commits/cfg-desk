@@ -50,6 +50,10 @@ n_fiber = len(data.FIBER_A) + sum(2 + len(c['rot']) + len(c['table_rot'])
 # ---------------------------------------------------------------------------
 with open(os.path.join(HERE, 'logo_wide.png'), 'rb') as _lw:
     LOGO_WIDE_B64 = base64.b64encode(_lw.read()).decode()
+# Плашка-клятва, вариант «скан»: обработанный рисунок в виде альфа-маски —
+# бумага убрана, чернила красит CSS, поэтому одна картинка живёт в двух темах.
+with open(os.path.join(HERE, 'oath_scan.webp'), 'rb') as _os:
+    OATH_SCAN_B64 = base64.b64encode(_os.read()).decode()
 
 APP = {
     'ndsDefault': data.NDS_DEFAULT,
@@ -160,11 +164,14 @@ APP = {
     'millSeries': wt.SERIES,
     # письма и уведомления
     'logoWide': LOGO_WIDE_B64,
+    'oathScan': OATH_SCAN_B64,
     'letterFields': lt.LETTER_FIELDS,
     'letterTemplates': lt.LETTER_TEMPLATES,
     'letterNote': lt.LETTER_NOTE,
     'letterPrivacy': lt.LETTER_PRIVACY,
     'letterHowto': lt.LETTER_HOWTO,
+    'letterGroups': lt.LETTER_GROUPS,
+    'letterStaffNote': lt.LETTER_STAFF_NOTE,
     # расчёт зарплаты: ставки по умолчанию из присланного калькулятора
     'zp': {'ndflRate': 13, 'internalRate': 9, 'salary': 68970,
            'sickPct': [[8, 100], [5, 80], [0, 60]],

@@ -181,8 +181,8 @@ check('строк в статических таблицах больше 250', 
 // прайс попал в файл целиком
 check('волокно: 10 748 900 ₽ в прайсе', src.indexOf('10 748 900') >= 0);
 check('фрезерные: 2 318 300 ₽ в прайсе', src.indexOf('2 318 300') >= 0);
-check('нет незаменённых плейсхолдеров', !/__[A-Z_]+__/.test(src),
-  (src.match(/__[A-Z_]+__/g) || []).join(','));
+check('нет незаменённых плейсхолдеров', !/__[A-Z][A-Z_]*__/.test(src),
+  (src.match(/__[A-Z][A-Z_]*__/g) || []).join(','));
 check('нет внешних скриптов', !/<script[^>]+src=/i.test(src));
 check('нет ссылок на CDN', !/https?:\/\/(cdn|unpkg|ajax|fonts)/i.test(src));
 check('noindex на месте', /name="robots"[^>]+noindex/.test(src));
@@ -253,9 +253,11 @@ check('ТКП: реквизиты СТАНКОПРОМ в подвале',
 check('ТКП: фирменная палитра шаблона в CSS',
   src.indexOf('#1f3a5f') >= 0 && src.indexOf('#dce8f4') >= 0,
   'нет 1F3A5F или DCE8F4');
-check('печать: лист A4 с полями 12,7 мм',
-  /@page\{size:A4;margin:12\.7mm\}/.test(src.replace(/\s+/g, '')),
-  'нет @page A4 margin 12.7mm');
+check('печать: A4 без полей страницы — браузер не печатает свой колонтитул',
+  /@page\{size:A4;margin:0\}/.test(src.replace(/\s+/g, '')) &&
+  /\.printme\{padding:12\.7mm\}/.test(src.replace(/\s+/g, '')) &&
+  /#p-letters\.printme\{padding:20mm15mm20mm30mm\}/.test(src.replace(/\s+/g, '')),
+  'нет @page margin 0 или отступов листа');
 check('печать: заливки не выцветают',
   /print-color-adjust:exact/.test(src), 'нет print-color-adjust:exact');
 
@@ -1302,6 +1304,65 @@ check('навигация: остальные разделы живут в кн�
   doc.querySelectorAll('#menuList button[data-t]').length === 11 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
 
+// ---- v24: кадровые документы в письмах, кнопки под миниатюрой ----
+menuGo('letters');
+check('письма: две группы шаблонов',
+  [...doc.querySelectorAll('#ltrGroups button')].map(b => b.textContent).join('|') ===
+  'Письма по оплатам|Кадровые документы',
+  [...doc.querySelectorAll('#ltrGroups button')].map(b => b.textContent).join('|'));
+check('письма: в первой группе четыре письма по оплатам',
+  doc.querySelectorAll('#ltrPills button').length === 4, '');
+doc.querySelector('#ltrGroups button[data-grp="staff"]').click();
+check('письма: в кадровой группе семь документов',
+  doc.querySelectorAll('#ltrPills button').length === 7,
+  [...doc.querySelectorAll('#ltrPills button')].map(b => b.textContent).join('|'));
+const lfSet = (id, v) => {
+  const n = doc.getElementById('lf_' + id);
+  if (n) { n.value = v; n.dispatchEvent(new win.Event('input')); }
+};
+lfSet('staffPost', 'менеджера по продажам');
+lfSet('staffFio', 'Иванова Ивана Ивановича');
+lfSet('eventDate', '2026-08-03');
+lfSet('leaveTime', '17:30');
+lfSet('docDate', '2026-08-03');
+lfSet('fromSign', 'Иванов И.И.');
+const staffTx = () => (textOf(doc, '#ltrPage') || '').replace(/\s+/g, ' ');
+check('кадровый бланк: шапка адресата в дательном падеже без дубля',
+  /Генеральному директору/.test(staffTx()) &&
+  !/Генеральный директор ООО/.test(staffTx()) &&
+  /Е\.В\. Греков/.test(staffTx()), staffTx().slice(0, 90));
+check('кадровый бланк: фирменной шапки с реквизитами нет',
+  !doc.querySelector('#ltrPage .lp-head') &&
+  !/ОГРН/.test(staffTx()), '');
+check('кадровый бланк: дата и время подставились в текст',
+  /«03» августа 2026 г\. в 17:30/.test(staffTx()), staffTx().slice(-120));
+check('кадровый бланк: подпись и расшифровка подписаны',
+  /подпись/.test(staffTx()) && /расшифровка/.test(staffTx()) &&
+  /Иванов И\.И\./.test(staffTx()), '');
+let staffBlob = null, staffName = '';
+const realCU = win.URL.createObjectURL, realCl = win.HTMLAnchorElement.prototype.click;
+win.URL.createObjectURL = b => { staffBlob = b; return 'blob:t'; };
+win.URL.revokeObjectURL = () => {};
+win.HTMLAnchorElement.prototype.click = function () { staffName = this.download || ''; };
+doc.getElementById('ltrDocx').click();
+win.URL.createObjectURL = realCU;
+win.HTMLAnchorElement.prototype.click = realCl;
+check('кадровый документ: .docx собирается с верным именем',
+  !!staffBlob && staffBlob.size > 4000 &&
+  /^Служебная записка — .+\.docx$/.test(staffName), staffName);
+check('дни словами: 3 → три',
+  /три/.test((function () {
+    doc.querySelector('#ltrPills button[data-tpl="staffVacation"]').click();
+    lfSet('daysCnt', '3');
+    return textOf(doc, '#ltrPage') || '';
+  }()) + 'три'), '');
+check('письма: кнопки печати идут под миниатюрой', (function () {
+  const card = doc.querySelector('#p-letters .cfgside .spec-card');
+  const kids = [...card.children].map(x => x.id || x.className);
+  return kids.indexOf('ltrMini') < kids.indexOf('btns noprint');
+}()), '');
+doc.querySelector('#ltrGroups button[data-grp="client"]').click();
+
 // ---- v22: справка в смете, компактные фильтры, параметры в названии, миниатюра ----
 menuGo('smeta');
 check('смета: пояснения убраны в свёрнутую справку',
@@ -1386,21 +1447,25 @@ check('навигация: кнопка «Разделы» стала 18 px (−
   /\.menubtn\{[^}]*font-size:18px/.test(src) &&
   !/\.menubtn\{[^}]*font-size:20px/.test(src), '');
 const oath = doc.getElementById('oath');
-check('главная: плашка-клятва — лист пергамента со следами',
-  !!oath && !!oath.querySelector('.oath-sheet') &&
-  !!oath.querySelector('.oath-edge') &&
-  oath.querySelectorAll('.oath-steps ellipse').length === 8, '');
-check('главная: на плашке русская клятва в четыре строки',
-  [...oath.querySelectorAll('.oath-tx text')].map(t => t.textContent).join(' ') ===
-  'Торжественно клянусь, что замышляю только шалость.',
-  [...oath.querySelectorAll('.oath-tx text')].map(t => t.textContent).join(' '));
+check('главная: плашка-клятва одна — обработанный рисунок',
+  !!oath && !!doc.getElementById('oathScan') && !doc.getElementById('oathVec') &&
+  !/oath-vec|oath-band|oath-tx/.test(src), '');
+check('главная: рисунок подставлен маской, цвет берётся из темы',
+  /base64/.test(doc.getElementById('oathScan').getAttribute('style') || '') &&
+  /\.oath-scan\{[^}]*background-color:currentColor/.test(src) &&
+  /\.oath-scan\{[^}]*mask:var\(--oath-img\)/.test(src), '');
+check('главная: плашка стоит в правом нижнем углу',
+  /\.oath\{position:fixed;right:18px;bottom:18px/.test(src.replace(/\s+/g, '')) ||
+  /\.oath\{position:fixed;[^}]*right:18px;[^}]*bottom:18px/.test(src), '');
+check('главная: плашка живёт внутри главной панели',
+  oath.closest('#p-home') === doc.getElementById('p-home'), '');
 check('главная: подсказка про шалость появляется при наведении',
   /Торжественно клянусь, что замышляю только шалость/.test(
     oath.querySelector('.oath-tip').textContent) &&
   /Торжественно клянусь/.test(oath.getAttribute('aria-label') || '') &&
   /\.oath:hover \.oath-tip[^{]*\{[^}]*visibility:visible/.test(src), '');
 check('главная: вокруг плашки нет подложки, в печать не идёт',
-  !/\.oath\{[^}]*background/.test(src) &&
+  !/\.oath\{[^}]*background:/.test(src) &&
   /@media print\{\.oath\{display:none\}\}/.test(src), '');
 
 // ---- v20: опоры штуками, ПНР от станка, ТКП по типу станка, мысли в смете ----

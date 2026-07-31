@@ -187,34 +187,29 @@ a{color:var(--or2)}
 .hero h1::before{content:"";display:inline-block;width:6px;height:22px;
   background:var(--or);border-radius:3px;margin-right:10px;vertical-align:-3px}
 .hero h1{margin:0 0 6px;font-size:24px;color:var(--tx)}
-.hero p{margin:0;color:var(--muted);font-size:14px;max-width:64ch;padding-right:210px}
-/* Плашка-клятва: лист пергамента с русским текстом и следами. Бумага своя —
-   это и есть смысл картинки, поэтому цвет не берётся из темы; вокруг фона нет,
-   так что плашка не выглядит наклейкой. */
-.hero{position:relative}
-.oath{position:absolute;right:0;top:-6px;width:150px;cursor:default;
-  opacity:.9;transition:opacity .16s, transform .16s}
-.oath:hover,.oath:focus-visible{opacity:1;transform:translateY(-2px) rotate(-.6deg);
-  outline:none}
-.oath svg{display:block;width:100%;height:auto}
-.oath-sheet{fill:url(#oathPaper)}
-.oath-edge{fill:none;stroke:#8c7233;stroke-width:1.2;opacity:.75}
-.oath-steps ellipse{fill:#2a2016;opacity:.9}
-.oath-tx text{fill:#2a2016;letter-spacing:.2px;
-  font:700 15px/1 Georgia,"Times New Roman",serif}
-.oath:hover .oath-tx text{fill:#12100c}
-.oath-tip{position:absolute;right:0;top:calc(100% + 8px);width:210px;
+.hero p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+/* Плашка-клятва: обработанный рисунок как маска — бумага убрана, цвет чернил
+   даёт CSS, поэтому она живёт и в тёмной, и в светлой теме. Место — правый
+   нижний угол окна; блок лежит внутри главной, так что на других вкладках
+   его нет. */
+.oath{position:fixed;right:18px;bottom:18px;width:132px;z-index:26;
+  color:var(--tx2);opacity:.6;cursor:default;
+  transition:opacity .16s, transform .16s, color .16s}
+.oath:hover,.oath:focus-visible{opacity:1;color:var(--or);
+  transform:translateY(-2px) rotate(-.5deg);outline:none}
+.oath-scan{width:100%;aspect-ratio:400 / 492;background-color:currentColor;
+  -webkit-mask:var(--oath-img) center/contain no-repeat;
+  mask:var(--oath-img) center/contain no-repeat}
+.oath-tip{position:absolute;right:0;bottom:calc(100% + 8px);width:214px;
   padding:8px 11px;border-radius:11px;border:1px solid var(--or);
   background:var(--bg2);color:var(--tx);font-size:12.5px;line-height:1.4;
   box-shadow:0 10px 26px var(--shadow);opacity:0;visibility:hidden;
-  transform:translateY(-4px);transition:.16s;z-index:20}
+  transform:translateY(4px);transition:.16s}
 .oath:hover .oath-tip,.oath:focus-visible .oath-tip{opacity:1;visibility:visible;
   transform:translateY(0)}
 @media(max-width:900px){
-  .hero p{padding-right:0}
-  .oath{position:static;width:132px;margin-top:12px}
-  .oath-tip{position:static;width:auto;opacity:1;visibility:visible;
-    transform:none;margin-top:6px;box-shadow:none;display:inline-block}
+  .oath{width:104px;right:10px;bottom:10px;opacity:.5}
+  .oath-tip{width:190px}
 }
 @media print{.oath{display:none}}
 
@@ -230,6 +225,17 @@ a{color:var(--or2)}
 .hint-det .det-b{padding:0 12px 10px;display:flex;flex-direction:column;gap:8px}
 
 /* Миниатюра письма в правой колонке: лист А4 сжат по ширине колонки */
+/* Группы шаблонов писем: узкие пилюли над крупными плитками */
+.ltrgroups{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+@media(max-width:900px){.ltrgroups{align-items:flex-start}}
+/* Кадровый бланк: адресат и «от кого» справа, пояснения мелким шрифтом */
+.lp-addr.staff{display:block;text-align:right}
+.lp-addr.staff .lp-to{margin-bottom:14px}
+.lp-addr.staff .lp-from{display:block;text-align:right}
+.lp-hint{display:block;font-size:10px;color:#7a8798;margin:0 0 8px}
+.lp-sign.staff{display:flex;gap:26px;align-items:flex-end;justify-content:space-between}
+.lp-sign.staff .lp-line{min-width:150px;text-align:center}
+.lp-sign.staff .lp-hint{text-align:center;margin-top:2px}
 .ltrmini{margin-top:10px;border:1px solid var(--line2);border-radius:8px;
   background:#fff;overflow:hidden;cursor:zoom-in;height:420px}
 .ltrmini-in{width:794px;transform-origin:top left}
@@ -295,6 +301,8 @@ table.spec td.minus{color:var(--bad)}
 @media print{
   /* Печатаем только письмо или расчёт — вместе с фирменной шапкой */
   #p-letters.printme .ltrpage{max-width:none;padding:0}
+  /* у письма поля по ГОСТ, поэтому его собственные отступы, а не общие */
+  #p-letters.printme{padding:20mm 15mm 20mm 30mm}
   #p-letters.printme .cfggrid,#p-letters.printme .bhead{display:none !important}
   #p-zp.printme .cfgside{position:static}
   #p-zp.printme .btns,#p-zp.printme .specout,#p-zp.printme details{display:none !important}
@@ -724,8 +732,12 @@ body.demo .internal{display:none !important}
   .kpstep>.step-h{display:none !important}
   .kpstep>.step-b{padding:0 !important}
   .kpstep .row{display:none !important}
-  /* Лист как в мастер-шаблоне: A4, поля 1,27 см, Calibri 9,5 pt. */
-  @page{size:A4;margin:12.7mm}
+  /* Лист как в мастер-шаблоне: A4, поля 1,27 см, Calibri 9,5 pt.
+     Поля страницы нулевые нарочно: при margin > 0 браузер печатает свои
+     колонтитулы — сверху заголовок, снизу адрес страницы. Нужные отступы
+     задаёт сам лист, поэтому ссылки под документом больше нет. */
+  @page{size:A4;margin:0}
+  .printme{padding:12.7mm}
   .kp{border:0;padding:0;margin:0;border-radius:0;font-size:9.5pt;line-height:1.35}
   .kp table{font-size:8.5pt}
   .kp thead th,.kp .kp-t th{font-size:8.5pt}

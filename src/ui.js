@@ -356,6 +356,15 @@
   }
   window.addEventListener('resize', fixNavOffset);
 
+  // ------------------------------------------------------------- плашка-клятва
+  // Рисунок подставляется маской: бумаги в файле нет, цвет чернил даёт CSS.
+  (function () {
+    var box = $('oath');
+    if (!box) return;
+    $('oathScan').style.setProperty('--oath-img',
+      'url("data:image/webp;base64,' + APP.oathScan + '")');
+  }());
+
   // ------------------------------------------------------------------ демо-режим
   function applyDemo(on, silent) {
     state.demo = on;
@@ -3252,6 +3261,38 @@
     if (!m) return String(v || '').trim() || '—';
     return m[3] + ' ' + (MONTHS_G2[parseInt(m[2], 10) - 1] || '') + ' ' + m[1] + ' г.';
   }
+  // Дата в кадровом виде: «21» мая 2026 г. — так оформлены присланные бланки
+  function ruDateQ(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || ''));
+    // пустую дату не рисуем подчёркиваниями: в готовом файле это выглядит
+    // как незаполненный шаблон, а место под дату и так видно
+    if (!m) return String(v || '').trim() || '«     »                     20      г.';
+    return '«' + m[3] + '» ' + (MONTHS_G2[parseInt(m[2], 10) - 1] || '') +
+      ' ' + m[1] + ' г.';
+  }
+  // «Генеральному директору» — должность в дательном падеже и без названия
+  // компании: название идёт следующей строкой, как в присланных бланках
+  function staffAddressee(sup) {
+    var t = String(sup.ceo_title || 'Директор').replace(/\s*ООО.*$/i, '').trim();
+    return t.replace(/^Генеральный директор$/i, 'Генеральному директору')
+      .replace(/^Директор$/i, 'Директору')
+      .replace(/^Исполнительный директор$/i, 'Исполнительному директору');
+  }
+  // «Е.В. Греков» — инициалы перед фамилией, как в шапке служебных записок
+  function ltrCeoShort(sup) {
+    var full = String(ltrCeoName() || sup.ceo_full || sup.ceo_short || '').trim();
+    var p = full.split(/\s+/);
+    if (p.length >= 3) return p[1].charAt(0) + '.' + p[2].charAt(0) + '. ' + p[0];
+    return full || '—';
+  }
+  var DAYS_WORDS = ['ноль', 'один', 'два', 'три', 'четыре', 'пять', 'шесть',
+    'семь', 'восемь', 'девять', 'десять', 'одиннадцать', 'двенадцать',
+    'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать',
+    'восемнадцать', 'девятнадцать', 'двадцать'];
+  function daysWords(v) {
+    var n = parseInt(String(v || '').replace(/\D/g, ''), 10);
+    return (n >= 0 && n < DAYS_WORDS.length) ? DAYS_WORDS[n] : String(v || '');
+  }
   function ltrSubst(text) {
     var sup = ltrSup();
     var sumCents = toCents(parseFloat(String(ltrVal('sum') || '0')
@@ -3260,7 +3301,10 @@
       company: sup.name, ceo_name: ltrCeoName(), ceo_title: sup.ceo_title,
       sum_rub: fmt(sumCents) + ' ₽', sum_words: propisyu(sumCents),
       docDate: ruDate(ltrVal('docDate')), payDate: ruDate(ltrVal('payDate')),
-      basisDate: ruDate(ltrVal('basisDate')), basisDate2: ruDate(ltrVal('basisDate2'))
+      basisDate: ruDate(ltrVal('basisDate')), basisDate2: ruDate(ltrVal('basisDate2')),
+      // кадровые: даты в кавычках и число дней словами
+      eventDate: ruDateQ(ltrVal('eventDate')), startDate: ruDateQ(ltrVal('startDate')),
+      days_words: daysWords(ltrVal('daysCnt'))
     };
     APP.letterFields.forEach(function (f) {
       if (map[f.id] === undefined) map[f.id] = ltrVal(f.id) || '—';
@@ -3277,6 +3321,35 @@
     var b = state.ltr.bodies && state.ltr.bodies[ltrTpl().id];
     return (b === undefined || b === null || b === '') ? ltrTpl().body : b;
   }
+  function ltrGroupOf(t) { return t.kind === 'staff' ? 'staff' : 'client'; }
+  function ltrGrp() {
+    var g = state.ltr.grp;
+    return (g === 'staff' || g === 'client') ? g : ltrGroupOf(ltrTpl());
+  }
+  function ltrTplsOfGroup(gid) {
+    return APP.letterTemplates.filter(function (t) { return ltrGroupOf(t) === gid; });
+  }
+  function renderLtrPills() {
+    var pl = fresh('ltrPills'), gid = ltrGrp();
+    ltrTplsOfGroup(gid).forEach(function (t) {
+      var b = el('button', 'pill', esc(t.title));
+      b.type = 'button';
+      b.setAttribute('data-tpl', t.id);
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', function () {
+        state.ltr.tpl = t.id;
+        state.ltr.head = '';
+        save(); renderLtrFields(); renderLtr();
+      });
+      pl.appendChild(b);
+    });
+    var gb = $('ltrGroups').querySelectorAll('button');
+    for (var i = 0; i < gb.length; i++) {
+      var on = gb[i].getAttribute('data-grp') === gid;
+      gb[i].className = on ? 'pill on' : 'pill';
+      gb[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+  }
   function renderLtrFields() {
     var box = fresh('ltrFields'), tpl = ltrTpl();
     var row = null, n = 0;
@@ -3285,12 +3358,13 @@
       if (!def) return;
       if (n % 3 === 0) { row = el('div', 'row'); box.appendChild(row); }
       n++;
-      var cell = el('div', def.client ? 'clientfield' : '');
+      var staff = tpl.kind === 'staff';
+      var cell = el('div', (def.client && !staff) ? 'clientfield' : '');
       var lab = el('label', 'f', esc(def.label) +
-        (def.client ? ' <span class="cf">клиент</span>' : ''));
+        ((def.client && !staff) ? ' <span class="cf">клиент</span>' : ''));
       cell.appendChild(lab);
-      var inp = el('input');
-      inp.type = def.kind === 'date' ? 'date' : 'text';
+      var inp = el(def.kind === 'area' ? 'textarea' : 'input');
+      if (def.kind !== 'area') inp.type = def.kind === 'date' ? 'date' : 'text';
       if (def.kind === 'money') inp.setAttribute('inputmode', 'decimal');
       inp.id = 'lf_' + fid;
       if (def.ph) inp.placeholder = def.ph;
@@ -3302,6 +3376,9 @@
   }
   function renderLtrPage() {
     var page = fresh('ltrPage'), tpl = ltrTpl(), sup = ltrSup();
+    // У служебных записок и заявлений фирменной шапки нет: это внутренний
+    // документ, сверху сразу адресат.
+    if (tpl.kind === 'staff') { renderStaffPage(page, tpl, sup); return; }
     var head = el('div', 'lp-head');
     head.innerHTML = '<img src="data:image/png;base64,' + APP.logoWide +
       '" alt="LASERCUT" class="lp-logo">' +
@@ -3311,7 +3388,16 @@
     page.appendChild(head);
 
     var addr = el('div', 'lp-addr');
-    if (tpl.fromOur) {
+    if (tpl.kind === 'staff') {
+      // Кадровый документ: шапка «Генеральному директору … от <должность> <ФИО>»
+      addr.className = 'lp-addr staff';
+      addr.innerHTML = '<div class="lp-to"><b>' + esc(sup.ceo_title) + '</b><br>' +
+        esc(sup.name) + '<br>' + esc(ltrCeoShort(sup)) + '</div>' +
+        '<div class="lp-from">от ' + esc(ltrVal('staffPost') || '—') +
+        '<span class="lp-hint">должность</span>' +
+        esc(ltrVal('staffFio') || '—') +
+        '<span class="lp-hint">ФИО полностью</span></div>';
+    } else if (tpl.fromOur) {
       addr.innerHTML = '<div class="lp-to">' + esc(ltrVal('fromName') || 'Адресат') +
         '</div>';
     } else {
@@ -3335,15 +3421,60 @@
     });
     page.appendChild(body);
 
-    var sign = el('div', 'lp-sign');
-    sign.innerHTML = '<span>' + esc(ruDate(ltrVal('docDate'))) + '</span>' +
-      '<span class="lp-line">' + esc(ltrVal('fromSign') || '') +
-      ' <span class="lp-blank">\u00a0</span></span>';
+    var sign = el('div', 'lp-sign' + (tpl.kind === 'staff' ? ' staff' : ''));
+    if (tpl.kind === 'staff') {
+      sign.innerHTML = '<span>' + esc(ruDateQ(ltrVal('docDate'))) + '</span>' +
+        '<span class="lp-line"><span class="lp-blank">\u00a0</span>' +
+        '<span class="lp-hint">подпись</span></span>' +
+        '<span class="lp-line">' + esc(ltrVal('fromSign') || '') +
+        '<span class="lp-hint">расшифровка</span></span>';
+    } else {
+      sign.innerHTML = '<span>' + esc(ruDate(ltrVal('docDate'))) + '</span>' +
+        '<span class="lp-line">' + esc(ltrVal('fromSign') || '') +
+        ' <span class="lp-blank">\u00a0</span></span>';
+    }
     page.appendChild(sign);
-    $('ltrPageCnt').textContent = 'лист А4';
+  }
+  function renderStaffPage(page, tpl, sup) {
+    var addr = el('div', 'lp-addr staff');
+    addr.innerHTML = '<div class="lp-to"><b>' + esc(staffAddressee(sup)) + '</b><br>' +
+      esc(sup.name) + '<br>' + esc(ltrCeoShort(sup)) + '</div>' +
+      '<div class="lp-from">от ' + esc(ltrVal('staffPost') || '—') +
+      '<span class="lp-hint">должность</span>' +
+      esc(ltrVal('staffFio') || '—') +
+      '<span class="lp-hint">ФИО полностью</span></div>';
+    page.appendChild(addr);
+    page.appendChild(el('h2', 'lp-h', esc(ltrSubst(ltrHeadText()))));
+    var body = el('div', 'lp-body');
+    ltrSubst(ltrBodyText()).split(/\n{1,}/).forEach(function (par) {
+      if (par.trim()) body.appendChild(el('p', '', esc(par.trim())));
+    });
+    page.appendChild(body);
+    var sign = el('div', 'lp-sign staff');
+    sign.innerHTML = '<span>' + esc(ruDateQ(ltrVal('docDate'))) + '</span>' +
+      '<span class="lp-line"><span class="lp-blank">\u00a0</span>' +
+      '<span class="lp-hint">подпись</span></span>' +
+      '<span class="lp-line">' + esc(ltrVal('fromSign') || '\u00a0') +
+      '<span class="lp-hint">расшифровка</span></span>';
+    page.appendChild(sign);
   }
   function ltrPlainText() {
     var tpl = ltrTpl(), sup = ltrSup(), out = [];
+    if (tpl.kind === 'staff') {
+      out.push(staffAddressee(sup));
+      out.push(sup.name);
+      out.push(ltrCeoShort(sup));
+      out.push('от ' + (ltrVal('staffPost') || '—'));
+      out.push(ltrVal('staffFio') || '—');
+      out.push('');
+      out.push(ltrSubst(ltrHeadText()));
+      out.push('');
+      out.push(ltrSubst(ltrBodyText()));
+      out.push('');
+      out.push(ruDateQ(ltrVal('docDate')) + '        (подпись)        ' +
+        (ltrVal('fromSign') || ''));
+      return out.join('\n');
+    }
     if (!tpl.fromOur) {
       out.push(sup.ceo_title);
       out.push(ltrCeoName());
@@ -3388,6 +3519,9 @@
     var tpl = ltrTpl();
     $('ltrTitle').textContent = tpl.title;
     $('ltrHint').textContent = tpl.hint;
+    // подсказка о приватности меняется по типу документа
+    var pv = $('ltrPrivacy');
+    if (pv) pv.textContent = tpl.kind === 'staff' ? APP.letterStaffNote : APP.letterPrivacy;
     var bs = $('ltrPills').querySelectorAll('button');
     for (var i = 0; i < bs.length; i++) {
       var on = bs[i].getAttribute('data-tpl') === tpl.id;
@@ -3401,19 +3535,24 @@
     thinkify();
   }
   (function () {
-    var pl = fresh('ltrPills');
-    APP.letterTemplates.forEach(function (t) {
-      var b = el('button', 'pill', esc(t.title));
-      b.type = 'button';
-      b.setAttribute('data-tpl', t.id);
-      b.setAttribute('role', 'tab');
-      b.addEventListener('click', function () {
-        state.ltr.tpl = t.id;
-        state.ltr.head = '';
-        save(); renderLtrFields(); renderLtr();
+    // Две группы: письма по оплатам и кадровые документы. Плитки шаблонов
+    // показываются только для выбранной группы — иначе их одиннадцать в ряд.
+    var gr = fresh('ltrGroups');
+    APP.letterGroups.forEach(function (g) {
+      var gb = el('button', 'pill', esc(g.title));
+      gb.type = 'button';
+      gb.setAttribute('data-grp', g.id);
+      gb.setAttribute('role', 'tab');
+      gb.addEventListener('click', function () {
+        state.ltr.grp = g.id;
+        // при смене группы берём первый шаблон из неё
+        var first = ltrTplsOfGroup(g.id)[0];
+        if (first) { state.ltr.tpl = first.id; state.ltr.head = ''; }
+        save(); renderLtrPills(); renderLtrFields(); renderLtr();
       });
-      pl.appendChild(b);
+      gr.appendChild(gb);
     });
+    renderLtrPills();
     var sel = fresh('ltrSupplier');
     APP.suppliers.forEach(function (s) { opt(sel, s.id, s.name); });
     sel.value = state.ltr.sup || APP.supplierDefault;
@@ -3465,6 +3604,46 @@
       var sup = ltrSup(), tpl = ltrTpl(), body = '';
       var NAVY2 = '1F3864', INK2 = '222222', GREY2 = '777777';
       var imgs = [];
+      if (tpl.kind === 'staff') {
+        // Кадровый документ: без фирменной шапки — шапка адресата справа
+        body += DOCX.p(DOCX.run(staffAddressee(sup), { b: true, sz: 19 }),
+          { align: 'right', space: { after: 20 } });
+        body += DOCX.p(DOCX.run(sup.name, { sz: 19 }),
+          { align: 'right', space: { after: 20 } });
+        body += DOCX.p(DOCX.run(ltrCeoShort(sup), { sz: 19 }),
+          { align: 'right', space: { after: 140 } });
+        body += DOCX.p(DOCX.run('от ' + (ltrVal('staffPost') || '—'), { sz: 19 }),
+          { align: 'right', space: { after: 10 } });
+        body += DOCX.p(DOCX.run('должность', { sz: 13, color: GREY2 }),
+          { align: 'right', space: { after: 40 } });
+        body += DOCX.p(DOCX.run(ltrVal('staffFio') || '—', { sz: 19 }),
+          { align: 'right', space: { after: 10 } });
+        body += DOCX.p(DOCX.run('ФИО полностью', { sz: 13, color: GREY2 }),
+          { align: 'right', space: { after: 260 } });
+        body += DOCX.p(DOCX.run(ltrSubst(ltrHeadText()), { b: true, sz: 24 }),
+          { align: 'center', space: { after: 200 } });
+        ltrSubst(ltrBodyText()).split(/\n{1,}/).forEach(function (par) {
+          if (!par.trim()) return;
+          body += DOCX.p(DOCX.run(par.trim(), { sz: 19, color: INK2 }),
+            { align: 'both', space: { after: 140 } });
+        });
+        body += DOCX.p('', { space: { after: 520 } });
+        body += DOCX.p(DOCX.run(ruDateQ(ltrVal('docDate')), { sz: 19 }) +
+          DOCX.run('                    ', { sz: 19 }) +
+          DOCX.run('                        ', { sz: 19, u: true }) +
+          DOCX.run('                    ', { sz: 19 }) +
+          DOCX.run(ltrVal('fromSign') || '                        ',
+            { sz: 19, u: !ltrVal('fromSign') }),
+          { space: { after: 10 } });
+        body += DOCX.p(DOCX.run('                                              ' +
+          'подпись                                    расшифровка',
+          { sz: 13, color: GREY2 }), { space: { after: 0 } });
+        var bytesS = DOCX.build({ body: body, images: [] });
+        var nameS = (tpl.docType || 'Документ') + ' — ' + tpl.title + '.docx';
+        downloadBlob(new Blob([bytesS], { type: DOCX_MIME }), nameS);
+        toast('Файл готов: ' + nameS);
+        return;
+      }
       if (APP.logoWide) {
         imgs.push({ name: 'logo.png', b64: APP.logoWide });
         body += DOCX.p(DOCX.image(1, 6.4, 1.49, 'LASERCUT'), { space: { after: 120 } });
@@ -3518,6 +3697,20 @@
       toast('Не удалось собрать файл: ' + (e && e.message ? e.message : 'ошибка'));
     }
   });
+  // Должность, ФИО и подпись сотрудника подставляются из карточки менеджера,
+  // если менеджер их там заполнил и в письмах поля ещё пустые
+  (function () {
+    var m = mgr();                       // имя и должность менеджера сделки
+    var full = String(m.name || '').trim();
+    if (full && !ltrVal('staffFioNom')) ltrSetVal('staffFioNom', full);
+    if (full && !ltrVal('staffFio')) ltrSetVal('staffFio', full);
+    if (full && !ltrVal('fromSign')) {
+      var p = full.split(/\s+/);
+      ltrSetVal('fromSign', p.length >= 3
+        ? p[0] + ' ' + p[1].charAt(0) + '.' + p[2].charAt(0) + '.' : full);
+    }
+    if (m.role && !ltrVal('staffPost')) ltrSetVal('staffPost', m.role);
+  }());
   if (state.ltr.ceo) $('ltrCeo').value = state.ltr.ceo;
   $('ltrMini').addEventListener('click', ltrMiniGo);
   $('ltrMiniGo').addEventListener('click', ltrMiniGo);

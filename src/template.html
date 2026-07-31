@@ -76,42 +76,7 @@
       не уходит на сервер.</p>
     <!-- Плашка-шалость: лента со следами, при наведении подсказка. Фон
          прозрачный, чернила и бумага берутся из переменных темы. -->
-    <div class="oath" id="oath" tabindex="0" role="img"
-      aria-label="Торжественно клянусь, что замышляю только шалость">
-      <svg viewBox="0 0 200 250" aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id="oathPaper" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#e8d5a8"/>
-            <stop offset="55%" stop-color="#d8c08a"/>
-            <stop offset="100%" stop-color="#c2a468"/>
-          </linearGradient>
-        </defs>
-        <path class="oath-sheet" d="M14 8 h172 v234 h-172 z"/>
-        <path class="oath-edge" d="M14 8 q10 8 0 16 q10 8 0 16 q10 8 0 16 q10 8 0 16
-          q10 8 0 16 q10 8 0 16 q10 8 0 16 q10 8 0 16 q10 8 0 16 q10 8 0 16
-          q10 8 0 16 q10 8 0 16 q10 8 0 16 q10 8 0 18 h172 q-10 -8 0 -16
-          q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16
-          q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -16
-          q-10 -8 0 -16 q-10 -8 0 -16 q-10 -8 0 -18 z"/>
-        <g class="oath-steps">
-          <ellipse cx="34" cy="34" rx="5" ry="7" transform="rotate(-16 34 34)"/>
-          <ellipse cx="50" cy="52" rx="5" ry="7" transform="rotate(-8 50 52)"/>
-          <ellipse cx="166" cy="40" rx="5" ry="7" transform="rotate(16 166 40)"/>
-          <ellipse cx="152" cy="58" rx="5" ry="7" transform="rotate(8 152 58)"/>
-          <ellipse cx="44" cy="196" rx="5" ry="7" transform="rotate(6 44 196)"/>
-          <ellipse cx="58" cy="214" rx="5" ry="7" transform="rotate(12 58 214)"/>
-          <ellipse cx="158" cy="200" rx="5" ry="7" transform="rotate(-10 158 200)"/>
-          <ellipse cx="144" cy="218" rx="5" ry="7" transform="rotate(-16 144 218)"/>
-        </g>
-        <g class="oath-tx">
-          <text x="100" y="106" text-anchor="middle">Торжественно</text>
-          <text x="100" y="132" text-anchor="middle">клянусь,</text>
-          <text x="100" y="158" text-anchor="middle">что замышляю</text>
-          <text x="100" y="184" text-anchor="middle">только шалость.</text>
-        </g>
-      </svg>
-      <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
-    </div>
+    
   </div>
   <div class="tiles">
     <button class="tile" type="button" data-go="build">
@@ -140,6 +105,15 @@
     <div class="cardhead"><h2>Что где лежит</h2></div>
     <div id="homeMap"></div>
   </div>
+
+  <!-- Плашка-клятва в правом нижнем углу: обработанный рисунок как маска,
+       цвет берётся из темы. Живёт внутри главной, поэтому на других вкладках
+       её нет; в печать не идёт. -->
+  <div class="oath" id="oath" tabindex="0" role="img"
+    aria-label="Торжественно клянусь, что замышляю только шалость">
+    <div class="oath-scan" id="oathScan"></div>
+    <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
+  </div>
 </section>
 
 <!-- ================= ПИСЬМА ================= -->
@@ -149,7 +123,10 @@
     <div>
       <h1 class="btitle">Письма и уведомления</h1>
     </div>
-    <div class="pills big" id="ltrPills" role="tablist" aria-label="Шаблон письма"></div>
+    <div class="ltrgroups">
+      <div class="pills" id="ltrGroups" role="tablist" aria-label="Группа шаблонов"></div>
+      <div class="pills big" id="ltrPills" role="tablist" aria-label="Шаблон письма"></div>
+    </div>
   </div>
 
   <div class="cfggrid">
@@ -191,18 +168,19 @@
     <div class="card spec-card">
       <div class="cardhead"><h2>Предпросмотр</h2>
         <span class="spec-cnt" id="ltrPageCnt"></span></div>
+      <!-- Живая миниатюра бланка: обновляется вместе с текстом слева.
+           Кнопки идут под ней — так виден и документ, и действия. -->
+      <div class="ltrmini" id="ltrMini" title="Открыть лист во всю ширину">
+        <div class="ltrmini-in" id="ltrMiniIn"></div>
+      </div>
       <div class="btns noprint">
         <button class="btn mini" type="button" id="ltrPrint">Печать</button>
         <button class="btn mini sec" type="button" id="ltrDocx">Скачать .docx</button>
         <button class="btn mini sec" type="button" id="ltrCopy">Скопировать текстом</button>
+        <button class="btn mini sec" type="button" id="ltrMiniGo">Лист во всю ширину</button>
       </div>
       <div class="note small">Печать даёт лист А4 с фирменной шапкой и полями
         по ГОСТ: слева 30 мм, справа 15 мм.</div>
-      <!-- Живая миниатюра бланка: обновляется вместе с текстом слева. -->
-      <div class="ltrmini" id="ltrMini" title="Открыть лист во всю ширину">
-        <div class="ltrmini-in" id="ltrMiniIn"></div>
-      </div>
-      <button class="btn mini sec noprint" type="button" id="ltrMiniGo">Лист во всю ширину</button>
     </div>
   </aside>
   </div>
