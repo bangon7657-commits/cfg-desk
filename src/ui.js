@@ -61,7 +61,9 @@
     // письма: шаблон, наше юрлицо, правки текста. Данные клиента тут не лежат.
     ltr: { tpl: '', sup: '', ceo: '', head: '', vals: {}, bodies: {} },
     // расчёт зарплаты
-    zp: null
+    zp: null,
+    // закреплённые вкладки в строке навигации (до четырёх)
+    pins: ['home', 'build', 'smeta', 'letters']
   };
   // Значения по умолчанию для зарплаты вынесены в функцию: их же берёт «Сбросить»
   function zpDefaults() {
@@ -115,6 +117,8 @@
       }
       if (!state.build.slots || typeof state.build.slots !== 'object') state.build.slots = {};
       if (!Array.isArray(state.build.saved)) state.build.saved = [];
+      // черновики до версии 19 не знали про настраиваемые вкладки
+      if (!Array.isArray(state.pins)) state.pins = ['home', 'build', 'smeta', 'letters'];
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
   if (!state.zp || typeof state.zp !== 'object') state.zp = zpDefaults();
@@ -149,21 +153,99 @@
     { id: 'shop', title: 'Готовность цеха', hint: 'блокеры до монтажа' },
     { id: 'data', title: 'Данные', hint: 'прайсы, источники, расхождения' }
   ];
-  var tabs = $('tabs').querySelectorAll('button');
-  // подписи вкладок берём из SECTIONS: иначе переименование раздела меняло
-  // бы только надпись в меню, а строка вкладок оставалась со старым текстом
-  for (var ti = 0; ti < tabs.length; ti++) {
-    var tid = tabs[ti].getAttribute('data-t');
-    SECTIONS.forEach(function (s) {
-      if (s.id !== tid) return;
-      var badge = tabs[ti].querySelector('.badge');
-      tabs[ti].textContent = s.title + ' ';
-      if (badge) tabs[ti].appendChild(badge);
+  var PINS_MAX = 4;
+  var PINS_DEF = ['home', 'build', 'smeta', 'letters'];
+  var curTab = 'cfg';
+  function secTitle(id) {
+    var t = id;
+    SECTIONS.forEach(function (s) { if (s.id === id) t = s.title; });
+    return t;
+  }
+  // Закреплённые вкладки: только существующие разделы, без повторов, до четырёх
+  function pins() {
+    var out = [], ids = SECTIONS.map(function (s) { return s.id; });
+    (Array.isArray(state.pins) ? state.pins : PINS_DEF).forEach(function (id) {
+      if (ids.indexOf(id) >= 0 && out.indexOf(id) < 0 && out.length < PINS_MAX) out.push(id);
     });
+    return out;
+  }
+  function tabBtns() { return $('tabs').querySelectorAll('button[data-t]'); }
+  // Строка вкладок собирается из закреплённых разделов. Значок сметы живёт
+  // внутри своей вкладки, поэтому код сметы проверяет его наличие.
+  function renderTabs() {
+    var box = fresh('tabs'), cur = curTab;
+    pins().forEach(function (id) {
+      var b = d.createElement('button');
+      b.type = 'button';
+      b.setAttribute('data-t', id);
+      b.setAttribute('aria-selected', id === cur ? 'true' : 'false');
+      var nm = d.createElement('span');
+      nm.textContent = secTitle(id);
+      b.appendChild(nm);
+      if (id === 'smeta') {
+        var bd = d.createElement('span');
+        bd.className = 'badge'; bd.id = 'smetaBadge';
+        bd.textContent = state.items.length ? String(state.items.length) : '';
+        b.appendChild(bd);
+      }
+      var x = d.createElement('span');
+      x.className = 'tabx';
+      x.setAttribute('data-x', id);
+      x.title = 'Убрать вкладку «' + secTitle(id) + '»';
+      x.textContent = '×';
+      b.appendChild(x);
+      b.addEventListener('click', function (e) {
+        if (e.target && e.target.getAttribute('data-x')) { unpin(id); return; }
+        showTab(id);
+      });
+      box.appendChild(b);
+    });
+    if (!pins().length) {
+      var hint = d.createElement('span');
+      hint.className = 'muted';
+      hint.style.fontSize = '12px';
+      hint.textContent = 'Вкладок нет — закрепите разделы в меню';
+      box.appendChild(hint);
+    }
+  }
+  function setPins(list) {
+    state.pins = list.slice(0, PINS_MAX);
+    save();
+    renderTabs();
+    renderMenuPins();
+    markTab(curTab);
+  }
+  function unpin(id) {
+    setPins(pins().filter(function (p) { return p !== id; }));
+    toast('Вкладка «' + secTitle(id) + '» убрана');
+  }
+  function pinToggle(id) {
+    var p = pins();
+    if (p.indexOf(id) >= 0) { unpin(id); return; }
+    if (p.length >= PINS_MAX) {
+      toast('Уже ' + PINS_MAX + ' вкладки — сначала уберите лишнюю');
+      return;
+    }
+    setPins(p.concat([id]));
+    toast('Вкладка «' + secTitle(id) + '» закреплена');
+  }
+  function renderMenuPins() {
+    var p = pins();
+    var bs = $('menuList').querySelectorAll('button[data-pin]');
+    for (var i = 0; i < bs.length; i++) {
+      var on = p.indexOf(bs[i].getAttribute('data-pin')) >= 0;
+      bs[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+      bs[i].textContent = on ? '★' : '☆';
+      bs[i].title = on ? 'Убрать из строки вкладок' : 'Закрепить вкладкой';
+    }
+    var f = $('pinsInfo');
+    if (f) f.textContent = 'Закреплено ' + p.length + ' из ' + PINS_MAX;
   }
 
   var menuList = fresh('menuList');
   SECTIONS.forEach(function (s) {
+    var row = d.createElement('div');
+    row.className = 'mrow';
     var b = d.createElement('button');
     b.type = 'button';
     b.setAttribute('data-t', s.id);
@@ -173,8 +255,33 @@
       showTab(s.id);
       closeMenu();
     });
-    menuList.appendChild(b);
+    var pb = d.createElement('button');
+    pb.type = 'button';
+    pb.className = 'pinbtn';
+    pb.setAttribute('data-pin', s.id);
+    pb.setAttribute('aria-pressed', 'false');
+    pb.textContent = '☆';
+    pb.addEventListener('click', function (e) {
+      e.stopPropagation();
+      pinToggle(s.id);
+    });
+    row.appendChild(b);
+    row.appendChild(pb);
+    menuList.appendChild(row);
   });
+  var mfoot = d.createElement('div');
+  mfoot.className = 'mfoot';
+  mfoot.innerHTML = '<span id="pinsInfo"></span>';
+  var reset = d.createElement('button');
+  reset.type = 'button';
+  reset.textContent = 'Вернуть по умолчанию';
+  reset.addEventListener('click', function (e) {
+    e.stopPropagation();
+    setPins(PINS_DEF.slice());
+    toast('Вкладки: ' + PINS_DEF.map(secTitle).join(', '));
+  });
+  mfoot.appendChild(reset);
+  menuList.appendChild(mfoot);
 
   window.addEventListener('hashchange', function () {
     var h = (location.hash || '').replace('#', '');
@@ -200,24 +307,26 @@
     if (e.key === 'Escape') closeMenu();
   });
 
-  function showTab(name) {
-    for (var i = 0; i < tabs.length; i++) {
-      tabs[i].setAttribute('aria-selected',
-        tabs[i].getAttribute('data-t') === name ? 'true' : 'false');
+  // Подсветка активного раздела вынесена отдельно: её же зовёт перерисовка
+  // строки вкладок после закрепления или снятия
+  function markTab(name) {
+    var tb = tabBtns();
+    for (var i = 0; i < tb.length; i++) {
+      tb[i].setAttribute('aria-selected',
+        tb[i].getAttribute('data-t') === name ? 'true' : 'false');
     }
-    var mi = $('menuList').querySelectorAll('button');
+    var mi = $('menuList').querySelectorAll('button[data-t]');
     for (var k = 0; k < mi.length; k++) {
       mi[k].setAttribute('aria-selected',
         mi[k].getAttribute('data-t') === name ? 'true' : 'false');
     }
     // Кнопка показывает, где мы находимся, если раздела нет в строке вкладок
-    var inTabs = false;
-    for (var t = 0; t < tabs.length; t++) {
-      if (tabs[t].getAttribute('data-t') === name) inTabs = true;
-    }
-    var title = name;
-    SECTIONS.forEach(function (s) { if (s.id === name) title = s.title; });
-    $('menuBtn').textContent = inTabs ? 'Разделы' : title;
+    var inTabs = pins().indexOf(name) >= 0;
+    $('menuBtn').textContent = inTabs ? 'Разделы' : secTitle(name);
+  }
+  function showTab(name) {
+    curTab = name;
+    markTab(name);
     var panels = d.querySelectorAll('.panel');
     for (var j = 0; j < panels.length; j++) {
       panels[j].classList.toggle('active', panels[j].id === 'p-' + name);
@@ -231,9 +340,8 @@
     d.documentElement.scrollTop = 0;
     d.body.scrollTop = 0;
   }
-  for (var t = 0; t < tabs.length; t++) {
-    tabs[t].addEventListener('click', function () { showTab(this.getAttribute('data-t')); });
-  }
+  renderTabs();
+  renderMenuPins();
 
   /* Высота шапки зависит от переносов текста, поэтому прибиваем вкладки
      не к жёстким 63px из CSS, а к фактической высоте шапки. */
@@ -1544,7 +1652,9 @@
     var has = state.items.length > 0;
     $('smetaEmpty').style.display = has ? 'none' : '';
     $('smetaWrap').style.display = has ? '' : 'none';
-    $('smetaBadge').textContent = has ? String(state.items.length) : '';
+    // значок живёт во вкладке «Смета и ТКП», а её могли снять из строки
+    var sBadge = $('smetaBadge');
+    if (sBadge) sBadge.textContent = has ? String(state.items.length) : '';
 
     T.lines.forEach(function (L, i) {
       var tr = d.createElement('tr');
