@@ -66,6 +66,8 @@ if (STAGE === 2) {
 
 if (STAGE !== 2) {
 
+function menuGo(id) { doc.querySelector('#menuList button[data-t="' + id + '"]').click(); }
+
 check('ошибок JS нет', first.errors.length === 0, first.errors.join(' | '));
 check('в строке вкладок четыре закреплённых раздела',
   doc.querySelectorAll('#tabs button[data-t]').length === 4,
@@ -1301,6 +1303,94 @@ check('главная: плашка без логотипа и рамки',
 check('навигация: остальные разделы живут в кнопке «Разделы»',
   doc.querySelectorAll('#menuList button[data-t]').length === 11 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
+
+// ---- v20: опоры штуками, ПНР от станка, ТКП по типу станка, мысли в смете ----
+menuGo('smeta');
+[...doc.querySelectorAll('#smetaBody .btn.danger')].forEach(b => b.click());
+menuGo('build');
+['machine', 'stab', 'chiller', 'sensor', 'vibro', 'asp', 'ctrl', 'pnr', 'delivery']
+  .forEach(id => {
+    const s2 = [...doc.querySelectorAll('#buildSlots .slot')]
+      .filter(x => x.querySelector('button[data-slot="' + id + '"]'))[0];
+    const del = s2 && [...s2.querySelectorAll('button')]
+      .filter(b => b.textContent === 'Убрать')[0];
+    if (del) del.click();
+  });
+doc.querySelector('#buildKinds button[data-kind="milling"]').click();
+doc.querySelector('#buildSlots button[data-slot="machine"]').click();
+doc.querySelector('#pickList .pickrow button').click();
+const slotByText = re => [...doc.querySelectorAll('#buildSlots .slot')]
+  .filter(s => re.test(s.textContent))[0];
+const pnrSlot = () => slotByText(/ПНР/);
+check('конфигуратор: ПНР подтянулся к модели станка — пять видов работ',
+  pnrSlot().querySelectorAll('button[data-pnr]').length === 5 &&
+  /23 000/.test(pnrSlot().querySelector('button[data-pnr="pnr"]').textContent),
+  pnrSlot().querySelector('button[data-pnr="pnr"]').textContent);
+pnrSlot().querySelector('button[data-pnr="both"]').click();
+check('конфигуратор: выбранный вид ПНР попал в слот',
+  /Пусконаладочные работы и обучение оператора/.test(
+    pnrSlot().querySelector('.slot-n b').textContent) &&
+  /46 000/.test(pnrSlot().querySelector('.slot-p').textContent),
+  pnrSlot().querySelector('.slot-p').textContent);
+doc.querySelector('#buildSlots button[data-slot="vibro"]').click();
+doc.querySelector('#pickList .pickrow button').click();
+const vibSlot = () => slotByText(/Виброопор/);
+check('конфигуратор: у виброопор выбор количества 4/6/8/10',
+  [...vibSlot().querySelectorAll('button[data-qty]')]
+    .map(b => b.getAttribute('data-qty')).join(',') === '4,6,8,10',
+  [...vibSlot().querySelectorAll('button[data-qty]')]
+    .map(b => b.getAttribute('data-qty')).join(','));
+check('конфигуратор: опоры по умолчанию 4 шт по 1 400 ₽ = 5 600 ₽',
+  /5 600/.test(vibSlot().querySelector('.slot-p').textContent),
+  vibSlot().querySelector('.slot-p').textContent);
+vibSlot().querySelector('button[data-qty="8"]').click();
+check('конфигуратор: 8 опор считаются как 11 200 ₽',
+  /11 200/.test(vibSlot().querySelector('.slot-p').textContent) &&
+  /8 шт × 1 400/.test(vibSlot().querySelector('.slot-n').textContent),
+  vibSlot().querySelector('.slot-p').textContent);
+doc.getElementById('buildToSmeta').click();
+check('конфигуратор: в смету ушли три позиции с верным склонением',
+  /Перенесено в смету: 3 позиции/.test(textOf(doc, '#toastText') || '') &&
+  doc.querySelectorAll('#smetaBody tr.item').length === 3,
+  textOf(doc, '#toastText') + ' | строк ' +
+  doc.querySelectorAll('#smetaBody tr.item').length);
+const vibRowTxt = () => [...doc.querySelectorAll('#smetaBody tr.item')]
+  .filter(tr => /Виброопор/.test(tr.textContent))[0].textContent
+  .replace(/[\s\u00a0\u202f]/g, '');
+// в смете к этому моменту действует скидка из проверок выше, поэтому
+// сверяем не абсолют, а то, что строка ровно в восемь раз больше цены штуки
+check('смета: строка опор считается по 8 шт', (function () {
+  const t = vibRowTxt();
+  const nums = (t.match(/\d+,\d\d/g) || []).map(x => Math.round(parseFloat(
+    x.replace(',', '.')) * 100));
+  return nums.length >= 2 && nums[1] === nums[0] * 8;
+}()), vibRowTxt().slice(0, 90));
+const kpSel = doc.getElementById('kpMode');
+kpSel.value = 'full';
+kpSel.dispatchEvent(new win.Event('change'));
+const kpTxt = () => doc.getElementById('kpDoc').textContent;
+check('ТКП: комплектация подписана типом станка из сметы',
+  /Комплектация — фрезерный станок с ЧПУ/.test(
+    [...doc.querySelectorAll('#kpDoc .kp-sec')].map(x => x.textContent).join(' ')),
+  [...doc.querySelectorAll('#kpDoc .kp-sec')].map(x => x.textContent.trim()).join(' / '));
+check('ТКП: волоконная комплектация в КП на фрезер не попадает',
+  !/Popula|защитных стёкол|редукторы/i.test(kpTxt()), '');
+check('ТКП: механика фрезера на месте',
+  /Hiwin 20/.test(kpTxt()) && /кривозубая рейка/.test(kpTxt()), '');
+check('ТКП: преимущества про волоконный источник убраны',
+  !/Ремонтопригодный источник/.test(kpTxt()) &&
+  !/Запас по параметрам/.test(kpTxt()) &&
+  /Официальный дистрибьютор/.test(kpTxt()), '');
+check('смета: боковых «мыслей» нет, в подборе они остались',
+  doc.querySelectorAll('#p-smeta .think').length === 0 &&
+  doc.querySelectorAll('#p-cfg .think').length > 0,
+  doc.querySelectorAll('#p-smeta .think').length + ' / ' +
+  doc.querySelectorAll('#p-cfg .think').length);
+// возвращаем краткий вариант и чистим смету, чтобы файл ушёл пустым
+kpSel.value = 'short';
+kpSel.dispatchEvent(new win.Event('change'));
+[...doc.querySelectorAll('#smetaBody .btn.danger')].forEach(b => b.click());
+doc.querySelector('#buildKinds button[data-kind="fiber"]').click();
 
 // ---- настраиваемые вкладки: закрепить, снять, вернуть по умолчанию ----
 const pinBtn = id => doc.querySelector('#menuList button[data-pin="' + id + '"]');
