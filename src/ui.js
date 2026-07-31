@@ -2895,6 +2895,17 @@
   renderCompressor();
   renderExtraction();
   renderCryo();
+  // Пояснения и техничка в «Подборе и цены» по умолчанию скрыты: экран должен
+  // быть рабочим, а не читательским. Тумблер запоминается в черновике.
+  function applyHints(on) {
+    $('p-cfg').classList.toggle('hints', !!on);
+  }
+  $('cfgHints').checked = !!state.cfgHints;
+  applyHints(state.cfgHints);
+  $('cfgHints').addEventListener('change', function () {
+    state.cfgHints = this.checked; save(); applyHints(this.checked);
+  });
+
   $('specGo').addEventListener('click', function () { showTab('smeta'); });
   $('specCopy').addEventListener('click', function () {
     var ta = $('specOut');
@@ -3181,6 +3192,11 @@
     try {
       var sup = ltrSup(), tpl = ltrTpl(), body = '';
       var NAVY2 = '1F3864', INK2 = '222222', GREY2 = '777777';
+      var imgs = [];
+      if (APP.logoWide) {
+        imgs.push({ name: 'logo.png', b64: APP.logoWide });
+        body += DOCX.p(DOCX.image(1, 6.4, 1.49, 'LASERCUT'), { space: { after: 120 } });
+      }
       body += DOCX.p(DOCX.run(sup.name, { b: true, color: NAVY2, sz: 22 }),
         { space: { after: 40 } });
       legalLines(sup).forEach(function (t) {
@@ -3189,12 +3205,12 @@
       body += DOCX.p('', { space: { after: 160 } });
       if (!tpl.fromOur) {
         body += DOCX.p(DOCX.run(sup.ceo_title, { b: true, sz: 19 }),
-          { space: { after: 20 }, jc: 'right' });
+          { space: { after: 20 }, align: 'right' });
         body += DOCX.p(DOCX.run(ltrCeoName(), { sz: 19 }),
-          { space: { after: 20 }, jc: 'right' });
+          { space: { after: 20 }, align: 'right' });
         body += DOCX.p(DOCX.run('ИНН ' + (sup.inn || '—') +
           (sup.kpp ? ' / КПП ' + sup.kpp : ''), { sz: 17, color: GREY2 }),
-          { space: { after: 140 }, jc: 'right' });
+          { space: { after: 140 }, align: 'right' });
         body += DOCX.p(DOCX.run('От: ' + (ltrVal('fromName') || '—'), { sz: 19 }),
           { space: { after: 20 } });
         ['fromInn', 'fromAddr', 'fromPhone'].forEach(function (k) {
@@ -3209,7 +3225,7 @@
       }
       body += DOCX.p('', { space: { after: 160 } });
       body += DOCX.p(DOCX.run(ltrSubst(ltrHeadText()), { b: true, sz: 22, color: NAVY2 }),
-        { space: { after: 160 }, jc: 'center' });
+        { space: { after: 160 }, align: 'center' });
       ltrSubst(ltrBodyText()).split(/\n{1,}/).forEach(function (par) {
         if (!par.trim()) return;
         body += DOCX.p(DOCX.run(par.trim(), { sz: 19, color: INK2 }),
@@ -3221,13 +3237,10 @@
         DOCX.run((ltrVal('fromSign') || '') + ' ', { sz: 19 }) +
         DOCX.run('                        ', { sz: 19, u: true }),
         { space: { after: 0 } });
-      var blob = DOCX.build({ body: body });
+      // DOCX.build отдаёт байты, а не Blob: без обёртки createObjectURL падал
+      var bytes = DOCX.build({ body: body, images: imgs });
       var name = 'Письмо — ' + tpl.title + '.docx';
-      var a = d.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = name;
-      d.body.appendChild(a); a.click();
-      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+      downloadBlob(new Blob([bytes], { type: DOCX_MIME }), name);
       toast('Файл готов: ' + name);
     } catch (e) {
       toast('Не удалось собрать файл: ' + (e && e.message ? e.message : 'ошибка'));
@@ -3549,10 +3562,16 @@
   }
   function srcMill() {
     return APP.milling.map(function (r) {
+      // двигатели и стол в прайсе живут внутри названия сборки — вытаскиваем,
+      // чтобы по ним можно было фильтровать конфигурацию
+      var motor = /Leadshine/i.test(r.name)
+        ? 'Шаговые с обратной связью (Leadshine)' : 'Шаговые';
+      var table = r.vac ? 'Вакуумный (VAC)' : 'Профильный (Т-паз)';
       return { name: nomMill(r.name), price: r.order,
         sub: 'шпиндель ' + r.kw + ' кВт · ' + r.cool + ' · стойка ' + r.ctrl +
-          (r.vac ? ' · вакуумный стол' : ''),
+          ' · ' + table.toLowerCase(),
         meta: { kind: 'milling', kw: r.kw, cool: r.cool, vac: r.vac,
+          ctrl: r.ctrl, motor: motor, table: table,
           format: r.format, volts: r.vac ? 380 : 220 } };
     });
   }
@@ -3560,7 +3579,7 @@
     return APP.co2.map(function (r) {
       return { name: co2Name(r), price: r.price,
         sub: 'поле ' + r.field + ' мм · трубка ' + r.tube + ' Вт',
-        meta: { kind: 'co2', tube: r.tube, volts: 220 } };
+        meta: { kind: 'co2', tube: r.tube, brand: r.brand, volts: 220 } };
     });
   }
   function srcMarker() {
@@ -3726,15 +3745,108 @@
   }
 
   // ---- диалог выбора позиции ----
-  var pickState = { slot: '', rows: [] };
+  // Для слота «Станок» сверху появляется набор фильтров-конфигурации: мощность
+  // шпинделя, стойка, двигатели, стол (у фрезерных), мощность и модули
+  // (у волокна). Цена в строке показывается вместе с разницей к базовой —
+  // видно, во что обходится каждое изменение конфигурации.
+  var pickState = { slot: '', rows: [], cfg: {}, base: 0 };
+  var PICK_CFG = {
+    milling: [
+      ['kw', 'Шпиндель, кВт', function (r) { return r.meta.kw ? r.meta.kw + ' кВт' : ''; }],
+      ['cool', 'Охлаждение', function (r) { return r.meta.cool || ''; }],
+      ['ctrl', 'Система управления', function (r) { return r.meta.ctrl || ''; }],
+      ['motor', 'Двигатели', function (r) { return r.meta.motor || ''; }],
+      ['table', 'Стол', function (r) { return r.meta.table || ''; }]
+    ],
+    fiber: [
+      ['power', 'Мощность источника', function (r) {
+        return r.meta.power ? (r.meta.power / 1000) + ' кВт' : ''; }],
+      ['format', 'Рабочее поле', function (r) {
+        return r.meta.format ? APP.fiberFormats[r.meta.format] + ' мм' : ''; }]
+    ],
+    co2: [
+      ['tube', 'Трубка, Вт', function (r) { return r.meta.tube || ''; }],
+      ['brandC', 'Бренд', function (r) { return r.meta.brand || ''; }]
+    ],
+    marker: [
+      ['watt', 'Мощность', function (r) { return r.meta.watt ? r.meta.watt + ' Вт' : ''; }],
+      ['mopa', 'MOPA', function (r) { return r.meta.mopa ? 'да' : 'нет'; }]
+    ]
+  };
+  function pickCfgDefs() {
+    if (pickState.slot !== 'machine') return [];
+    return PICK_CFG[buildKind()] || [];
+  }
+  function renderPickCfg() {
+    var box = fresh('pickCfg'), defs = pickCfgDefs();
+    if (!defs.length) { box.style.display = 'none'; return; }
+    box.style.display = '';
+    box.appendChild(el('div', 'mc-h', 'Конфигурация — меняйте параметры, цена ' +
+      'пересчитается по прайсу'));
+    var row = el('div', 'mc-row');
+    defs.forEach(function (d) {
+      var key = d[0], label = d[1], get = d[2];
+      var vals = [];
+      pickState.rows.forEach(function (r) {
+        var v = get(r);
+        if (v && vals.indexOf(v) < 0) vals.push(v);
+      });
+      if (vals.length < 2) return;
+      var cell = el('div');
+      cell.appendChild(el('label', 'f', esc(label)));
+      var sel = el('select');
+      opt(sel, '', 'любая');
+      vals.forEach(function (v) { opt(sel, v, v); });
+      sel.value = pickState.cfg[key] || '';
+      sel.addEventListener('change', function () {
+        pickState.cfg[key] = this.value;
+        renderPick();
+      });
+      cell.appendChild(sel);
+      row.appendChild(cell);
+    });
+    box.appendChild(row);
+    var chosen = [];
+    defs.forEach(function (d) {
+      if (pickState.cfg[d[0]]) chosen.push(d[1] + ': ' + pickState.cfg[d[0]]);
+    });
+    box.appendChild(el('div', 'mc-f', chosen.length
+      ? 'Отбор: ' + esc(chosen.join(' · ')) + '. Разница в цене считается от ' +
+        'выбранной позиции слота или самой дешёвой в отборе.'
+      : 'Фильтры не заданы — показан весь список.'));
+    var reset = el('button', 'btn mini sec', 'Сбросить конфигурацию');
+    reset.type = 'button';
+    reset.addEventListener('click', function () {
+      pickState.cfg = {};
+      renderPickCfg(); renderPick();
+    });
+    box.appendChild(reset);
+  }
+  function pickFilter(rows) {
+    var defs = pickCfgDefs();
+    if (!defs.length) return rows;
+    return rows.filter(function (r) {
+      var ok = true;
+      defs.forEach(function (d) {
+        var want = pickState.cfg[d[0]];
+        if (want && d[2](r) !== want) ok = false;
+      });
+      return ok;
+    });
+  }
   function openPick(slotId) {
     var def = slotDef(slotId);
     if (!def) return;
     pickState.slot = slotId;
     pickState.rows = def[3]();
+    pickState.cfg = {};
+    // база для разницы: то, что уже стоит в слоте
+    var cur = slotItems()[slotId];
+    pickState.base = cur ? toCents(cur.price || 0) : 0;
     $('pickTitle').textContent = def[1] + ' — выбор позиции';
     $('pickSearch').value = '';
     $('pickModal').classList.add('open');
+    renderPickCfg();
     renderPick();
     try { $('pickSearch').focus(); } catch (e) {}
   }
@@ -3742,10 +3854,18 @@
   function renderPick() {
     var q = ($('pickSearch').value || '').trim().toLowerCase();
     var sort = $('pickSort').value;
-    var rows = pickState.rows.filter(function (r) {
+    var rows = pickFilter(pickState.rows).filter(function (r) {
       return !q || r.name.toLowerCase().indexOf(q) >= 0 ||
         (r.sub || '').toLowerCase().indexOf(q) >= 0;
     });
+    // если в слоте пусто, базой считаем самую дешёвую строку отбора
+    var base = pickState.base;
+    if (!base && rows.length) {
+      base = rows.reduce(function (m, r) {
+        var c = toCents(r.price || 0);
+        return (!m || (c && c < m)) ? c : m;
+      }, 0);
+    }
     if (sort === 'asc') rows = rows.slice().sort(function (a, b) { return a.price - b.price; });
     if (sort === 'desc') rows = rows.slice().sort(function (a, b) { return b.price - a.price; });
     $('pickCnt').textContent = cnt(rows.length, ['позиция', 'позиции']);
@@ -3759,10 +3879,16 @@
     }
     rows.slice(0, 200).forEach(function (r) {
       var row = el('div', 'pickrow');
+      var cents = toCents(r.price || 0);
+      var diff = base && cents ? cents - base : 0;
+      var diffTx = diff
+        ? '<span class="pd ' + (diff > 0 ? 'up' : 'dn') + '">' +
+          (diff > 0 ? '+' : '−') + fmtRub(Math.abs(diff)) + ' ₽</span>'
+        : (base && cents ? '<span class="pd same">без изменения</span>' : '');
       row.innerHTML = '<div class="pn"><b>' + esc(r.name) + '</b>' +
         (r.sub ? '<span class="muted">' + esc(r.sub) + '</span>' : '') + '</div>' +
-        '<div class="pp">' + (r.price ? fmtRub(toCents(r.price)) + ' ₽'
-          : '<span class="muted">цену уточнить</span>') + '</div>';
+        '<div class="pp">' + (r.price ? fmtRub(cents) + ' ₽'
+          : '<span class="muted">цену уточнить</span>') + diffTx + '</div>';
       var b = el('button', 'btn mini', 'Выбрать');
       b.type = 'button';
       b.addEventListener('click', function () {
