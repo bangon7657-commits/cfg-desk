@@ -700,7 +700,6 @@ repl = {
     '__LETTER_PRIVACY__': esc(lt.LETTER_PRIVACY),
     '__ZP_NOTE__': esc(APP['zp']['note']),
     '__APP_NAME__': APP_NAME,
-    '__APP_TAGLINE__': APP_TAGLINE,
     '__SITE_URL__': SITE_URL,
     '__MGR_NAME__': esc(data.MANAGER['name']),
     '__MGR_ROLE__': esc(data.MANAGER['role']),
