@@ -15,6 +15,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import data
 import reference as ref
 import wattsan as wt
+import letters as lt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DIST = os.environ.get('DIST_DIR') or os.path.join(HERE, 'dist')
@@ -47,6 +48,9 @@ n_fiber = len(data.FIBER_A) + sum(2 + len(c['rot']) + len(c['table_rot'])
 # Данные для клиента. В JSON попадает только то, что реально читает интерфейс.
 # Остальное (массы, сервис, наценки) рисуется статическими таблицами.
 # ---------------------------------------------------------------------------
+with open(os.path.join(HERE, 'logo_wide.png'), 'rb') as _lw:
+    LOGO_WIDE_B64 = base64.b64encode(_lw.read()).decode()
+
 APP = {
     'ndsDefault': data.NDS_DEFAULT,
     'kpValidDays': data.KP_VALID_DAYS,
@@ -147,6 +151,19 @@ APP = {
     'brushes': wt.BRUSHES,
     'spindles': wt.SPINDLES,
     'millSeries': wt.SERIES,
+    # письма и уведомления
+    'logoWide': LOGO_WIDE_B64,
+    'letterFields': lt.LETTER_FIELDS,
+    'letterTemplates': lt.LETTER_TEMPLATES,
+    'letterNote': lt.LETTER_NOTE,
+    'letterPrivacy': lt.LETTER_PRIVACY,
+    'letterHowto': lt.LETTER_HOWTO,
+    # расчёт зарплаты: ставки по умолчанию из присланного калькулятора
+    'zp': {'ndflRate': 13, 'internalRate': 9, 'salary': 68970,
+           'sickPct': [[8, 100], [5, 80], [0, 60]],
+           'note': 'НДФЛ и внутренний налог компании считаются от полной '
+                   'начисленной суммы. Первые три дня больничного платит '
+                   'работодатель, остальные — СФР.'},
     'vibroQty': data.VIBRO_QTY,
     'pnr': [{'model': m, 'days': d, 'pnr': p, 'plus1': p1, 'plus2': p2,
              'training': t, 'package': pk}
@@ -666,6 +683,10 @@ repl = {
     '__COMPONENTS_NOTE__': esc(data.COMPONENTS_NOTE),
     '__KP_HEAD__': KP_HEAD,
     '__MARK__': MARK_B64,
+    '__LOGO_WIDE__': LOGO_WIDE_B64,
+    '__LETTER_NOTE__': esc(lt.LETTER_NOTE),
+    '__LETTER_PRIVACY__': esc(lt.LETTER_PRIVACY),
+    '__ZP_NOTE__': esc(APP['zp']['note']),
     '__APP_NAME__': APP_NAME,
     '__APP_TAGLINE__': APP_TAGLINE,
     '__SITE_URL__': SITE_URL,
