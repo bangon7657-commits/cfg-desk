@@ -81,7 +81,9 @@ body.demo .demo-banner{display:flex;gap:14px;align-items:center;justify-content:
 nav{display:none;background:var(--bg2);border-bottom:1px solid var(--line);
   position:sticky;top:63px;z-index:29}
 body.js nav{display:block}
-.navinner{max-width:1200px;margin:0 auto;padding:7px 12px;display:flex;gap:9px;
+/* Строка навигации шире колонки контента (1200): кнопка «Разделы» уходит
+   левее текста, и раскрытое меню ложится в свободное поле, а не на статью. */
+.navinner{max-width:1560px;margin:0 auto;padding:7px 12px;display:flex;gap:12px;
   align-items:center}
 .navtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px 0;
   flex:1 1 auto}
@@ -100,36 +102,55 @@ body.js nav{display:block}
 
 /* кнопка «Разделы» — фирменный оранжевый блок с меню */
 .navmenu{position:relative;flex:0 0 auto}
-.menubtn{font:inherit;font-size:13.5px;font-weight:700;padding:6px 14px 6px 32px;
-  border-radius:16px;cursor:pointer;border:1px solid var(--or);
+/* Кнопка «Разделы» крупнее прежней в 1.5 раза: 13.5 → 20 px, отступы и
+   иконка-гамбургер выросли пропорционально. */
+.menubtn{font:inherit;font-size:20px;font-weight:700;padding:9px 21px 9px 48px;
+  border-radius:22px;cursor:pointer;border:1px solid var(--or);
   background:color-mix(in srgb, var(--or) 16%, transparent);color:var(--or);
   position:relative;line-height:1.25;white-space:nowrap}
-.menubtn::before{content:"";position:absolute;left:12px;top:50%;
-  width:13px;height:2px;background:var(--or);border-radius:2px;
-  box-shadow:0 -4px 0 var(--or), 0 4px 0 var(--or);transform:translateY(-1px)}
+.menubtn::before{content:"";position:absolute;left:18px;top:50%;
+  width:20px;height:3px;background:var(--or);border-radius:2px;
+  box-shadow:0 -6px 0 var(--or), 0 6px 0 var(--or);transform:translateY(-1px)}
 .menubtn:hover{background:var(--or);color:var(--onor)}
 .menubtn:hover::before{background:var(--onor);
-  box-shadow:0 -4px 0 var(--onor), 0 4px 0 var(--onor)}
+  box-shadow:0 -6px 0 var(--onor), 0 6px 0 var(--onor)}
 .menulist{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:40;
-  min-width:228px;padding:6px;border-radius:13px;border:1px solid var(--line2);
-  background:color-mix(in srgb, var(--bg2) 94%, transparent);
+  min-width:288px;padding:6px;border-radius:13px;border:1px solid var(--line2);
+  background:color-mix(in srgb, var(--bg2) 97%, transparent);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   box-shadow:0 12px 32px var(--shadow)}
 .menulist.open{display:block}
-.menulist button{display:block;width:100%;font:inherit;font-size:13.5px;
-  text-align:left;padding:7px 11px;border:0;border-radius:9px;background:none;
-  color:var(--tx2);cursor:pointer;line-height:1.3}
-.menulist button:hover{background:var(--bg3);color:var(--tx)}
-.menulist button[aria-selected="true"]{color:var(--or);font-weight:700;
+/* строка меню: слева переход в раздел, справа кнопка-закрепление во вкладки */
+.menulist .mrow{display:flex;align-items:stretch;gap:2px;border-radius:9px}
+.menulist .mrow:hover{background:var(--bg3)}
+.menulist .mrow>button[data-t]{display:block;flex:1 1 auto;font:inherit;
+  font-size:13.5px;text-align:left;padding:7px 11px;border:0;border-radius:9px;
+  background:none;color:var(--tx2);cursor:pointer;line-height:1.3}
+.menulist .mrow>button[data-t]:hover{color:var(--tx)}
+.menulist .mrow>button[aria-selected="true"]{color:var(--or);font-weight:700;
   background:var(--orbg)}
-.menulist button small{display:block;font-size:11px;color:var(--muted);
-  font-weight:400;margin-top:1px}
+.menulist .mrow>button[data-t] small{display:block;font-size:11px;
+  color:var(--muted);font-weight:400;margin-top:1px}
+.pinbtn{flex:0 0 auto;width:34px;border:0;border-radius:9px;background:none;
+  color:var(--muted);cursor:pointer;font:inherit;font-size:16px;line-height:1}
+.pinbtn:hover{background:var(--bg4);color:var(--or)}
+.pinbtn[aria-pressed="true"]{color:var(--or)}
+.menulist .mfoot{display:flex;gap:6px;align-items:center;
+  border-top:1px solid var(--line);margin-top:5px;padding:6px 8px 2px}
+.menulist .mfoot span{font-size:11px;color:var(--muted);flex:1 1 auto}
+.menulist .mfoot button{font:inherit;font-size:11.5px;padding:4px 9px;
+  border:1px solid var(--line2);border-radius:8px;background:none;
+  color:var(--tx2);cursor:pointer}
+.menulist .mfoot button:hover{border-color:var(--or2);color:var(--tx)}
+/* крестик снятия вкладки — виден при наведении и всегда на тач-экранах */
+.navtabs button .tabx{font-size:14px;line-height:1;opacity:.45;margin-left:1px}
+.navtabs button:hover .tabx{opacity:1}
 @media(max-width:560px){
-  .navinner{padding:6px 10px;gap:7px}
+  .navinner{padding:6px 10px;gap:8px}
   .navtabs button{font-size:13px;padding:6px 11px}
-  .menubtn{font-size:13px;padding:6px 12px 6px 29px}
-  .menubtn::before{left:11px;width:12px}
-  .menulist{min-width:min(74vw, 300px)}
+  .menubtn{font-size:17px;padding:8px 15px 8px 40px}
+  .menubtn::before{left:15px;width:17px}
+  .menulist{min-width:min(80vw, 320px)}
 }
 .badge{background:var(--or);color:var(--onor);font-size:12px;font-weight:700;
   min-width:20px;padding:1px 6px;border-radius:10px;line-height:1.5}
