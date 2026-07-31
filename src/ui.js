@@ -57,8 +57,29 @@
     // имя и контакты менеджера сделки: пустые поля = менеджер из данных
     mgr: {},
     // сборка комплекта по слотам: тип, содержимое слотов, сохранённые сборки
-    build: { kind: 'fiber', slots: {}, saved: [], reqOnly: false }
+    build: { kind: 'fiber', slots: {}, saved: [], reqOnly: false },
+    // письма: шаблон, наше юрлицо, правки текста. Данные клиента тут не лежат.
+    ltr: { tpl: '', sup: '', ceo: '', head: '', vals: {}, bodies: {} },
+    // расчёт зарплаты
+    zp: null
   };
+  // Значения по умолчанию для зарплаты вынесены в функцию: их же берёт «Сбросить»
+  function zpDefaults() {
+    var now = new Date();
+    var m = now.getMonth(), y = now.getFullYear();
+    var wd = 0, dd = new Date(y, m, 1);
+    while (dd.getMonth() === m) {
+      var w = dd.getDay();
+      if (w > 0 && w < 6) wd++;
+      dd.setDate(dd.getDate() + 1);
+    }
+    return { month: m, year: y, mode: 'gross', salary: APP.zp.salary,
+      normDays: wd, normHours: wd * 8, worked: wd, bonus: 0, penalty: 0, other: 0,
+      ot15: 0, ot20: 0, holH: 0, holOver: false, vacDays: 0, vacDaily: 0,
+      vacEarn: '', sickDays: 0, sickDaily: 0, sickEarn: '', sickYears: 8,
+      halfDays: '', advManual: '', ndfl: APP.zp.ndflRate,
+      internal: APP.zp.internalRate };
+  }
   try {
     // v1 → v2: подхватываем черновик, сохранённый прошлой версией, и переносим его
     var raw = localStorage.getItem(LS);
@@ -82,6 +103,12 @@
       }
       // черновики до версии 13 не знали про своего менеджера
       if (!state.mgr || typeof state.mgr !== 'object') state.mgr = {};
+      // черновики до версии 17 не знали про письма и зарплату
+      if (!state.ltr || typeof state.ltr !== 'object') {
+        state.ltr = { tpl: '', sup: '', ceo: '', head: '', vals: {}, bodies: {} };
+      }
+      if (!state.ltr.vals || typeof state.ltr.vals !== 'object') state.ltr.vals = {};
+      if (!state.ltr.bodies || typeof state.ltr.bodies !== 'object') state.ltr.bodies = {};
       // черновики до версии 16 не знали про сборку по слотам
       if (!state.build || typeof state.build !== 'object') {
         state.build = { kind: 'fiber', slots: {}, saved: [], reqOnly: false };
@@ -90,6 +117,10 @@
       if (!Array.isArray(state.build.saved)) state.build.saved = [];
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
+  if (!state.zp || typeof state.zp !== 'object') state.zp = zpDefaults();
+  if (!state.ltr || typeof state.ltr !== 'object') {
+    state.ltr = { tpl: '', sup: '', ceo: '', head: '', vals: {}, bodies: {} };
+  }
 
   var saveTimer = null;
   function save() {
@@ -106,8 +137,11 @@
   // Один источник истины: SECTIONS. Из него строится меню, по нему же
   // проверяется хеш в адресе.
   var SECTIONS = [
-    { id: 'build', title: 'Сборка', hint: 'слоты комплекта и проверка' },
-    { id: 'cfg', title: 'Конфигуратор', hint: 'станок, обвязка, цена' },
+    { id: 'home', title: 'Главная', hint: 'три инструмента менеджера' },
+    { id: 'build', title: 'Конфигуратор', hint: 'слоты комплекта и проверка' },
+    { id: 'letters', title: 'Письма', hint: 'возврат, платежи, официальные' },
+    { id: 'zp', title: 'Зарплата', hint: 'оклад, переработки, налоги' },
+    { id: 'cfg', title: 'Подбор и цены', hint: 'станок, обвязка, техничка' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
     { id: 'match', title: 'Подбор по задаче', hint: 'толщина и материал' },
     { id: 'gas', title: 'Газ и владение', hint: 'расход и стоимость' },
@@ -2884,6 +2918,596 @@
     save(); renderSmeta();
     toast('Убрано из сметы: ' + cnt(n, ['позиция', 'позиции']));
   });
+
+  // =====================================================================
+  //                    ГЛАВНАЯ: три плитки-инструмента
+  // =====================================================================
+  (function () {
+    var tiles = $('p-home').querySelectorAll('.tile');
+    for (var i = 0; i < tiles.length; i++) {
+      (function (b) {
+        b.addEventListener('click', function () { showTab(b.getAttribute('data-go')); });
+      }(tiles[i]));
+    }
+    var map = fresh('homeMap');
+    SECTIONS.forEach(function (sec) {
+      if (sec.id === 'home') return;
+      var row = el('div', 'maprow');
+      row.innerHTML = '<b>' + esc(sec.title) + '</b><span class="muted">' +
+        esc(sec.hint) + '</span>';
+      var b = el('button', 'btn mini sec', 'Открыть');
+      b.type = 'button';
+      b.addEventListener('click', function () { showTab(sec.id); });
+      row.appendChild(b);
+      map.appendChild(row);
+    });
+  }());
+
+  // =====================================================================
+  //                       ПИСЬМА И УВЕДОМЛЕНИЯ
+  // Бланк на фирменной шапке: шапка адресата и отправителя, заголовок,
+  // свободно правимый текст, подпись. Данные клиента не сохраняются.
+  // =====================================================================
+  var ltrClient = {};                     // живёт только до перезагрузки
+  function ltrTpl() {
+    var id = state.ltr.tpl || APP.letterTemplates[0].id, found = null;
+    APP.letterTemplates.forEach(function (t) { if (t.id === id) found = t; });
+    return found || APP.letterTemplates[0];
+  }
+  function ltrFieldDef(id) {
+    var found = null;
+    APP.letterFields.forEach(function (f) { if (f.id === id) found = f; });
+    return found;
+  }
+  function ltrVal(id) {
+    var def = ltrFieldDef(id);
+    if (def && def.client) return ltrClient[id] || '';
+    return (state.ltr.vals && state.ltr.vals[id]) || '';
+  }
+  function ltrSetVal(id, v) {
+    var def = ltrFieldDef(id);
+    if (def && def.client) { ltrClient[id] = v; renderLtr(); return; }
+    if (!state.ltr.vals) state.ltr.vals = {};
+    state.ltr.vals[id] = v;
+    save(); renderLtr();
+  }
+  function ltrSup() {
+    var id = state.ltr.sup || APP.supplierDefault, found = null;
+    APP.suppliers.forEach(function (s) { if (s.id === id) found = s; });
+    return found || APP.suppliers[0];
+  }
+  function ltrCeoName() {
+    return (state.ltr.ceo || '').trim() || ltrSup().ceo_full ||
+      'руководителю (ФИО уточнить)';
+  }
+  // Дата по-русски: 09.10.2025 → «09 октября 2025 г.»
+  var MONTHS_G2 = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля',
+    'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+  function ruDate(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || ''));
+    if (!m) return String(v || '').trim() || '—';
+    return m[3] + ' ' + (MONTHS_G2[parseInt(m[2], 10) - 1] || '') + ' ' + m[1] + ' г.';
+  }
+  function ltrSubst(text) {
+    var sup = ltrSup();
+    var sumCents = toCents(parseFloat(String(ltrVal('sum') || '0')
+      .replace(/\s| /g, '').replace(',', '.')) || 0);
+    var map = {
+      company: sup.name, ceo_name: ltrCeoName(), ceo_title: sup.ceo_title,
+      sum_rub: fmt(sumCents) + ' ₽', sum_words: propisyu(sumCents),
+      docDate: ruDate(ltrVal('docDate')), payDate: ruDate(ltrVal('payDate')),
+      basisDate: ruDate(ltrVal('basisDate')), basisDate2: ruDate(ltrVal('basisDate2'))
+    };
+    APP.letterFields.forEach(function (f) {
+      if (map[f.id] === undefined) map[f.id] = ltrVal(f.id) || '—';
+    });
+    return String(text).replace(/\{([a-zA-Z_]+)\}/g, function (all, key) {
+      return map[key] !== undefined ? map[key] : all;
+    });
+  }
+  function ltrHeadText() {
+    return (state.ltr.head !== undefined && state.ltr.head !== null &&
+      state.ltr.head !== '') ? state.ltr.head : ltrTpl().heading;
+  }
+  function ltrBodyText() {
+    var b = state.ltr.bodies && state.ltr.bodies[ltrTpl().id];
+    return (b === undefined || b === null || b === '') ? ltrTpl().body : b;
+  }
+  function renderLtrFields() {
+    var box = fresh('ltrFields'), tpl = ltrTpl();
+    var row = null, n = 0;
+    tpl.use.forEach(function (fid) {
+      var def = ltrFieldDef(fid);
+      if (!def) return;
+      if (n % 3 === 0) { row = el('div', 'row'); box.appendChild(row); }
+      n++;
+      var cell = el('div', def.client ? 'clientfield' : '');
+      var lab = el('label', 'f', esc(def.label) +
+        (def.client ? ' <span class="cf">клиент</span>' : ''));
+      cell.appendChild(lab);
+      var inp = el('input');
+      inp.type = def.kind === 'date' ? 'date' : 'text';
+      if (def.kind === 'money') inp.setAttribute('inputmode', 'decimal');
+      inp.id = 'lf_' + fid;
+      if (def.ph) inp.placeholder = def.ph;
+      inp.value = ltrVal(fid);
+      inp.addEventListener('input', function () { ltrSetVal(fid, this.value); });
+      cell.appendChild(inp);
+      row.appendChild(cell);
+    });
+  }
+  function renderLtrPage() {
+    var page = fresh('ltrPage'), tpl = ltrTpl(), sup = ltrSup();
+    var head = el('div', 'lp-head');
+    head.innerHTML = '<img src="data:image/png;base64,' + APP.logoWide +
+      '" alt="LASERCUT" class="lp-logo">' +
+      '<div class="lp-co"><b>' + esc(sup.name) + '</b>' +
+      legalLines(sup).map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('') +
+      '</div>';
+    page.appendChild(head);
+
+    var addr = el('div', 'lp-addr');
+    if (tpl.fromOur) {
+      addr.innerHTML = '<div class="lp-to">' + esc(ltrVal('fromName') || 'Адресат') +
+        '</div>';
+    } else {
+      addr.innerHTML = '<div class="lp-to"><b>' + esc(sup.ceo_title) + '</b><br>' +
+        esc(ltrCeoName()) + '<br><span class="muted">ИНН ' + esc(sup.inn || '—') +
+        (sup.kpp ? ' / КПП ' + esc(sup.kpp) : '') + '</span></div>' +
+        '<div class="lp-from"><b>От:</b> ' + esc(ltrVal('fromName') || '—') +
+        (ltrVal('fromInn') ? '<br>ИНН ' + esc(ltrVal('fromInn')) : '') +
+        (ltrVal('fromAddr') ? '<br>' + esc(ltrVal('fromAddr')) : '') +
+        (ltrVal('fromPhone') ? '<br>тел. ' + esc(ltrVal('fromPhone')) : '') + '</div>';
+    }
+    page.appendChild(addr);
+
+    page.appendChild(el('h2', 'lp-h', esc(ltrSubst(ltrHeadText()))));
+    if (tpl.id === 'official' && ltrVal('subject')) {
+      page.appendChild(el('div', 'lp-sub', esc(ltrVal('subject'))));
+    }
+    var body = el('div', 'lp-body');
+    ltrSubst(ltrBodyText()).split(/\n{1,}/).forEach(function (par) {
+      if (par.trim()) body.appendChild(el('p', '', esc(par.trim())));
+    });
+    page.appendChild(body);
+
+    var sign = el('div', 'lp-sign');
+    sign.innerHTML = '<span>' + esc(ruDate(ltrVal('docDate'))) + '</span>' +
+      '<span class="lp-line">' + esc(ltrVal('fromSign') || '') +
+      ' <span class="lp-blank">\u00a0</span></span>';
+    page.appendChild(sign);
+    $('ltrPageCnt').textContent = 'лист А4';
+  }
+  function ltrPlainText() {
+    var tpl = ltrTpl(), sup = ltrSup(), out = [];
+    if (!tpl.fromOur) {
+      out.push(sup.ceo_title);
+      out.push(ltrCeoName());
+      out.push('ИНН ' + (sup.inn || '—') + (sup.kpp ? ' / КПП ' + sup.kpp : ''));
+      out.push('');
+      out.push('От: ' + (ltrVal('fromName') || '—'));
+      if (ltrVal('fromInn')) out.push('ИНН ' + ltrVal('fromInn'));
+      if (ltrVal('fromAddr')) out.push(ltrVal('fromAddr'));
+      if (ltrVal('fromPhone')) out.push('тел. ' + ltrVal('fromPhone'));
+    } else {
+      out.push(sup.name);
+      out.push('Кому: ' + (ltrVal('fromName') || '—'));
+    }
+    out.push('');
+    out.push(ltrSubst(ltrHeadText()));
+    out.push('');
+    out.push(ltrSubst(ltrBodyText()));
+    out.push('');
+    out.push(ruDate(ltrVal('docDate')) + '   ' + (ltrVal('fromSign') || '') +
+      '  (подпись)');
+    return out.join('\n');
+  }
+  function renderLtr() {
+    var tpl = ltrTpl();
+    $('ltrTitle').textContent = tpl.title;
+    $('ltrHint').textContent = tpl.hint;
+    var bs = $('ltrPills').querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) {
+      var on = bs[i].getAttribute('data-tpl') === tpl.id;
+      bs[i].className = on ? 'pill on' : 'pill';
+      bs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+    if ($('ltrHead').value !== ltrHeadText()) $('ltrHead').value = ltrHeadText();
+    if ($('ltrBody').value !== ltrBodyText()) $('ltrBody').value = ltrBodyText();
+    renderLtrPage();
+    thinkify();
+  }
+  (function () {
+    var pl = fresh('ltrPills');
+    APP.letterTemplates.forEach(function (t) {
+      var b = el('button', 'pill', esc(t.title));
+      b.type = 'button';
+      b.setAttribute('data-tpl', t.id);
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', function () {
+        state.ltr.tpl = t.id;
+        state.ltr.head = '';
+        save(); renderLtrFields(); renderLtr();
+      });
+      pl.appendChild(b);
+    });
+    var sel = fresh('ltrSupplier');
+    APP.suppliers.forEach(function (s) { opt(sel, s.id, s.name); });
+    sel.value = state.ltr.sup || APP.supplierDefault;
+    var ho = fresh('ltrHowto');
+    APP.letterHowto.forEach(function (t) { ho.appendChild(el('li', '', esc(t))); });
+  }());
+  $('ltrSupplier').addEventListener('change', function () {
+    state.ltr.sup = this.value;
+    state.ltr.ceo = '';
+    $('ltrCeo').value = '';
+    save(); renderLtr();
+  });
+  $('ltrCeo').addEventListener('input', function () {
+    state.ltr.ceo = this.value; save(); renderLtr();
+  });
+  $('ltrHead').addEventListener('input', function () {
+    state.ltr.head = this.value; save(); renderLtrPage();
+  });
+  $('ltrBody').addEventListener('input', function () {
+    if (!state.ltr.bodies) state.ltr.bodies = {};
+    state.ltr.bodies[ltrTpl().id] = this.value;
+    save(); renderLtrPage();
+  });
+  $('ltrReset').addEventListener('click', function () {
+    if (state.ltr.bodies) delete state.ltr.bodies[ltrTpl().id];
+    state.ltr.head = '';
+    save(); renderLtr();
+    toast('Текст письма вернулся к шаблону');
+  });
+  $('ltrPrint').addEventListener('click', function () {
+    var p = $('p-letters');
+    p.classList.add('printme');
+    try { window.print(); } finally {
+      setTimeout(function () { p.classList.remove('printme'); }, 300);
+    }
+  });
+  $('ltrCopy').addEventListener('click', function () {
+    var txt = ltrPlainText();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(txt).then(function () {
+        toast('Письмо скопировано');
+      }, function () { toast('Скопировать не удалось — выделите текст на листе'); });
+      return;
+    }
+    toast('Буфер обмена недоступен — выделите текст на листе');
+  });
+  $('ltrDocx').addEventListener('click', function () {
+    try {
+      var sup = ltrSup(), tpl = ltrTpl(), body = '';
+      var NAVY2 = '1F3864', INK2 = '222222', GREY2 = '777777';
+      body += DOCX.p(DOCX.run(sup.name, { b: true, color: NAVY2, sz: 22 }),
+        { space: { after: 40 } });
+      legalLines(sup).forEach(function (t) {
+        body += DOCX.p(DOCX.run(t, { sz: 15, color: GREY2 }), { space: { after: 0 } });
+      });
+      body += DOCX.p('', { space: { after: 160 } });
+      if (!tpl.fromOur) {
+        body += DOCX.p(DOCX.run(sup.ceo_title, { b: true, sz: 19 }),
+          { space: { after: 20 }, jc: 'right' });
+        body += DOCX.p(DOCX.run(ltrCeoName(), { sz: 19 }),
+          { space: { after: 20 }, jc: 'right' });
+        body += DOCX.p(DOCX.run('ИНН ' + (sup.inn || '—') +
+          (sup.kpp ? ' / КПП ' + sup.kpp : ''), { sz: 17, color: GREY2 }),
+          { space: { after: 140 }, jc: 'right' });
+        body += DOCX.p(DOCX.run('От: ' + (ltrVal('fromName') || '—'), { sz: 19 }),
+          { space: { after: 20 } });
+        ['fromInn', 'fromAddr', 'fromPhone'].forEach(function (k) {
+          if (ltrVal(k)) {
+            body += DOCX.p(DOCX.run(ltrVal(k), { sz: 17, color: INK2 }),
+              { space: { after: 0 } });
+          }
+        });
+      } else {
+        body += DOCX.p(DOCX.run('Кому: ' + (ltrVal('fromName') || '—'), { sz: 19 }),
+          { space: { after: 40 } });
+      }
+      body += DOCX.p('', { space: { after: 160 } });
+      body += DOCX.p(DOCX.run(ltrSubst(ltrHeadText()), { b: true, sz: 22, color: NAVY2 }),
+        { space: { after: 160 }, jc: 'center' });
+      ltrSubst(ltrBodyText()).split(/\n{1,}/).forEach(function (par) {
+        if (!par.trim()) return;
+        body += DOCX.p(DOCX.run(par.trim(), { sz: 19, color: INK2 }),
+          { space: { after: 120 } });
+      });
+      body += DOCX.p('', { space: { after: 240 } });
+      body += DOCX.p(DOCX.run(ruDate(ltrVal('docDate')), { sz: 19 }) +
+        DOCX.run('                                        ', { sz: 19 }) +
+        DOCX.run((ltrVal('fromSign') || '') + ' ', { sz: 19 }) +
+        DOCX.run('                        ', { sz: 19, u: true }),
+        { space: { after: 0 } });
+      var blob = DOCX.build({ body: body });
+      var name = 'Письмо — ' + tpl.title + '.docx';
+      var a = d.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      d.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+      toast('Файл готов: ' + name);
+    } catch (e) {
+      toast('Не удалось собрать файл: ' + (e && e.message ? e.message : 'ошибка'));
+    }
+  });
+  if (state.ltr.ceo) $('ltrCeo').value = state.ltr.ceo;
+  renderLtrFields();
+  renderLtr();
+
+  // =====================================================================
+  //                          РАСЧЁТ ЗАРПЛАТЫ
+  // Перенос калькулятора: оклад по дням, переработки, выходные, отпуск,
+  // больничный, аванс. НДФЛ и внутренний налог — от начисленной суммы.
+  // Считаем в копейках, как и всё остальное в приложении.
+  // =====================================================================
+  var ZP_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль',
+    'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+  var ZP_FIELDS = {
+    zpSalary: 'salary', zpNormDays: 'normDays', zpNormHours: 'normHours',
+    zpWorked: 'worked', zpBonus: 'bonus', zpPenalty: 'penalty', zpOther: 'other',
+    zpOt15: 'ot15', zpOt20: 'ot20', zpHolH: 'holH', zpVacDays: 'vacDays',
+    zpVacDaily: 'vacDaily', zpVacEarn: 'vacEarn', zpSickDays: 'sickDays',
+    zpSickDaily: 'sickDaily', zpSickEarn: 'sickEarn', zpSickYears: 'sickYears',
+    zpHalfDays: 'halfDays', zpAdvManual: 'advManual', zpNdfl: 'ndfl',
+    zpInternal: 'internal'
+  };
+  function num(v) {
+    var x = parseFloat(String(v === undefined || v === null ? '' : v)
+      .replace(/\s| /g, '').replace(',', '.'));
+    return isFinite(x) ? x : 0;
+  }
+  function zpWeekdays(y, m) {
+    var c = 0, dd = new Date(y, m, 1);
+    while (dd.getMonth() === m) {
+      var w = dd.getDay();
+      if (w > 0 && w < 6) c++;
+      dd.setDate(dd.getDate() + 1);
+    }
+    return c;
+  }
+  function zpWeekdaysHalf(y, m) {
+    var c = 0;
+    for (var i = 1; i <= 15; i++) {
+      var w = new Date(y, m, i).getDay();
+      if (w > 0 && w < 6) c++;
+    }
+    return c;
+  }
+  function sickPct(years) {
+    var y = num(years), out = 60;
+    (APP.zp.sickPct || []).forEach(function (r) { if (y >= r[0] && r[1] > out) out = r[1]; });
+    return out;
+  }
+  // Расчёт целиком в копейках: доли процентов делим через divHalfUp
+  function zpCalc() {
+    var z = state.zp;
+    var nRate = Math.round(num(z.ndfl) * 10);          // 13 % → 130 (десятые)
+    var iRate = Math.round(num(z.internal) * 10);
+    var kPct = 1000 - nRate - iRate;                   // доля «на руки», ‰
+    var salaryIn = toCents(num(z.salary));
+    var salaryFull = z.mode === 'net'
+      ? (kPct > 0 ? divHalfUp(salaryIn * 1000, kPct) : 0)
+      : salaryIn;
+    var normDays = Math.max(num(z.normDays), 1);
+    var normHours = Math.max(num(z.normHours), 1);
+    var dayRate = divHalfUp(salaryFull, normDays);
+    var hourRate = divHalfUp(salaryFull, normHours);
+    var lines = [];
+    function add(label, formula, cents) {
+      if (cents) lines.push({ label: label, formula: formula, cents: cents });
+    }
+    var worked = num(z.worked);
+    var salaryPart = divHalfUp(salaryFull * Math.round(worked * 100), normDays * 100);
+    lines.push({ label: 'Оклад за ' + worked + ' из ' + normDays + ' раб. дн.',
+      formula: fmtRub(salaryFull) + ' ÷ ' + normDays + ' × ' + worked,
+      cents: salaryPart });
+    var ot15 = num(z.ot15), ot20 = num(z.ot20);
+    add('Сверхурочные: ' + ot15 + ' ч ×1,5 + ' + ot20 + ' ч ×2',
+      fmt(hourRate) + ' × (1,5×' + ot15 + ' + 2×' + ot20 + ')',
+      divHalfUp(hourRate * Math.round(ot15 * 150) + hourRate * Math.round(ot20 * 200), 100));
+    var holH = num(z.holH), holMult = z.holOver ? 2 : 1;
+    add('Выходные и праздники: ' + holH + ' ч, доплата ×' + holMult,
+      fmt(hourRate) + ' × ' + holMult + ' × ' + holH,
+      divHalfUp(hourRate * holMult * Math.round(holH * 100), 100));
+    add('Отпускные, ' + num(z.vacDays) + ' кал. дн.',
+      fmt(toCents(num(z.vacDaily))) + ' × ' + num(z.vacDays),
+      toCents(num(z.vacDaily)) * num(z.vacDays));
+    var sickDays = num(z.sickDays), sDaily = toCents(num(z.sickDaily));
+    var pct = sickPct(z.sickYears);
+    var sickEmpDays = Math.min(sickDays, 3), sickSfrDays = Math.max(sickDays - 3, 0);
+    var sickEmployer = divHalfUp(sDaily * pct * sickEmpDays, 100);
+    var sickSfr = divHalfUp(sDaily * pct * sickSfrDays, 100);
+    add('Больничный, ' + sickEmpDays + ' дн. от работодателя (' + pct + ' % по стажу)',
+      fmt(sDaily) + ' × ' + pct + ' % × ' + sickEmpDays, sickEmployer);
+    add('Бонус', 'введён вручную', toCents(num(z.bonus)));
+    var accrued = 0;
+    lines.forEach(function (l) { accrued += l.cents; });
+    var ndfl = divHalfUp(accrued * nRate, 1000);
+    var internal = divHalfUp(accrued * iRate, 1000);
+    var penalty = toCents(num(z.penalty)), other = toCents(num(z.other));
+    var deductions = ndfl + internal + penalty + other;
+    var net = accrued - deductions;
+    var advGross, advNdfl, advInternal, advNet;
+    if (String(z.advManual || '').trim() !== '') {
+      advNet = toCents(num(z.advManual));
+      advGross = kPct > 0 ? divHalfUp(advNet * 1000, kPct) : 0;
+      advNdfl = divHalfUp(advGross * nRate, 1000);
+      advInternal = divHalfUp(advGross * iRate, 1000);
+    } else {
+      advGross = divHalfUp(salaryFull * Math.round(num(z.halfDays) * 100), normDays * 100);
+      advNdfl = divHalfUp(advGross * nRate, 1000);
+      advInternal = divHalfUp(advGross * iRate, 1000);
+      advNet = advGross - advNdfl - advInternal;
+    }
+    return { salaryFull: salaryFull, dayRate: dayRate, hourRate: hourRate,
+      lines: lines, accrued: accrued, ndfl: ndfl, internal: internal,
+      penalty: penalty, other: other, deductions: deductions, net: net,
+      sickSfr: sickSfr, sickSfrDays: sickSfrDays, advNet: advNet,
+      rest: net - advNet, nRate: nRate, iRate: iRate,
+      effective: accrued ? divHalfUp(deductions * 1000, accrued) : 0 };
+  }
+  function zpText(T) {
+    var out = ['Расчёт зарплаты: ' + ZP_MONTHS[state.zp.month] + ' ' + state.zp.year];
+    T.lines.forEach(function (l) { out.push(l.label + ': ' + fmt(l.cents) + ' ₽'); });
+    out.push('Начислено: ' + fmt(T.accrued) + ' ₽');
+    out.push('НДФЛ ' + pctText(T.nRate) + ': −' + fmt(T.ndfl) + ' ₽');
+    out.push('Внутренний налог ' + pctText(T.iRate) + ': −' + fmt(T.internal) + ' ₽');
+    if (T.penalty) out.push('Штраф: −' + fmt(T.penalty) + ' ₽');
+    if (T.other) out.push('Прочие удержания: −' + fmt(T.other) + ' ₽');
+    out.push('На руки: ' + fmt(T.net) + ' ₽');
+    if (T.advNet) {
+      out.push('Аванс: ' + fmt(T.advNet) + ' ₽, остаток к выплате: ' + fmt(T.rest) + ' ₽');
+    }
+    if (T.sickSfr) {
+      out.push('Больничный от СФР (' + T.sickSfrDays + ' дн.): ' + fmt(T.sickSfr) +
+        ' ₽ — платит фонд, не работодатель');
+    }
+    return out.join('\n');
+  }
+  function renderZp() {
+    var z = state.zp, T = zpCalc();
+    $('zpPeriod').textContent = ZP_MONTHS[z.month] + ' ' + z.year;
+    var hero = fresh('zpHero');
+    hero.innerHTML = '<div class="l">На руки за месяц</div><div class="v">' +
+      fmtRub(T.net) + ' ₽</div><div class="split"><div><div class="l">Начислено</div>' +
+      '<div class="s">' + fmtRub(T.accrued) + ' ₽</div></div>' +
+      '<div><div class="l">Удержано</div><div class="s">' + fmtRub(T.deductions) +
+      ' ₽</div></div></div>';
+    $('zpRateCnt').textContent = 'ставка удержаний ' + pctText(T.effective);
+    var body = fresh('zpBody');
+    T.lines.forEach(function (l) {
+      var tr = d.createElement('tr');
+      tr.innerHTML = '<td>' + esc(l.label) + '<br><span class="muted">' +
+        esc(l.formula) + '</span></td><td class="num">' + fmt(l.cents) + ' ₽</td>';
+      body.appendChild(tr);
+    });
+    [['НДФЛ ' + pctText(T.nRate), T.ndfl], ['Внутренний налог ' + pctText(T.iRate), T.internal],
+      ['Штраф', T.penalty], ['Прочие удержания', T.other]].forEach(function (r) {
+      if (!r[1]) return;
+      var tr = d.createElement('tr');
+      tr.innerHTML = '<td>' + esc(r[0]) + '</td><td class="num minus">−' +
+        fmt(r[1]) + ' ₽</td>';
+      body.appendChild(tr);
+    });
+    var tot = fresh('zpTotals');
+    function line(k, v, cls) {
+      var n = el('div', cls || '');
+      n.innerHTML = '<span>' + k + '</span><span>' + v + '</span>';
+      tot.appendChild(n);
+    }
+    line('Начислено', fmt(T.accrued) + ' ₽');
+    line('Удержано', '−' + fmt(T.deductions) + ' ₽', 'gain');
+    line('На руки', fmt(T.net) + ' ₽', 'big');
+    if (T.advNet) {
+      line('Аванс за 1–15', fmt(T.advNet) + ' ₽');
+      line('Остаток к выплате', fmt(T.rest) + ' ₽');
+    }
+    if (T.sickSfr) {
+      line('Больничный от СФР', fmt(T.sickSfr) + ' ₽');
+    }
+    var wd = zpWeekdays(z.year, z.month);
+    var warn = fresh('zpNormWarn');
+    if (num(z.normDays) > wd) {
+      warn.appendChild(el('div', 'note alert', 'Указано ' + z.normDays +
+        ' рабочих дней, а будних в месяце ' + wd + '. Сверьтесь с производственным ' +
+        'календарём: праздники и переносы кнопка не знает.'));
+    } else {
+      warn.appendChild(el('div', 'note', 'Норму дней и часов проверьте по ' +
+        'производственному календарю: кнопка «Пн–Пт» считает будние дни без ' +
+        'учёта праздников.'));
+    }
+    $('zpOut').value = zpText(T);
+    thinkify();
+  }
+  (function () {
+    var sel = fresh('zpMonth');
+    ZP_MONTHS.forEach(function (m, i) { opt(sel, String(i), m); });
+    sel.value = String(state.zp.month);
+    $('zpMode').value = state.zp.mode || 'gross';
+    $('zpHolOver').checked = !!state.zp.holOver;
+    Object.keys(ZP_FIELDS).forEach(function (id) {
+      var key = ZP_FIELDS[id], n = $(id);
+      if (!n) return;
+      n.value = state.zp[key] === undefined || state.zp[key] === null
+        ? '' : state.zp[key];
+      n.addEventListener('input', function () {
+        state.zp[key] = this.value; save(); renderZp();
+      });
+    });
+  }());
+  $('zpMonth').addEventListener('change', function () {
+    state.zp.month = parseInt(this.value, 10) || 0; save(); renderZp();
+  });
+  $('zpMode').addEventListener('change', function () {
+    state.zp.mode = this.value; save(); renderZp();
+  });
+  $('zpHolOver').addEventListener('change', function () {
+    state.zp.holOver = this.checked; save(); renderZp();
+  });
+  $('zpFillNorm').addEventListener('click', function () {
+    var wd = zpWeekdays(state.zp.year, state.zp.month);
+    state.zp.normDays = wd; state.zp.normHours = wd * 8; state.zp.worked = wd;
+    $('zpNormDays').value = wd; $('zpNormHours').value = wd * 8; $('zpWorked').value = wd;
+    save(); renderZp();
+    toast('Норма по будням: ' + wd + ' дн., ' + wd * 8 + ' ч');
+  });
+  $('zpHalfAuto').addEventListener('click', function () {
+    var h = zpWeekdaysHalf(state.zp.year, state.zp.month);
+    state.zp.halfDays = h; $('zpHalfDays').value = h;
+    save(); renderZp();
+  });
+  $('zpVacCalc').addEventListener('click', function () {
+    var e = num(state.zp.vacEarn);
+    if (!e) { toast('Впишите заработок за 12 месяцев'); return; }
+    var v = Math.round(e / 12 / 29.3 * 100) / 100;
+    state.zp.vacDaily = v; $('zpVacDaily').value = v;
+    save(); renderZp();
+    toast('Средний дневной для отпуска: ' + v.toFixed(2) + ' ₽');
+  });
+  $('zpSickCalc').addEventListener('click', function () {
+    var e = num(state.zp.sickEarn);
+    if (!e) { toast('Впишите заработок за два года'); return; }
+    var v = Math.round(e / 730 * 100) / 100;
+    state.zp.sickDaily = v; $('zpSickDaily').value = v;
+    save(); renderZp();
+    toast('Средний дневной для больничного: ' + v.toFixed(2) + ' ₽');
+  });
+  $('zpPrint').addEventListener('click', function () {
+    var p = $('p-zp');
+    p.classList.add('printme');
+    try { window.print(); } finally {
+      setTimeout(function () { p.classList.remove('printme'); }, 300);
+    }
+  });
+  $('zpCopy').addEventListener('click', function () {
+    var ta = $('zpOut');
+    ta.select();
+    var ok = false;
+    try { ok = d.execCommand('copy'); } catch (e) { ok = false; }
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(ta.value).then(function () {
+        toast('Расчёт скопирован');
+      }, function () { toast('Скопируйте текст вручную — поле выделено'); });
+      return;
+    }
+    toast(ok ? 'Расчёт скопирован' : 'Скопируйте текст вручную — поле выделено');
+  });
+  $('zpReset').addEventListener('click', function () {
+    state.zp = zpDefaults();
+    Object.keys(ZP_FIELDS).forEach(function (id) {
+      var n = $(id);
+      if (n) n.value = state.zp[ZP_FIELDS[id]];
+    });
+    $('zpMonth').value = String(state.zp.month);
+    $('zpMode').value = state.zp.mode;
+    $('zpHolOver').checked = false;
+    save(); renderZp();
+    toast('Расчёт сброшен к значениям по умолчанию');
+  });
+  renderZp();
 
   // =====================================================================
   //                            СБОРКА КОМПЛЕКТА
