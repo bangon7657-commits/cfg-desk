@@ -974,7 +974,7 @@ win.document.getElementById('pickSort').value = 'asc';
 win.document.getElementById('pickSort').dispatchEvent(new win.Event('change'));
 check('выбор: сортировка по цене работает',
   doc.querySelectorAll('#pickList .pickrow').length === pickFound, '');
-doc.querySelector('#pickList .pickrow button').click();
+doc.querySelector('#pickList .pickrow button.btn').click();
 check('выбор: диалог закрылся, слот заполнен',
   !doc.getElementById('pickModal').classList.contains('open') &&
   doc.querySelectorAll('#buildSlots .slot.filled').length === 1, '');
@@ -992,7 +992,7 @@ check('сборка: пустой обязательный слот виден �
 doc.querySelector('#buildSlots .slot .btn[data-slot="stab"]').click();
 win.document.getElementById('pickSearch').value = 'АСН-5000/1-Ц';
 win.document.getElementById('pickSearch').dispatchEvent(new win.Event('input'));
-doc.querySelector('#pickList .pickrow button').click();
+doc.querySelector('#pickList .pickrow button.btn').click();
 check('совместимость: слабый стабилизатор отклонён',
   /не проходит/.test(textOf(doc, '#buildCheck')) &&
   /снимает гарантию/.test(textOf(doc, '#buildCheck')),
@@ -1005,7 +1005,7 @@ check('совместимость: заголовок проверки крас�
 doc.querySelector('#buildSlots .slot .btn[data-slot="stab"]').click();
 win.document.getElementById('pickSearch').value = 'АСН-30000/3-ЭМ';
 win.document.getElementById('pickSearch').dispatchEvent(new win.Event('input'));
-doc.querySelector('#pickList .pickrow button').click();
+doc.querySelector('#pickList .pickrow button.btn').click();
 check('совместимость: подходящий стабилизатор проходит',
   /Стабилизатор проходит по мощности/.test(textOf(doc, '#buildCheck')),
   textOf(doc, '#buildCheck').slice(0, 160));
@@ -1302,6 +1302,79 @@ check('навигация: остальные разделы живут в кн�
   doc.querySelectorAll('#menuList button[data-t]').length === 11 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
 
+// ---- v22: справка в смете, компактные фильтры, параметры в названии, миниатюра ----
+menuGo('smeta');
+check('смета: пояснения убраны в свёрнутую справку',
+  !!doc.getElementById('smetaHints') &&
+  !doc.getElementById('smetaHints').hasAttribute('open') &&
+  doc.querySelectorAll('#smetaHints .note').length === 2, '');
+check('диалог: поиск идёт выше фильтров конфигурации', (function () {
+  const box = doc.querySelector('#pickModal .modal-box');
+  const kids = [...box.children].map(x => x.id || x.className);
+  return kids.indexOf('modal-f') < kids.indexOf('pickCfg');
+}()), '');
+menuGo('build');
+doc.querySelector('#buildKinds button[data-kind="milling"]').click();
+doc.querySelector('#buildSlots button[data-slot="machine"]').click();
+check('диалог: фильтры компактные — узкие колонки и мелкие подписи',
+  /\.modal-cfg \.mc-row\{[^}]*minmax\(118px/.test(src) &&
+  /\.modal-cfg select\{[^}]*font-size:12\.5px/.test(src), '');
+const cfgSels2 = () => [...doc.querySelectorAll('#pickCfg select')];
+const motorSel2 = () => cfgSels2().filter(s2 => /Серводвигатели/.test(s2.textContent))[0];
+const tableSel2 = () => cfgSels2().filter(s2 => /СОЖ/.test(s2.textContent))[0];
+check('диалог: в двигателях есть серво и Yako с пометкой «по запросу»',
+  !!motorSel2() &&
+  /Серводвигатели \(по запросу\)/.test(motorSel2().textContent) &&
+  /Шаговые Yako \(по запросу\)/.test(motorSel2().textContent), '');
+check('диалог: в столах появился вариант с СОЖ',
+  !!tableSel2() && /С СОЖ — ванна охлаждения \(по запросу\)/.test(tableSel2().textContent), '');
+const reqRowsBefore = doc.querySelectorAll('#pickList .pickrow').length;
+motorSel2().value = 'Серводвигатели (по запросу)';
+motorSel2().dispatchEvent(new win.Event('change'));
+check('диалог: вариант по запросу не режет список и честно предупреждает',
+  doc.querySelectorAll('#pickList .pickrow').length === reqRowsBefore &&
+  /В прайсе этого нет/.test(textOf(doc, '#pickCfg .mc-req') || ''),
+  textOf(doc, '#pickCfg .mc-req'));
+doc.querySelector('#pickList .pickrow button.btn').click();
+check('конфигуратор: пометка «по запросу» ушла в наименование позиции',
+  /по запросу/.test(textOf(doc, '#buildSlots .slot.filled .slot-n b') || ''),
+  textOf(doc, '#buildSlots .slot.filled .slot-n b'));
+doc.querySelector('#buildSlots button[data-slot="machine"]').click();
+const segs2 = () => [...doc.querySelectorAll('#pickList .pickrow button.seg')];
+check('диалог: параметры в названии стали кнопками',
+  segs2().length > 0 &&
+  segs2().some(b => b.getAttribute('data-key') === 'kw') &&
+  segs2().some(b => b.getAttribute('data-key') === 'ctrl'),
+  segs2().slice(0, 4).map(b => b.getAttribute('data-key') + ':' + b.textContent).join(' | '));
+const kwSeg = segs2().filter(b => b.getAttribute('data-key') === 'kw')[0];
+kwSeg.click();
+const pop2 = doc.querySelector('.segpop');
+check('диалог: клик по параметру открывает список значений',
+  !!pop2 && pop2.querySelectorAll('button').length > 2, '');
+const other2 = [...pop2.querySelectorAll('button')]
+  .filter(b => /кВт/.test(b.textContent) && b.textContent !== kwSeg.textContent)[0];
+const segBefore = doc.querySelectorAll('#pickList .pickrow').length;
+other2.click();
+check('диалог: выбор другого шпинделя меняет отбор',
+  !doc.querySelector('.segpop') &&
+  doc.querySelectorAll('#pickList .pickrow').length !== segBefore &&
+  /Шпиндель/.test(textOf(doc, '#pickCfg .mc-f') || ''),
+  textOf(doc, '#pickCfg .mc-f'));
+doc.getElementById('pickClose').click();
+menuGo('letters');
+check('письма: справа живая миниатюра листа',
+  !!doc.getElementById('ltrMini') &&
+  doc.querySelectorAll('#ltrMiniIn .ltrpage').length === 1 &&
+  /масштаб \d+ %/.test(textOf(doc, '#ltrPageCnt') || ''),
+  textOf(doc, '#ltrPageCnt'));
+check('письма: миниатюра повторяет текст бланка', (function () {
+  const a = (textOf(doc, '#ltrMiniIn') || '').replace(/\s+/g, ' ').slice(0, 120);
+  const b = (textOf(doc, '#ltrPage') || '').replace(/\s+/g, ' ').slice(0, 120);
+  return a.length > 40 && a === b;
+}()), '');
+check('письма: у миниатюры есть кнопка на полный лист',
+  !!doc.getElementById('ltrMiniGo'), '');
+
 // ---- v21: шапка без таглайна, кнопка у края, плашка-клятва ----
 check('шапка: под названием только «внутренний инструмент компании»',
   /^внутренний инструмент компании$/i.test(
@@ -1313,19 +1386,20 @@ check('навигация: кнопка «Разделы» стала 18 px (−
   /\.menubtn\{[^}]*font-size:18px/.test(src) &&
   !/\.menubtn\{[^}]*font-size:20px/.test(src), '');
 const oath = doc.getElementById('oath');
-check('главная: плашка-клятва на месте, с лентой и следами',
-  !!oath && oath.querySelectorAll('.oath-band path').length === 4 &&
-  oath.querySelectorAll('.oath-steps ellipse').length === 10, '');
-check('главная: на плашке английская фраза из четырёх строк',
+check('главная: плашка-клятва — лист пергамента со следами',
+  !!oath && !!oath.querySelector('.oath-sheet') &&
+  !!oath.querySelector('.oath-edge') &&
+  oath.querySelectorAll('.oath-steps ellipse').length === 8, '');
+check('главная: на плашке русская клятва в четыре строки',
   [...oath.querySelectorAll('.oath-tx text')].map(t => t.textContent).join(' ') ===
-  'I SOLEMNLY SWEAR THAT I AM UP TO NO GOOD',
+  'Торжественно клянусь, что замышляю только шалость.',
   [...oath.querySelectorAll('.oath-tx text')].map(t => t.textContent).join(' '));
 check('главная: подсказка про шалость появляется при наведении',
   /Торжественно клянусь, что замышляю только шалость/.test(
     oath.querySelector('.oath-tip').textContent) &&
   /Торжественно клянусь/.test(oath.getAttribute('aria-label') || '') &&
   /\.oath:hover \.oath-tip[^{]*\{[^}]*visibility:visible/.test(src), '');
-check('главная: у плашки нет своего фона — берётся фон страницы',
+check('главная: вокруг плашки нет подложки, в печать не идёт',
   !/\.oath\{[^}]*background/.test(src) &&
   /@media print\{\.oath\{display:none\}\}/.test(src), '');
 
@@ -1343,7 +1417,7 @@ menuGo('build');
   });
 doc.querySelector('#buildKinds button[data-kind="milling"]').click();
 doc.querySelector('#buildSlots button[data-slot="machine"]').click();
-doc.querySelector('#pickList .pickrow button').click();
+doc.querySelector('#pickList .pickrow button.btn').click();
 const slotByText = re => [...doc.querySelectorAll('#buildSlots .slot')]
   .filter(s => re.test(s.textContent))[0];
 const pnrSlot = () => slotByText(/ПНР/);
@@ -1358,7 +1432,7 @@ check('конфигуратор: выбранный вид ПНР попал в 
   /46 000/.test(pnrSlot().querySelector('.slot-p').textContent),
   pnrSlot().querySelector('.slot-p').textContent);
 doc.querySelector('#buildSlots button[data-slot="vibro"]').click();
-doc.querySelector('#pickList .pickrow button').click();
+doc.querySelector('#pickList .pickrow button.btn').click();
 const vibSlot = () => slotByText(/Виброопор/);
 check('конфигуратор: у виброопор выбор количества 4/6/8/10',
   [...vibSlot().querySelectorAll('button[data-qty]')]
