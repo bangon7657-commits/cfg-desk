@@ -34,7 +34,7 @@
       <img class="brand-mark" src="data:image/png;base64,__MARK__" alt="LASERCUT"
            width="34" height="50">
       <span class="brand-tx">Лазеркат<b>КА</b>
-        <small>__APP_TAGLINE__ · внутренний инструмент</small></span>
+        <small>внутренний инструмент компании</small></span>
     </a>
     <div class="head-right">
       <button type="button" class="themebtn" id="themeBtn" aria-pressed="false"
@@ -74,6 +74,39 @@
     <p>Три инструмента: подобрать оборудование и выпустить ТКП, напечатать письмо
       или уведомление, посчитать зарплату. Всё считается в браузере, ничего
       не уходит на сервер.</p>
+    <!-- Плашка-шалость: лента со следами, при наведении подсказка. Фон
+         прозрачный, чернила и бумага берутся из переменных темы. -->
+    <div class="oath" id="oath" tabindex="0" role="img"
+      aria-label="Торжественно клянусь, что замышляю только шалость">
+      <svg viewBox="0 0 260 150" aria-hidden="true" focusable="false">
+        <g class="oath-steps">
+          <ellipse cx="24" cy="26" rx="4.4" ry="6.2" transform="rotate(-18 24 26)"/>
+          <ellipse cx="40" cy="46" rx="4.4" ry="6.2" transform="rotate(-12 40 46)"/>
+          <ellipse cx="30" cy="70" rx="4.2" ry="6" transform="rotate(-6 30 70)"/>
+          <ellipse cx="46" cy="92" rx="4.2" ry="6" transform="rotate(4 46 92)"/>
+          <ellipse cx="36" cy="116" rx="4" ry="5.8" transform="rotate(10 36 116)"/>
+          <ellipse cx="222" cy="30" rx="4.4" ry="6.2" transform="rotate(14 222 30)"/>
+          <ellipse cx="208" cy="52" rx="4.4" ry="6.2" transform="rotate(8 208 52)"/>
+          <ellipse cx="220" cy="76" rx="4.2" ry="6" transform="rotate(2 220 76)"/>
+          <ellipse cx="204" cy="98" rx="4.2" ry="6" transform="rotate(-6 204 98)"/>
+          <ellipse cx="216" cy="120" rx="4" ry="5.8" transform="rotate(-12 216 120)"/>
+        </g>
+        <path class="oath-curl" d="M86 20 C64 12 56 30 70 38 C80 44 92 38 92 28"/>
+        <g class="oath-band">
+          <path d="M74 30 h112 l-9 11 h-112 z"/>
+          <path d="M66 52 h120 l-9 11 h-120 z"/>
+          <path d="M74 74 h112 l-9 11 h-112 z"/>
+          <path d="M60 96 h126 l-9 11 h-126 z"/>
+        </g>
+        <g class="oath-tx">
+          <text x="130" y="39" text-anchor="middle">I SOLEMNLY</text>
+          <text x="126" y="61" text-anchor="middle">SWEAR THAT</text>
+          <text x="130" y="83" text-anchor="middle">I AM UP</text>
+          <text x="123" y="105" text-anchor="middle">TO NO GOOD</text>
+        </g>
+      </svg>
+      <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
+    </div>
   </div>
   <div class="tiles">
     <button class="tile" type="button" data-go="build">
