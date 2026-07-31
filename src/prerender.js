@@ -67,13 +67,13 @@ if (STAGE === 2) {
 if (STAGE !== 2) {
 
 check('ошибок JS нет', first.errors.length === 0, first.errors.join(' | '));
-check('в строке вкладок 4 частых раздела',
-  doc.querySelectorAll('#tabs button').length === 4,
+check('в строке вкладок 5 частых разделов',
+  doc.querySelectorAll('#tabs button').length === 5,
   'найдено ' + doc.querySelectorAll('#tabs button').length);
-check('панелей 7', doc.querySelectorAll('.panel').length === 7,
+check('панелей 8', doc.querySelectorAll('.panel').length === 8,
   'найдено ' + doc.querySelectorAll('.panel').length);
-check('в кнопке «Разделы» все 7 разделов',
-  doc.querySelectorAll('#menuList button').length === 7,
+check('в кнопке «Разделы» все 8 разделов',
+  doc.querySelectorAll('#menuList button').length === 8,
   'найдено ' + doc.querySelectorAll('#menuList button').length);
 check('меню закрыто при открытии',
   !doc.getElementById('menuList').classList.contains('open'), '');
@@ -916,6 +916,142 @@ check('спецификация: кнопка очистки опустошае�
   doc.querySelectorAll('#smetaBody tr').length === 0 &&
   doc.getElementById('specEmpty').style.display === '', '');
 
+// ---- сборка комплекта по слотам (модель конфигуратора Regard) ----
+win.document.querySelector('#tabs button[data-t="build"]').click();
+check('сборка: панель открывается вкладкой',
+  doc.getElementById('p-build').classList.contains('active'), '');
+const kinds = doc.querySelectorAll('#buildKinds button');
+check('сборка: четыре типа комплекта', kinds.length === 4, 'типов ' + kinds.length);
+check('сборка: активный тип отмечен',
+  !!doc.querySelector('#buildKinds button.on'), '');
+const slots0 = doc.querySelectorAll('#buildSlots .slot');
+check('сборка: у волокна семь слотов', slots0.length === 7, 'слотов ' + slots0.length);
+check('сборка: обязательные слоты помечены звёздочкой',
+  doc.querySelectorAll('#buildSlots .slot.req .star').length >= 2,
+  'помечено ' + doc.querySelectorAll('#buildSlots .slot.req .star').length);
+check('сборка: в пустом слоте видно число позиций',
+  /\d+ позици/.test(textOf(doc, '#buildSlots')), textOf(doc, '#buildSlots').slice(0, 90));
+check('сборка: полоса заполнения построена',
+  doc.querySelectorAll('#buildFill .chip').length === 7 &&
+  /0 из 7/.test(textOf(doc, '#buildFillCnt')), textOf(doc, '#buildFillCnt'));
+check('сборка: без станка проверка ругается',
+  /Станок не выбран/.test(textOf(doc, '#buildCheck')),
+  textOf(doc, '#buildCheck').slice(0, 90));
+
+// выбор позиции в слот через диалог
+doc.querySelector('#buildSlots .slot .btn[data-slot="machine"]').click();
+check('выбор: диалог открылся и наполнен',
+  doc.getElementById('pickModal').classList.contains('open') &&
+  doc.querySelectorAll('#pickList .pickrow').length > 10,
+  'строк ' + doc.querySelectorAll('#pickList .pickrow').length);
+const pickAll = doc.querySelectorAll('#pickList .pickrow').length;
+win.document.getElementById('pickSearch').value = '1530 6000';
+win.document.getElementById('pickSearch').dispatchEvent(new win.Event('input'));
+const pickFound = doc.querySelectorAll('#pickList .pickrow').length;
+check('выбор: поиск сужает список', pickFound > 0 && pickFound < pickAll,
+  'было ' + pickAll + ', стало ' + pickFound);
+win.document.getElementById('pickSort').value = 'asc';
+win.document.getElementById('pickSort').dispatchEvent(new win.Event('change'));
+check('выбор: сортировка по цене работает',
+  doc.querySelectorAll('#pickList .pickrow').length === pickFound, '');
+doc.querySelector('#pickList .pickrow button').click();
+check('выбор: диалог закрылся, слот заполнен',
+  !doc.getElementById('pickModal').classList.contains('open') &&
+  doc.querySelectorAll('#buildSlots .slot.filled').length === 1, '');
+check('сборка: станок попал в итог справа',
+  /Лазерный станок по металлу/.test(textOf(doc, '#buildBody')),
+  textOf(doc, '#buildBody').slice(0, 100));
+check('сборка: итог и НДС посчитаны',
+  /Итого/.test(textOf(doc, '#buildTotals')) && /НДС/.test(textOf(doc, '#buildTotals')),
+  textOf(doc, '#buildTotals'));
+check('сборка: пустой обязательный слот виден в проверке',
+  /Обязательный слот «Стабилизатор напряжения» пуст/.test(textOf(doc, '#buildCheck')),
+  textOf(doc, '#buildCheck').slice(0, 140));
+
+// маломощный стабилизатор должен не пройти по карте готовности
+doc.querySelector('#buildSlots .slot .btn[data-slot="stab"]').click();
+win.document.getElementById('pickSearch').value = 'АСН-5000/1-Ц';
+win.document.getElementById('pickSearch').dispatchEvent(new win.Event('input'));
+doc.querySelector('#pickList .pickrow button').click();
+check('совместимость: слабый стабилизатор отклонён',
+  /не проходит/.test(textOf(doc, '#buildCheck')) &&
+  /снимает гарантию/.test(textOf(doc, '#buildCheck')),
+  textOf(doc, '#buildCheck').slice(0, 200));
+check('совместимость: однофазный стабилизатор к станку 380 В — ошибка',
+  /стабилизатор однофазный/.test(textOf(doc, '#buildCheck')), '');
+check('совместимость: заголовок проверки красный при ошибках',
+  !!doc.querySelector('#buildCheck .chk-h.bad'), '');
+// подходящий стабилизатор
+doc.querySelector('#buildSlots .slot .btn[data-slot="stab"]').click();
+win.document.getElementById('pickSearch').value = 'АСН-30000/3-ЭМ';
+win.document.getElementById('pickSearch').dispatchEvent(new win.Event('input'));
+doc.querySelector('#pickList .pickrow button').click();
+check('совместимость: подходящий стабилизатор проходит',
+  /Стабилизатор проходит по мощности/.test(textOf(doc, '#buildCheck')),
+  textOf(doc, '#buildCheck').slice(0, 160));
+
+// типовой комплект и перенос в смету
+const tplBefore = doc.querySelectorAll('#buildSlots .slot.filled').length;
+doc.querySelector('#buildTemplates .tplrow button').click();
+check('типовые: комплект подставился в слоты',
+  doc.querySelectorAll('#buildSlots .slot.filled').length >= tplBefore + 2,
+  'заполнено ' + doc.querySelectorAll('#buildSlots .slot.filled').length);
+check('типовые: у комплекта показана сумма',
+  /₽/.test(textOf(doc, '#buildTemplates')), textOf(doc, '#buildTemplates').slice(0, 90));
+check('сборка: текст для копирования собран',
+  /Итого:/.test(doc.getElementById('buildOut').value) &&
+  /Комплект:/.test(doc.getElementById('buildOut').value),
+  doc.getElementById('buildOut').value.slice(0, 80));
+
+// сохранение сборки
+win.document.getElementById('buildName').value = 'Тестовая сборка';
+win.document.getElementById('buildSave').click();
+check('сохранение: сборка появилась в списке',
+  /Тестовая сборка/.test(textOf(doc, '#buildSaved')), textOf(doc, '#buildSaved').slice(0, 120));
+check('сохранение: поле названия очищено',
+  doc.getElementById('buildName').value === '', '');
+
+const smetaBefore = doc.querySelectorAll('#smetaBody tr').length;
+win.document.getElementById('buildToSmeta').click();
+check('сборка: перенос в смету добавил позиции',
+  doc.querySelectorAll('#smetaBody tr').length > smetaBefore,
+  'было ' + smetaBefore + ', стало ' + doc.querySelectorAll('#smetaBody tr').length);
+check('сборка: сходимость сметы не нарушена',
+  !/Сходимость нарушена/.test(textOf(doc, '#checkBlock')),
+  textOf(doc, '#checkBlock').slice(0, 120));
+
+// только обязательные слоты
+win.document.getElementById('buildReqOnly').checked = true;
+win.document.getElementById('buildReqOnly').dispatchEvent(new win.Event('change'));
+check('сборка: тумблер скрывает пустые необязательные слоты',
+  doc.querySelectorAll('#buildSlots .slot').length <= 7, '');
+win.document.getElementById('buildReqOnly').checked = false;
+win.document.getElementById('buildReqOnly').dispatchEvent(new win.Event('change'));
+
+// смена типа комплекта — свои слоты
+doc.querySelector('#buildKinds button[data-kind="milling"]').click();
+check('сборка: у фрезерного девять слотов',
+  doc.querySelectorAll('#buildSlots .slot').length === 9,
+  'слотов ' + doc.querySelectorAll('#buildSlots .slot').length);
+check('сборка: слоты фрезерного другие',
+  /Чиллер/.test(textOf(doc, '#buildSlots')) && /Аспирация/.test(textOf(doc, '#buildSlots')), '');
+doc.querySelector('#buildKinds button[data-kind="co2"]').click();
+check('сборка: у CO₂ чиллер обязателен',
+  /Чиллер \*/.test(textOf(doc, '#buildSlots').replace(/\s+/g, ' ')),
+  textOf(doc, '#buildSlots').slice(0, 160));
+doc.querySelector('#buildKinds button[data-kind="marker"]').click();
+check('сборка: у маркиратора есть поворотная ось',
+  /Поворотное устройство/.test(textOf(doc, '#buildSlots')), '');
+doc.querySelector('#buildKinds button[data-kind="fiber"]').click();
+win.document.getElementById('buildReset').click();
+check('сборка: сброс очищает слоты',
+  doc.querySelectorAll('#buildSlots .slot.filled').length === 0, '');
+check('сборка: в ней нет корзины, оплаты и консультаций',
+  !/В корзину|Купить|консультаци|Перезвоните|Доставка и оплата/i
+    .test(doc.getElementById('p-build').textContent),
+  (doc.getElementById('p-build').textContent
+    .match(/В корзину|Купить|консультаци|Перезвоните/i) || [''])[0]);
+
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
 // Всё, что натворили проверки, должно быть убрано: файл обязан открываться
 // чистым. Забытый след один раз уже уезжал в выпуск — теперь список полный,
@@ -943,14 +1079,21 @@ if (toastNode) {
 doc.getElementById('saveDot').textContent = '';
 // поля шапки ТКП, заполненные проверками
 ['kpClient', 'kpInn', 'kpNum', 'kpContact', 'kpPhone', 'kpNote', 'kpDate', 'kpTitle',
-  'mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail', 'freeName', 'freePrice', 'specOut']
+  'mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail', 'freeName', 'freePrice', 'specOut',
+  'buildName', 'buildOut', 'pickSearch']
   .forEach(id => { const n = doc.getElementById(id); if (n) n.value = ''; });
 // правая спецификация: в выпуске смета пуста, значит и она пустая
-['specBody', 'specTotals'].forEach(id => {
+['specBody', 'specTotals', 'buildBody', 'buildTotals', 'buildCheck', 'pickList',
+  'buildSaved'].forEach(id => {
   const n = doc.getElementById(id); if (n) n.innerHTML = '';
 });
 const specCntNode = doc.getElementById('specCnt');
 if (specCntNode) specCntNode.textContent = '';
+['specCnt', 'buildCnt', 'buildFillCnt', 'pickCnt'].forEach(id => {
+  const n = doc.getElementById(id); if (n) n.textContent = '';
+});
+const pickModalNode = doc.getElementById('pickModal');
+if (pickModalNode) pickModalNode.className = 'modal';
 doc.querySelectorAll('#supBox input').forEach(n => { n.value = ''; });
 const supBoxNode = doc.getElementById('supBox');
 if (supBoxNode) supBoxNode.removeAttribute('open');
@@ -1019,7 +1162,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 7,
+  doc2.querySelectorAll('.nojs-title').length === 8,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('2 867 000') >= 0);
 check('пререндер: смета пуста при открытии',
