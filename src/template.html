@@ -81,6 +81,9 @@
     приложение подводит к обвязке → добавили нужное → полоса внизу ведёт в смету.
     Справа в каждом шаге — «мысли»: техничка, предупреждения и что уточнить.</p>
 
+<div class="cfggrid">
+<div class="cfgmain">
+
   <div class="step">
     <div class="step-h"><div class="step-n">1</div>
       <div class="step-t">Менеджер сделки<small>подставляется в подпись ТКП и в файл Word</small></div></div>
@@ -106,7 +109,8 @@
     <div class="step-h"><div class="step-n">2</div>
       <div class="step-t">Категория оборудования<small>дальше поля меняются под выбранную категорию</small></div></div>
     <div class="step-b">
-      <select id="cat">
+      <div class="pills" id="catPills" role="tablist" aria-label="Категория оборудования"></div>
+      <select id="cat" aria-label="Категория оборудования">
         <option value="fiber">Волоконный станок по металлу</option>
         <option value="milling">Фрезерный станок с ЧПУ</option>
         <option value="co2">Лазерный CO₂ станок</option>
@@ -150,6 +154,7 @@
         <div class="step-t">Цена и что входит<small>НДС включён, подготовка цеха — сверху</small></div></div>
       <div class="step-b">
         <div id="fOut"></div>
+        <div class="matches" id="fMatches"></div>
         <div class="btns noprint"><button class="btn" id="fAdd">Добавить в смету</button></div>
         <div class="note">В цену волоконного станка входят контроллер FSCUT, лазерная голова BLT
           и чиллер CWFL, подобранные под мощность источника. __FIBER_A_NOTE__</div>
@@ -299,6 +304,7 @@
         <div class="step-t">Цена<small>две цены рядом: под заказ и из наличия</small></div></div>
       <div class="step-b">
         <div id="mOut"></div>
+        <div class="matches" id="mMatches"></div>
         <div class="btns noprint"><button class="btn" id="mAdd">Добавить в смету</button></div>
       </div>
     </div>
@@ -332,6 +338,22 @@
         <div class="note"><b>Общие условия:</b><ul>__PNR_TERMS__</ul></div>
       </div>
     </div>
+
+    <div class="step">
+      <div class="step-h"><div class="step-n">7</div>
+        <div class="step-t">Аспирация BELMASH<small>полный ряд с характеристиками · розница ×1,2</small></div></div>
+      <div class="step-b">
+        <div class="row">
+          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="aspModel"></select></div>
+          <div><label class="f">Питание</label><select id="aspVolt"></select></div>
+        </div>
+        <div class="specbox" id="aspSpec"></div>
+        <div class="btns noprint"><button class="btn sec" type="button" id="aspAdd">Добавить в смету</button></div>
+        <div class="note">Цены BELMASH — розница производителя, умноженная на 1,2:
+          так считает присланный конфигуратор. В прайсе LASERCUT есть только DC850,
+          DC2500 и DC3900 — их цены лежат в опциях выше и имеют приоритет.</div>
+      </div>
+    </div>
   </div>
 
   <!-- CO₂ -->
@@ -347,6 +369,7 @@
           <div style="flex:2 1 320px"><label class="f">Модель</label><select id="cModel"></select></div>
         </div>
         <div id="cOut"></div>
+        <div class="matches" id="cMatches"></div>
         <div class="btns noprint"><button class="btn" id="cAdd">Добавить в смету</button>
           <button class="btn sec" type="button" id="cNext">Дальше: чиллер</button></div>
         <div class="note">__CO2_NOTE__</div>
@@ -374,7 +397,14 @@
         <div class="step-t">Стабилизатор напряжения<small>условие гарантии, а не опция</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="cStab"></select></div>
+          <div><label class="f">Бренд</label><select id="cStabBrand"></select></div>
+          <div style="flex:2 1 320px"><label class="f">Модель из полного ряда</label>
+            <select id="cStabFull"></select></div>
+        </div>
+        <div class="specbox" id="cStabSpec"></div>
+        <div class="btns noprint"><button class="btn sec" type="button" id="cStabFullAdd">Добавить выбранную модель</button></div>
+        <div class="row">
+          <div style="flex:2 1 320px"><label class="f">Или модель из прайса опций</label><select id="cStab"></select></div>
         </div>
         <div class="think-box" id="cStabOut"></div>
         <div class="btns noprint"><button class="btn sec" id="cStabAdd">Добавить в смету</button></div>
@@ -412,6 +442,7 @@
             <option value="stock">Из наличия — склад</option></select></div>
         </div>
         <div id="kOut"></div>
+        <div class="matches" id="kMatches"></div>
         <div class="btns noprint"><button class="btn" id="kAdd">Добавить в смету</button>
           <button class="btn sec" type="button" id="kNext">Дальше: поворотная ось</button></div>
         <div class="note">__MARKER_NOTE__</div>
@@ -458,6 +489,51 @@
       </div>
     </div>
   </div>
+
+  <div class="step">
+    <div class="step-h"><div class="step-n">+</div>
+      <div class="step-t">Своя позиция<small>всё, чего нет в прайсе: доставка, оснастка, ЗИП, монтаж</small></div></div>
+    <div class="step-b">
+      <div class="row">
+        <div style="flex:2 1 320px"><label class="f">Наименование</label>
+          <input type="text" id="freeName" placeholder="Доставка до Екатеринбурга"></div>
+        <div><label class="f">Цена, ₽</label>
+          <input type="text" id="freePrice" inputmode="decimal" placeholder="0"></div>
+        <div><label class="f">Тип строки</label><select id="freeType">
+          <option value="eq">Оборудование</option>
+          <option value="opt">Опция</option>
+          <option value="srv">Услуга</option></select></div>
+      </div>
+      <div class="btns noprint"><button class="btn sec" type="button" id="freeAdd">Добавить в смету</button></div>
+      <div class="note">Строка попадёт в смету и в ТКП как обычная позиция.
+        Ноль в цене допустим: это способ показать «уточняется».</div>
+    </div>
+  </div>
+
+</div><!-- /cfgmain -->
+
+<aside class="cfgside">
+  <div class="card spec-card">
+    <div class="cardhead">
+      <h2>Спецификация</h2>
+      <span class="spec-cnt" id="specCnt"></span>
+    </div>
+    <div id="specEmpty" class="empty small">Пока пусто. Выберите станок и нажмите
+      «Добавить в смету» — позиции появятся здесь.</div>
+    <table class="spec" id="specTable"><tbody id="specBody"></tbody></table>
+    <div class="spec-tot" id="specTotals"></div>
+    <div class="btns noprint">
+      <button class="btn mini" type="button" id="specGo">Открыть смету и ТКП</button>
+      <button class="btn mini sec" type="button" id="specCopy">Скопировать текстом</button>
+      <button class="btn mini sec" type="button" id="specClear">Очистить</button>
+    </div>
+    <textarea id="specOut" class="specout" readonly aria-label="спецификация текстом"></textarea>
+    <div class="note small">Цены: волокно — прайс от __DATE_FIBER__, фрезерные — __DATE_MILLING__,
+      опции и ПНР — __DATE_OPTIONS__, CO₂ — __CO2_DATE_3__, маркираторы — прайс __MARKER_DATE_3__.
+      НДС включён. Любую цену можно перебить вручную в смете.</div>
+  </div>
+</aside>
+</div><!-- /cfggrid -->
 
   <h2>Справочно: полные прайсы</h2>
   <p class="muted">Свёрнуты, чтобы не мешать работе. Разворачивайте, когда нужно посмотреть весь ряд.</p>
