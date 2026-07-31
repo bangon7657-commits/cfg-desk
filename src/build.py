@@ -687,6 +687,7 @@ repl = {
     '__DELIVERY_ORDER__': esc(data.DELIVERY_ORDER_LABEL),
     '__DELIVERY_ORDER_FULL__': esc(data.DELIVERY_TERMS['order']),
     '__DELIVERY_STOCK_FULL__': esc(data.DELIVERY_TERMS['stock']),
+    '__DELIVERY_STOCK__': esc(data.DELIVERY_STOCK_LABEL),
     '__CONFLICTS__': CONFLICTS_HTML,
     '__MISSING__': MISSING_HTML,
     '__SERIES_TABLE__': SERIES_TABLE,
