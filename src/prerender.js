@@ -72,8 +72,8 @@ check('ошибок JS нет', first.errors.length === 0, first.errors.join(' |
 check('в строке вкладок четыре закреплённых раздела',
   doc.querySelectorAll('#tabs button[data-t]').length === 4,
   'найдено ' + doc.querySelectorAll('#tabs button[data-t]').length);
-check('вкладки по умолчанию: главная, конфигуратор, смета, письма',
-  ['home', 'build', 'smeta', 'letters'].join(',') ===
+check('вкладки по умолчанию идут в порядке меню',
+  ['home', 'build', 'letters', 'smeta'].join(',') ===
   [...doc.querySelectorAll('#tabs button[data-t]')]
     .map(b => b.getAttribute('data-t')).join(','),
   [...doc.querySelectorAll('#tabs button[data-t]')]
@@ -91,7 +91,7 @@ check('в меню у каждого раздела кнопка закрепл�
     .filter(b => b.getAttribute('aria-pressed') === 'true').length === 4, '');
 check('в меню есть счётчик и сброс вкладок',
   !!doc.getElementById('pinsInfo') &&
-  /Закреплено 4 из 4/.test(doc.getElementById('pinsInfo').textContent), '');
+  /Закреплено 4 из 6/.test(doc.getElementById('pinsInfo').textContent), '');
 check('меню закрыто при открытии',
   !doc.getElementById('menuList').classList.contains('open'), '');
 check('навигация: вкладки скруглённые и полупрозрачные',
@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 30', /const CACHE = 'cfg-v30'/.test(swTxt),
+check('кеш: версия поднята до 31', /const CACHE = 'cfg-v31'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1879,23 +1879,55 @@ doc.querySelector('#buildKinds button[data-kind="fiber"]').click();
 const pinBtn = id => doc.querySelector('#menuList button[data-pin="' + id + '"]');
 const tabIds = () => [...doc.querySelectorAll('#tabs button[data-t]')]
   .map(b => b.getAttribute('data-t')).join(',');
+// закрепляем пятую и шестую: лимит поднят до шести
 pinBtn('guide').click();
-check('вкладки: пятую закрепить нельзя, приложение предупреждает',
-  tabIds() === 'home,build,smeta,letters' &&
-  /Уже 4 вкладки/.test(textOf(doc, '#toastText') || ''),
+pinBtn('calc').click();
+check('вкладки: закрепляются шесть штук',
+  tabIds() === 'home,build,letters,smeta,calc,guide' &&
+  /Закреплено 6 из 6/.test(doc.getElementById('pinsInfo').textContent), tabIds());
+pinBtn('zp').click();
+check('вкладки: седьмую закрепить нельзя, приложение предупреждает',
+  tabIds() === 'home,build,letters,smeta,calc,guide' &&
+  /Уже 6 вкладок/.test(textOf(doc, '#toastText') || ''),
   tabIds() + ' | ' + textOf(doc, '#toastText'));
 doc.querySelector('#tabs button[data-t="letters"] .tabx').click();
-check('вкладки: крестик снимает вкладку', tabIds() === 'home,build,smeta', tabIds());
-pinBtn('guide').click();
-check('вкладки: звёздочка в меню закрепляет раздел',
-  tabIds() === 'home,build,smeta,guide' &&
-  pinBtn('guide').getAttribute('aria-pressed') === 'true', tabIds());
+check('вкладки: крестик снимает вкладку',
+  tabIds() === 'home,build,smeta,calc,guide', tabIds());
+pinBtn('letters').click();
+check('вкладки: звёздочка в меню закрепляет раздел, порядок из меню',
+  tabIds() === 'home,build,letters,smeta,calc,guide' &&
+  pinBtn('letters').getAttribute('aria-pressed') === 'true', tabIds());
 check('вкладки: у незакреплённого раздела звёздочка пустая',
-  pinBtn('letters').getAttribute('aria-pressed') === 'false', '');
+  pinBtn('zp').getAttribute('aria-pressed') === 'false', '');
+// перенос строк меню: «Зарплата» уезжает наверх, порядок сохраняется
+(function () {
+  const rowIds = () => [...doc.querySelectorAll('#menuList .mrow')]
+    .map(r => r.getAttribute('data-row')).join(',');
+  check('меню: строки можно тащить — есть ручка и draggable',
+    doc.querySelectorAll('#menuList .mrow[draggable="true"]').length === 8 &&
+    doc.querySelectorAll('#menuList .mrow .mgrip').length === 8,
+    rowIds());
+  const before = rowIds();
+  const src = doc.querySelector('#menuList .mrow[data-row="zp"]');
+  const dst = doc.querySelector('#menuList .mrow[data-row="home"]');
+  const dt = { data: {}, setData(k, v) { this.data[k] = v; },
+    getData(k) { return this.data[k]; } };
+  const ev = n => { const e = new win.Event(n, { bubbles: true }); e.dataTransfer = dt; return e; };
+  src.dispatchEvent(ev('dragstart'));
+  dst.dispatchEvent(ev('dragover'));
+  dst.dispatchEvent(ev('drop'));
+  check('меню: перетащенный раздел встаёт на новое место',
+    rowIds() === 'zp,home,build,letters,cfg,smeta,calc,guide',
+    before + ' → ' + rowIds());
+  check('меню: новый порядок подхватила и строка вкладок',
+    tabIds() === 'home,build,letters,smeta,calc,guide', tabIds());
+}());
 doc.getElementById('menuList').querySelector('.mfoot button').click();
-check('вкладки: «Вернуть по умолчанию» возвращает четыре исходных',
-  tabIds() === 'home,build,smeta,letters' &&
-  /Закреплено 4 из 4/.test(doc.getElementById('pinsInfo').textContent), tabIds());
+check('вкладки: «Вернуть по умолчанию» возвращает исходные вкладки и порядок',
+  tabIds() === 'home,build,letters,smeta' &&
+  [...doc.querySelectorAll('#menuList .mrow')].map(r => r.getAttribute('data-row'))
+    .join(',') === 'home,build,letters,zp,cfg,smeta,calc,guide' &&
+  /Закреплено 4 из 6/.test(doc.getElementById('pinsInfo').textContent), tabIds());
 check('вкладки: значок сметы жив после перерисовки строки',
   !!doc.getElementById('smetaBadge'), '');
 

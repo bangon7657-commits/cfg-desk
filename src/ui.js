@@ -59,6 +59,8 @@
     supId: '', sups: {}, theme: 'dark',
     // какая часть справочника открыта: подбор по задаче, техника или газ
     guidePart: 'match',
+    // свой порядок разделов в меню: строки можно перетаскивать
+    secOrder: [],
     // калькуляторы: какая часть открыта и что введено в поля
     calcPart: 'nds',
     calc: { nds: {}, lease: {}, cost: {}, roi: {} },
@@ -148,6 +150,7 @@
       if (MERGED.indexOf(state.guidePart) < 0) state.guidePart = 'match';
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
+  if (!Array.isArray(state.secOrder)) state.secOrder = [];
   if (!state.calc || typeof state.calc !== 'object') {
     state.calc = { nds: {}, lease: {}, cost: {}, roi: {} };
   }
@@ -202,9 +205,40 @@
   function guidePartIds() {
     return GUIDE_PARTS.map(function (g) { return g.id; });
   }
-  var PINS_MAX = 4;
+  var PINS_MAX = 6;
   var PINS_DEF = ['home', 'build', 'smeta', 'letters'];
   var curTab = 'cfg';
+  // Порядок разделов в меню менеджер задаёт сам: строку можно взять и
+  // перетащить выше или ниже. Список храним в черновике, чужие и повторные
+  // имена отбрасываем, забытые разделы дописываем в конец.
+  function secOrder() {
+    var ids = SECTIONS.map(function (s) { return s.id; });
+    var out = [];
+    (Array.isArray(state.secOrder) ? state.secOrder : []).forEach(function (id) {
+      if (ids.indexOf(id) >= 0 && out.indexOf(id) < 0) out.push(id);
+    });
+    ids.forEach(function (id) { if (out.indexOf(id) < 0) out.push(id); });
+    return out;
+  }
+  function secById(id) {
+    var found = null;
+    SECTIONS.forEach(function (s) { if (s.id === id) found = s; });
+    return found;
+  }
+  // перенос строки: id встаёт на место toIndex, остальные сдвигаются
+  function moveSec(id, toIndex) {
+    var order = secOrder();
+    var from = order.indexOf(id);
+    if (from < 0) return;
+    if (toIndex < 0) toIndex = 0;
+    if (toIndex > order.length - 1) toIndex = order.length - 1;
+    if (from === toIndex) return;
+    order.splice(from, 1);
+    order.splice(toIndex, 0, id);
+    state.secOrder = order;
+    save();
+    renderMenu();
+  }
   function secTitle(id) {
     var t = id;
     SECTIONS.forEach(function (s) { if (s.id === id) t = s.title; });
@@ -216,6 +250,10 @@
     (Array.isArray(state.pins) ? state.pins : PINS_DEF).forEach(function (id) {
       if (ids.indexOf(id) >= 0 && out.indexOf(id) < 0 && out.length < PINS_MAX) out.push(id);
     });
+    // строка вкладок держит тот же порядок, что меню: перетащили в меню —
+    // переехало и во вкладках, иначе два разных порядка путают
+    var order = secOrder();
+    out.sort(function (x, y) { return order.indexOf(x) - order.indexOf(y); });
     return out;
   }
   function tabBtns() { return $('tabs').querySelectorAll('button[data-t]'); }
@@ -272,7 +310,8 @@
     var p = pins();
     if (p.indexOf(id) >= 0) { unpin(id); return; }
     if (p.length >= PINS_MAX) {
-      toast('Уже ' + PINS_MAX + ' вкладки — сначала уберите лишнюю');
+      toast('Уже ' + cnt(PINS_MAX, ['вкладка', 'вкладки', 'вкладок']) +
+        ' — сначала уберите лишнюю');
       return;
     }
     setPins(p.concat([id]));
@@ -291,33 +330,80 @@
     if (f) f.textContent = 'Закреплено ' + p.length + ' из ' + PINS_MAX;
   }
 
-  var menuList = fresh('menuList');
-  SECTIONS.forEach(function (s) {
-    var row = d.createElement('div');
-    row.className = 'mrow';
-    var b = d.createElement('button');
-    b.type = 'button';
-    b.setAttribute('data-t', s.id);
-    b.setAttribute('role', 'menuitem');
-    b.innerHTML = '<span>' + esc(s.title) + '</span><small>' + esc(s.hint) + '</small>';
-    b.addEventListener('click', function () {
-      showTab(s.id);
-      closeMenu();
+  // Строки меню перерисовываются целиком: так проще держать порядок,
+  // который менеджер задал перетаскиванием.
+  var dragId = null;
+  function renderMenu() {
+    var menuList = fresh('menuList');
+    secOrder().forEach(function (id) {
+      var s = secById(id);
+      if (!s) return;
+      var row = d.createElement('div');
+      row.className = 'mrow';
+      row.setAttribute('draggable', 'true');
+      row.setAttribute('data-row', s.id);
+      var grip = d.createElement('span');
+      grip.className = 'mgrip';
+      grip.setAttribute('aria-hidden', 'true');
+      grip.textContent = '⠿';
+      grip.title = 'Перетащите, чтобы поменять порядок';
+      var b = d.createElement('button');
+      b.type = 'button';
+      b.setAttribute('data-t', s.id);
+      b.setAttribute('role', 'menuitem');
+      b.innerHTML = '<span>' + esc(s.title) + '</span><small>' +
+        esc(s.hint) + '</small>';
+      b.addEventListener('click', function () {
+        showTab(s.id);
+        closeMenu();
+      });
+      var pb = d.createElement('button');
+      pb.type = 'button';
+      pb.className = 'pinbtn';
+      pb.setAttribute('data-pin', s.id);
+      pb.setAttribute('aria-pressed', 'false');
+      pb.textContent = '☆';
+      pb.addEventListener('click', function (e) {
+        e.stopPropagation();
+        pinToggle(s.id);
+      });
+      // перетаскивание мышью: строка следует за курсором, место видно рамкой
+      row.addEventListener('dragstart', function (e) {
+        dragId = s.id;
+        row.classList.add('drag');
+        try { e.dataTransfer.setData('text/plain', s.id); } catch (err) { /* Safari */ }
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', function () {
+        dragId = null;
+        row.classList.remove('drag');
+        var all = $('menuList').querySelectorAll('.mrow');
+        for (var k = 0; k < all.length; k++) all[k].classList.remove('over');
+      });
+      row.addEventListener('dragover', function (e) {
+        if (!dragId || dragId === s.id) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        row.classList.add('over');
+      });
+      row.addEventListener('dragleave', function () { row.classList.remove('over'); });
+      row.addEventListener('drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        row.classList.remove('over');
+        var moved = dragId;
+        if (!moved || moved === s.id) return;
+        moveSec(moved, secOrder().indexOf(s.id));
+      });
+      row.appendChild(grip);
+      row.appendChild(b);
+      row.appendChild(pb);
+      menuList.appendChild(row);
     });
-    var pb = d.createElement('button');
-    pb.type = 'button';
-    pb.className = 'pinbtn';
-    pb.setAttribute('data-pin', s.id);
-    pb.setAttribute('aria-pressed', 'false');
-    pb.textContent = '☆';
-    pb.addEventListener('click', function (e) {
-      e.stopPropagation();
-      pinToggle(s.id);
-    });
-    row.appendChild(b);
-    row.appendChild(pb);
-    menuList.appendChild(row);
-  });
+    menuList.appendChild(mfoot);
+    markTab(curTab);
+    renderMenuPins();
+  }
   var mfoot = d.createElement('div');
   mfoot.className = 'mfoot';
   mfoot.innerHTML = '<span id="pinsInfo"></span>';
@@ -327,10 +413,13 @@
   reset.addEventListener('click', function (e) {
     e.stopPropagation();
     setPins(PINS_DEF.slice());
-    toast('Вкладки: ' + PINS_DEF.map(secTitle).join(', '));
+    state.secOrder = SECTIONS.map(function (x) { return x.id; });
+    save();
+    renderMenu();
+    toast('Вкладки и порядок разделов вернулись к исходным');
   });
   mfoot.appendChild(reset);
-  menuList.appendChild(mfoot);
+  renderMenu();
 
   window.addEventListener('hashchange', function () {
     var h = (location.hash || '').replace('#', '');

@@ -126,8 +126,15 @@ body.js nav{display:block}
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   box-shadow:0 12px 32px var(--shadow)}
 .menulist.open{display:block}
-/* строка меню: слева переход в раздел, справа кнопка-закрепление во вкладки */
+/* строка меню: слева ручка переноса, посередине переход в раздел,
+   справа кнопка-закрепление во вкладки. Строку можно перетащить выше
+   или ниже — порядок запоминается. */
 .menulist .mrow{display:flex;align-items:stretch;gap:2px;border-radius:9px}
+.menulist .mgrip{flex:0 0 auto;display:flex;align-items:center;padding:0 6px 0 4px;
+  color:var(--muted);font-size:15px;line-height:1;cursor:grab;user-select:none}
+.menulist .mrow:hover .mgrip{color:var(--or2)}
+.menulist .mrow.drag{opacity:.45;cursor:grabbing}
+.menulist .mrow.over{box-shadow:inset 0 2px 0 var(--or);background:var(--bg3)}
 .menulist .mrow:hover{background:var(--bg3)}
 .menulist .mrow>button[data-t]{display:block;flex:1 1 auto;font:inherit;
   font-size:13.5px;text-align:left;padding:7px 11px;border:0;border-radius:9px;

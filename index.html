@@ -137,8 +137,15 @@ body.js nav{display:block}
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   box-shadow:0 12px 32px var(--shadow)}
 .menulist.open{display:block}
-/* строка меню: слева переход в раздел, справа кнопка-закрепление во вкладки */
+/* строка меню: слева ручка переноса, посередине переход в раздел,
+   справа кнопка-закрепление во вкладки. Строку можно перетащить выше
+   или ниже — порядок запоминается. */
 .menulist .mrow{display:flex;align-items:stretch;gap:2px;border-radius:9px}
+.menulist .mgrip{flex:0 0 auto;display:flex;align-items:center;padding:0 6px 0 4px;
+  color:var(--muted);font-size:15px;line-height:1;cursor:grab;user-select:none}
+.menulist .mrow:hover .mgrip{color:var(--or2)}
+.menulist .mrow.drag{opacity:.45;cursor:grabbing}
+.menulist .mrow.over{box-shadow:inset 0 2px 0 var(--or);background:var(--bg3)}
 .menulist .mrow:hover{background:var(--bg3)}
 .menulist .mrow>button[data-t]{display:block;flex:1 1 auto;font:inherit;
   font-size:13.5px;text-align:left;padding:7px 11px;border:0;border-radius:9px;
@@ -972,11 +979,11 @@ body.demo .internal{display:none !important}
          Строка вкладок — только частые: так на телефоне не нужно листать. -->
     <div class="navmenu">
       <button type="button" class="menubtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Разделы</button>
-      <div class="menulist" id="menuList" role="menu"><div class="mrow"><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Главная</span><small>три инструмента менеджера</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="cfg" role="menuitem" aria-selected="false"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="smeta" role="menuitem" aria-selected="true"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, готовность цеха, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 4</span><button type="button">Вернуть по умолчанию</button></div></div>
+      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Главная</span><small>три инструмента менеджера</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="build"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="cfg"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="cfg" role="menuitem" aria-selected="false"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="true"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, готовность цеха, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
     </div>
     <!-- Строка вкладок собирается скриптом из закреплённых разделов: до
          четырёх, выбор и снятие — через меню «Разделы» и крестик на вкладке. -->
-    <div class="navtabs" id="tabs"><button type="button" data-t="home" aria-selected="false"><span>Главная</span><span class="tabx" data-x="home" title="Убрать вкладку «Главная»">×</span></button><button type="button" data-t="build" aria-selected="false"><span>Конфигуратор</span><span class="tabx" data-x="build" title="Убрать вкладку «Конфигуратор»">×</span></button><button type="button" data-t="smeta" aria-selected="true"><span>Смета и ТКП</span><span class="badge" id="smetaBadge"></span><span class="tabx" data-x="smeta" title="Убрать вкладку «Смета и ТКП»">×</span></button><button type="button" data-t="letters" aria-selected="false"><span>Письма</span><span class="tabx" data-x="letters" title="Убрать вкладку «Письма»">×</span></button></div>
+    <div class="navtabs" id="tabs"><button type="button" data-t="home" aria-selected="false"><span>Главная</span><span class="tabx" data-x="home" title="Убрать вкладку «Главная»">×</span></button><button type="button" data-t="build" aria-selected="false"><span>Конфигуратор</span><span class="tabx" data-x="build" title="Убрать вкладку «Конфигуратор»">×</span></button><button type="button" data-t="letters" aria-selected="false"><span>Письма</span><span class="tabx" data-x="letters" title="Убрать вкладку «Письма»">×</span></button><button type="button" data-t="smeta" aria-selected="true"><span>Смета и ТКП</span><span class="badge" id="smetaBadge"></span><span class="tabx" data-x="smeta" title="Убрать вкладку «Смета и ТКП»">×</span></button></div>
   </div>
 </nav>
 
@@ -2992,6 +2999,8 @@ var DOCX = (function () {
     supId: '', sups: {}, theme: 'dark',
     // какая часть справочника открыта: подбор по задаче, техника или газ
     guidePart: 'match',
+    // свой порядок разделов в меню: строки можно перетаскивать
+    secOrder: [],
     // калькуляторы: какая часть открыта и что введено в поля
     calcPart: 'nds',
     calc: { nds: {}, lease: {}, cost: {}, roi: {} },
@@ -3081,6 +3090,7 @@ var DOCX = (function () {
       if (MERGED.indexOf(state.guidePart) < 0) state.guidePart = 'match';
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
+  if (!Array.isArray(state.secOrder)) state.secOrder = [];
   if (!state.calc || typeof state.calc !== 'object') {
     state.calc = { nds: {}, lease: {}, cost: {}, roi: {} };
   }
@@ -3135,9 +3145,40 @@ var DOCX = (function () {
   function guidePartIds() {
     return GUIDE_PARTS.map(function (g) { return g.id; });
   }
-  var PINS_MAX = 4;
+  var PINS_MAX = 6;
   var PINS_DEF = ['home', 'build', 'smeta', 'letters'];
   var curTab = 'cfg';
+  // Порядок разделов в меню менеджер задаёт сам: строку можно взять и
+  // перетащить выше или ниже. Список храним в черновике, чужие и повторные
+  // имена отбрасываем, забытые разделы дописываем в конец.
+  function secOrder() {
+    var ids = SECTIONS.map(function (s) { return s.id; });
+    var out = [];
+    (Array.isArray(state.secOrder) ? state.secOrder : []).forEach(function (id) {
+      if (ids.indexOf(id) >= 0 && out.indexOf(id) < 0) out.push(id);
+    });
+    ids.forEach(function (id) { if (out.indexOf(id) < 0) out.push(id); });
+    return out;
+  }
+  function secById(id) {
+    var found = null;
+    SECTIONS.forEach(function (s) { if (s.id === id) found = s; });
+    return found;
+  }
+  // перенос строки: id встаёт на место toIndex, остальные сдвигаются
+  function moveSec(id, toIndex) {
+    var order = secOrder();
+    var from = order.indexOf(id);
+    if (from < 0) return;
+    if (toIndex < 0) toIndex = 0;
+    if (toIndex > order.length - 1) toIndex = order.length - 1;
+    if (from === toIndex) return;
+    order.splice(from, 1);
+    order.splice(toIndex, 0, id);
+    state.secOrder = order;
+    save();
+    renderMenu();
+  }
   function secTitle(id) {
     var t = id;
     SECTIONS.forEach(function (s) { if (s.id === id) t = s.title; });
@@ -3149,6 +3190,10 @@ var DOCX = (function () {
     (Array.isArray(state.pins) ? state.pins : PINS_DEF).forEach(function (id) {
       if (ids.indexOf(id) >= 0 && out.indexOf(id) < 0 && out.length < PINS_MAX) out.push(id);
     });
+    // строка вкладок держит тот же порядок, что меню: перетащили в меню —
+    // переехало и во вкладках, иначе два разных порядка путают
+    var order = secOrder();
+    out.sort(function (x, y) { return order.indexOf(x) - order.indexOf(y); });
     return out;
   }
   function tabBtns() { return $('tabs').querySelectorAll('button[data-t]'); }
@@ -3205,7 +3250,8 @@ var DOCX = (function () {
     var p = pins();
     if (p.indexOf(id) >= 0) { unpin(id); return; }
     if (p.length >= PINS_MAX) {
-      toast('Уже ' + PINS_MAX + ' вкладки — сначала уберите лишнюю');
+      toast('Уже ' + cnt(PINS_MAX, ['вкладка', 'вкладки', 'вкладок']) +
+        ' — сначала уберите лишнюю');
       return;
     }
     setPins(p.concat([id]));
@@ -3224,33 +3270,80 @@ var DOCX = (function () {
     if (f) f.textContent = 'Закреплено ' + p.length + ' из ' + PINS_MAX;
   }
 
-  var menuList = fresh('menuList');
-  SECTIONS.forEach(function (s) {
-    var row = d.createElement('div');
-    row.className = 'mrow';
-    var b = d.createElement('button');
-    b.type = 'button';
-    b.setAttribute('data-t', s.id);
-    b.setAttribute('role', 'menuitem');
-    b.innerHTML = '<span>' + esc(s.title) + '</span><small>' + esc(s.hint) + '</small>';
-    b.addEventListener('click', function () {
-      showTab(s.id);
-      closeMenu();
+  // Строки меню перерисовываются целиком: так проще держать порядок,
+  // который менеджер задал перетаскиванием.
+  var dragId = null;
+  function renderMenu() {
+    var menuList = fresh('menuList');
+    secOrder().forEach(function (id) {
+      var s = secById(id);
+      if (!s) return;
+      var row = d.createElement('div');
+      row.className = 'mrow';
+      row.setAttribute('draggable', 'true');
+      row.setAttribute('data-row', s.id);
+      var grip = d.createElement('span');
+      grip.className = 'mgrip';
+      grip.setAttribute('aria-hidden', 'true');
+      grip.textContent = '⠿';
+      grip.title = 'Перетащите, чтобы поменять порядок';
+      var b = d.createElement('button');
+      b.type = 'button';
+      b.setAttribute('data-t', s.id);
+      b.setAttribute('role', 'menuitem');
+      b.innerHTML = '<span>' + esc(s.title) + '</span><small>' +
+        esc(s.hint) + '</small>';
+      b.addEventListener('click', function () {
+        showTab(s.id);
+        closeMenu();
+      });
+      var pb = d.createElement('button');
+      pb.type = 'button';
+      pb.className = 'pinbtn';
+      pb.setAttribute('data-pin', s.id);
+      pb.setAttribute('aria-pressed', 'false');
+      pb.textContent = '☆';
+      pb.addEventListener('click', function (e) {
+        e.stopPropagation();
+        pinToggle(s.id);
+      });
+      // перетаскивание мышью: строка следует за курсором, место видно рамкой
+      row.addEventListener('dragstart', function (e) {
+        dragId = s.id;
+        row.classList.add('drag');
+        try { e.dataTransfer.setData('text/plain', s.id); } catch (err) { /* Safari */ }
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', function () {
+        dragId = null;
+        row.classList.remove('drag');
+        var all = $('menuList').querySelectorAll('.mrow');
+        for (var k = 0; k < all.length; k++) all[k].classList.remove('over');
+      });
+      row.addEventListener('dragover', function (e) {
+        if (!dragId || dragId === s.id) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        row.classList.add('over');
+      });
+      row.addEventListener('dragleave', function () { row.classList.remove('over'); });
+      row.addEventListener('drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        row.classList.remove('over');
+        var moved = dragId;
+        if (!moved || moved === s.id) return;
+        moveSec(moved, secOrder().indexOf(s.id));
+      });
+      row.appendChild(grip);
+      row.appendChild(b);
+      row.appendChild(pb);
+      menuList.appendChild(row);
     });
-    var pb = d.createElement('button');
-    pb.type = 'button';
-    pb.className = 'pinbtn';
-    pb.setAttribute('data-pin', s.id);
-    pb.setAttribute('aria-pressed', 'false');
-    pb.textContent = '☆';
-    pb.addEventListener('click', function (e) {
-      e.stopPropagation();
-      pinToggle(s.id);
-    });
-    row.appendChild(b);
-    row.appendChild(pb);
-    menuList.appendChild(row);
-  });
+    menuList.appendChild(mfoot);
+    markTab(curTab);
+    renderMenuPins();
+  }
   var mfoot = d.createElement('div');
   mfoot.className = 'mfoot';
   mfoot.innerHTML = '<span id="pinsInfo"></span>';
@@ -3260,10 +3353,13 @@ var DOCX = (function () {
   reset.addEventListener('click', function (e) {
     e.stopPropagation();
     setPins(PINS_DEF.slice());
-    toast('Вкладки: ' + PINS_DEF.map(secTitle).join(', '));
+    state.secOrder = SECTIONS.map(function (x) { return x.id; });
+    save();
+    renderMenu();
+    toast('Вкладки и порядок разделов вернулись к исходным');
   });
   mfoot.appendChild(reset);
-  menuList.appendChild(mfoot);
+  renderMenu();
 
   window.addEventListener('hashchange', function () {
     var h = (location.hash || '').replace('#', '');
