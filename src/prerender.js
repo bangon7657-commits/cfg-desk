@@ -80,13 +80,13 @@ check('вкладки по умолчанию: главная, конфигур�
     .map(b => b.getAttribute('data-t')).join(','));
 check('у каждой вкладки есть крестик снятия',
   doc.querySelectorAll('#tabs button[data-t] .tabx').length === 4, '');
-check('панелей 9', doc.querySelectorAll('.panel').length === 9,
+check('панелей 7', doc.querySelectorAll('.panel').length === 7,
   'найдено ' + doc.querySelectorAll('.panel').length);
-check('в кнопке «Разделы» все 9 разделов',
-  doc.querySelectorAll('#menuList button[data-t]').length === 9,
+check('в кнопке «Разделы» все 7 разделов',
+  doc.querySelectorAll('#menuList button[data-t]').length === 7,
   'найдено ' + doc.querySelectorAll('#menuList button[data-t]').length);
 check('в меню у каждого раздела кнопка закрепления',
-  doc.querySelectorAll('#menuList button[data-pin]').length === 9 &&
+  doc.querySelectorAll('#menuList button[data-pin]').length === 7 &&
   [...doc.querySelectorAll('#menuList button[data-pin]')]
     .filter(b => b.getAttribute('aria-pressed') === 'true').length === 4, '');
 check('в меню есть счётчик и сброс вкладок',
@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 28', /const CACHE = 'cfg-v28'/.test(swTxt),
+check('кеш: версия поднята до 29', /const CACHE = 'cfg-v29'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -649,7 +649,7 @@ check('обвязка: сказано, что верх таблицы расхо
   /Верх таблицы эта модель не закрывает/.test(textOf(doc, '#compressorOut')),
   (textOf(doc, '#compressorOut') || '').slice(-160));
 check('данные: пробел по цеху для 12 кВт заявлен',
-  doc.getElementById('p-data').textContent.indexOf('12 кВт и форматов 2030') >= 0, '');
+  doc.getElementById('g-data').textContent.indexOf('12 кВт и форматов 2030') >= 0, '');
 
 // Согласование числительных: «122 конфигураций» — ошибка, нужно «122 конфигурации»
 const badPlural = (src.match(/\b\d*[02-9][2-4]\s+конфигураций/g) || []);
@@ -765,7 +765,7 @@ check('стабилизаторы фрезера: четыре новые мод
 check('стабилизаторы фрезера: цены совпадают с присланными',
   /28090/.test(src) && /33590/.test(src) && /75590/.test(src) && /95190/.test(src), '');
 check('данные: расхождение цен на один стабилизатор описано',
-  doc.getElementById('p-data').textContent
+  doc.getElementById('g-data').textContent
     .indexOf('Один стабилизатор Ресанта в двух списках') >= 0, '');
 
 // ---- CO₂, маркираторы, «мысли» и полоса итога ----
@@ -1094,7 +1094,7 @@ check('главная: у плиток есть переходы',
   ['build', 'letters', 'zp'].every(k =>
     !!doc.querySelector('#p-home .tile[data-go="' + k + '"]')), '');
 check('главная: карта разделов построена',
-  doc.querySelectorAll('#homeMap .maprow').length >= 8,
+  doc.querySelectorAll('#homeMap .maprow').length >= 6,
   'строк ' + doc.querySelectorAll('#homeMap .maprow').length);
 doc.querySelector('#p-home .tile[data-go="letters"]').click();
 check('главная: плитка открывает письма',
@@ -1163,7 +1163,11 @@ doc.querySelector('#ltrPills button[data-tpl="refund"]').click();
   check('возврат: ссылка на неосновательное обогащение, статья 1102 ГК РФ',
     /неосновательным обогащением/.test(t) && /статья 1102/.test(t), t.slice(0, 140));
   check('возврат: нет ссылки на договор РКО — он с банком, а не с получателем',
-    !/расчётно-кассовое обслуживание/.test(t) && !/расчётно-кассов/.test(src), '');
+    !/расчётно-кассовое обслуживание/.test(t) &&
+    !/договором на расчётно-кассовое/.test(src), '');
+  check('возврат: старый черновик письма сбрасывается при обновлении',
+    /удержанные комиссии банка/.test(src) &&
+    /delete state\.ltr\.bodies\[bk\]/.test(src), '');
   check('возврат: с получателя не требуют банковские комиссии',
     !/комиссии банка/.test(t), '');
   check('возврат: указан срок возврата',
@@ -1379,18 +1383,19 @@ check('подбор: длинный лид убран в свёрнутую сп
 check('главная: плашка без логотипа и рамки',
   !doc.querySelector('#p-home .hero img') && /\.hero\{background:none;border:0/.test(src), '');
 check('навигация: остальные разделы живут в кнопке «Разделы»',
-  doc.querySelectorAll('#menuList button[data-t]').length === 9 &&
+  doc.querySelectorAll('#menuList button[data-t]').length === 7 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
 
 // ---- v28: три раздела сведены в «Справочник», меню поверх всего ----
 menuGo('guide');
-check('справочник: одна панель вместо трёх прежних',
+check('справочник: одна панель вместо пяти прежних',
   !!doc.getElementById('p-guide') && !doc.getElementById('p-match') &&
   !doc.getElementById('p-tech') && !doc.getElementById('p-gas') &&
+  !doc.getElementById('p-shop') && !doc.getElementById('p-data') &&
   doc.getElementById('p-guide').classList.contains('active'), '');
-check('справочник: три части и переключатель над ними',
+check('справочник: пять частей и переключатель над ними',
   [...doc.querySelectorAll('#guideTabs button')].map(b => b.textContent).join('|') ===
-  'Подбор по задаче|Техника|Газ и владение',
+  'Подбор по задаче|Техника|Газ и владение|Готовность цеха|Данные',
   [...doc.querySelectorAll('#guideTabs button')].map(b => b.textContent).join('|'));
 const gShown = () => [...doc.querySelectorAll('#p-guide .subpanel')]
   .filter(n => n.classList.contains('active')).map(n => n.id).join(',');
@@ -1406,6 +1411,14 @@ doc.querySelector('#guideTabs button[data-sub="tech"]').click();
 check('справочник: техника открывается и таблицы на месте',
   gShown() === 'g-tech' && /Рабочие толщины/.test(doc.getElementById('g-tech').textContent),
   gShown());
+doc.querySelector('#guideTabs button[data-sub="shop"]').click();
+check('справочник: готовность цеха переехала внутрь',
+  gShown() === 'g-shop' &&
+  /пуско-наладк/i.test(doc.getElementById('g-shop').textContent), gShown());
+doc.querySelector('#guideTabs button[data-sub="data"]').click();
+check('справочник: служебные данные переехали внутрь',
+  gShown() === 'g-data' &&
+  /Статус полей/.test(doc.getElementById('g-data').textContent), gShown());
 check('справочник: части прячутся стилем, а не разметкой',
   /\.subpanel\{display:none\}/.test(src.replace(/\s+/g, '')) &&
   /\.subpanel\.active\{display:block\}/.test(src.replace(/\s+/g, '')), '');
@@ -1848,7 +1861,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 9,
+  doc2.querySelectorAll('.nojs-title').length === 7,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('3 010 400') >= 0);
 check('пререндер: смета пуста при открытии',

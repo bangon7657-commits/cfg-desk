@@ -953,7 +953,7 @@ body.demo .internal{display:none !important}
          Строка вкладок — только частые: так на телефоне не нужно листать. -->
     <div class="navmenu">
       <button type="button" class="menubtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Разделы</button>
-      <div class="menulist" id="menuList" role="menu"><div class="mrow"><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Главная</span><small>три инструмента менеджера</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="cfg" role="menuitem" aria-selected="false"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="smeta" role="menuitem" aria-selected="true"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор по задаче, техника, газ и владение</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="shop" role="menuitem" aria-selected="false"><span>Готовность цеха</span><small>блокеры до монтажа</small></button><button type="button" class="pinbtn" data-pin="shop" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="data" role="menuitem" aria-selected="false"><span>Данные</span><small>прайсы, источники, расхождения</small></button><button type="button" class="pinbtn" data-pin="data" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 4</span><button type="button">Вернуть по умолчанию</button></div></div>
+      <div class="menulist" id="menuList" role="menu"><div class="mrow"><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Главная</span><small>три инструмента менеджера</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="cfg" role="menuitem" aria-selected="false"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="smeta" role="menuitem" aria-selected="true"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, готовность цеха, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 4</span><button type="button">Вернуть по умолчанию</button></div></div>
     </div>
     <!-- Строка вкладок собирается скриптом из закреплённых разделов: до
          четырёх, выбор и снятие — через меню «Разделы» и крестик на вкладке. -->
@@ -1000,7 +1000,7 @@ body.demo .internal{display:none !important}
   </div>
   <div class="card">
     <div class="cardhead"><h2>Что где лежит</h2></div>
-    <div id="homeMap"><div class="maprow"><b>Конфигуратор</b><span class="muted">слоты комплекта и проверка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Письма</b><span class="muted">возврат, платежи, официальные</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Зарплата</b><span class="muted">оклад, переработки, налоги</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Подбор и цены</b><span class="muted">станок, обвязка, техничка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Смета и ТКП</b><span class="muted">позиции, скидки, файл</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Справочник</b><span class="muted">подбор по задаче, техника, газ и владение</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Готовность цеха</b><span class="muted">блокеры до монтажа</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Данные</b><span class="muted">прайсы, источники, расхождения</span><button class="btn mini sec" type="button">Открыть</button></div></div>
+    <div id="homeMap"><div class="maprow"><b>Конфигуратор</b><span class="muted">слоты комплекта и проверка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Письма</b><span class="muted">возврат, платежи, официальные</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Зарплата</b><span class="muted">оклад, переработки, налоги</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Подбор и цены</b><span class="muted">станок, обвязка, техничка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Смета и ТКП</b><span class="muted">позиции, скидки, файл</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Справочник</b><span class="muted">подбор, техника, газ, готовность цеха, данные</span><button class="btn mini sec" type="button">Открыть</button></div></div>
   </div>
 
 </section>
@@ -1970,7 +1970,7 @@ body.demo .internal{display:none !important}
         газа со стоимостью владения — в одном разделе.</p>
     </div>
   </div>
-  <div class="pills big subtabs" id="guideTabs" role="tablist" aria-label="Часть справочника"><button class="pill" type="button" data-sub="match" role="tab" aria-selected="false">Подбор по задаче</button><button class="pill" type="button" data-sub="tech" role="tab" aria-selected="false">Техника</button><button class="pill on" type="button" data-sub="gas" role="tab" aria-selected="true">Газ и владение</button></div>
+  <div class="pills big subtabs" id="guideTabs" role="tablist" aria-label="Часть справочника"><button class="pill" type="button" data-sub="match" role="tab" aria-selected="false">Подбор по задаче</button><button class="pill" type="button" data-sub="tech" role="tab" aria-selected="false">Техника</button><button class="pill on" type="button" data-sub="gas" role="tab" aria-selected="true">Газ и владение</button><button class="pill" type="button" data-sub="shop" role="tab" aria-selected="false">Готовность цеха</button><button class="pill" type="button" data-sub="data" role="tab" aria-selected="false">Данные</button></div>
 
   <div class="subpanel" id="g-match" role="tabpanel">
   <p class="lead">Правило скилла: предлагать не больше двух моделей.
@@ -2137,11 +2137,7 @@ body.demo .internal{display:none !important}
     </div>
   </details>
   </div>
-</section>
-
-<!-- ================= ГОТОВНОСТЬ ЦЕХА ================= -->
-<span class="nojs-title">Готовность цеха</span>
-<section class="panel" id="p-shop">
+  <div class="subpanel" id="g-shop" role="tabpanel">
   <p class="lead">Технические условия на пуско-наладку. Это деньги и сроки клиента сверх цены
     станка — молчать нельзя, всплывёт на монтаже.</p>
 
@@ -2182,15 +2178,9 @@ body.demo .internal{display:none !important}
       <div class="scroll"><table class=""><thead><tr><th>Модель</th><th>Масса</th></tr></thead><tbody><tr><td>0404 mini</td><td><b>92 кг</b></td></tr><tr><td>0609 mini</td><td><b>135 кг</b></td></tr><tr><td>A1 6090</td><td><b>400 кг</b></td></tr><tr><td>M1 6090</td><td><b>500 кг</b></td></tr><tr><td>A1 1313</td><td><b>540 кг</b></td></tr><tr><td>M1 1313</td><td><b>650 кг</b></td></tr><tr><td>A1 1325</td><td><b>720 кг</b></td></tr><tr><td>M1 1325</td><td><b>880 кг</b></td></tr><tr><td>M1 1325 RD</td><td><b>1550 кг</b></td></tr><tr><td>A1 1616</td><td><b>620 кг</b></td></tr><tr><td>M1 1616</td><td><b>730 кг</b></td></tr><tr><td>M1 2030</td><td><b>1140 кг</b></td></tr><tr><td>M1 2040</td><td><b>1370 кг</b></td></tr><tr><td>M1 2060</td><td><b>1810 кг</b></td></tr><tr><td>M3 1313</td><td><b>980 кг</b></td></tr><tr><td>M3 1325</td><td><b>1260 кг</b></td></tr><tr><td>M3 1616</td><td><b>1100 кг</b></td></tr><tr><td>M3 2030</td><td><b>1580 кг</b></td></tr><tr><td>M3 2040</td><td><b>1850 кг</b></td></tr><tr><td>M3 2060</td><td><b>2300 кг</b></td></tr></tbody></table></div>
     </div>
   </details>
-</section>
+  </div>
 
-
-
-
-
-<!-- ================= ДАННЫЕ ================= -->
-<span class="nojs-title">Данные</span>
-<section class="panel" id="p-data">
+  <div class="subpanel" id="g-data" role="tabpanel">
   <p class="lead">Служебная вкладка. Приложение показывает расхождения флагом,
     а не решает их самостоятельно.</p>
 
@@ -2255,7 +2245,15 @@ body.demo .internal{display:none !important}
   <div class="note alert">Цена ≠ актуальность. Прайсы датированы, наличие меняется ежедневно.
     Перед счётом — сверка с менеджером. Наличие на складе в приложение принципиально
     не заводится.</div>
+  </div>
+
 </section>
+
+
+
+
+
+
 
 </div>
 
@@ -2789,6 +2787,16 @@ var DOCX = (function () {
       }
       if (!state.ltr.vals || typeof state.ltr.vals !== 'object') state.ltr.vals = {};
       if (!state.ltr.bodies || typeof state.ltr.bodies !== 'object') state.ltr.bodies = {};
+      // В версии 27 письмо о возврате переписано: ссылка на договор РКО и
+      // требование вернуть банковские комиссии были юридически неверны.
+      // Черновики с этими оборотами сбрасываем — иначе печатается старый текст.
+      var STALE = /расчётно-кассовое обслуживание|удержанные комиссии банка/;
+      for (var bk in state.ltr.bodies) {
+        if (state.ltr.bodies.hasOwnProperty(bk) &&
+            STALE.test(String(state.ltr.bodies[bk] || ''))) {
+          delete state.ltr.bodies[bk];
+        }
+      }
       // черновики до версии 16 не знали про сборку по слотам
       if (!state.build || typeof state.build !== 'object') {
         state.build = { kind: 'fiber', slots: {}, saved: [], reqOnly: false };
@@ -2799,12 +2807,11 @@ var DOCX = (function () {
       if (!Array.isArray(state.pins)) state.pins = ['home', 'build', 'smeta', 'letters'];
       // в версии 28 три раздела сведены в «Справочник»: закреплённые вкладки
       // со старыми именами переводим на него, повтор убираем
+      var MERGED = ['match', 'tech', 'gas', 'shop', 'data'];
       state.pins = state.pins.map(function (id) {
-        return (id === 'match' || id === 'tech' || id === 'gas') ? 'guide' : id;
+        return MERGED.indexOf(id) >= 0 ? 'guide' : id;
       }).filter(function (id, i, all) { return all.indexOf(id) === i; });
-      if (['match', 'tech', 'gas'].indexOf(state.guidePart) < 0) {
-        state.guidePart = 'match';
-      }
+      if (MERGED.indexOf(state.guidePart) < 0) state.guidePart = 'match';
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
   if (!state.zp || typeof state.zp !== 'object') state.zp = zpDefaults();
@@ -2838,16 +2845,16 @@ var DOCX = (function () {
     { id: 'cfg', title: 'Подбор и цены', hint: 'станок, обвязка, техничка' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
     { id: 'guide', title: 'Справочник',
-      hint: 'подбор по задаче, техника, газ и владение' },
-    { id: 'shop', title: 'Готовность цеха', hint: 'блокеры до монтажа' },
-    { id: 'data', title: 'Данные', hint: 'прайсы, источники, расхождения' }
+      hint: 'подбор, техника, газ, готовность цеха, данные' }
   ];
   // Справочник собран из трёх бывших разделов. Их прежние имена остались
   // адресами частей: ссылка #tech по-прежнему открывает нужную часть.
   var GUIDE_PARTS = [
     { id: 'match', title: 'Подбор по задаче' },
     { id: 'tech', title: 'Техника' },
-    { id: 'gas', title: 'Газ и владение' }
+    { id: 'gas', title: 'Газ и владение' },
+    { id: 'shop', title: 'Готовность цеха' },
+    { id: 'data', title: 'Данные' }
   ];
   function guidePartIds() {
     return GUIDE_PARTS.map(function (g) { return g.id; });

@@ -118,6 +118,16 @@
       }
       if (!state.ltr.vals || typeof state.ltr.vals !== 'object') state.ltr.vals = {};
       if (!state.ltr.bodies || typeof state.ltr.bodies !== 'object') state.ltr.bodies = {};
+      // В версии 27 письмо о возврате переписано: ссылка на договор РКО и
+      // требование вернуть банковские комиссии были юридически неверны.
+      // Черновики с этими оборотами сбрасываем — иначе печатается старый текст.
+      var STALE = /расчётно-кассовое обслуживание|удержанные комиссии банка/;
+      for (var bk in state.ltr.bodies) {
+        if (state.ltr.bodies.hasOwnProperty(bk) &&
+            STALE.test(String(state.ltr.bodies[bk] || ''))) {
+          delete state.ltr.bodies[bk];
+        }
+      }
       // черновики до версии 16 не знали про сборку по слотам
       if (!state.build || typeof state.build !== 'object') {
         state.build = { kind: 'fiber', slots: {}, saved: [], reqOnly: false };
@@ -128,12 +138,11 @@
       if (!Array.isArray(state.pins)) state.pins = ['home', 'build', 'smeta', 'letters'];
       // в версии 28 три раздела сведены в «Справочник»: закреплённые вкладки
       // со старыми именами переводим на него, повтор убираем
+      var MERGED = ['match', 'tech', 'gas', 'shop', 'data'];
       state.pins = state.pins.map(function (id) {
-        return (id === 'match' || id === 'tech' || id === 'gas') ? 'guide' : id;
+        return MERGED.indexOf(id) >= 0 ? 'guide' : id;
       }).filter(function (id, i, all) { return all.indexOf(id) === i; });
-      if (['match', 'tech', 'gas'].indexOf(state.guidePart) < 0) {
-        state.guidePart = 'match';
-      }
+      if (MERGED.indexOf(state.guidePart) < 0) state.guidePart = 'match';
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
   if (!state.zp || typeof state.zp !== 'object') state.zp = zpDefaults();
@@ -167,16 +176,16 @@
     { id: 'cfg', title: 'Подбор и цены', hint: 'станок, обвязка, техничка' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
     { id: 'guide', title: 'Справочник',
-      hint: 'подбор по задаче, техника, газ и владение' },
-    { id: 'shop', title: 'Готовность цеха', hint: 'блокеры до монтажа' },
-    { id: 'data', title: 'Данные', hint: 'прайсы, источники, расхождения' }
+      hint: 'подбор, техника, газ, готовность цеха, данные' }
   ];
   // Справочник собран из трёх бывших разделов. Их прежние имена остались
   // адресами частей: ссылка #tech по-прежнему открывает нужную часть.
   var GUIDE_PARTS = [
     { id: 'match', title: 'Подбор по задаче' },
     { id: 'tech', title: 'Техника' },
-    { id: 'gas', title: 'Газ и владение' }
+    { id: 'gas', title: 'Газ и владение' },
+    { id: 'shop', title: 'Готовность цеха' },
+    { id: 'data', title: 'Данные' }
   ];
   function guidePartIds() {
     return GUIDE_PARTS.map(function (g) { return g.id; });
