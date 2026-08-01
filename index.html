@@ -207,11 +207,6 @@ a{color:var(--or2)}
 .step-t{font-size:16.5px;font-weight:700;color:var(--tx)}
 .step-t small{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:1px}
 /* ---------------- Главная: три плитки ---------------- */
-.hero{background:none;border:0;padding:6px 0 2px;margin-bottom:14px}
-.hero h1::before{content:"";display:inline-block;width:6px;height:22px;
-  background:var(--or);border-radius:3px;margin-right:10px;vertical-align:-3px}
-.hero h1{margin:0 0 6px;font-size:24px;color:var(--tx)}
-.hero p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
 /* Тренажёр: полоса прогресса, крупные варианты ответа, разбор ошибок */
 .quizbar{height:6px;border-radius:4px;background:var(--bg4);overflow:hidden;
   margin:4px 0 14px}
@@ -274,11 +269,25 @@ a{color:var(--or2)}
 .hint-det .det-b{padding:0 12px 10px;display:flex;flex-direction:column;gap:8px}
 
 /* Миниатюра письма в правой колонке: лист А4 сжат по ширине колонки */
-/* Группы шаблонов писем: узкие пилюли над крупными плитками */
-.ltrgroups{display:flex;flex-direction:column;gap:12px;align-items:flex-start;
-  margin:0 0 18px}
-.ltrgroups .pills{margin-bottom:0}
-.ltrgroups #ltrGroups .pill{padding:10px 16px}
+/* Письма: группы-плашки. Заголовок всегда виден, список документов
+   раскрывается под нажатой группой. */
+.ltracc{display:flex;flex-direction:column;gap:10px;margin:0 0 18px}
+.ltracc-i{border:1px solid var(--line2);border-radius:12px;background:var(--bg2);
+  overflow:hidden}
+.ltracc-i.open{border-color:var(--or)}
+.ltracc-h{display:flex;align-items:center;gap:12px;width:100%;font:inherit;
+  font-size:16px;font-weight:700;padding:14px 16px;border:0;cursor:pointer;
+  background:none;color:var(--tx);text-align:left}
+.ltracc-h:hover{color:var(--or2)}
+.ltracc-i.open .ltracc-h{color:var(--or);background:var(--orbg)}
+.ltracc-h .la-c{font-size:12.5px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px}
+.ltracc-h .la-x{margin-left:auto;width:12px;height:12px;flex:0 0 auto;
+  border-right:2px solid currentColor;border-bottom:2px solid currentColor;
+  transform:rotate(45deg) translateY(-2px);transition:transform .16s}
+.ltracc-i.open .ltracc-h .la-x{transform:rotate(225deg) translateY(-2px)}
+.ltracc-b{padding:4px 16px 16px}
+.ltracc-b .pills{margin:0}
 /* После выбора группы над плитками шаблонов на пару секунд всплывают стрелки:
    подсказка, что выбирать дальше. Стрелки появляются по очереди. */
 .pill.point{position:relative}
@@ -306,22 +315,45 @@ a{color:var(--or2)}
 .lp-sign.staff{display:flex;gap:26px;align-items:flex-end;justify-content:space-between}
 .lp-sign.staff .lp-line{min-width:150px;text-align:center}
 .lp-sign.staff .lp-hint{text-align:center;margin-top:2px}
+/* Миниатюра листа ТКП в правой колонке сметы: тот же приём, что в письмах */
+.kpmini{margin-top:10px;border:1px solid var(--line2);border-radius:8px;
+  background:#fff;overflow:hidden;cursor:zoom-in;height:460px}
+.kpmini-in{width:794px;transform-origin:top left}
+@media(max-width:999px){.kpmini{height:320px}}
+@media print{.kpmini,#kpMiniGo{display:none}}
 .ltrmini{margin-top:10px;border:1px solid var(--line2);border-radius:8px;
   background:#fff;overflow:hidden;cursor:zoom-in;height:420px}
 .ltrmini-in{width:794px;transform-origin:top left}
 @media(max-width:999px){.ltrmini{height:320px}}
 @media print{.ltrmini,#ltrMiniGo{display:none}}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;
-  margin-bottom:18px}
-.tile{display:flex;flex-direction:column;gap:6px;text-align:left;padding:18px;
-  border:1px solid var(--line);border-radius:14px;background:var(--bg2);cursor:pointer;
-  transition:.14s;font:inherit;color:inherit}
-.tile:hover{border-color:var(--or);transform:translateY(-2px)}
-.tile-n{width:28px;height:28px;border-radius:50%;background:var(--or);color:var(--onor);
-  font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
-.tile-t{font-size:18px;font-weight:700;color:var(--tx)}
-.tile-d{font-size:13px;color:var(--muted);line-height:1.5}
-.tile-a{margin-top:auto;font-size:13px;font-weight:600;color:var(--or)}
+/* Песочница: поиск, сценарии, карточки инструментов. Карточка отвечает на
+   три вопроса — что делает, что ей нужно, что дальше. */
+.maptop{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.maptop input[type=search]{width:100%;font:inherit;font-size:16px;padding:13px 15px;
+  border:1px solid var(--line2);border-radius:10px;background:var(--bg4);color:var(--tx)}
+.maptop input[type=search]:focus{outline:0;border-color:var(--or);
+  box-shadow:0 0 0 3px rgba(255,122,24,.22)}
+.maptop .pills{margin:0}
+.mapflow{margin-bottom:22px}
+.mapflow-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.mapflow-h b{font-size:15px;text-transform:uppercase;letter-spacing:.6px;color:var(--or)}
+.mapflow-h .muted{font-size:13.5px}
+.mapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:12px}
+.mapcard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:15px 16px;
+  border:1px solid var(--line);border-radius:13px;background:var(--bg2);cursor:pointer;
+  font:inherit;color:inherit;transition:.14s}
+.mapcard:hover{border-color:var(--or);transform:translateY(-2px);
+  box-shadow:0 10px 24px var(--shadow)}
+.mapcard .mc-t{font-size:16px;font-weight:700;color:var(--tx)}
+.mapcard .mc-w{font-size:13.5px;color:var(--tx2);line-height:1.45}
+.mapcard .mc-n{font-size:12.5px;color:var(--muted)}
+.mapcard .mc-n i{font-style:normal;text-transform:uppercase;letter-spacing:.5px;
+  font-size:11px;color:var(--or2)}
+.mapcard .mc-x{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line2);
+  padding-top:6px;margin-top:2px}
+.mapcard .mc-a{font-size:13px;font-weight:700;color:var(--or2);margin-top:auto}
+@media(max-width:560px){.mapgrid{grid-template-columns:1fr}}
+
 .maprow{display:flex;gap:10px;align-items:center;justify-content:space-between;
   padding:8px 0;border-bottom:1px dashed var(--line2);font-size:13.5px;flex-wrap:wrap}
 .maprow b{color:var(--tx)}
@@ -979,65 +1011,51 @@ body.demo .internal{display:none !important}
          Строка вкладок — только частые: так на телефоне не нужно листать. -->
     <div class="navmenu">
       <button type="button" class="menubtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Разделы</button>
-      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Главная</span><small>три инструмента менеджера</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="build"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="cfg"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="cfg" role="menuitem" aria-selected="false"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="true"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, готовность цеха, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
+      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Песочница</span><small>карта инструментов и куда идти</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="build"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="cfg"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="cfg" role="menuitem" aria-selected="false"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="true"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, готовность цеха, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
     </div>
     <!-- Строка вкладок собирается скриптом из закреплённых разделов: до
          четырёх, выбор и снятие — через меню «Разделы» и крестик на вкладке. -->
-    <div class="navtabs" id="tabs"><button type="button" data-t="home" aria-selected="false"><span>Главная</span><span class="tabx" data-x="home" title="Убрать вкладку «Главная»">×</span></button><button type="button" data-t="build" aria-selected="false"><span>Конфигуратор</span><span class="tabx" data-x="build" title="Убрать вкладку «Конфигуратор»">×</span></button><button type="button" data-t="letters" aria-selected="false"><span>Письма</span><span class="tabx" data-x="letters" title="Убрать вкладку «Письма»">×</span></button><button type="button" data-t="smeta" aria-selected="true"><span>Смета и ТКП</span><span class="badge" id="smetaBadge"></span><span class="tabx" data-x="smeta" title="Убрать вкладку «Смета и ТКП»">×</span></button></div>
+    <div class="navtabs" id="tabs"><button type="button" data-t="home" aria-selected="false"><span>Песочница</span><span class="tabx" data-x="home" title="Убрать вкладку «Песочница»">×</span></button><button type="button" data-t="build" aria-selected="false"><span>Конфигуратор</span><span class="tabx" data-x="build" title="Убрать вкладку «Конфигуратор»">×</span></button><button type="button" data-t="letters" aria-selected="false"><span>Письма</span><span class="tabx" data-x="letters" title="Убрать вкладку «Письма»">×</span></button><button type="button" data-t="smeta" aria-selected="true"><span>Смета и ТКП</span><span class="badge" id="smetaBadge"></span><span class="tabx" data-x="smeta" title="Убрать вкладку «Смета и ТКП»">×</span></button></div>
   </div>
 </nav>
 
 <div class="wrap">
 
 <!-- ================= ГЛАВНАЯ ================= -->
-<span class="nojs-title">Главная</span>
+<span class="nojs-title">Песочница</span>
 <section class="panel" id="p-home">
-  <div class="hero">
-    <h1>Рабочий стол менеджера</h1>
-    <p>Три инструмента: подобрать оборудование и выпустить ТКП, напечатать письмо
-      или уведомление, посчитать зарплату. Всё считается в браузере, ничего
-      не уходит на сервер.</p>
-    <!-- Плашка-шалость: лента со следами, при наведении подсказка. Фон
-         прозрачный, чернила и бумага берутся из переменных темы. -->
-    
-  </div>
-  <div class="tiles">
-    <button class="tile" type="button" data-go="build">
-      <span class="tile-n">1</span>
-      <span class="tile-t">Конфигуратор и КП</span>
-      <span class="tile-d">Слоты комплекта, проверка сборки, смета и ТКП в Word.
-        Из конфигуратора — кнопка «Перенести в смету».</span>
-      <span class="tile-a">Открыть конфигуратор →</span>
-    </button>
-    <button class="tile" type="button" data-go="letters">
-      <span class="tile-n">2</span>
-      <span class="tile-t">Письма и уведомления</span>
-      <span class="tile-d">Возврат платежа, уточнение назначения, перезачёт,
-        официальное письмо. Текст правится, печать и .docx на фирменном бланке.</span>
-      <span class="tile-a">Открыть письма →</span>
-    </button>
-    <button class="tile" type="button" data-go="zp">
-      <span class="tile-n">3</span>
-      <span class="tile-t">Расчёт зарплаты</span>
-      <span class="tile-d">Оклад по дням, переработки, выходные, отпуск, больничный,
-        аванс, НДФЛ и внутренний налог. Печать расчёта.</span>
-      <span class="tile-a">Открыть расчёт →</span>
-    </button>
-  </div>
-  <div class="card">
-    <div class="cardhead"><h2>Что где лежит</h2></div>
-    <div id="homeMap"><div class="maprow"><b>Конфигуратор</b><span class="muted">слоты комплекта и проверка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Письма</b><span class="muted">возврат, платежи, официальные</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Зарплата</b><span class="muted">оклад, переработки, налоги</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Подбор и цены</b><span class="muted">станок, обвязка, техничка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Смета и ТКП</b><span class="muted">позиции, скидки, файл</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Калькуляторы</b><span class="muted">НДС, лизинг, час работы станка, окупаемость</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Справочник</b><span class="muted">подбор, техника, газ, готовность цеха, данные</span><button class="btn mini sec" type="button">Открыть</button></div></div>
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Песочница</h1>
+      <p class="lead">Карта инструментов: что где лежит, зачем нужно и что делать
+        следующим шагом. Всё считается в браузере, наружу ничего не уходит.</p>
+    </div>
+    <span class="pill on" id="mapCnt"></span>
   </div>
 
+  <!-- Поиск по карте: набираешь «НДС» или «письмо» — остаются нужные карточки -->
+  <div class="maptop">
+    <input type="search" id="mapSearch" placeholder="Что нужно сделать? НДС, письмо, окупаемость, толщина…" aria-label="поиск по инструментам">
+    <div class="pills" id="mapFilters" role="tablist" aria-label="Чем занимаемся"><button class="pill on" type="button" data-flow="all" role="tab" aria-selected="true">Всё</button><button class="pill" type="button" data-flow="sale" role="tab">Продажа</button><button class="pill" type="button" data-flow="docs" role="tab">Документы и деньги</button><button class="pill" type="button" data-flow="know" role="tab">Справка и обучение</button></div>
+  </div>
+
+  <!-- Три сценария работы: продажа, документы, справка. Внутри — карточки
+       инструментов с назначением и переходом. -->
+  <div id="mapFlows"><div class="mapflow"><div class="mapflow-h"><b>Продажа</b><span class="muted">от задачи клиента до подписи</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="guide:match"><span class="mc-t">Подбор по задаче</span><span class="mc-w">Материал и толщина → мощность с запасом и две модели</span><span class="mc-n"><i>нужно:</i> знать, что режет клиент</span><span class="mc-x">дальше — конфигуратор</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="build"><span class="mc-t">Конфигуратор</span><span class="mc-w">Комплект по слотам: станок, обвязка, ПНР. Проверка совместимости</span><span class="mc-n"><i>нужно:</i> выбранная модель</span><span class="mc-x">кнопка «Перенести в смету»</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="smeta"><span class="mc-t">Смета и ТКП</span><span class="mc-w">Позиции, скидки, НДС, лист предложения и файл для Word</span><span class="mc-n"><i>нужно:</i> позиции из конфигуратора</span><span class="mc-x">скачать .docx или напечатать в PDF</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:roi"><span class="mc-t">Окупаемость и лизинг</span><span class="mc-w">Срок возврата вложений, платёж по лизингу, график</span><span class="mc-n"><i>нужно:</i> цену комплекта и загрузку</span><span class="mc-x">цифры — в разговор и в ТКП</span><span class="mc-a">Открыть →</span></button></div></div><div class="mapflow"><div class="mapflow-h"><b>Документы и деньги</b><span class="muted">бумаги, которые нужны сегодня</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="letters"><span class="mc-t">Письма по оплатам</span><span class="mc-w">Возврат ошибочного платежа, уточнение назначения, перезачёт</span><span class="mc-n"><i>нужно:</i> реквизиты и номер поручения</span><span class="mc-x">печать или .docx на бланке</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="letters"><span class="mc-t">Кадровые документы</span><span class="mc-w">Заявления и служебные записки: отпуск, врач, отгул</span><span class="mc-n"><i>нужно:</i> даты и причину</span><span class="mc-x">подписать у руководителя</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="zp"><span class="mc-t">Зарплата</span><span class="mc-w">Оклад по дням, переработки, дежурство, отпуск, больничный, аванс</span><span class="mc-n"><i>нужно:</i> оклад и отработанные дни</span><span class="mc-x">печать расчёта</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:nds"><span class="mc-t">Проверка НДС</span><span class="mc-w">Выделить налог из суммы или начислить сверху, сумма прописью</span><span class="mc-n"><i>нужно:</i> сумму из счёта</span><span class="mc-x">сверить со счётом</span><span class="mc-a">Открыть →</span></button></div></div><div class="mapflow"><div class="mapflow-h"><b>Справка и обучение</b><span class="muted">когда нужен факт, а не догадка</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="guide:tech"><span class="mc-t">Техника простым языком</span><span class="mc-w">Толщины по мощностям, серии A/E/S, что внутри станка</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">говорить клиенту рабочие толщины, а не предельные</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:gas"><span class="mc-t">Газ и стоимость владения</span><span class="mc-w">Расход по соплам, баллоны в час, деньги за месяц</span><span class="mc-n"><i>нужно:</i> сопло, газ, часы резки</span><span class="mc-x">аргумент против «дешёвого» станка</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:cost"><span class="mc-t">Час работы станка</span><span class="mc-w">Электричество, газ, расходники, оператор, амортизация</span><span class="mc-n"><i>нужно:</i> тариф и цены расходников</span><span class="mc-x">себестоимость → в окупаемость</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:shop"><span class="mc-t">Готовность цеха</span><span class="mc-w">Что должно быть на площадке до приезда монтажников</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">отправить клиенту список</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:quiz"><span class="mc-t">Тренажёр</span><span class="mc-w">Десять вопросов на разминку или экзамен на двадцать пять</span><span class="mc-n"><i>нужно:</i> пять минут</span><span class="mc-x">разбор ошибок со ссылкой на справку</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:data"><span class="mc-t">Данные и пробелы</span><span class="mc-w">Откуда цифры, где их нет и что нельзя говорить клиенту</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">сомнительное — уточнять, а не придумывать</span><span class="mc-a">Открыть →</span></button></div></div></div>
+
+  <div class="card" id="mapEmpty" hidden="">
+    <div class="cardhead"><h2>Ничего не нашлось</h2></div>
+    <p class="muted">Попробуйте другое слово: «смета», «зарплата», «газ», «лизинг».</p>
+  </div>
 </section>
 
 <!-- Плашка-клятва в правом нижнем углу: обработанный рисунок как маска,
      цвет берётся из темы. Лежит вне панелей, поэтому видна на каждой вкладке;
      в печать не идёт. -->
-<div class="oath" id="oath" tabindex="0" role="img" aria-label="Торжественно клянусь, что замышляю только шалость">
-  <div class="oath-scan" id="oathScan" style="--oath-img: url(&quot;data:image/webp;base64,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&quot;);"></div>
+<a class="oath" id="oath" href="https://theuselessweb.com/" target="_blank" rel="noopener noreferrer" aria-label="Торжественно клянусь, что замышляю только шалость — открыть бесполезный сайт">
+  <span class="oath-scan" id="oathScan" style="--oath-img: url(&quot;data:image/webp;base64,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&quot;);"></span>
   <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
-</div>
+</a>
 
 <!-- ================= ПИСЬМА ================= -->
 <span class="nojs-title">Письма</span>
@@ -1047,12 +1065,9 @@ body.demo .internal{display:none !important}
       <h1 class="btitle">Письма и уведомления</h1>
     </div>
   </div>
-  <!-- Группы и шаблоны идут слева под заголовком: сначала выбираем группу,
-       под ней раскрываются письма этой группы. -->
-  <div class="ltrgroups">
-    <div class="pills big" id="ltrGroups" role="tablist" aria-label="Группа шаблонов"><button class="pill on" type="button" data-grp="client" role="tab" aria-selected="true">Письма по оплатам</button><button class="pill" type="button" data-grp="staff" role="tab" aria-selected="false">Кадровые документы</button></div>
-    <div class="pills big" id="ltrPills" role="tablist" aria-label="Шаблон письма"><button class="pill on point" type="button" data-tpl="refund" role="tab" aria-selected="true" style="--point-delay: 0.00s;">Возврат ошибочного платежа</button><button class="pill point" type="button" data-tpl="purpose" role="tab" aria-selected="false" style="--point-delay: 0.12s;">Уточнение назначения платежа</button><button class="pill point" type="button" data-tpl="offset" role="tab" aria-selected="false" style="--point-delay: 0.24s;">Перезачёт оплаты</button><button class="pill point" type="button" data-tpl="official" role="tab" aria-selected="false" style="--point-delay: 0.36s;">Официальное письмо</button></div>
-  </div>
+  <!-- Группы — раскрывающиеся плашки: нажал «Кадровые документы» — под самой
+       кнопкой раскрылись её документы. Открыта всегда одна группа. -->
+  <div class="ltracc" id="ltrGroups" aria-label="Группы шаблонов"><div class="ltracc-i open" data-grp="client"><button class="ltracc-h" type="button" data-grp="client" aria-expanded="true"><span class="la-t">Письма по оплатам</span><span class="la-c">4 документа</span><span class="la-x" aria-hidden="true"></span></button><div class="ltracc-b"><div class="pills big" id="ltrPills" role="tablist" aria-label="Шаблон письма"><button class="pill on point" type="button" data-tpl="refund" role="tab" aria-selected="true" style="--point-delay: 0.00s;">Возврат ошибочного платежа</button><button class="pill point" type="button" data-tpl="purpose" role="tab" aria-selected="false" style="--point-delay: 0.12s;">Уточнение назначения платежа</button><button class="pill point" type="button" data-tpl="offset" role="tab" aria-selected="false" style="--point-delay: 0.24s;">Перезачёт оплаты</button><button class="pill point" type="button" data-tpl="official" role="tab" aria-selected="false" style="--point-delay: 0.36s;">Официальное письмо</button></div></div></div><div class="ltracc-i" data-grp="staff"><button class="ltracc-h" type="button" data-grp="staff" aria-expanded="false"><span class="la-t">Кадровые документы</span><span class="la-c">7 документов</span><span class="la-x" aria-hidden="true"></span></button><div class="ltracc-b" hidden=""></div></div></div>
 
   <div class="cfggrid">
   <div class="cfgmain">
@@ -1060,9 +1075,9 @@ body.demo .internal{display:none !important}
       <div class="cardhead"><h2 id="ltrTitle"></h2>
         <span class="spec-cnt" id="ltrHint"></span></div>
       <div class="row">
-        <div style="flex:2 1 300px"><label class="f">Наше юрлицо — адресат письма</label>
+        <div style="flex:2 1 300px"><label class="f" for="ltrSupplier">Наше юрлицо — адресат письма</label>
           <select id="ltrSupplier"><option value="stankoprom">ООО «СТАНКОПРОМ»</option><option value="infoservice">ООО «ИНФО-СЕРВИС»</option><option value="lasercut_td">ООО «ТД ЛАЗЕРКАТ»</option></select></div>
-        <div style="flex:2 1 260px"><label class="f">Руководитель в шапке</label>
+        <div style="flex:2 1 260px"><label class="f" for="ltrCeo">Руководитель в шапке</label>
           <input type="text" id="ltrCeo" placeholder="подставится из реквизитов"></div>
       </div>
       <div id="ltrFields"></div>
@@ -1135,19 +1150,19 @@ body.demo .internal{display:none !important}
     <div class="card">
       <div class="cardhead"><h2>Оклад и норма месяца</h2></div>
       <div class="row">
-        <div><label class="f">Оклад за полный месяц, ₽</label>
+        <div><label class="f" for="zpSalary">Оклад за полный месяц, ₽</label>
           <input type="text" id="zpSalary" inputmode="decimal"></div>
-        <div><label class="f">Оклад указан</label><select id="zpMode">
+        <div><label class="f" for="zpMode">Оклад указан</label><select id="zpMode">
           <option value="gross">Грязными — до налогов</option>
           <option value="net">Чистыми — на руки</option></select></div>
-        <div><label class="f">Месяц</label><select id="zpMonth"><option value="0">Январь</option><option value="1">Февраль</option><option value="2">Март</option><option value="3">Апрель</option><option value="4">Май</option><option value="5">Июнь</option><option value="6">Июль</option><option value="7">Август</option><option value="8">Сентябрь</option><option value="9">Октябрь</option><option value="10">Ноябрь</option><option value="11">Декабрь</option></select></div>
+        <div><label class="f" for="zpMonth">Месяц</label><select id="zpMonth"><option value="0">Январь</option><option value="1">Февраль</option><option value="2">Март</option><option value="3">Апрель</option><option value="4">Май</option><option value="5">Июнь</option><option value="6">Июль</option><option value="7">Август</option><option value="8">Сентябрь</option><option value="9">Октябрь</option><option value="10">Ноябрь</option><option value="11">Декабрь</option></select></div>
       </div>
       <div class="row">
-        <div><label class="f">Норма рабочих дней</label>
+        <div><label class="f" for="zpNormDays">Норма рабочих дней</label>
           <input type="text" id="zpNormDays" inputmode="numeric"></div>
-        <div><label class="f">Норма часов</label>
+        <div><label class="f" for="zpNormHours">Норма часов</label>
           <input type="text" id="zpNormHours" inputmode="numeric"></div>
-        <div><label class="f">Отработано дней</label>
+        <div><label class="f" for="zpWorked">Отработано дней</label>
           <input type="text" id="zpWorked" inputmode="decimal"></div>
       </div>
       <div class="btns noprint">
@@ -1156,9 +1171,9 @@ body.demo .internal{display:none !important}
       <div id="zpNormWarn"></div>
       <div class="cardsub">Аванс</div>
       <div class="row">
-        <div><label class="f">Отработано дней с 1 по 15</label>
+        <div><label class="f" for="zpHalfDays">Отработано дней с 1 по 15</label>
           <input type="text" id="zpHalfDays" inputmode="decimal"></div>
-        <div><label class="f">Аванс выплачен суммой, ₽</label>
+        <div><label class="f" for="zpAdvManual">Аванс выплачен суммой, ₽</label>
           <input type="text" id="zpAdvManual" inputmode="decimal" placeholder="пусто — считать по дням"></div>
       </div>
       <div class="btns noprint">
@@ -1169,18 +1184,18 @@ body.demo .internal{display:none !important}
     <div class="card">
       <div class="cardhead"><h2>Надбавки и удержания</h2></div>
       <div class="row">
-        <div><label class="f">Бонус, ₽</label><input type="text" id="zpBonus" inputmode="decimal"></div>
-        <div><label class="f">Дежурство, ₽</label>
+        <div><label class="f" for="zpBonus">Бонус, ₽</label><input type="text" id="zpBonus" inputmode="decimal"></div>
+        <div><label class="f" for="zpDuty">Дежурство, ₽</label>
           <input type="text" id="zpDuty" inputmode="decimal"></div>
-        <div><label class="f">Штраф, ₽</label><input type="text" id="zpPenalty" inputmode="decimal"></div>
+        <div><label class="f" for="zpPenalty">Штраф, ₽</label><input type="text" id="zpPenalty" inputmode="decimal"></div>
       </div>
       <div class="cardsub">Переработки и работа в выходные</div>
       <div class="row">
-        <div><label class="f">Сверхурочные ×1,5, ч</label>
+        <div><label class="f" for="zpOt15">Сверхурочные ×1,5, ч</label>
           <input type="text" id="zpOt15" inputmode="decimal"></div>
-        <div><label class="f">Сверхурочные ×2, ч</label>
+        <div><label class="f" for="zpOt20">Сверхурочные ×2, ч</label>
           <input type="text" id="zpOt20" inputmode="decimal"></div>
-        <div><label class="f">Часы в выходные и праздники</label>
+        <div><label class="f" for="zpHolH">Часы в выходные и праздники</label>
           <input type="text" id="zpHolH" inputmode="decimal"></div>
       </div>
       <label class="chk"><input type="checkbox" id="zpHolOver">
@@ -1191,23 +1206,23 @@ body.demo .internal{display:none !important}
         <summary>Отпуск и больничный</summary>
         <div class="det-b">
           <div class="row">
-            <div><label class="f">Дней отпуска</label>
+            <div><label class="f" for="zpVacDays">Дней отпуска</label>
               <input type="text" id="zpVacDays" inputmode="numeric"></div>
-            <div><label class="f">Средний дневной, ₽</label>
+            <div><label class="f" for="zpVacDaily">Средний дневной, ₽</label>
               <input type="text" id="zpVacDaily" inputmode="decimal"></div>
-            <div><label class="f">Заработок за 12 мес., ₽</label>
+            <div><label class="f" for="zpVacEarn">Заработок за 12 мес., ₽</label>
               <input type="text" id="zpVacEarn" inputmode="decimal" placeholder="÷ 12 ÷ 29,3"></div>
           </div>
           <div class="row">
-            <div><label class="f">Дней больничного</label>
+            <div><label class="f" for="zpSickDays">Дней больничного</label>
               <input type="text" id="zpSickDays" inputmode="numeric"></div>
-            <div><label class="f">Средний дневной, ₽</label>
+            <div><label class="f" for="zpSickDaily">Средний дневной, ₽</label>
               <input type="text" id="zpSickDaily" inputmode="decimal"></div>
-            <div><label class="f">Заработок за 2 года, ₽</label>
+            <div><label class="f" for="zpSickEarn">Заработок за 2 года, ₽</label>
               <input type="text" id="zpSickEarn" inputmode="decimal" placeholder="÷ 730"></div>
           </div>
           <div class="row">
-            <div><label class="f">Страховой стаж, лет</label>
+            <div><label class="f" for="zpSickYears">Страховой стаж, лет</label>
               <input type="text" id="zpSickYears" inputmode="numeric"></div>
           </div>
           <div class="btns noprint">
@@ -1223,9 +1238,9 @@ body.demo .internal{display:none !important}
         <summary>Ставки налогов</summary>
         <div class="det-b">
           <div class="row">
-            <div><label class="f">НДФЛ, %</label>
+            <div><label class="f" for="zpNdfl">НДФЛ, %</label>
               <input type="text" id="zpNdfl" inputmode="decimal"></div>
-            <div><label class="f">Внутренний налог компании, %</label>
+            <div><label class="f" for="zpInternal">Внутренний налог компании, %</label>
               <input type="text" id="zpInternal" inputmode="decimal"></div>
           </div>
           <div class="note small">НДФЛ и внутренний налог компании считаются от полной начисленной суммы. Первые три дня больничного платит работодатель, остальные — СФР.</div>
@@ -1297,7 +1312,7 @@ body.demo .internal{display:none !important}
     <div class="card">
       <div class="cardhead"><h2>Мои сборки</h2></div>
       <div class="row">
-        <div style="flex:2 1 260px"><label class="f">Название</label>
+        <div style="flex:2 1 260px"><label class="f" for="buildName">Название</label>
           <input type="text" id="buildName" placeholder="Волокно 1530 6 кВт под ключ"></div>
         <div style="align-self:end"><button class="btn sec" type="button" id="buildSave">Сохранить</button></div>
       </div>
@@ -1376,20 +1391,20 @@ body.demo .internal{display:none !important}
         <div class="step-t">Конфигурация волоконного станка<small>серия, формат, мощность, модули</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div><label class="f">Серия</label><select id="fSeries"><option value="S">S — лист и трубы</option><option value="A">A — компактная, 3–4 мм в режиме 24/7</option></select></div>
-          <div><label class="f">Формат поля</label><select id="fFormat"><option value="1530">1530 — 1500×3000 мм</option><option value="1560">1560 — 1500×6000 мм</option><option value="2030">2030 — 2000×3000 мм</option><option value="2040">2040 — 2000×4000 мм</option><option value="2060">2060 — 2000×6000 мм</option></select></div>
-          <div><label class="f">Мощность источника</label><select id="fPower"><option value="3000">3 кВт</option><option value="6000">6 кВт</option><option value="12000">12 кВт</option></select></div>
+          <div><label class="f" for="fSeries">Серия</label><select id="fSeries"><option value="S">S — лист и трубы</option><option value="A">A — компактная, 3–4 мм в режиме 24/7</option></select></div>
+          <div><label class="f" for="fFormat">Формат поля</label><select id="fFormat"><option value="1530">1530 — 1500×3000 мм</option><option value="1560">1560 — 1500×6000 мм</option><option value="2030">2030 — 2000×3000 мм</option><option value="2040">2040 — 2000×4000 мм</option><option value="2060">2060 — 2000×6000 мм</option></select></div>
+          <div><label class="f" for="fPower">Мощность источника</label><select id="fPower"><option value="3000">3 кВт</option><option value="6000">6 кВт</option><option value="12000">12 кВт</option></select></div>
         </div>
         <div class="row">
-          <div><label class="f">Сменный стол</label><select id="fTable">
+          <div><label class="f" for="fTable">Сменный стол</label><select id="fTable">
             <option value="0">нет</option><option value="1">да</option></select></div>
-          <div><label class="f">RD-модуль (труборез, поворотная ось)</label><select id="fRot">
+          <div><label class="f" for="fRot">RD-модуль (труборез, поворотная ось)</label><select id="fRot">
             <option value="">нет</option><option value="6-160">rotary 6-160</option>
             <option value="6-240">rotary 6-240</option><option value="6-360">rotary 6-360</option>
           </select></div>
         </div>
         <div class="row">
-          <div style="flex:2 1 340px"><label class="f">Приводы (сервомоторы)</label>
+          <div style="flex:2 1 340px"><label class="f" for="fServo">Приводы (сервомоторы)</label>
             <select id="fServo"><option value="yaskawa_std">Yaskawa, стандарт</option><option value="yaskawa_plus">Yaskawa, усиленный</option><option value="bochu_std">Bochu S9, стандарт</option><option value="bochu_plus">Bochu S9, усиленный</option></select></div>
         </div>
         
@@ -1404,7 +1419,7 @@ body.demo .internal{display:none !important}
       <div class="step-b has-think"><div class="doing">
         <div id="fOut"><div class="pricebox"><div class="pb stock"><div class="lbl">Цена, НДС включён</div><div class="val">3 010 400 ₽</div><div class="sub">Лазерный станок по металлу WATTSAN S 1530 3000 Вт · приводы Yaskawa, стандарт</div></div><div class="pb"><div class="lbl">Второй ценник</div><div class="val" style="font-size:19px">нет в прайсе</div><div class="sub">По волокну одна цена. Наценку за наличие не выдумываем.</div></div></div><div class="note">Сверх цены станка: доставка, ПНР, обучение и подготовка цеха. Стабилизатор ≥ 30 000 Вт (волокно) или ≥ 50 000 Вт (труборез) — отдельная статья и условие гарантии.</div></div>
         <div class="matches" id="fMatches"><h3>Совпадения в прайсе — нажмите, чтобы взять цену</h3><div class="mrow"><span class="nm">Лазерный станок по металлу WATTSAN S 1530 3000 Вт</span><b>3 010 400 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок по металлу WATTSAN S 1530 6000 Вт</span><b>4 016 300 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок по металлу WATTSAN S 1530 12000 Вт</span><b>5 544 000 ₽</b></div></div>
-        <div class="btns noprint"><button class="btn" id="fAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn" id="fAdd">Добавить в смету</button></div>
         
         
       </div><div class="think"><div class="note">В цену волоконного станка входят контроллер FSCUT, лазерная голова BLT
@@ -1422,12 +1437,12 @@ body.demo .internal{display:none !important}
       <div class="step-t">Компрессор<small>для резки воздухом и пневматики станка</small></div></div>
     <div class="step-b has-think"><div class="doing">
       <div class="row">
-        <div style="flex:3 1 340px"><label class="f">Модель</label>
+        <div style="flex:3 1 340px"><label class="f" for="kitCompressor">Модель</label>
           <select id="kitCompressor"><option value="esc20x">Компрессорная станция ERSTVAK ESC-20X-500AL 16 бар — 630 000 ₽</option><option value="esc30x">Компрессорная станция ERSTVAK ESC-30X-500AL 16 бар — 760 000 ₽</option><option value="vk20t16">Компрессор Ремеза ВК20Т-16-500Д2 — 650 000 ₽</option><option value="vk30t16">Компрессор Ремеза ВК30Т-16-500Д2 — 870 000 ₽</option><option value="vk30t20">Компрессор Ремеза ВК30Т-20-470Д2 — 1 270 000 ₽</option></select></div>
       </div>
       
       <div class="btns noprint">
-        <button class="btn" id="compressorAdd">Добавить в смету</button></div>
+        <button type="button" class="btn" id="compressorAdd">Добавить в смету</button></div>
       <div class="scroll"><table class=""><thead><tr><th>Модель</th><th>Давление</th><th>Подача</th><th>Мощность</th><th>Ресивер</th><th>Шум</th><th>Габариты, масса</th><th>Гарантия</th><th>КП</th><th>Цена с НДС</th></tr></thead><tbody><tr><td><b>Компрессорная станция ERSTVAK ESC-20X-500AL 16 бар</b></td><td>16 бар</td><td>1200 л/мин</td><td>15,0 кВт</td><td>500 л</td><td>65±2 дБ</td><td>2120×996×1929 мм, 510 кг</td><td>24 месяца</td><td>23.04.2026 — срок действия в КП не указан</td><td><b>630 000 ₽</b></td></tr><tr><td><b>Компрессорная станция ERSTVAK ESC-30X-500AL 16 бар</b></td><td>16 бар</td><td>2200 л/мин</td><td>22,0 кВт</td><td>500 л</td><td>68±4 дБ</td><td>2120×996×1929 мм, 660 кг</td><td>24 месяца</td><td>06.04.2026 — срок действия в КП не указан</td><td><b>760 000 ₽</b></td></tr><tr><td><b>Компрессор Ремеза ВК20Т-16-500Д2</b></td><td>16 бар</td><td>1450 л/мин</td><td>15,0 кВт</td><td>500 л</td><td>66 дБА</td><td>1960×850×1780 мм, 640 кг</td><td>12 месяцев с даты ввода в эксплуатацию, но не более 18 месяцев с даты поставки</td><td>13.04.2026 — срок КП 30 дней — истёк, цену переспросить</td><td><b>650 000 ₽</b></td></tr><tr><td><b>Компрессор Ремеза ВК30Т-16-500Д2</b></td><td>16 бар</td><td>2500 л/мин</td><td>22,0 кВт</td><td>470 л</td><td>75 дБА</td><td>2170×880×1920 мм, 850 кг</td><td>12 месяцев с даты ввода в эксплуатацию, но не более 18 месяцев с даты поставки</td><td>15.05.2026 — срок КП 30 дней — истёк, цену переспросить</td><td><b>870 000 ₽</b></td></tr><tr><td><b>Компрессор Ремеза ВК30Т-20-470Д2</b></td><td>20 бар</td><td>1700 л/мин</td><td>22,0 кВт</td><td>470 л</td><td>69 дБА</td><td>2170×880×1920 мм, 830 кг</td><td>12 месяцев с даты ввода в эксплуатацию, но не более 18 месяцев с даты поставки</td><td>15.06.2026 — срок КП 30 дней — истёк, цену переспросить</td><td><b>1 270 000 ₽</b></td></tr></tbody></table></div>
     </div><div class="think"><div class="think-box" id="compressorOut"><div class="calcsteps"><div>Давление <b>16 бар</b> · подача <b>1200 л/мин</b> · двигатель <b>15 кВт</b> · ресивер <b>500 л</b></div><div><b>Тип:</b> винтовой, а не поршневой: у металлореза режим близок к непрерывному, поршневой на нём быстро выработает ресурс</div><div><b>Давление:</b> 16 бар — классика для лазерной резки: в линии до головы теряется часть давления, и рабочих 13–16 бар должно хватать с запасом</div><div><b>Производительность:</b> считать по расходу газа станка и брать запас 20–30 %: компрессор, работающий на пределе, греется и гонит влагу</div><div><b>Подготовка воздуха:</b> нужен комплект «4 в 1» — компрессор, ресивер, рефрижераторный осушитель и магистральные фильтры</div><div><b>Почему это важно:</b> влага и масло в воздухе садятся на защитное стекло и сопло: грязный воздух — это расходники и потеря качества реза, а не только «немного мокро»</div><div>Шум 65±2 дБ · осушитель: рефрижераторный ARCTICA L + 4 фильтра</div><div>Гарантия 24 месяца · срок: 20 рабочих дней · габариты 2120×996×1929 мм · масса 510 кг</div></div><div class="note alert">КП от 23.04.2026: срок действия в КП не указан.</div><div class="note">Подача 1,2 м³/мин. По таблице 6 кВт резка воздухом требует от 0,35 м³/мин (1 мм) до 3,8 м³/мин (нержавейка 20 мм). Верх таблицы эта модель не закрывает: для 3,8 м³/мин с запасом нужно около 4,75 м³/мин, а такого компрессора в заведённых КП нет — считайте по реальному режиму заказчика.</div><div class="note">Компрессор нужен для резки воздухом и для пневматики станка. Давление 16 бар закрывает штатные режимы; 20 бар берут под большие толщины и запас. Производительность подбирают по расходу газа: см. таблицу расхода 6 кВт. ВАЖНО: все КП датированы апрелем–июнем 2026 и срок их действия истёк — цену подтверждайте у поставщика заново. У ВК30Т-16-500Д2 в самом КП противоречие: в названии «500», а в параметрах ресивер 470 л.</div></div></div></div>
   </div>
@@ -1437,12 +1452,12 @@ body.demo .internal{display:none !important}
       <div class="step-t">Дымоуловитель<small>вытяжка в комплекте станка есть, но фильтрации у неё нет</small></div></div>
     <div class="step-b has-think"><div class="doing">
       <div class="row">
-        <div style="flex:3 1 340px"><label class="f">Модель</label>
+        <div style="flex:3 1 340px"><label class="f" for="kitExtraction">Модель</label>
           <select id="kitExtraction"><option value="pa6000ct">Дымоуловитель PURE-AIR PA-6000CT (350 мм) — 1 380 000 ₽</option></select></div>
       </div>
       
       <div class="btns noprint">
-        <button class="btn" id="extractionAdd">Добавить в смету</button></div>
+        <button type="button" class="btn" id="extractionAdd">Добавить в смету</button></div>
       <div class="scroll"><table class=""><thead><tr><th>Модель</th><th>Производительность</th><th>Разрежение</th><th>Мощность</th><th>Патрубок</th><th>Фильтр</th><th>Цена с НДС</th></tr></thead><tbody><tr><td><b>Дымоуловитель PURE-AIR PA-6000CT (350 мм)</b></td><td>6000 м³/ч</td><td>3500 Па</td><td>7,5 кВт</td><td>350 мм</td><td>префильтр 99,97 % на 0,3 мкм — класс H13 ГОСТ Р ЕН 1822-1-2010</td><td><b>1 380 000 ₽</b></td></tr></tbody></table></div>
     </div><div class="think"><div class="think-box" id="extractionOut"><div class="calcsteps"><div>Производительность <b>6000 м³/ч</b> · разрежение <b>3500 Па</b> · мощность <b>7,5 кВт</b> · патрубок 350 мм</div><div>префильтр 99,97 % на 0,3 мкм — класс H13 ГОСТ Р ЕН 1822-1-2010</div><div>Габариты 1360 (1690 с лотком)×953×2086 мм · масса 600 кг</div><div>оплата 50 % в течение 5 банковских дней после подписания договора, гарантия 12 месяцев</div><div class="internal">Источник цены: КП СТАНКОПРОМ исх. № 457 от 15.06.2026</div></div><div class="note alert">КП от 15.06.2026: предложение действовало до 26.07.2026 — срок истёк.</div></div></div></div>
   </div>
@@ -1452,12 +1467,12 @@ body.demo .internal{display:none !important}
       <div class="step-t">Криоцилиндр вместо баллонов<small>когда азота нужно много</small></div></div>
     <div class="step-b has-think"><div class="doing">
       <div class="row">
-        <div style="flex:3 1 340px"><label class="f">Позиция</label>
+        <div style="flex:3 1 340px"><label class="f" for="kitCryo">Позиция</label>
           <select id="kitCryo"><option value="dpl210">Криоцилиндр вертикальный DPL-210/2,3 (9,2 нм³/ч) — 281 000 ₽</option><option value="ghk02_30">Криоцилиндр ГХК-0,2 DPL-210/2,3 с испарителем (30 нм³/ч) — 352 300 ₽</option></select></div>
       </div>
       
       <div class="btns noprint">
-        <button class="btn" id="cryoAdd">Добавить в смету</button></div>
+        <button type="button" class="btn" id="cryoAdd">Добавить в смету</button></div>
       
       <div class="scroll"><table class=""><thead><tr><th>Позиция</th><th>Производительность</th><th>Цена с НДС</th></tr></thead><tbody><tr><td><b>Криоцилиндр вертикальный DPL-210/2,3 (9,2 нм³/ч)</b></td><td>9,2 нм³/ч</td><td><b>281 000 ₽</b></td></tr><tr><td><b>Криоцилиндр ГХК-0,2 DPL-210/2,3 с испарителем (30 нм³/ч)</b></td><td>30 нм³/ч</td><td><b>352 300 ₽</b></td></tr></tbody></table></div>
       <details><summary>Характеристики газификатора</summary>
@@ -1470,7 +1485,7 @@ body.demo .internal{display:none !important}
       <div class="step-t">Стабилизатор напряжения<small>условие гарантии, а не опция</small></div></div>
     <div class="step-b has-think"><div class="doing">
       <div class="row">
-        <div style="flex:3 1 340px"><label class="f">Модель</label>
+        <div style="flex:3 1 340px"><label class="f" for="kitStab">Модель</label>
           <select id="kitStab"><option value="res30">Стабилизатор напряжения Ресанта АСН-30000/3-ЭМ — 30 000 ВА — 117 000 ₽</option><option value="res60">Стабилизатор напряжения Ресанта АСН-60000/3-ЭМ — 60 000 ВА — 211 000 ₽</option><option value="res100">Стабилизатор напряжения Ресанта АСН-100000/3-ЭМ — 100 000 ВА — 690 000 ₽</option><option value="res150">Стабилизатор напряжения Ресанта АСН-150000/3-ЭМ — 150 000 ВА — 960 000 ₽</option><option value="shtil30">Стабилизатор напряжения Штиль R30000-3 — 30 кВт — 315 000 ₽</option><option value="shtil63">Стабилизатор напряжения Штиль R63000-3 — 63 кВт — 498 000 ₽</option><option value="shtil81">Стабилизатор напряжения Штиль R81000-3 — 81 кВт — 578 000 ₽</option><option value="shtil100">Стабилизатор напряжения Штиль R100K-3 — 100 кВт — 608 000 ₽</option></select></div>
         <div style="flex:0 0 auto;align-self:flex-end">
           <label class="chk"><input type="checkbox" id="stabAll">
@@ -1478,7 +1493,7 @@ body.demo .internal{display:none !important}
       </div>
       
       <div class="btns noprint">
-        <button class="btn" id="stabAdd">Добавить в смету</button></div>
+        <button type="button" class="btn" id="stabAdd">Добавить в смету</button></div>
       
       
       <div class="scroll"><table class=""><thead><tr><th>Модель</th><th>Мощность</th><th>Питание</th><th>Назначение</th><th>Цена</th></tr></thead><tbody><tr><td><b>Стабилизатор напряжения Ресанта АСН-30000/3-ЭМ</b></td><td>30 000 ВА</td><td>3 фазы</td><td>металлорез</td><td><b>117 000 ₽</b></td></tr><tr><td><b>Стабилизатор напряжения Ресанта АСН-60000/3-ЭМ</b></td><td>60 000 ВА</td><td>3 фазы</td><td>металлорез</td><td><b>211 000 ₽</b></td></tr><tr><td><b>Стабилизатор напряжения Ресанта АСН-100000/3-ЭМ</b></td><td>100 000 ВА</td><td>3 фазы</td><td>металлорез</td><td><b>690 000 ₽</b></td></tr><tr><td><b>Стабилизатор напряжения Ресанта АСН-150000/3-ЭМ</b></td><td>150 000 ВА</td><td>3 фазы</td><td>металлорез</td><td><b>960 000 ₽</b></td></tr><tr><td><b>Стабилизатор напряжения Штиль R30000-3</b></td><td>30 кВт</td><td>380 В, 3 фазы</td><td>металлорез</td><td><b>315 000 ₽</b></td></tr><tr><td><b>Стабилизатор напряжения Штиль R63000-3</b></td><td>63 кВт</td><td>380 В, 3 фазы</td><td>металлорез</td><td><b>498 000 ₽</b></td></tr><tr><td><b>Стабилизатор напряжения Штиль R81000-3</b></td><td>81 кВт</td><td>380 В, 3 фазы</td><td>металлорез</td><td><b>578 000 ₽</b></td></tr><tr><td><b>Стабилизатор напряжения Штиль R100K-3</b></td><td>100 кВт</td><td>380 В, 3 фазы</td><td>металлорез</td><td><b>608 000 ₽</b></td></tr><tr><td><b>Стабилизатор напряжения Ресанта АСН-12000/1-ЭМ</b></td><td>12 000 ВА</td><td>1 фаза</td><td>сварка</td><td><b>34 000 ₽</b></td></tr><tr><td><b>Стабилизатор напряжения Ресанта АСН-20000/3-ЭМ</b></td><td>20 000 ВА</td><td>3 фазы</td><td>сварка</td><td><b>87 000 ₽</b></td></tr></tbody></table></div>
@@ -1537,11 +1552,11 @@ body.demo .internal{display:none !important}
         <div class="step-t">Конфигурация фрезерного станка<small>формат поля, затем конкретная сборка</small></div></div>
       <div class="step-b"><div class="doing">
         <div class="row">
-          <div><label class="f">Формат поля</label><select id="mFormat"><option value="0404">0404 — 400×400 мм</option><option value="0609">0609 — 600×900 мм</option><option value="6090">6090 — 600×900 мм</option><option value="1313">1313 — 1300×1300 мм</option><option value="1325">1325 — 1300×2500 мм</option><option value="1616">1616 — 1600×1600 мм</option><option value="1625">1625 — 1600×2500 мм</option><option value="1630">1630 — 1600×3000 мм</option><option value="2030">2030 — 2000×3000 мм</option><option value="2040">2040 — 2000×4000 мм</option><option value="2060">2060 — 2000×6000 мм</option></select></div>
-          <div style="flex:2 1 320px"><label class="f">Сборка</label><select id="mConfig"><option value="0404 mini, 1.5wc, NC">0404 mini, 1.5wc, NC</option><option value="0404 mini, 1.5wc, A11">0404 mini, 1.5wc, A11</option><option value="0404 mini Cabine, 1.5wc, A11">0404 mini Cabine, 1.5wc, A11</option></select></div>
+          <div><label class="f" for="mFormat">Формат поля</label><select id="mFormat"><option value="0404">0404 — 400×400 мм</option><option value="0609">0609 — 600×900 мм</option><option value="6090">6090 — 600×900 мм</option><option value="1313">1313 — 1300×1300 мм</option><option value="1325">1325 — 1300×2500 мм</option><option value="1616">1616 — 1600×1600 мм</option><option value="1625">1625 — 1600×2500 мм</option><option value="1630">1630 — 1600×3000 мм</option><option value="2030">2030 — 2000×3000 мм</option><option value="2040">2040 — 2000×4000 мм</option><option value="2060">2060 — 2000×6000 мм</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="mConfig">Сборка</label><select id="mConfig"><option value="0404 mini, 1.5wc, NC">0404 mini, 1.5wc, NC</option><option value="0404 mini, 1.5wc, A11">0404 mini, 1.5wc, A11</option><option value="0404 mini Cabine, 1.5wc, A11">0404 mini Cabine, 1.5wc, A11</option></select></div>
         </div>
         <div class="row internal">
-          <div><label class="f">Какой ценник берём</label><select id="priceMode">
+          <div><label class="f" for="priceMode">Какой ценник берём</label><select id="priceMode">
             <option value="order">Под заказ — завод, до 80 раб. дней</option>
             <option value="stock">Из наличия — склад</option></select></div>
         </div>
@@ -1554,7 +1569,7 @@ body.demo .internal{display:none !important}
       <div class="step-b"><div class="doing">
         <div id="mOut"><div class="pricebox"><div class="pb stock"><div class="lbl">Под заказ — завод, до 80 раб. дней</div><div class="val">236 300 ₽</div><div class="sub">Оплата 50 % + остаток</div></div><div class="pb"><div class="lbl">Из наличия — склад</div><div class="val">262 300 ₽</div><div class="sub">Оплата 100 %</div></div></div><div class="calcsteps internal"><div>Разница: <b>26 000 ₽</b>, это <b>+11 %</b> к цене под заказ</div><div>Правило прайса: +11 % с округлением до 100 ₽. Цена берётся из таблицы, а не считается.</div></div><div class="muted">Шпиндель 1 кВт · охлаждение водяное · стойка NC · вакуумный стол: нет · поле 400×400 мм · питание 220 В</div><div class="note alert">Водяное охлаждение шпинделя — нужен чиллер. В прайсе три модели S&amp;A, но привязки к мощности шпинделя в данных нет: подбор чиллера уточнять у сервиса.</div><div class="note">Что клиент платит сверх: доставка, ПНР, обучение, чиллер. В цену фрезерного они не входят.</div></div>
         <div class="matches" id="mMatches"><h3>Совпадения в прайсе — нажмите, чтобы взять цену</h3><div class="mrow"><span class="nm">Фрезерный станок WATTSAN 0404 mini, 1.5wc, NC</span><b>236 300 ₽</b></div><div class="mrow"><span class="nm">Фрезерный станок WATTSAN 0404 mini, 1.5wc, A11</span><b>282 500 ₽</b></div><div class="mrow"><span class="nm">Фрезерный станок WATTSAN 0404 mini Cabine, 1.5wc, A11</span><b>358 900 ₽</b></div></div>
-        <div class="btns noprint"><button class="btn" id="mAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn" id="mAdd">Добавить в смету</button></div>
       </div><div class="think"></div></div>
     </div>
 
@@ -1572,8 +1587,8 @@ body.demo .internal{display:none !important}
         <div class="step-t">ПНР и обучение<small>платные услуги — не обещать как бесплатное преимущество</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div style="flex:2 1 300px"><label class="f">Станок</label><select id="pnrModel"><option value="0">Wattsan 0404/0609 mini</option><option value="1">Wattsan 0404/0609 mini Cabine</option><option value="2">Wattsan A1/M1 6090</option><option value="3">Wattsan A1/M1 1313</option><option value="4">Wattsan A1/M1 1616</option><option value="5">Wattsan A1/M1 1325</option><option value="6">Wattsan M1 2030/2040</option><option value="7">Wattsan M1 1313 S4</option><option value="8">Wattsan M1 1313 RD / 1325 RD</option><option value="9">Wattsan M3 1313-2060</option></select></div>
-          <div><label class="f">Что включить</label><select id="pnrKind">
+          <div style="flex:2 1 300px"><label class="f" for="pnrModel">Станок</label><select id="pnrModel"><option value="0">Wattsan 0404/0609 mini</option><option value="1">Wattsan 0404/0609 mini Cabine</option><option value="2">Wattsan A1/M1 6090</option><option value="3">Wattsan A1/M1 1313</option><option value="4">Wattsan A1/M1 1616</option><option value="5">Wattsan A1/M1 1325</option><option value="6">Wattsan M1 2030/2040</option><option value="7">Wattsan M1 1313 S4</option><option value="8">Wattsan M1 1313 RD / 1325 RD</option><option value="9">Wattsan M3 1313-2060</option></select></div>
+          <div><label class="f" for="pnrKind">Что включить</label><select id="pnrKind">
             <option value="pnr">ПНР</option>
             <option value="plus1">ПНР +1 день</option>
             <option value="plus2">ПНР +2 дня</option>
@@ -1583,7 +1598,7 @@ body.demo .internal{display:none !important}
         </div>
         <label class="chk"><input type="checkbox" id="thirdParty"> Сторонний станок — коэффициент ×1,2</label>
         
-        <div class="btns noprint"><button class="btn sec" id="pnrAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="pnrAdd">Добавить в смету</button></div>
         
       </div><div class="think"><div class="think-box" id="pnrOut"><div class="calcsteps"><div>По прайсу: <b>23 000 ₽</b> · выезд 1 дн.</div><div>На сторонние станки коэффициент ×1,2 · Штраф за ложный выезд 19 000 ₽ или по договору · Минимальный выезд за день — 22 000 ₽ · У M3 обучение входит в ПНР — единственный случай в прайсе</div></div></div><div class="note"><b>Общие условия:</b><ul><li>На сторонние станки коэффициент ×1,2</li><li>Штраф за ложный выезд 19 000 ₽ или по договору</li><li>Минимальный выезд за день — 22 000 ₽</li><li>У M3 обучение входит в ПНР — единственный случай в прайсе</li></ul></div></div></div>
     </div>
@@ -1593,8 +1608,8 @@ body.demo .internal{display:none !important}
         <div class="step-t">Аспирация BELMASH<small>полный ряд с характеристиками · розница ×1,2</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="aspModel"><option value="BDC200">BELMASH BDC200 — 200 м³/ч — 17 990 ₽</option><option value="DC850">BELMASH DC850 — 850 м³/ч — 25 190 ₽</option><option value="DC850C">BELMASH DC850C — 850 м³/ч — 42 590 ₽</option><option value="DC1200">BELMASH DC1200 — 1200 м³/ч — 23 990 ₽</option><option value="DC1600M">BELMASH DC1600M — 1600 м³/ч — 32 390 ₽</option><option value="DC2500">BELMASH DC2500 — 2530 м³/ч — 40 790 ₽</option><option value="DC2500-AT">BELMASH DC2500-AT — 2530 м³/ч — 48 590 ₽</option><option value="DC2500MC">BELMASH DC2500MC — 2530 м³/ч — 62 390 ₽</option><option value="DC2500MC-AT">BELMASH DC2500MC-AT — 2530 м³/ч — 71 990 ₽</option><option value="DC2500-PS">BELMASH DC2500-PS — 2520 м³/ч — 61 790 ₽</option><option value="DC3900">BELMASH DC3900 — 3900 м³/ч — 53 990 ₽</option><option value="DC3900MC-AT">BELMASH DC3900MC-AT — 3900 м³/ч — 107 990 ₽</option><option value="DC3900-PS">BELMASH DC3900-PS — undefined м³/ч — NaN ₽</option><option value="DC4500-F3">BELMASH DC4500-F3 — 4560 м³/ч — 113 990 ₽</option><option value="DC4500-F4">BELMASH DC4500-F4 — 4560 м³/ч — 131 990 ₽</option></select></div>
-          <div><label class="f">Питание</label><select id="aspVolt"><option value="220">220 В</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="aspModel">Модель</label><select id="aspModel"><option value="BDC200">BELMASH BDC200 — 200 м³/ч — 17 990 ₽</option><option value="DC850">BELMASH DC850 — 850 м³/ч — 25 190 ₽</option><option value="DC850C">BELMASH DC850C — 850 м³/ч — 42 590 ₽</option><option value="DC1200">BELMASH DC1200 — 1200 м³/ч — 23 990 ₽</option><option value="DC1600M">BELMASH DC1600M — 1600 м³/ч — 32 390 ₽</option><option value="DC2500">BELMASH DC2500 — 2530 м³/ч — 40 790 ₽</option><option value="DC2500-AT">BELMASH DC2500-AT — 2530 м³/ч — 48 590 ₽</option><option value="DC2500MC">BELMASH DC2500MC — 2530 м³/ч — 62 390 ₽</option><option value="DC2500MC-AT">BELMASH DC2500MC-AT — 2530 м³/ч — 71 990 ₽</option><option value="DC2500-PS">BELMASH DC2500-PS — 2520 м³/ч — 61 790 ₽</option><option value="DC3900">BELMASH DC3900 — 3900 м³/ч — 53 990 ₽</option><option value="DC3900MC-AT">BELMASH DC3900MC-AT — 3900 м³/ч — 107 990 ₽</option><option value="DC3900-PS">BELMASH DC3900-PS — undefined м³/ч — NaN ₽</option><option value="DC4500-F3">BELMASH DC4500-F3 — 4560 м³/ч — 113 990 ₽</option><option value="DC4500-F4">BELMASH DC4500-F4 — 4560 м³/ч — 131 990 ₽</option></select></div>
+          <div><label class="f" for="aspVolt">Питание</label><select id="aspVolt"><option value="220">220 В</option></select></div>
         </div>
         <div class="specbox" id="aspSpec"><h4>BELMASH BDC200</h4><dl><dt>Производительность</dt><dd>200 м³/ч</dd><dt>Мощность</dt><dd>1200 Вт</dd><dt>Патрубков</dt><dd>1 × 100 мм</dd><dt>Фильтрация</dt><dd>0,5 мкм · Картридж, 2 ступени</dd><dt>Мешок</dt><dd>50 л</dd><dt>Шум</dt><dd>85 дБ</dd><dt>Масса</dt><dd>10 кг</dd><dt>Питание</dt><dd>220 В</dd><dt>Артикул</dt><dd>D125A</dd><dt>Розница производителя</dt><dd>14 990 ₽</dd><dt>Цена в смету (×1,2)</dt><dd>17 990 ₽</dd></dl><div class="idx">Индексов в названии нет.</div></div>
         <div class="btns noprint"><button class="btn sec" type="button" id="aspAdd">Добавить в смету</button></div>
@@ -1612,14 +1627,14 @@ body.demo .internal{display:none !important}
         <div class="step-t">Выбор CO₂-станка<small>бренд, затем модель — цены с сайта, витрина сайта, сверка 25.03.2026</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div><label class="f">Бренд</label><select id="cBrand">
+          <div><label class="f" for="cBrand">Бренд</label><select id="cBrand">
             <option value="Wattsan">Wattsan</option>
             <option value="Zerder">Zerder — бюджетный</option></select></div>
-          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="cModel"><option value="0203 Micro">0203 Micro</option><option value="0503 Hobby-T">0503 Hobby-T</option><option value="0503">0503</option><option value="6040">6040</option><option value="6090 ST">6090 ST</option><option value="6090 LT">6090 LT</option><option value="6090 PRO">6090 PRO</option><option value="1290 ST">1290 ST</option><option value="1290 LT">1290 LT</option><option value="1290 PRO">1290 PRO</option><option value="1290 DUOS ST">1290 DUOS ST</option><option value="1290 DUOS LT">1290 DUOS LT</option><option value="NC-C1390">NC-C1390</option><option value="1610 ST">1610 ST</option><option value="1610 LT">1610 LT</option><option value="1610 PRO">1610 PRO</option><option value="1610 DUOS ST">1610 DUOS ST</option><option value="1610 DUOS LT">1610 DUOS LT</option><option value="1610 Conveyor">1610 Conveyor</option><option value="1610 Duos Conveyor">1610 Duos Conveyor</option><option value="1610 Cam Conveyor">1610 Cam Conveyor</option><option value="NC-C1612">NC-C1612</option><option value="1616 Flat Bed">1616 Flat Bed</option><option value="1616 Flat Bed PRO">1616 Flat Bed PRO</option><option value="1630 Flat Bed PRO">1630 Flat Bed PRO</option><option value="1820 Conveyor PRO Dual">1820 Conveyor PRO Dual</option><option value="1820 Conveyor PRO">1820 Conveyor PRO</option><option value="1830 Conveyor">1830 Conveyor</option><option value="2030 Flat Bed">2030 Flat Bed</option><option value="2030 Flat Bed PRO">2030 Flat Bed PRO</option><option value="2030 Conveyor">2030 Conveyor</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="cModel">Модель</label><select id="cModel"><option value="0203 Micro">0203 Micro</option><option value="0503 Hobby-T">0503 Hobby-T</option><option value="0503">0503</option><option value="6040">6040</option><option value="6090 ST">6090 ST</option><option value="6090 LT">6090 LT</option><option value="6090 PRO">6090 PRO</option><option value="1290 ST">1290 ST</option><option value="1290 LT">1290 LT</option><option value="1290 PRO">1290 PRO</option><option value="1290 DUOS ST">1290 DUOS ST</option><option value="1290 DUOS LT">1290 DUOS LT</option><option value="NC-C1390">NC-C1390</option><option value="1610 ST">1610 ST</option><option value="1610 LT">1610 LT</option><option value="1610 PRO">1610 PRO</option><option value="1610 DUOS ST">1610 DUOS ST</option><option value="1610 DUOS LT">1610 DUOS LT</option><option value="1610 Conveyor">1610 Conveyor</option><option value="1610 Duos Conveyor">1610 Duos Conveyor</option><option value="1610 Cam Conveyor">1610 Cam Conveyor</option><option value="NC-C1612">NC-C1612</option><option value="1616 Flat Bed">1616 Flat Bed</option><option value="1616 Flat Bed PRO">1616 Flat Bed PRO</option><option value="1630 Flat Bed PRO">1630 Flat Bed PRO</option><option value="1820 Conveyor PRO Dual">1820 Conveyor PRO Dual</option><option value="1820 Conveyor PRO">1820 Conveyor PRO</option><option value="1830 Conveyor">1830 Conveyor</option><option value="2030 Flat Bed">2030 Flat Bed</option><option value="2030 Flat Bed PRO">2030 Flat Bed PRO</option><option value="2030 Conveyor">2030 Conveyor</option></select></div>
         </div>
         <div id="cOut"><div class="pricebox"><div class="pb stock"><div class="lbl">Цена с сайта</div><div class="val">300 300 ₽</div><div class="sub">розничная, НДС включён</div></div></div><div class="muted">Поле 500×300 мм · трубка 60 Вт · стойка Ruida RDC8445S</div><div class="note">Сверх цены станка: чиллер, стабилизатор, ПНР, обучение и доставка. Дальше по шагам.</div></div>
         <div class="matches" id="cMatches"><h3>Совпадения в прайсе — нажмите, чтобы взять цену</h3><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 0203 Micro</span><b>63 000 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 0503 Hobby-T</span><b>266 700 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 0503</span><b>300 300 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 6040</span><b>318 200 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 6090 ST</span><b>403 200 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 6090 LT</span><b>417 900 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 6090 PRO</span><b>791 700 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 1290 ST</span><b>570 200 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 1290 LT</span><b>587 000 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 1290 PRO</span><b>876 800 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 1290 DUOS ST</span><b>666 800 ₽</b></div><div class="mrow"><span class="nm">Лазерный станок CO₂ Wattsan 1290 DUOS LT</span><b>682 500 ₽</b></div><div class="muted">Показаны первые 12 из 31 строка</div></div>
-        <div class="btns noprint"><button class="btn" id="cAdd">Добавить в смету</button>
+        <div class="btns noprint"><button type="button" class="btn" id="cAdd">Добавить в смету</button>
           <button class="btn sec" type="button" id="cNext">Дальше: чиллер</button></div>
         
         
@@ -1633,10 +1648,10 @@ body.demo .internal{display:none !important}
         <div class="step-t">Чиллер<small>в цену CO₂ не входит — считаем отдельной строкой</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="cChiller"><option value="cw3000">Чиллер S&amp;A CW-3000TG — 20 100 ₽</option><option value="cw5000">Чиллер S&amp;A CW-5000TG — 53 625 ₽</option><option value="cw5200">Чиллер S&amp;A CW-5200TH — 57 280 ₽</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="cChiller">Модель</label><select id="cChiller"><option value="cw3000">Чиллер S&amp;A CW-3000TG — 20 100 ₽</option><option value="cw5000">Чиллер S&amp;A CW-5000TG — 53 625 ₽</option><option value="cw5200">Чиллер S&amp;A CW-5200TH — 57 280 ₽</option></select></div>
         </div>
         
-        <div class="btns noprint"><button class="btn sec" id="cChillerAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="cChillerAdd">Добавить в смету</button></div>
         
       </div><div class="think"><div class="think-box" id="cChillerOut"><div class="calcsteps"><div>без компрессора, радиатор с вентилятором</div><div>Цена: <b>20 100 ₽</b></div></div></div><div class="note alert">Чиллер в цену CO₂ не входит. Какой ставить под конкретную трубку — в данных не записано: практика — CW-3000 на слабые трубки, CW-5000/5200 на 100 Вт и выше, но это надо подтвердить у сервиса, а не подставлять из приложения.</div></div></div>
     </div>
@@ -1646,17 +1661,17 @@ body.demo .internal{display:none !important}
         <div class="step-t">Стабилизатор напряжения<small>условие гарантии, а не опция</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div><label class="f">Бренд</label><select id="cStabBrand"><option value="resanta">Ресанта</option><option value="shtyl">Штиль</option></select></div>
-          <div style="flex:2 1 320px"><label class="f">Модель из полного ряда</label>
+          <div><label class="f" for="cStabBrand">Бренд</label><select id="cStabBrand"><option value="resanta">Ресанта</option><option value="shtyl">Штиль</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="cStabFull">Модель из полного ряда</label>
             <select id="cStabFull"><option value="r3000-1c">Ресанта АСН-3000/1-Ц — 3 кВт — 8 490 ₽</option><option value="r5000-1c">Ресанта АСН-5000/1-Ц — 5 кВт — 10 190 ₽</option><option value="r8000-1c">Ресанта АСН-8000/1-Ц — 8 кВт — 13 490 ₽</option><option value="r10000-1c">Ресанта АСН-10000/1-Ц — 10 кВт — 17 290 ₽</option><option value="r12000-1c">Ресанта АСН-12000/1-Ц — 12 кВт — 21 290 ₽</option><option value="r5000-1em">Ресанта АСН-5000/1-ЭМ — 5 кВт — 20 590 ₽</option><option value="r8000-1em">Ресанта АСН-8000/1-ЭМ — 8 кВт — 26 990 ₽</option><option value="r10000-1em">Ресанта АСН-10000/1-ЭМ — 10 кВт — 28 090 ₽</option><option value="r12000-1em">Ресанта АСН-12000/1-ЭМ — 12 кВт — 33 590 ₽</option><option value="r20000-1em">Ресанта АСН-20000/1-ЭМ — 20 кВт — 69 890 ₽</option><option value="r30000-1em">Ресанта АСН-30000/1-ЭМ — 30 кВт — 89 090 ₽</option><option value="r6000-3em">Ресанта АСН-6000/3-ЭМ — 6 кВт — 45 990 ₽</option><option value="r9000-3em">Ресанта АСН-9000/3-ЭМ — 9 кВт — 69 490 ₽</option><option value="r15000-3em">Ресанта АСН-15000/3-ЭМ — 15 кВт — 75 590 ₽</option><option value="r20000-3em">Ресанта АСН-20000/3-ЭМ — 20 кВт — 95 190 ₽</option><option value="r30000-3em">Ресанта АСН-30000/3-ЭМ — 30 кВт — 116 290 ₽</option><option value="r45000-3em">Ресанта АСН-45000/3-ЭМ — 45 кВт — 210 190 ₽</option><option value="r60000-3em">Ресанта АСН-60000/3-ЭМ — 60 кВт — 226 390 ₽</option><option value="r100000-3em">Ресанта АСН-100000/3-ЭМ — 100 кВт — 779 790 ₽</option><option value="r150000-3em">Ресанта АСН-150000/3-ЭМ — 150 кВт — 1 091 590 ₽</option><option value="r15000-3c">Ресанта АСН-15000/3-Ц — 15 кВт — 54 390 ₽</option><option value="r30000-3c">Ресанта АСН-30000/3-Ц — 30 кВт — 84 090 ₽</option></select></div>
         </div>
         <div class="specbox" id="cStabSpec"><h4>Ресанта АСН-3000/1-Ц</h4><dl><dt>Мощность</dt><dd>3 000 Вт</dd><dt>Тип</dt><dd>Ц — релейный (электронный)</dd><dt>Вход</dt><dd>140–260 В</dd><dt>Точность</dt><dd>±8 %</dd><dt>Питание</dt><dd>1 фаза, 220 В</dd><dt>Макс. ток</dt><dd>15,8 А</dd><dt>КПД</dt><dd>97 %</dd><dt>Охлаждение</dt><dd>естественное</dd><dt>Масса</dt><dd>9,44 кг</dd><dt>Артикул</dt><dd>63/6/5</dd><dt>Цена</dt><dd>8 490 ₽</dd></dl><div class="idx">Источник: resanta.ru · совпадает с прайсом LASERCUT · Ц — релейный: переключает отводы трансформатора ступенями, точность ±8 %, реакция менее 15 мс, дешевле. ЭМ — электромеханический: щётка плавно ходит по обмотке, точность ±2 %, но отработка медленная (30–40 В/с). Для стойки ЧПУ и частотника важнее не сама точность, а то, что у релейного напряжение меняется скачком в момент коммутации — это потенциальный сброс программы. Трёхфазный стабилизатор Ресанты — это три независимых однофазных канала, поэтому при перекосе фаз стоит поставить перед ним реле контроля фаз. Цены — resanta.ru, Москва, 31.07.2026.</div></div>
         <div class="btns noprint"><button class="btn sec" type="button" id="cStabFullAdd">Добавить выбранную модель</button></div>
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Или модель из прайса опций</label><select id="cStab"><option value="Ресанта-3000/1-Ц">Стабилизатор напряжения Ресанта-3000/1-Ц — 8 490 ₽</option><option value="Ресанта-5000/1-Ц">Стабилизатор напряжения Ресанта-5000/1-Ц — 10 190 ₽</option><option value="Ресанта-8000/1-Ц">Стабилизатор напряжения Ресанта-8000/1-Ц — 13 490 ₽</option><option value="Ресанта-10000/1-ЭМ">Стабилизатор напряжения Ресанта-10000/1-ЭМ — 28 090 ₽</option><option value="Ресанта-12000/1-ЭМ">Стабилизатор напряжения Ресанта-12000/1-ЭМ — 33 590 ₽</option><option value="Ресанта-15000/3-ЭМ (380 В)">Стабилизатор напряжения Ресанта-15000/3-ЭМ (380 В) — 75 590 ₽</option><option value="Ресанта АСН-20000/3-ЭМ (380 В)">Стабилизатор напряжения Ресанта АСН-20000/3-ЭМ (380 В) — 95 190 ₽</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="cStab">Или модель из прайса опций</label><select id="cStab"><option value="Ресанта-3000/1-Ц">Стабилизатор напряжения Ресанта-3000/1-Ц — 8 490 ₽</option><option value="Ресанта-5000/1-Ц">Стабилизатор напряжения Ресанта-5000/1-Ц — 10 190 ₽</option><option value="Ресанта-8000/1-Ц">Стабилизатор напряжения Ресанта-8000/1-Ц — 13 490 ₽</option><option value="Ресанта-10000/1-ЭМ">Стабилизатор напряжения Ресанта-10000/1-ЭМ — 28 090 ₽</option><option value="Ресанта-12000/1-ЭМ">Стабилизатор напряжения Ресанта-12000/1-ЭМ — 33 590 ₽</option><option value="Ресанта-15000/3-ЭМ (380 В)">Стабилизатор напряжения Ресанта-15000/3-ЭМ (380 В) — 75 590 ₽</option><option value="Ресанта АСН-20000/3-ЭМ (380 В)">Стабилизатор напряжения Ресанта АСН-20000/3-ЭМ (380 В) — 95 190 ₽</option></select></div>
         </div>
         
-        <div class="btns noprint"><button class="btn sec" id="cStabAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="cStabAdd">Добавить в смету</button></div>
         
       </div><div class="think"><div class="think-box" id="cStabOut"><div class="calcsteps"><div>Цена: <b>8 490 ₽</b></div><div>Однофазный, 220 В</div></div></div><div class="note">Мощность станка по CO₂ в данных не записана, поэтому приложение
           не проверяет стабилизатор на проходимость: сверяйте по паспорту станка.</div></div></div>
@@ -1667,9 +1682,9 @@ body.demo .internal{display:none !important}
         <div class="step-t">ПНР и обучение<small>цены по CO₂ в прайсе сервиса нет</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Услуга</label><select id="cPnr"><option value="pnr_co2">Пусконаладочные работы (CO₂-станок) — цену уточнить</option><option value="train_co2">Обучение оператора (CO₂-станок) — цену уточнить</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="cPnr">Услуга</label><select id="cPnr"><option value="pnr_co2">Пусконаладочные работы (CO₂-станок) — цену уточнить</option><option value="train_co2">Обучение оператора (CO₂-станок) — цену уточнить</option></select></div>
         </div>
-        <div class="btns noprint"><button class="btn sec" id="cPnrAdd">Добавить строкой без цены</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="cPnrAdd">Добавить строкой без цены</button></div>
         
       </div><div class="think"><div class="note alert">В прайсе сервиса ПНР и обучение есть только по фрезерным станкам. Для CO₂ и маркираторов цену запрашивают у сервиса: позиция добавится в смету с нулём, сумму поставьте руками.</div></div></div>
     </div>
@@ -1682,17 +1697,17 @@ body.demo .internal{display:none !important}
         <div class="step-t">Выбор маркиратора<small>серия, затем модель — прайс июнь 2026</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div><label class="f">Серия</label><select id="kSeries"><option value="FL TT">FL TT</option><option value="FL BOX">FL BOX</option><option value="FL Compact">FL Compact</option><option value="FL ST">FL ST</option><option value="FM">FM</option><option value="FL HH">FL HH</option><option value="FL GT">FL GT</option><option value="UV TT">UV TT</option><option value="UV Compact">UV Compact</option><option value="UV ST">UV ST</option><option value="FM UV">FM UV</option><option value="UV GT">UV GT</option><option value="3D">3D</option><option value="RF CO2">RF CO2</option><option value="Zerder">Zerder</option><option value="FL HT">FL HT</option></select></div>
-          <div style="flex:2 1 300px"><label class="f">Модель</label><select id="kModel"><option value="FL TT R20 (Raycus 20W)">FL TT R20 (Raycus 20W)</option><option value="FL TT R30 (Raycus 30W)">FL TT R30 (Raycus 30W)</option><option value="FL TT R50 (Raycus 50W)">FL TT R50 (Raycus 50W)</option><option value="FL TT R100 (Raycus 100W)">FL TT R100 (Raycus 100W)</option><option value="FL TT J30 M7 (JPT 30W MOPA)">FL TT J30 M7 (JPT 30W MOPA)</option><option value="FL TT J60 M7 (JPT 60W MOPA)">FL TT J60 M7 (JPT 60W MOPA)</option><option value="FL TT J100 M7 (JPT 100W MOPA)">FL TT J100 M7 (JPT 100W MOPA)</option><option value="FL TT J20 LP (JPT 20W LP)">FL TT J20 LP (JPT 20W LP)</option><option value="FL TT J30 LP (JPT 30W LP)">FL TT J30 LP (JPT 30W LP)</option><option value="FL TT J50 LP (JPT 50W LP)">FL TT J50 LP (JPT 50W LP)</option></select></div>
+          <div><label class="f" for="kSeries">Серия</label><select id="kSeries"><option value="FL TT">FL TT</option><option value="FL BOX">FL BOX</option><option value="FL Compact">FL Compact</option><option value="FL ST">FL ST</option><option value="FM">FM</option><option value="FL HH">FL HH</option><option value="FL GT">FL GT</option><option value="UV TT">UV TT</option><option value="UV Compact">UV Compact</option><option value="UV ST">UV ST</option><option value="FM UV">FM UV</option><option value="UV GT">UV GT</option><option value="3D">3D</option><option value="RF CO2">RF CO2</option><option value="Zerder">Zerder</option><option value="FL HT">FL HT</option></select></div>
+          <div style="flex:2 1 300px"><label class="f" for="kModel">Модель</label><select id="kModel"><option value="FL TT R20 (Raycus 20W)">FL TT R20 (Raycus 20W)</option><option value="FL TT R30 (Raycus 30W)">FL TT R30 (Raycus 30W)</option><option value="FL TT R50 (Raycus 50W)">FL TT R50 (Raycus 50W)</option><option value="FL TT R100 (Raycus 100W)">FL TT R100 (Raycus 100W)</option><option value="FL TT J30 M7 (JPT 30W MOPA)">FL TT J30 M7 (JPT 30W MOPA)</option><option value="FL TT J60 M7 (JPT 60W MOPA)">FL TT J60 M7 (JPT 60W MOPA)</option><option value="FL TT J100 M7 (JPT 100W MOPA)">FL TT J100 M7 (JPT 100W MOPA)</option><option value="FL TT J20 LP (JPT 20W LP)">FL TT J20 LP (JPT 20W LP)</option><option value="FL TT J30 LP (JPT 30W LP)">FL TT J30 LP (JPT 30W LP)</option><option value="FL TT J50 LP (JPT 50W LP)">FL TT J50 LP (JPT 50W LP)</option></select></div>
         </div>
         <div class="row internal">
-          <div><label class="f">Какой ценник берём</label><select id="kMode">
+          <div><label class="f" for="kMode">Какой ценник берём</label><select id="kMode">
             <option value="order">Под заказ — завод, до 80 раб. дней</option>
             <option value="stock">Из наличия — склад</option></select></div>
         </div>
         <div id="kOut"><div class="pricebox"><div class="pb stock"><div class="lbl">Под заказ — завод, до 80 раб. дней</div><div class="val">252 100 ₽</div><div class="sub">Оплата 50 % + остаток</div></div><div class="pb"><div class="lbl">Из наличия — склад</div><div class="val">279 800 ₽</div><div class="sub">Оплата 100 %</div></div></div><div class="muted">Мощность 20 Вт · излучатель Raycus · MOPA: нет</div><div class="calcsteps internal"><div>Разница: <b>27 700 ₽</b>, это <b>+10,99 %</b> к цене под заказ</div></div></div>
         <div class="matches" id="kMatches"><h3>Совпадения в прайсе — нажмите, чтобы взять цену</h3><div class="mrow"><span class="nm">Лазерный маркиратор Wattsan FL TT R20 (Raycus 20W) (под заказ)</span><b>252 100 ₽</b></div><div class="mrow"><span class="nm">Лазерный маркиратор Wattsan FL TT R30 (Raycus 30W) (под заказ)</span><b>275 800 ₽</b></div><div class="mrow"><span class="nm">Лазерный маркиратор Wattsan FL TT R50 (Raycus 50W) (под заказ)</span><b>333 800 ₽</b></div><div class="mrow"><span class="nm">Лазерный маркиратор Wattsan FL TT R100 (Raycus 100W) (под заказ)</span><b>505 500 ₽</b></div><div class="mrow"><span class="nm">Лазерный маркиратор Wattsan FL TT J30 M7 (JPT 30W MOPA) (под заказ)</span><b>405 400 ₽</b></div><div class="mrow"><span class="nm">Лазерный маркиратор Wattsan FL TT J60 M7 (JPT 60W MOPA) (под заказ)</span><b>463 100 ₽</b></div><div class="mrow"><span class="nm">Лазерный маркиратор Wattsan FL TT J100 M7 (JPT 100W MOPA) (под заказ)</span><b>591 200 ₽</b></div><div class="mrow"><span class="nm">Лазерный маркиратор Wattsan FL TT J20 LP (JPT 20W LP) (под заказ)</span><b>343 400 ₽</b></div><div class="mrow"><span class="nm">Лазерный маркиратор Wattsan FL TT J30 LP (JPT 30W LP) (под заказ)</span><b>396 900 ₽</b></div><div class="mrow"><span class="nm">Лазерный маркиратор Wattsan FL TT J50 LP (JPT 50W LP) (под заказ)</span><b>565 100 ₽</b></div></div>
-        <div class="btns noprint"><button class="btn" id="kAdd">Добавить в смету</button>
+        <div class="btns noprint"><button type="button" class="btn" id="kAdd">Добавить в смету</button>
           <button class="btn sec" type="button" id="kNext">Дальше: поворотная ось</button></div>
         
         
@@ -1704,10 +1719,10 @@ body.demo .internal{display:none !important}
         <div class="step-t">Поворотное устройство<small>подбирается по детали — цен в прайсе нет</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Тип</label><select id="kRot"><option value="rot_chuck">Поворотное устройство кулачковое (патрон)</option><option value="rot_roller">Поворотное устройство роликовое</option><option value="rot_disc">Поворотное устройство дисковое (планшайба)</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="kRot">Тип</label><select id="kRot"><option value="rot_chuck">Поворотное устройство кулачковое (патрон)</option><option value="rot_roller">Поворотное устройство роликовое</option><option value="rot_disc">Поворотное устройство дисковое (планшайба)</option></select></div>
         </div>
         
-        <div class="btns noprint"><button class="btn sec" id="kRotAdd">Добавить строкой без цены</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="kRotAdd">Добавить строкой без цены</button></div>
         
       </div><div class="think"><div class="think-box" id="kRotOut"><div class="calcsteps"><div>Под что: кольца, гильзы, трубки — зажим в патрон</div><div>Цена: <b>в прайсе нет</b> — уточнить у сервиса</div></div></div><div class="note alert">Тип оси подбирается по детали, а не по станку. Цен в прайсе нет: позиция уйдёт в смету без суммы, поставьте её руками после ответа сервиса.</div></div></div>
     </div>
@@ -1717,10 +1732,10 @@ body.demo .internal{display:none !important}
         <div class="step-t">Стабилизатор напряжения<small>маркиратор — 220 В, хватает младших моделей</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="kStab"><option value="Ресанта-3000/1-Ц">Стабилизатор напряжения Ресанта-3000/1-Ц — 8 490 ₽</option><option value="Ресанта-5000/1-Ц">Стабилизатор напряжения Ресанта-5000/1-Ц — 10 190 ₽</option><option value="Ресанта-8000/1-Ц">Стабилизатор напряжения Ресанта-8000/1-Ц — 13 490 ₽</option><option value="Ресанта-10000/1-ЭМ">Стабилизатор напряжения Ресанта-10000/1-ЭМ — 28 090 ₽</option><option value="Ресанта-12000/1-ЭМ">Стабилизатор напряжения Ресанта-12000/1-ЭМ — 33 590 ₽</option><option value="Ресанта-15000/3-ЭМ (380 В)">Стабилизатор напряжения Ресанта-15000/3-ЭМ (380 В) — 75 590 ₽</option><option value="Ресанта АСН-20000/3-ЭМ (380 В)">Стабилизатор напряжения Ресанта АСН-20000/3-ЭМ (380 В) — 95 190 ₽</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="kStab">Модель</label><select id="kStab"><option value="Ресанта-3000/1-Ц">Стабилизатор напряжения Ресанта-3000/1-Ц — 8 490 ₽</option><option value="Ресанта-5000/1-Ц">Стабилизатор напряжения Ресанта-5000/1-Ц — 10 190 ₽</option><option value="Ресанта-8000/1-Ц">Стабилизатор напряжения Ресанта-8000/1-Ц — 13 490 ₽</option><option value="Ресанта-10000/1-ЭМ">Стабилизатор напряжения Ресанта-10000/1-ЭМ — 28 090 ₽</option><option value="Ресанта-12000/1-ЭМ">Стабилизатор напряжения Ресанта-12000/1-ЭМ — 33 590 ₽</option><option value="Ресанта-15000/3-ЭМ (380 В)">Стабилизатор напряжения Ресанта-15000/3-ЭМ (380 В) — 75 590 ₽</option><option value="Ресанта АСН-20000/3-ЭМ (380 В)">Стабилизатор напряжения Ресанта АСН-20000/3-ЭМ (380 В) — 95 190 ₽</option></select></div>
         </div>
         
-        <div class="btns noprint"><button class="btn sec" id="kStabAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="kStabAdd">Добавить в смету</button></div>
         
       </div><div class="think"><div class="think-box" id="kStabOut"><div class="calcsteps"><div>Цена: <b>8 490 ₽</b></div><div>Однофазный, 220 В</div></div></div><div class="note">Потребление маркиратора в данных не записано — приложение
           не считает запас по мощности за вас.</div></div></div>
@@ -1731,9 +1746,9 @@ body.demo .internal{display:none !important}
         <div class="step-t">ПНР и обучение<small>цены по маркираторам в прайсе сервиса нет</small></div></div>
       <div class="step-b has-think"><div class="doing">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Услуга</label><select id="kPnr"><option value="pnr_mark">Пусконаладочные работы (маркиратор) — цену уточнить</option><option value="train_mark">Обучение оператора (маркиратор) — цену уточнить</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="kPnr">Услуга</label><select id="kPnr"><option value="pnr_mark">Пусконаладочные работы (маркиратор) — цену уточнить</option><option value="train_mark">Обучение оператора (маркиратор) — цену уточнить</option></select></div>
         </div>
-        <div class="btns noprint"><button class="btn sec" id="kPnrAdd">Добавить строкой без цены</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="kPnrAdd">Добавить строкой без цены</button></div>
         
       </div><div class="think"><div class="note alert">В прайсе сервиса ПНР и обучение есть только по фрезерным станкам. Для CO₂ и маркираторов цену запрашивают у сервиса: позиция добавится в смету с нулём, сумму поставьте руками.</div></div></div>
     </div>
@@ -1744,11 +1759,11 @@ body.demo .internal{display:none !important}
       <div class="step-t">Своя позиция<small>всё, чего нет в прайсе: доставка, оснастка, ЗИП, монтаж</small></div></div>
     <div class="step-b has-think"><div class="doing">
       <div class="row">
-        <div style="flex:2 1 320px"><label class="f">Наименование</label>
+        <div style="flex:2 1 320px"><label class="f" for="freeName">Наименование</label>
           <input type="text" id="freeName" placeholder="Доставка до Екатеринбурга"></div>
-        <div><label class="f">Цена, ₽</label>
+        <div><label class="f" for="freePrice">Цена, ₽</label>
           <input type="text" id="freePrice" inputmode="decimal" placeholder="0"></div>
-        <div><label class="f">Тип строки</label><select id="freeType">
+        <div><label class="f" for="freeType">Тип строки</label><select id="freeType">
           <option value="eq">Оборудование</option>
           <option value="opt">Опция</option>
           <option value="srv">Услуга</option></select></div>
@@ -1766,15 +1781,15 @@ body.demo .internal{display:none !important}
     <div class="cardhead"><h2>Менеджер сделки</h2>
       <button class="btn mini sec" type="button" id="mgrReset">По умолчанию</button></div>
     <div class="row tight">
-      <div><label class="f">Имя и фамилия</label>
+      <div><label class="f" for="mgrName">Имя и фамилия</label>
         <input type="text" id="mgrName" placeholder="Вениамин Вараксин"></div>
-      <div><label class="f">Должность</label>
+      <div><label class="f" for="mgrRole">Должность</label>
         <input type="text" id="mgrRole" placeholder="менеджер по продажам"></div>
     </div>
     <div class="row tight">
-      <div><label class="f">Телефон</label>
+      <div><label class="f" for="mgrPhone">Телефон</label>
         <input type="text" id="mgrPhone" placeholder="+7 (921) 181-75-86"></div>
-      <div><label class="f">Почта</label>
+      <div><label class="f" for="mgrEmail">Почта</label>
         <input type="text" id="mgrEmail" placeholder="15@lasercut.ru"></div>
     </div>
     <div class="note small" id="mgrOut">В подписи ТКП: Вениамин Вараксин · менеджер по продажам · +7 (921) 181-75-86 · 15@lasercut.ru — это менеджер по умолчанию из данных</div>
@@ -1849,118 +1864,163 @@ body.demo .internal{display:none !important}
 <!-- ================= СМЕТА И ТКП ================= -->
 <span class="nojs-title">Смета и ТКП</span>
 <section class="panel" id="p-smeta">
-  <p class="lead">Скидка применяется к каждой позиции и может быть переопределена построчно.
-    НДС выделяется изнутри: НДС = сумма × ставка ÷ (100 + ставка). Расчёт показан пошагово,
-    сходимость перепроверяется тремя независимыми способами.</p>
+  <div class="bhead noprint">
+    <div>
+      <h1 class="btitle">Смета и ТКП</h1>
+      <p class="lead">Считаем позиции, собираем предложение, забираем файл.</p>
+    </div>
+    <span class="pill on" id="smetaState">смета пуста</span>
+  </div>
 
-  <div class="step noprint">
-    <div class="step-h"><div class="step-n">1</div>
-      <div class="step-t">Скидка и НДС<small>скидка по умолчанию для новых позиций</small></div></div>
-    <div class="step-b">
+  <!-- Слева работа со сметой, справа лист ТКП живьём: видно, что уедет
+       клиенту, и не надо прокручивать страницу вниз. -->
+  <div class="cfggrid noprint">
+  <div class="cfgmain">
+    <div class="card">
+      <div class="cardhead"><h2>Скидка и НДС</h2>
+        <span class="spec-cnt" id="smetaRule">скидка 5 % · НДС 22 %</span></div>
       <div class="row">
-        <div><label class="f">Скидка по умолчанию, %</label><select id="discount"><option value="0">0 %</option><option value="5">0,5 %</option><option value="10">1 %</option><option value="15">1,5 %</option><option value="20">2 %</option><option value="25">2,5 %</option><option value="30">3 %</option><option value="35">3,5 %</option><option value="40">4 %</option><option value="45">4,5 %</option><option value="50">5 %</option><option value="55">5,5 %</option><option value="60">6 %</option><option value="65">6,5 %</option><option value="70">7 %</option><option value="75">7,5 %</option><option value="80">8 %</option><option value="85">8,5 %</option><option value="90">9 %</option><option value="95">9,5 %</option><option value="100">10 %</option><option value="120">12 %</option><option value="150">15 %</option><option value="200">20 %</option><option value="250">25 %</option><option value="300">30 %</option></select></div>
-        <div><label class="f">Ставка НДС, %</label>
+        <div><label class="f" for="discount">Скидка по умолчанию, %</label><select id="discount"><option value="0">0 %</option><option value="5">0,5 %</option><option value="10">1 %</option><option value="15">1,5 %</option><option value="20">2 %</option><option value="25">2,5 %</option><option value="30">3 %</option><option value="35">3,5 %</option><option value="40">4 %</option><option value="45">4,5 %</option><option value="50">5 %</option><option value="55">5,5 %</option><option value="60">6 %</option><option value="65">6,5 %</option><option value="70">7 %</option><option value="75">7,5 %</option><option value="80">8 %</option><option value="85">8,5 %</option><option value="90">9 %</option><option value="95">9,5 %</option><option value="100">10 %</option><option value="120">12 %</option><option value="150">15 %</option><option value="200">20 %</option><option value="250">25 %</option><option value="300">30 %</option></select></div>
+        <div><label class="f" for="ndsRate">Ставка НДС, %</label>
           <select id="ndsRate">
             <option value="220">22</option><option value="200">20</option>
             <option value="100">10</option><option value="50">5</option><option value="0">0</option>
           </select></div>
-        <div class="internal"><label class="f">Лестница уступок</label>
-          <div class="muted" style="padding-top:10px">5 % → 2 % → 1 %. Не начинать с максимума.
-            Максимум в приложении — 30 %.</div></div>
       </div>
-      <!-- Пояснения занимали место над таблицей: убраны в свёрнутую справку. -->
       <details class="hint-det" id="smetaHints">
-        <summary>Правила скидки и сроки — справка</summary>
+        <summary>Как считается и когда скидка не идёт</summary>
         <div class="det-b">
-          <div class="note">Скидка по умолчанию идёт на оборудование и опции.
-            ПНР и обучение — платные услуги по прайсу, они по умолчанию без скидки.
-            Нужна скидка и на услуги — поставьте её в строке сметы вручную.</div>
-          <div class="note internal">Счёт фиксирует цену и наличие на 5 дней.
-            Срок действия ТКП — 15 дней. Оплата в ТКП печатается так:
-            100 % предоплата (возможна схема 50/50 по согласованию); безнал с НДС; для юрлиц — рассрочка, кредит, лизинг. Работа по 44-ФЗ и 223-ФЗ</div>
+          <div class="note">Скидка идёт на оборудование и опции. ПНР и обучение —
+            платные услуги по прайсу, по умолчанию без скидки: нужна — поставьте
+            её в строке сметы.</div>
+          <div class="note internal">Лестница уступок: 5 % → 2 % → 1 %, не начинать
+            с максимума. Максимум в приложении — 30 %.</div>
+          <div class="note internal">Счёт держит цену 5 дней, ТКП —
+            15 дней. НДС выделяется изнутри: сумма × ставка ÷ (100 + ставка),
+            сходимость проверяется тремя способами.</div>
+          <div class="note small">Оплата в ТКП печатается так: 100 % предоплата (возможна схема 50/50 по согласованию); безнал с НДС; для юрлиц — рассрочка, кредит, лизинг. Работа по 44-ФЗ и 223-ФЗ</div>
         </div>
       </details>
     </div>
-  </div>
 
-  <div class="step noprint">
-    <div class="step-h"><div class="step-n">2</div>
-      <div class="step-t">Позиции сметы<small>цену и количество можно править прямо в строке — итог и НДС пересчитаются</small></div></div>
-    <div class="step-b">
+    <div class="card">
+      <div class="cardhead"><h2>Позиции</h2>
+        <span class="spec-cnt">цену и количество правьте в строке</span></div>
       <div class="scroll" id="smetaWrap"><table id="smetaTable"><thead><tr>
         <th style="width:40%">Наименование</th><th>Кол-во</th><th>Цена, ₽</th>
         <th>Скидка, %</th><th>Со скидкой</th><th>Сумма</th><th class="noprint"></th>
       </tr></thead><tbody id="smetaBody"></tbody></table></div>
-      <div id="smetaEmpty" class="empty" style="">Смета пуста. Добавьте позиции на вкладке «Конфигуратор».</div>
+      <div id="smetaEmpty" class="empty" style="">Смета пуста. Добавьте позиции в конфигураторе.</div>
       <div id="totals" class="totals"></div>
       <div id="propis" class="propis"></div>
       <div id="checkBlock" class=""></div>
-      <div class="btns noprint">
-        <button class="btn" id="btnWord">Скачать ТКП для Word</button>
-        <button class="btn" id="btnPrint">PDF — печать → «Сохранить как PDF»</button>
-        <button class="btn sec" id="btnSend">Отправить файлом</button>
-        <button class="btn sec" id="btnJson">Скопировать JSON для скилла</button>
-        <button class="btn danger" id="btnClear">Очистить смету</button>
-      </div>
-      <div class="note">Файл — настоящий <b>.docx</b>: открывается в Word (в том числе
-        на телефоне), LibreOffice и Google Документах, правится как обычный документ.
-        PDF получается печатью: в диалоге выберите «Сохранить как PDF».
-        «Отправить файлом» на телефоне открывает системное «Поделиться»
-        (Telegram, WhatsApp, почта), на компьютере скачивает файл — отправьте его
-        вложением.</div>
-      <textarea id="jsonOut" class="noprint" rows="8" style="margin-top:12px;display:none;
-        font-family:ui-monospace,Consolas,monospace;font-size:12.5px"></textarea>
     </div>
-  </div>
 
-  <div class="step kpstep">
-    <div class="step-h"><div class="step-n">3</div>
-      <div class="step-t">Шапка ТКП и предпросмотр<small>печать берёт только этот блок</small></div></div>
-    <div class="step-b">
-      <div class="row noprint">
-        <div style="flex:2 1 260px"><label class="f">Клиент</label><input type="text" id="kpClient" placeholder="ООО «Ромашка»"></div>
-        <div><label class="f">ИНН</label><input type="text" id="kpInn" placeholder="7801234567"></div>
-        <div><label class="f">Исх. номер</label><input type="text" id="kpNum" placeholder="1207"></div>
+    <div class="card">
+      <div class="cardhead"><h2>Шапка предложения</h2>
+        <span class="spec-cnt">попадёт в первый лист ТКП</span></div>
+      <div class="row">
+        <div style="flex:2 1 260px"><label class="f" for="kpClient">Клиент</label><input type="text" id="kpClient" placeholder="ООО «Ромашка»"></div>
+        <div><label class="f" for="kpInn">ИНН</label><input type="text" id="kpInn" placeholder="7801234567"></div>
+        <div><label class="f" for="kpNum">Исх. номер</label><input type="text" id="kpNum" placeholder="1207"></div>
+        <div><label class="f" for="kpDate">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
       </div>
-      <div class="row noprint">
-        <div><label class="f">Контакт</label><input type="text" id="kpContact" placeholder="Иван Петров"></div>
-        <div><label class="f">Телефон клиента</label><input type="text" id="kpPhone" placeholder="+7 900 000-00-00"></div>
-        <div><label class="f">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
-        <div><label class="f">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
-      </div>
-      <div class="row noprint">
-        <div style="flex:2 1 300px"><label class="f">Вариант ТКП</label>
+      <details class="hint-det">
+        <summary>Контакт, примечание, заголовок</summary>
+        <div class="det-b">
+          <div class="row">
+            <div><label class="f" for="kpContact">Контакт</label><input type="text" id="kpContact" placeholder="Иван Петров"></div>
+            <div><label class="f" for="kpPhone">Телефон клиента</label><input type="text" id="kpPhone" placeholder="+7 900 000-00-00"></div>
+            <div><label class="f" for="kpNote">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
+          </div>
+          <div class="row">
+            <div><label class="f" for="kpTitle">Заголовок предложения</label>
+              <input type="text" id="kpTitle" placeholder="подставится первая позиция сметы"></div>
+          </div>
+        </div>
+      </details>
+      <div class="cardsub">Вариант, поставщик, срок</div>
+      <div class="row">
+        <div style="flex:2 1 240px"><label class="f" for="kpMode">Вариант ТКП</label>
           <select id="kpMode"><option value="short">Краткое ТКП — смета, условия поставки, гарантия — на 1–2 страницы</option><option value="full">Полное ТКП — восемь разделов как в фирменном шаблоне</option></select></div>
-        <div style="flex:3 1 340px" id="kpModeHint" class="muted">Когда клиент уже всё знает и ждёт цену: повторная сделка, тендерная заявка, быстрый ответ в переписке.</div>
-      </div>
-      <div class="row noprint">
-        <div style="flex:2 1 300px"><label class="f">Поставщик в ТКП</label>
+        <div style="flex:2 1 240px"><label class="f" for="kpSupplier">Поставщик</label>
           <select id="kpSupplier"><option value="stankoprom">СТАНКОПРОМ</option><option value="infoservice">ИНФО-СЕРВИС</option><option value="lasercut_td">ТД ЛАЗЕРКАТ</option></select></div>
-        <div style="flex:0 0 auto;align-self:flex-end">
-          <button class="btn sec" type="button" id="supEdit">Реквизиты поставщика</button></div>
+        <div style="flex:2 1 240px"><label class="f" for="kpTerm">Срок поставки</label>
+          <select id="kpTerm">
+            <option value="order">Под заказ — до 80 раб. дней</option>
+            <option value="stock">Из наличия — со склада</option>
+          </select></div>
       </div>
-      <details class="det noprint" id="supBox">
+      <div class="muted small" id="kpModeHint">Когда клиент уже всё знает и ждёт цену: повторная сделка, тендерная заявка, быстрый ответ в переписке.</div>
+      <div class="btns">
+        <button class="btn mini sec" type="button" id="supEdit">Реквизиты поставщика</button>
+      </div>
+      <details class="det" id="supBox">
         <summary class="det-h">Реквизиты поставщика<small>сохраняются в этом браузере</small></summary>
         <div class="det-b">
           <div class="note alert">Реквизиты СТАНКОПРОМ перенесены из мастер-шаблона ТКП, ИНФО-СЕРВИС и ТД ЛАЗЕРКАТ — присланы 30.07.2026. ФИО руководителя и ОКПО есть только у СТАНКОПРОМ, остальные такие поля пустые: их можно дописать вручную, правка сохраняется в этом браузере.</div>
-          <div class="row"><div style="flex:1 1 240px"><label class="f">Юр. лицо</label><input type="text" id="sup_name" data-sup="name"></div><div style="flex:1 1 240px"><label class="f">Должность и лицо в подписи</label><input type="text" id="sup_ceo_title" data-sup="ceo_title"></div><div style="flex:1 1 240px"><label class="f">Фамилия И.О.</label><input type="text" id="sup_ceo_short" data-sup="ceo_short"></div><div style="flex:1 1 240px"><label class="f">Руководитель полностью</label><input type="text" id="sup_ceo_full" data-sup="ceo_full"></div><div style="flex:1 1 240px"><label class="f">Строка в шапке ТКП</label><input type="text" id="sup_head_line" data-sup="head_line"></div><div style="flex:1 1 240px"><label class="f">ИНН</label><input type="text" id="sup_inn" data-sup="inn"></div><div style="flex:1 1 240px"><label class="f">КПП</label><input type="text" id="sup_kpp" data-sup="kpp"></div><div style="flex:1 1 240px"><label class="f">ОГРН</label><input type="text" id="sup_ogrn" data-sup="ogrn"></div><div style="flex:1 1 240px"><label class="f">ОКПО</label><input type="text" id="sup_okpo" data-sup="okpo"></div><div style="flex:1 1 240px"><label class="f">УНП (РБ)</label><input type="text" id="sup_unp" data-sup="unp"></div><div style="flex:1 1 240px"><label class="f">Р/счёт</label><input type="text" id="sup_account" data-sup="account"></div><div style="flex:1 1 240px"><label class="f">Банк</label><input type="text" id="sup_bank" data-sup="bank"></div><div style="flex:1 1 240px"><label class="f">БИК</label><input type="text" id="sup_bik" data-sup="bik"></div><div style="flex:1 1 240px"><label class="f">К/счёт</label><input type="text" id="sup_corr" data-sup="corr"></div><div style="flex:1 1 240px"><label class="f">Юр. адрес</label><input type="text" id="sup_addr_legal" data-sup="addr_legal"></div><div style="flex:1 1 240px"><label class="f">Факт. адрес</label><input type="text" id="sup_addr_fact" data-sup="addr_fact"></div></div>
+          <div class="row"><div style="flex:1 1 240px"><label class="f" for="sup_name">Юр. лицо</label><input type="text" id="sup_name" data-sup="name"></div><div style="flex:1 1 240px"><label class="f" for="sup_ceo_title">Должность и лицо в подписи</label><input type="text" id="sup_ceo_title" data-sup="ceo_title"></div><div style="flex:1 1 240px"><label class="f" for="sup_ceo_short">Фамилия И.О.</label><input type="text" id="sup_ceo_short" data-sup="ceo_short"></div><div style="flex:1 1 240px"><label class="f" for="sup_ceo_full">Руководитель полностью</label><input type="text" id="sup_ceo_full" data-sup="ceo_full"></div><div style="flex:1 1 240px"><label class="f" for="sup_head_line">Строка в шапке ТКП</label><input type="text" id="sup_head_line" data-sup="head_line"></div><div style="flex:1 1 240px"><label class="f" for="sup_inn">ИНН</label><input type="text" id="sup_inn" data-sup="inn"></div><div style="flex:1 1 240px"><label class="f" for="sup_kpp">КПП</label><input type="text" id="sup_kpp" data-sup="kpp"></div><div style="flex:1 1 240px"><label class="f" for="sup_ogrn">ОГРН</label><input type="text" id="sup_ogrn" data-sup="ogrn"></div><div style="flex:1 1 240px"><label class="f" for="sup_okpo">ОКПО</label><input type="text" id="sup_okpo" data-sup="okpo"></div><div style="flex:1 1 240px"><label class="f" for="sup_unp">УНП (РБ)</label><input type="text" id="sup_unp" data-sup="unp"></div><div style="flex:1 1 240px"><label class="f" for="sup_account">Р/счёт</label><input type="text" id="sup_account" data-sup="account"></div><div style="flex:1 1 240px"><label class="f" for="sup_bank">Банк</label><input type="text" id="sup_bank" data-sup="bank"></div><div style="flex:1 1 240px"><label class="f" for="sup_bik">БИК</label><input type="text" id="sup_bik" data-sup="bik"></div><div style="flex:1 1 240px"><label class="f" for="sup_corr">К/счёт</label><input type="text" id="sup_corr" data-sup="corr"></div><div style="flex:1 1 240px"><label class="f" for="sup_addr_legal">Юр. адрес</label><input type="text" id="sup_addr_legal" data-sup="addr_legal"></div><div style="flex:1 1 240px"><label class="f" for="sup_addr_fact">Факт. адрес</label><input type="text" id="sup_addr_fact" data-sup="addr_fact"></div></div>
           <div class="btns">
             <button class="btn sec" type="button" id="supReset">Вернуть исходные</button>
           </div>
           <div id="supWarn" class="note"></div>
         </div>
       </details>
-      <div class="row noprint">
-        <div style="flex:2 1 300px"><label class="f">Срок поставки в ТКП</label>
-          <select id="kpTerm">
-            <option value="order">Под заказ — до 80 раб. дней</option>
-            <option value="stock">Из наличия — со склада</option>
-          </select></div>
-        <div style="flex:3 1 320px"><label class="f">Заголовок предложения</label>
-          <input type="text" id="kpTitle" placeholder="подставится первая позиция сметы"></div>
-      </div>
+    </div>
+  </div>
 
-      <!-- Лист ТКП. Оформление повторяет мастер-шаблон скилла lasercut-kp:
+  <aside class="cfgside">
+    <div class="card spec-card">
+      <div class="cardhead"><h2>Лист ТКП</h2>
+        <span class="spec-cnt" id="kpMiniCnt">3 позиции · масштаб 45 %</span></div>
+      <div class="kpmini" id="kpMini" title="Открыть предпросмотр целиком">
+        <div class="kpmini-in" id="kpMiniIn" style="transform: scale(0.453);"><div class="kp">
+        <div class="kp-head"><img class="kp-logo" src="data:image/png;base64,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" alt="LASERCUT" width="260" height="61"><div class="kp-contacts">+7 (800) 777-17-87 · info@lasercut.ru · lasercut.ru<br><span>ООО «СТАНКОПРОМ» — официальный представитель Wattsan · бренд LASERCUT · на рынке с 2009 года</span></div></div>
+        <div><div class="kp-title"><b>ТЕХНИКО-КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ</b><span>Фрезерный станок WATTSAN 0404 mini, 1.5wc, NC</span></div><div class="kp-to"><div>Кому: <b><span class="kp-blank"></span></b> ИНН <span class="kp-blank"></span></div><div>Исх. № <b><span class="kp-blank"></span></b></div><div>Контакты: <b><span class="kp-blank"></span></b></div><div>от «01» августа 2026 г.</div></div><p class="kp-lead">Благодарим за интерес к оборудованию LASERCUT. Ниже — состав поставки, стоимость и условия. Оборудование новое, не бывшее в эксплуатации, соответствует требованиям ТР ТС 004/2011, 010/2011, 020/2011.</p><div class="kp-sum"><div><div class="k">Рекомендуем</div><div class="v">Фрезерный станок WATTSAN 0404 mini, 1.5wc, NC</div></div><div><div class="k">Стоимость, с НДС 22 %</div><div class="v">281 125,00 ₽</div></div><div><div class="k">Срок поставки</div><div class="v">до 80 раб. дней</div></div><div><div class="k">Гарантия</div><div class="v">12 месяцев</div></div></div><div class="kp-sec">1.&nbsp; Смета поставки</div><table><thead><tr><th class="kp-n">№</th><th>Наименование</th><th class="kp-q">Кол-во</th><th class="kp-p">Цена за ед., с НДС ₽</th><th class="kp-p">Сумма, с НДС ₽</th></tr></thead><tbody><tr><td class="kp-n">1</td><td class="kp-nm"><b>Фрезерный станок WATTSAN 0404 mini, 1.5wc, NC</b><span>скидка 5 % от цены прайса 236 300,00 ₽</span></td><td class="kp-q">1 шт</td><td class="kp-p">224 485,00</td><td class="kp-p"><b>224 485,00</b></td></tr><tr><td class="kp-n">2</td><td class="kp-nm"><b>Виброопора Wattsan S-78-7d185 (за 1 шт.)</b><span>скидка 5 % от цены прайса 1 400,00 ₽</span></td><td class="kp-q">8 шт</td><td class="kp-p">1 330,00</td><td class="kp-p"><b>10 640,00</b></td></tr><tr><td class="kp-n">3</td><td class="kp-nm"><b>Пусконаладочные работы и обучение оператора — 0404 / 0609 mini</b></td><td class="kp-q">1 шт</td><td class="kp-p">46 000,00</td><td class="kp-p"><b>46 000,00</b></td></tr><tr class="kp-tot"><td colspan="4">Ваша выгода:</td><td>12 375,00</td></tr><tr class="kp-tot"><td colspan="4">Итого без НДС:</td><td>230 430,33</td></tr><tr class="kp-tot"><td colspan="4">в т. ч. НДС 22 %:</td><td>50 694,67</td></tr><tr class="kp-fin"><td colspan="4">ИТОГО к оплате (с НДС 22 %):</td><td>281 125,00 ₽</td></tr></tbody></table><p class="kp-propis"><b>Сумма прописью:</b> Двести восемьдесят одна тысяча сто двадцать пять рублей 00 копеек, в том числе НДС 22 % — пятьдесят тысяч шестьсот девяносто четыре рубля 67 копеек. Доставка в стоимость не включена. Счёт фиксирует цену и наличие на 5 дней.</p><div class="kp-sec">2.&nbsp; Что закрывает эта конфигурация</div><table class="kp-t"><tbody><tr><th>Рабочее поле</th><td>400×400 мм</td></tr><tr><th>Шпиндель</th><td>GDZ-80-1.5, 24 000 об/мин, 1,5 кВт</td></tr><tr><th>Охлаждение шпинделя</th><td>водяное</td></tr><tr><th>Ход по Z</th><td>120 мм</td></tr><tr><th>Стол</th><td>профильный (Т-паз), питание 220 В</td></tr><tr><th>МДФ, фанера, мягкое дерево</th><td>да</td></tr><tr><th>Твёрдые породы (дуб, бук, ясень)</th><td>медленно</td></tr><tr><th>Акрил, пластик, алюминий</th><td>да</td></tr><tr><th>Глубокая 3D-фрезеровка</th><td>с оговорками</td></tr><tr><th>Металл, толстый алюминий</th><td>нет</td></tr></tbody></table><div class="kp-sec">3.&nbsp; Комплектация — фрезерный станок с ЧПУ</div><ul class="kp-list"><li>Станок в сборе: привод X и Y — кривозубая рейка, Z — ШВП, направляющие Hiwin 20</li><li>Шпиндель и стойка ЧПУ по выбранной модели — состав в разделе характеристик</li><li>Смазка ручная, питание 220 В (у версий с вакуумным столом — 380 В)</li><li>Паспорт и инструкция на русском языке, ПО с лицензией</li></ul><p class="kp-propis">Состав фрезерных станков в прайсе не расписан: перечислено то, что подтверждено таблицей характеристик. Точную комплектацию подтверждает менеджер счётом.</p><div class="kp-sec">4.&nbsp; Технические характеристики</div><table class="kp-t"><tbody><tr><th>Модель</th><td>Фрезерный станок WATTSAN 0404 mini, 1.5wc, NC</td></tr><tr><th>Шпиндель</th><td>GDZ-80-1.5, 24 000 об/мин, 1,5 кВт</td></tr><tr><th>Цанга</th><td>ER-11</td></tr><tr><th>Охлаждение</th><td>водяное</td></tr><tr><th>Ход по Z</th><td>120 мм</td></tr><tr><th>Стойка ЧПУ</th><td>NcStudio</td></tr><tr><th>Масса</th><td>92 кг</td></tr><tr><th>Механика</th><td>привод X и Y — кривозубая рейка, Z — ШВП, направляющие Hiwin 20, смазка ручная</td></tr><tr><th>Соответствие</th><td>ТР ТС 004/2011, 010/2011, 020/2011</td></tr></tbody></table><p class="kp-propis">Серийные параметры — по карточке модели производителя. Точные характеристики конкретного исполнения подтверждаются паспортом завода при отгрузке.</p><div class="kp-sec">5.&nbsp; Как пройдёт запуск</div><ol class="kp-list"><li><b>Счёт и договор.</b> Безнал с НДС; доступны рассрочка, кредит и лизинг, работа по 44-ФЗ и 223-ФЗ.</li><li><b>Доставка.</b> До вашей площадки по РФ транспортной компанией или самовывоз со склада.</li><li><b>Пусконаладка на площадке.</b> Инженер LASERCUT приезжает, ставит станок, вводит в эксплуатацию и настраивает режимы под ваши материалы.</li><li><b>Обучение оператора на месте.</b> Работа с ПО и режимами. Опыт работы с ЧПУ оператору не нужен.</li><li><b>Первая деталь.</b> Станок отдаёт первую готовую деталь и дальше работает в вашем потоке.</li></ol><div class="kp-sec">6.&nbsp; Преимущества</div><table class="kp-t"><tbody><tr><th>Официальный дистрибьютор</th><td>Не серый импорт: сертификаты, гарантия завода, соответствие ТР ТС 004/2011, 010/2011, 020/2011.</td></tr><tr><th>Сервис рядом</th><td>Сертифицированный сервисный центр Wattsan в шести городах: Москва, СПб, Екатеринбург, Казань, Краснодар, Минск. Реакция на рекламацию — 24 часа.</td></tr><tr><th>Поддержка по серийному номеру</th><td>На весь срок службы станка, даже если он куплен на вторичном рынке.</td></tr><tr><th>Русский интерфейс и документация</th><td>ПО локализовано, паспорт и инструкция на русском, оператор проходит инструктаж при запуске.</td></tr><tr><th>Проверка в три этапа</th><td>На заводе, на складе в России и перед отправкой клиенту.</td></tr></tbody></table></div>
+        <div class="kp-sec">7.&nbsp; Условия поставки</div>
+        <table class="kp-t"><tbody>
+          <tr><th>Срок поставки</th><td>до 80 рабочих дней с даты оплаты по договору поставки</td></tr>
+          <tr><th>Условия оплаты</th><td>100 % предоплата (возможна схема 50/50 по согласованию); безнал с НДС; для юрлиц — рассрочка, кредит, лизинг. Работа по 44-ФЗ и 223-ФЗ</td></tr><tr><th>Доставка</th><td>до адреса заказчика по РФ транспортной компанией, в стоимость оборудования не включена; возможен самовывоз со склада</td></tr><tr><th>Пусконаладка</th><td>выезд инженера на площадку: монтаж, ввод в эксплуатацию, настройка режимов и обучение оператора — включено, если ПНР стоит отдельной позицией сметы</td></tr><tr><th>Срок действия КП</th><td>15 дней с даты выставления (цены и наличие могут измениться)</td></tr>
+        </tbody></table>
+        <div class="kp-sec">8.&nbsp; Гарантия и сервис</div>
+        <table class="kp-t"><tbody><tr><th>Гарантия</th><td>12 месяцев с даты подписания акта приёма-передачи (расходные материалы не входят)</td></tr><tr><th>Сервис</th><td>сертифицированный сервисный центр Wattsan: Москва, СПб, Екатеринбург, Казань, Краснодар (РФ), Минск (РБ)</td></tr><tr><th>Поддержка</th><td>по серийному номеру — на весь срок службы оборудования, даже для купленных на вторичном рынке</td></tr><tr><th>Документация</th><td>паспорт и инструкция на русском языке; ПО локализовано</td></tr><tr><th>Обучение</th><td>инструктаж персонала в рамках пусконаладочных работ</td></tr></tbody></table>
+        <div class="kp-cta"><b>Готовы сделать следующий шаг?</b><span>По запросу станок отработает ваши образцы — видео и фото результата придут до подписания договора. Доступен онлайн-показ на 20 минут или тест-драйв в демозале: Москва, СПб, Екатеринбург, Казань, Краснодар, Минск. Отзывы производств: lasercut.ru/otzyivyi</span></div>
+        <div class="kp-sign"><div><div class="kp-sign-t">С уважением,<br><b>Генеральный директор ООО «СТАНКОПРОМ»</b></div><div class="kp-line"></div><span class="kp-cap"><b>Греков Е.В.</b> · подпись / Ф.И.О.</span></div><div><div class="kp-sign-t"></div><div class="kp-line"></div><span class="kp-cap">М.П.</span></div></div>
+        <div class="kp-mgr"><span>Ваш менеджер</span><b>Вениамин Вараксин</b><span> · менеджер по продажам</span><br><span>+7 (921) 181-75-86 · 15@lasercut.ru · lasercut.ru (РФ) · laser-cut.by (РБ)</span></div>
+        <div class="kp-legal"><b>Торговая марка WATTSAN · бренд LASERCUT</b><span>Юр. лицо: ООО «СТАНКОПРОМ» · ИНН/КПП 7811692637 / 781101001 · ОГРН/ОКПО 1187847125465 / 28428219</span><span>Руководитель: Греков Евгений Валерьевич</span><span>Р/счёт: 40702810555000034390 · Северо-Западный банк ПАО Сбербанк · БИК 044030653 · К/счёт 30101810500000000653</span><span>Юр. адрес: 192019, г. Санкт-Петербург, Глухоозёрское шоссе, д. 12, литера Ж, помещ. 1-Н, офисы 1, 2, 3</span><span>Факт. адрес: 196105, г. Санкт-Петербург, Витебский пр-кт, д. 11, литера А, помещ. 1-Н, ком. 101 (адрес из мастер-шаблона ТКП)</span><span>Соцсети: vk.com/lasercut_ru · youtube.com/user/lasercutru</span></div>
+      </div></div>
+      </div>
+      <div class="btns">
+        <button type="button" class="btn mini" id="btnWord">Скачать для Word</button>
+        <button type="button" class="btn mini" id="btnPrint">Печать или PDF</button>
+        <button type="button" class="btn mini sec" id="btnSend">Отправить файлом</button>
+      </div>
+      <div class="btns">
+        <button class="btn mini sec" type="button" id="kpMiniGo">Открыть целиком</button>
+        <button type="button" class="btn mini sec" id="btnJson">JSON для скилла</button>
+        <button type="button" class="btn mini danger" id="btnClear">Очистить смету</button>
+      </div>
+      <details class="hint-det">
+        <summary>Чем отличаются файл и печать</summary>
+        <div class="det-b">
+          <div class="note small">Файл — настоящий .docx: открывается в Word, в том
+            числе на телефоне, и правится как обычный документ. PDF получается
+            печатью: в диалоге выберите «Сохранить как PDF». «Отправить файлом»
+            на телефоне открывает системное «Поделиться», на компьютере скачивает
+            файл.</div>
+        </div>
+      </details>
+      <textarea id="jsonOut" rows="6" style="margin-top:10px;display:none;
+        font-family:ui-monospace,Consolas,monospace;font-size:12px"></textarea>
+    </div>
+  </aside>
+  </div>
+
+  <div class="step kpstep">
+    <div class="step-h"><div class="step-n">3</div>
+      <div class="step-t">Шапка ТКП и предпросмотр<small>печать берёт только этот блок</small></div></div>
+    <div class="step-b">
+            <!-- Лист ТКП. Оформление повторяет мастер-шаблон скилла lasercut-kp:
            тёмно-синие плашки разделов, светло-голубые заливки, Calibri, A4.
            Шапка, постоянные разделы и подвал — статика, поэтому печатаются
            даже если скрипт не запустился. -->
@@ -1997,7 +2057,7 @@ body.demo .internal{display:none !important}
         станка и срок окупаемости для клиента.</p>
     </div>
   </div>
-  <div class="pills big subtabs" id="calcTabs" role="tablist" aria-label="Калькулятор"><button class="pill" type="button" data-sub="nds" role="tab" aria-selected="false">НДС</button><button class="pill" type="button" data-sub="lease" role="tab" aria-selected="false">Лизинг и график</button><button class="pill" type="button" data-sub="cost" role="tab" aria-selected="false">Час работы станка</button><button class="pill on" type="button" data-sub="roi" role="tab" aria-selected="true">Окупаемость</button></div>
+  <div class="pills big subtabs" id="calcTabs" role="tablist" aria-label="Калькулятор"><button class="pill" type="button" data-sub="nds" role="tab" aria-selected="false">НДС</button><button class="pill on" type="button" data-sub="lease" role="tab" aria-selected="true">Лизинг и график</button><button class="pill" type="button" data-sub="cost" role="tab" aria-selected="false">Час работы станка</button><button class="pill" type="button" data-sub="roi" role="tab" aria-selected="false">Окупаемость</button></div>
 
   <!-- ---------- НДС ---------- -->
   <div class="subpanel" id="c-nds" role="tabpanel">
@@ -2007,10 +2067,10 @@ body.demo .internal{display:none !important}
         <div class="cardhead"><h2>Проверка НДС</h2>
           <span class="spec-cnt" id="ndsHint"></span></div>
         <div class="row">
-          <div><label class="f">Сумма, ₽</label>
+          <div><label class="f" for="cnSum">Сумма, ₽</label>
             <input type="text" id="cnSum" inputmode="decimal" placeholder="например 3 010 400"></div>
-          <div><label class="f">Ставка</label><select id="cnRate"><option value="220">22 % — текущая ставка</option><option value="200">20 % — счета и КП прошлых лет</option><option value="100">10 % — льготная</option><option value="0">без НДС</option></select></div>
-          <div><label class="f">Что известно</label><select id="cnMode">
+          <div><label class="f" for="cnRate">Ставка</label><select id="cnRate"><option value="220">22 % — текущая ставка</option><option value="200">20 % — счета и КП прошлых лет</option><option value="100">10 % — льготная</option><option value="0">без НДС</option></select></div>
+          <div><label class="f" for="cnMode">Что известно</label><select id="cnMode">
             <option value="in">Сумма с НДС — выделить налог</option>
             <option value="out">Сумма без НДС — начислить сверху</option>
           </select></div>
@@ -2038,19 +2098,19 @@ body.demo .internal{display:none !important}
   </div>
 
   <!-- ---------- ЛИЗИНГ ---------- -->
-  <div class="subpanel" id="c-lease" role="tabpanel">
+  <div class="subpanel active" id="c-lease" role="tabpanel">
     <div class="cfggrid">
     <div class="cfgmain">
       <div class="card">
         <div class="cardhead"><h2>Условия договора</h2></div>
         <div class="row">
-          <div><label class="f">Цена комплекта, ₽</label>
+          <div><label class="f" for="clPrice">Цена комплекта, ₽</label>
             <input type="text" id="clPrice" inputmode="decimal"></div>
-          <div><label class="f">Аванс, %</label>
+          <div><label class="f" for="clAdv">Аванс, %</label>
             <input type="text" id="clAdv" inputmode="decimal"></div>
-          <div><label class="f">Срок, месяцев</label>
+          <div><label class="f" for="clMonths">Срок, месяцев</label>
             <input type="text" id="clMonths" inputmode="numeric"></div>
-          <div><label class="f">Удорожание, % в год</label>
+          <div><label class="f" for="clUp">Удорожание, % в год</label>
             <input type="text" id="clUp" inputmode="decimal"></div>
         </div>
         <div class="btns noprint">
@@ -2086,41 +2146,41 @@ body.demo .internal{display:none !important}
       <div class="card">
         <div class="cardhead"><h2>Станок и энергия</h2></div>
         <div class="row">
-          <div><label class="f">Потребление, кВт</label>
+          <div><label class="f" for="ccPower">Потребление, кВт</label>
             <input type="text" id="ccPower" inputmode="decimal" placeholder="из паспорта"></div>
-          <div><label class="f">Тариф, ₽/кВт·ч</label>
+          <div><label class="f" for="ccKwh">Тариф, ₽/кВт·ч</label>
             <input type="text" id="ccKwh" inputmode="decimal" placeholder="из счёта энергосбыта"></div>
-          <div><label class="f">Газ, ₽/час</label>
+          <div><label class="f" for="ccGas">Газ, ₽/час</label>
             <input type="text" id="ccGas" inputmode="decimal" placeholder="из части «Газ и владение»"></div>
         </div>
       </div>
       <div class="card">
         <div class="cardhead"><h2>Расходники</h2></div>
         <div class="row">
-          <div><label class="f">Сопло, ₽</label>
+          <div><label class="f" for="ccNozzle">Сопло, ₽</label>
             <input type="text" id="ccNozzle" inputmode="decimal"></div>
-          <div><label class="f">Ресурс сопла, ч</label>
+          <div><label class="f" for="ccNozzleH">Ресурс сопла, ч</label>
             <input type="text" id="ccNozzleH" inputmode="decimal"></div>
-          <div><label class="f">Защитное стекло, ₽</label>
+          <div><label class="f" for="ccGlass">Защитное стекло, ₽</label>
             <input type="text" id="ccGlass" inputmode="decimal"></div>
-          <div><label class="f">Ресурс стекла, ч</label>
+          <div><label class="f" for="ccGlassH">Ресурс стекла, ч</label>
             <input type="text" id="ccGlassH" inputmode="decimal"></div>
         </div>
       </div>
       <div class="card">
         <div class="cardhead"><h2>Оператор и амортизация</h2></div>
         <div class="row">
-          <div><label class="f">Оператор, ₽/мес</label>
+          <div><label class="f" for="ccOper">Оператор, ₽/мес</label>
             <input type="text" id="ccOper" inputmode="decimal"></div>
-          <div><label class="f">Часов работы в месяц</label>
+          <div><label class="f" for="ccHours">Часов работы в месяц</label>
             <input type="text" id="ccHours" inputmode="decimal"></div>
         </div>
         <div class="row">
-          <div><label class="f">Цена комплекта, ₽</label>
+          <div><label class="f" for="ccPrice">Цена комплекта, ₽</label>
             <input type="text" id="ccPrice" inputmode="decimal"></div>
-          <div><label class="f">Срок службы, часов</label>
+          <div><label class="f" for="ccLife">Срок службы, часов</label>
             <input type="text" id="ccLife" inputmode="decimal" placeholder="например 20 000"></div>
-          <div><label class="f">Прочее, ₽/час</label>
+          <div><label class="f" for="ccOther">Прочее, ₽/час</label>
             <input type="text" id="ccOther" inputmode="decimal" placeholder="аренда, обслуживание"></div>
         </div>
         <div class="btns noprint">
@@ -2145,23 +2205,23 @@ body.demo .internal{display:none !important}
   </div>
 
   <!-- ---------- ОКУПАЕМОСТЬ ---------- -->
-  <div class="subpanel active" id="c-roi" role="tabpanel">
+  <div class="subpanel" id="c-roi" role="tabpanel">
     <div class="cfggrid">
     <div class="cfgmain">
       <div class="card">
         <div class="cardhead"><h2>Как сейчас и как будет</h2></div>
         <div class="row">
-          <div><label class="f">Платите подрядчику, ₽/мес</label>
+          <div><label class="f" for="crOut">Платите подрядчику, ₽/мес</label>
             <input type="text" id="crOut" inputmode="decimal"></div>
-          <div><label class="f">Часов резки в месяц</label>
+          <div><label class="f" for="crHours">Часов резки в месяц</label>
             <input type="text" id="crHours" inputmode="decimal"></div>
-          <div><label class="f">Своя себестоимость, ₽/час</label>
+          <div><label class="f" for="crCost">Своя себестоимость, ₽/час</label>
             <input type="text" id="crCost" inputmode="decimal" placeholder="из расчёта часа"></div>
         </div>
         <div class="row">
-          <div><label class="f">Цена комплекта, ₽</label>
+          <div><label class="f" for="crPrice">Цена комплекта, ₽</label>
             <input type="text" id="crPrice" inputmode="decimal"></div>
-          <div><label class="f">Продаёте резку на сторону, ₽/час</label>
+          <div><label class="f" for="crSell">Продаёте резку на сторону, ₽/час</label>
             <input type="text" id="crSell" inputmode="decimal" placeholder="если планируете загружать станок заказами"></div>
         </div>
         <div class="btns noprint">
@@ -2224,8 +2284,8 @@ body.demo .internal{display:none !important}
         <div class="step-t">Что режем<small>мощность считается с обязательным запасом 30 % — требование завода</small></div></div>
       <div class="step-b"><div class="doing">
         <div class="row">
-          <div><label class="f">Материал</label><select id="mtMaterial"><option value="Углеродистая сталь">Углеродистая сталь</option><option value="Нержавейка">Нержавейка</option><option value="Алюминий">Алюминий</option><option value="Латунь">Латунь</option><option value="Медь">Медь</option></select></div>
-          <div><label class="f">Рабочая толщина, мм</label>
+          <div><label class="f" for="mtMaterial">Материал</label><select id="mtMaterial"><option value="Углеродистая сталь">Углеродистая сталь</option><option value="Нержавейка">Нержавейка</option><option value="Алюминий">Алюминий</option><option value="Латунь">Латунь</option><option value="Медь">Медь</option></select></div>
+          <div><label class="f" for="mtThick">Рабочая толщина, мм</label>
             <input type="number" id="mtThick" min="0.5" max="80" step="0.5" value="6"></div>
         </div>
       </div><div class="think"></div></div>
@@ -2244,8 +2304,8 @@ body.demo .internal{display:none !important}
         <div class="step-t">Задача клиента<small>формулировки взяты из матрицы подбора скилла</small></div></div>
       <div class="step-b"><div class="doing">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Что делает клиент</label><select id="mkTask"><option value="0">Маленькая столярка</option><option value="1">Пластик, акрил, мягкое дерево</option><option value="2">Мебельный цех, твёрдое дерево</option><option value="3">Крупная 3D-обработка</option><option value="4">Деревообработка с поворотом заготовки</option><option value="5">Серийное производство</option><option value="6">Двери и фасады</option><option value="7">Фрезеровать металл и алюминий</option></select></div>
-          <div><label class="f">Размер заготовки</label><select id="mkSize"><option value="0609">600×900 мм</option></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="mkTask">Что делает клиент</label><select id="mkTask"><option value="0">Маленькая столярка</option><option value="1">Пластик, акрил, мягкое дерево</option><option value="2">Мебельный цех, твёрдое дерево</option><option value="3">Крупная 3D-обработка</option><option value="4">Деревообработка с поворотом заготовки</option><option value="5">Серийное производство</option><option value="6">Двери и фасады</option><option value="7">Фрезеровать металл и алюминий</option></select></div>
+          <div><label class="f" for="mkSize">Размер заготовки</label><select id="mkSize"><option value="0609">600×900 мм</option></select></div>
         </div>
         <label class="chk"><input type="checkbox" id="mkVac"> Нужен вакуумный стол — листовые заготовки</label>
       </div><div class="think"></div></div>
@@ -2338,13 +2398,13 @@ body.demo .internal{display:none !important}
       <div class="step-t">Режим резки<small>сопло и газ определяют расход</small></div></div>
     <div class="step-b has-think"><div class="doing">
       <div class="row">
-        <div><label class="f">Сопло</label><select id="gNozzle"><option value="0">Сопло 1,0 мм</option><option value="1">Сопло 2,0 мм</option><option value="2">Сопло 3,0 мм</option><option value="3">Сопло 5,0 мм</option></select></div>
-        <div><label class="f">Газ</label><select id="gGas">
+        <div><label class="f" for="gNozzle">Сопло</label><select id="gNozzle"><option value="0">Сопло 1,0 мм</option><option value="1">Сопло 2,0 мм</option><option value="2">Сопло 3,0 мм</option><option value="3">Сопло 5,0 мм</option></select></div>
+        <div><label class="f" for="gGas">Газ</label><select id="gGas">
           <option value="o2">Кислород — углеродистая сталь</option>
           <option value="n2">Азот — нержавейка, алюминий</option></select></div>
-        <div><label class="f">Часов резки в месяц</label>
+        <div><label class="f" for="gHours">Часов резки в месяц</label>
           <input type="number" id="gHours" min="1" max="700" value="80"></div>
-        <div><label class="f">Цена баллона 40 л, ₽</label>
+        <div><label class="f" for="gPrice">Цена баллона 40 л, ₽</label>
           <input type="number" id="gPrice" min="0" step="50" placeholder="ввести вручную"></div>
       </div>
       
@@ -2388,7 +2448,7 @@ body.demo .internal{display:none !important}
     <div class="step-b has-think"><div class="doing">
       <div id="readyList"><div class="chk"><input type="checkbox"><span style="flex:1"><b>Ввод питания</b> — 380 В, три фазы <span class="flag-block">блокер</span><br><span class="muted">Нет ввода — нет сделки. Проверять до КП, а не на монтаже.</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Кабель к щиту</b> — пятижильный медный, ≥ 8 мм² <span class="flag-block">блокер</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Автомат</b> — ≥ 40 А <span class="flag-block">блокер</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Стабилизатор</b> — ≥ 30 000 Вт <span class="flag-block">блокер</span><br><span class="muted">Условие гарантии: паспорт запрещает работу без стабилизатора. Генераторы как источник питания запрещены. Только электромеханический или инверторный, в нестабильных сетях с запасом ≥ 30 %. Это НЕ «Ресанта за 8 490 ₽» из прайса комплектующих — отдельная статья бюджета.</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Заземление</b> — TN-S, &lt; 4 Ω <span class="flag-block">блокер</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Фундамент</b> — цельный 300–500 мм, перепад ± 5 мм/м, нагрузка 4 т/м² <span class="flag-block">блокер</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Пневмолиния</b> — не нужна<br><span class="muted">Обязательна для S-HP и RD.</span></span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Дистиллят на запуск</b> — 30 л</span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Место вокруг станка</b> — ≥ 800 мм (паспорт требует 1–1,2 м до стен)</span></div><div class="chk"><input type="checkbox"><span style="flex:1"><b>Погрузка</b> — &gt; 1500 кг: погрузчик ≥ 2,5 т или кран-балка ≥ 10 т</span></div></div>
       
-    </div><div class="think"><div class="check fail" id="readyOut"><b>КП не выпускать: не закрыто блокеров — 6 из 6.</b><ul><li>Ввод питания</li><li>Кабель к щиту</li><li>Автомат</li><li>Стабилизатор</li><li>Заземление</li><li>Фундамент</li></ul>Нет ввода 380 В — нет сделки. Проверять до КП, а не на монтаже.</div></div></div>
+    </div><div class="think"><div class="check fail" id="readyOut"><b>ТКП не выпускать: не закрыто блокеров — 6 из 6.</b><ul><li>Ввод питания</li><li>Кабель к щиту</li><li>Автомат</li><li>Стабилизатор</li><li>Заземление</li><li>Фундамент</li></ul>Нет ввода 380 В — нет сделки. Проверять до ТКП, а не на монтаже.</div></div></div>
   </div>
 
   <details>
@@ -2999,6 +3059,8 @@ var DOCX = (function () {
     supId: '', sups: {}, theme: 'dark',
     // какая часть справочника открыта: подбор по задаче, техника или газ
     guidePart: 'match',
+    // выбранный сценарий на карте инструментов
+    mapFlow: 'all',
     // свой порядок разделов в меню: строки можно перетаскивать
     secOrder: [],
     // калькуляторы: какая часть открыта и что введено в поля
@@ -3081,7 +3143,7 @@ var DOCX = (function () {
       if (!Array.isArray(state.build.saved)) state.build.saved = [];
       // черновики до версии 19 не знали про настраиваемые вкладки
       if (!Array.isArray(state.pins)) state.pins = ['home', 'build', 'smeta', 'letters'];
-      // в версии 28 три раздела сведены в «Справочник»: закреплённые вкладки
+      // с версии 28 эти разделы сведены в «Справочник»: закреплённые вкладки
       // со старыми именами переводим на него, повтор убираем
       var MERGED = ['match', 'tech', 'gas', 'shop', 'data', 'quiz'];
       state.pins = state.pins.map(function (id) {
@@ -3121,7 +3183,7 @@ var DOCX = (function () {
   // Один источник истины: SECTIONS. Из него строится меню, по нему же
   // проверяется хеш в адресе.
   var SECTIONS = [
-    { id: 'home', title: 'Главная', hint: 'три инструмента менеджера' },
+    { id: 'home', title: 'Песочница', hint: 'карта инструментов и куда идти' },
     { id: 'build', title: 'Конфигуратор', hint: 'слоты комплекта и проверка' },
     { id: 'letters', title: 'Письма', hint: 'возврат, платежи, официальные' },
     { id: 'zp', title: 'Зарплата', hint: 'оклад, переработки, налоги' },
@@ -3132,7 +3194,7 @@ var DOCX = (function () {
     { id: 'guide', title: 'Справочник',
       hint: 'подбор, техника, газ, готовность цеха, данные' }
   ];
-  // Справочник собран из трёх бывших разделов. Их прежние имена остались
+  // Справочник собран из бывших самостоятельных разделов. Прежние имена остались
   // адресами частей: ссылка #tech по-прежнему открывает нужную часть.
   var GUIDE_PARTS = [
     { id: 'match', title: 'Подбор по задаче' },
@@ -4792,6 +4854,16 @@ var DOCX = (function () {
     // значок живёт во вкладке «Смета и ТКП», а её могли снять из строки
     var sBadge = $('smetaBadge');
     if (sBadge) sBadge.textContent = has ? String(state.items.length) : '';
+    var st = $('smetaState');
+    if (st) {
+      st.textContent = has
+        ? cnt(state.items.length, ['позиция', 'позиции', 'позиций']) + ' · ' +
+          fmtRub(T.total) + ' ₽ с НДС'
+        : 'смета пуста';
+    }
+    var rule = $('smetaRule');
+    if (rule) rule.textContent = 'скидка ' + pctText(T.gDisc) +
+      ' · НДС ' + pctText(T.rate);
 
     T.lines.forEach(function (L, i) {
       var tr = d.createElement('tr');
@@ -4906,7 +4978,7 @@ var DOCX = (function () {
     }
     if (problems.length) {
       cb.className = 'check fail';
-      cb.innerHTML = '<b>Сходимость нарушена — КП не выпускать.</b><ul>' +
+      cb.innerHTML = '<b>Сходимость нарушена — ТКП не выпускать.</b><ul>' +
         problems.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>';
     } else {
       cb.className = 'check good';
@@ -5075,7 +5147,42 @@ var DOCX = (function () {
 
     // статические «Условия поставки» и «Гарантия и сервис» идут следом
     setStaticSectionNumbers(n, n + 1);
+    renderKpMini();
   }
+
+  // Миниатюра листа справа: лист А4 сжимается по ширине колонки, поэтому
+  // видно, что уедет клиенту, без прокрутки страницы вниз.
+  function renderKpMini() {
+    var box = $('kpMini'), inner = $('kpMiniIn'), doc0 = $('kpDoc');
+    if (!box || !inner || !doc0) return;
+    // копию листа кладём без id: иначе в документе появляются двойники
+    // (#kpPreview и остальные), и любой поиск по id хватает не тот узел
+    var copy = doc0.cloneNode(true);
+    copy.removeAttribute('id');
+    var withId = copy.querySelectorAll('[id]');
+    for (var i = 0; i < withId.length; i++) withId[i].removeAttribute('id');
+    clear(inner);
+    inner.appendChild(copy);
+    var w = box.clientWidth || 360;
+    var k = Math.max(0.3, Math.min(1, w / 794));
+    inner.style.transform = 'scale(' + k.toFixed(3) + ')';
+    var c = $('kpMiniCnt');
+    if (c) c.textContent = state.items.length
+      ? cnt(state.items.length, ['позиция', 'позиции', 'позиций']) +
+        ' · масштаб ' + Math.round(k * 100) + ' %'
+      : 'смета пуста';
+  }
+  (function () {
+    var go = $('kpMiniGo'), box = $('kpMini');
+    function jump() {
+      var st = d.querySelector('#p-smeta .kpstep');
+      if (!st) return;
+      try { st.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      catch (e) { d.documentElement.scrollTop = st.offsetTop; }
+    }
+    if (go) go.addEventListener('click', jump);
+    if (box) box.addEventListener('click', jump);
+  }());
 
   // Номера двух статических разделов зависят от варианта ТКП
   function setStaticSectionNumbers(a, b) {
@@ -5981,10 +6088,10 @@ var DOCX = (function () {
       });
       if (openBlockers.length) {
         out.className = 'check fail';
-        out.innerHTML = '<b>КП не выпускать: не закрыто блокеров — ' + openBlockers.length +
+        out.innerHTML = '<b>ТКП не выпускать: не закрыто блокеров — ' + openBlockers.length +
           ' из ' + totalBlockers + '.</b><ul>' +
           openBlockers.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') +
-          '</ul>Нет ввода 380 В — нет сделки. Проверять до КП, а не на монтаже.';
+          '</ul>Нет ввода 380 В — нет сделки. Проверять до ТКП, а не на монтаже.';
       } else {
         out.className = 'check good';
         out.innerHTML = '<b>Блокеры закрыты.</b> Осталось непроверенных пунктов: ' + openOther +
@@ -6308,27 +6415,190 @@ var DOCX = (function () {
   });
 
   // =====================================================================
-  //                    ГЛАВНАЯ: три плитки-инструмента
+  //                 ПЕСОЧНИЦА: карта инструментов
+  // Раньше здесь были плитки и сухой список разделов. Теперь карта
+  // сценариев: слева направо — как идёт работа. У каждой карточки написано,
+  // что она делает, что ей нужно на входе и куда идти дальше. Поиск ищет
+  // и по названию, и по описанию, и по ключевым словам, чтобы человек нашёл
+  // инструмент словами задачи: «НДС», «толщина», «отпуск».
   // =====================================================================
-  (function () {
-    var tiles = $('p-home').querySelectorAll('.tile');
-    for (var i = 0; i < tiles.length; i++) {
-      (function (b) {
-        b.addEventListener('click', function () { showTab(b.getAttribute('data-go')); });
-      }(tiles[i]));
-    }
-    var map = fresh('homeMap');
-    SECTIONS.forEach(function (sec) {
-      if (sec.id === 'home') return;
-      var row = el('div', 'maprow');
-      row.innerHTML = '<b>' + esc(sec.title) + '</b><span class="muted">' +
-        esc(sec.hint) + '</span>';
-      var b = el('button', 'btn mini sec', 'Открыть');
-      b.type = 'button';
-      b.addEventListener('click', function () { showTab(sec.id); });
-      row.appendChild(b);
-      map.appendChild(row);
+  var MAP_FLOWS = [
+    { id: 'sale', title: 'Продажа', hint: 'от задачи клиента до подписи',
+      cards: [
+        { go: 'guide', part: 'match', title: 'Подбор по задаче',
+          what: 'Материал и толщина → мощность с запасом и две модели',
+          need: 'знать, что режет клиент',
+          next: 'дальше — конфигуратор',
+          keys: 'толщина материал мощность подбор модель сталь нержавейка' },
+        { go: 'build', title: 'Конфигуратор',
+          what: 'Комплект по слотам: станок, обвязка, ПНР. Проверка совместимости',
+          need: 'выбранная модель',
+          next: 'кнопка «Перенести в смету»',
+          keys: 'сборка слоты комплект компрессор чиллер стабилизатор пнр опоры' },
+        { go: 'smeta', title: 'Смета и ТКП',
+          what: 'Позиции, скидки, НДС, лист предложения и файл для Word',
+          need: 'позиции из конфигуратора',
+          next: 'скачать .docx или напечатать в PDF',
+          keys: 'смета ткп кп скидка ндс word docx печать счёт итого' },
+        { go: 'calc', part: 'roi', title: 'Окупаемость и лизинг',
+          what: 'Срок возврата вложений, платёж по лизингу, график',
+          need: 'цену комплекта и загрузку',
+          next: 'цифры — в разговор и в ТКП',
+          keys: 'окупаемость лизинг рассрочка платёж график экономия выгода' }
+      ] },
+    { id: 'docs', title: 'Документы и деньги', hint: 'бумаги, которые нужны сегодня',
+      cards: [
+        { go: 'letters', title: 'Письма по оплатам',
+          what: 'Возврат ошибочного платежа, уточнение назначения, перезачёт',
+          need: 'реквизиты и номер поручения',
+          next: 'печать или .docx на бланке',
+          keys: 'письмо возврат платёж назначение перезачёт официальное бланк' },
+        { go: 'letters', title: 'Кадровые документы',
+          what: 'Заявления и служебные записки: отпуск, врач, отгул',
+          need: 'даты и причину',
+          next: 'подписать у руководителя',
+          keys: 'кадровые заявление записка отпуск врач отгул сотрудник' },
+        { go: 'zp', title: 'Зарплата',
+          what: 'Оклад по дням, переработки, дежурство, отпуск, больничный, аванс',
+          need: 'оклад и отработанные дни',
+          next: 'печать расчёта',
+          keys: 'зарплата оклад ндфл аванс переработка больничный отпуск дежурство' },
+        { go: 'calc', part: 'nds', title: 'Проверка НДС',
+          what: 'Выделить налог из суммы или начислить сверху, сумма прописью',
+          need: 'сумму из счёта',
+          next: 'сверить со счётом',
+          keys: 'ндс налог прописью счёт ставка 22 20 процент' }
+      ] },
+    { id: 'know', title: 'Справка и обучение', hint: 'когда нужен факт, а не догадка',
+      cards: [
+        { go: 'guide', part: 'tech', title: 'Техника простым языком',
+          what: 'Толщины по мощностям, серии A/E/S, что внутри станка',
+          need: 'ничего',
+          next: 'говорить клиенту рабочие толщины, а не предельные',
+          keys: 'техника толщина серия комплектация голова контроллер труборез' },
+        { go: 'guide', part: 'gas', title: 'Газ и стоимость владения',
+          what: 'Расход по соплам, баллоны в час, деньги за месяц',
+          need: 'сопло, газ, часы резки',
+          next: 'аргумент против «дешёвого» станка',
+          keys: 'газ азот кислород баллон расход владение сопло' },
+        { go: 'calc', part: 'cost', title: 'Час работы станка',
+          what: 'Электричество, газ, расходники, оператор, амортизация',
+          need: 'тариф и цены расходников',
+          next: 'себестоимость → в окупаемость',
+          keys: 'себестоимость час машиночас электричество расходники амортизация' },
+        { go: 'guide', part: 'shop', title: 'Готовность цеха',
+          what: 'Что должно быть на площадке до приезда монтажников',
+          need: 'ничего',
+          next: 'отправить клиенту список',
+          keys: 'цех площадка монтаж пнр электрика вентиляция фундамент' },
+        { go: 'guide', part: 'quiz', title: 'Тренажёр',
+          what: 'Десять вопросов на разминку или экзамен на двадцать пять',
+          need: 'пять минут',
+          next: 'разбор ошибок со ссылкой на справку',
+          keys: 'тренажёр экзамен вопросы проверить себя обучение новичок' },
+        { go: 'guide', part: 'data', title: 'Данные и пробелы',
+          what: 'Откуда цифры, где их нет и что нельзя говорить клиенту',
+          need: 'ничего',
+          next: 'сомнительное — уточнять, а не придумывать',
+          keys: 'данные источники прайс расхождения пробелы наценка' }
+      ] }
+  ];
+  function mapCardsAll() {
+    var out = [];
+    MAP_FLOWS.forEach(function (f) {
+      f.cards.forEach(function (c) { out.push({ flow: f, card: c }); });
     });
+    return out;
+  }
+  function mapGo(c) {
+    showTab(c.go);
+    if (c.part) showGuidePart && c.go === 'guide' && showGuidePart(c.part);
+    if (c.part && c.go === 'calc') showCalcPart(c.part);
+  }
+  function renderMap() {
+    var box = $('mapFlows');
+    if (!box) return;
+    clear(box);
+    var q = ($('mapSearch') && $('mapSearch').value || '').trim().toLowerCase();
+    var flow = state.mapFlow || 'all';
+    var shown = 0;
+    MAP_FLOWS.forEach(function (f) {
+      if (flow !== 'all' && flow !== f.id) return;
+      var cards = f.cards.filter(function (c) {
+        if (!q) return true;
+        return (c.title + ' ' + c.what + ' ' + c.keys + ' ' + f.title)
+          .toLowerCase().indexOf(q) >= 0;
+      });
+      if (!cards.length) return;
+      var wrap = el('div', 'mapflow');
+      var head = el('div', 'mapflow-h');
+      head.innerHTML = '<b>' + esc(f.title) + '</b><span class="muted">' +
+        esc(f.hint) + '</span>';
+      wrap.appendChild(head);
+      var grid = el('div', 'mapgrid');
+      cards.forEach(function (c) {
+        shown++;
+        var b = el('button', 'mapcard');
+        b.type = 'button';
+        b.setAttribute('data-go', c.go + (c.part ? ':' + c.part : ''));
+        b.innerHTML = '<span class="mc-t">' + esc(c.title) + '</span>' +
+          '<span class="mc-w">' + esc(c.what) + '</span>' +
+          '<span class="mc-n"><i>нужно:</i> ' + esc(c.need) + '</span>' +
+          '<span class="mc-x">' + esc(c.next) + '</span>' +
+          '<span class="mc-a">Открыть →</span>';
+        b.addEventListener('click', function () { mapGo(c); });
+        grid.appendChild(b);
+      });
+      wrap.appendChild(grid);
+      box.appendChild(wrap);
+    });
+    var em = $('mapEmpty');
+    if (em) em.hidden = shown > 0;
+    var cn = $('mapCnt');
+    if (cn) {
+      cn.textContent = q || flow !== 'all'
+        ? cnt(shown, ['инструмент', 'инструмента', 'инструментов'])
+        : cnt(mapCardsAll().length, ['инструмент', 'инструмента', 'инструментов']) +
+          ' в ' + cnt(MAP_FLOWS.length, ['сценарии', 'сценариях', 'сценариях']);
+    }
+  }
+  (function () {
+    if (!d.getElementById('mapFlows')) return;
+    var fl = fresh('mapFilters');
+    var list = [{ id: 'all', title: 'Всё' }].concat(MAP_FLOWS.map(function (f) {
+      return { id: f.id, title: f.title };
+    }));
+    list.forEach(function (x) {
+      var b = el('button', 'pill', x.title);
+      b.type = 'button';
+      b.setAttribute('data-flow', x.id);
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', function () {
+        state.mapFlow = x.id;
+        save();
+        var bs = fl.querySelectorAll('button');
+        for (var i = 0; i < bs.length; i++) {
+          var on = bs[i].getAttribute('data-flow') === x.id;
+          bs[i].className = on ? 'pill on' : 'pill';
+          bs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+        }
+        renderMap();
+      });
+      fl.appendChild(b);
+    });
+    var cur = state.mapFlow || 'all';
+    var start = fl.querySelector('button[data-flow="' + cur + '"]') ||
+      fl.querySelector('button');
+    if (start) {
+      start.className = 'pill on';
+      start.setAttribute('aria-selected', 'true');
+    }
+    var srch = $('mapSearch');
+    if (srch) {
+      srch.addEventListener('input', renderMap);
+      srch.addEventListener('search', renderMap);
+    }
+    renderMap();
   }());
 
   // =====================================================================
@@ -6463,8 +6733,26 @@ var DOCX = (function () {
       }
     }, 3200);
   }
+  // Плашки-группы: у каждой свой список документов, раскрыта одна.
+  // Нажал «Кадровые документы» — под кнопкой появились её заявления.
   function renderLtrPills() {
-    var pl = fresh('ltrPills'), gid = ltrGrp();
+    var gid = ltrGrp();
+    // контейнер плиток один: переносим его в открытую группу
+    var host = $('ltrPills');
+    var target = $('ltrGroups').querySelector('.ltracc-i[data-grp="' + gid +
+      '"] .ltracc-b');
+    if (host && target && host.parentNode !== target) target.appendChild(host);
+    var accs = $('ltrGroups').querySelectorAll('.ltracc-i');
+    for (var k = 0; k < accs.length; k++) {
+      var id = accs[k].getAttribute('data-grp');
+      var open = id === gid;
+      accs[k].classList.toggle('open', open);
+      var head = accs[k].querySelector('button.ltracc-h');
+      if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      var body = accs[k].querySelector('.ltracc-b');
+      if (body) body.hidden = !open;
+    }
+    var pl = fresh('ltrPills');
     ltrTplsOfGroup(gid).forEach(function (t) {
       var b = el('button', 'pill', esc(t.title));
       b.type = 'button';
@@ -6477,12 +6765,6 @@ var DOCX = (function () {
       });
       pl.appendChild(b);
     });
-    var gb = $('ltrGroups').querySelectorAll('button');
-    for (var i = 0; i < gb.length; i++) {
-      var on = gb[i].getAttribute('data-grp') === gid;
-      gb[i].className = on ? 'pill on' : 'pill';
-      gb[i].setAttribute('aria-selected', on ? 'true' : 'false');
-    }
   }
   function renderLtrFields() {
     var box = fresh('ltrFields'), tpl = ltrTpl();
@@ -6496,6 +6778,7 @@ var DOCX = (function () {
       var cell = el('div', (def.client && !staff) ? 'clientfield' : '');
       var lab = el('label', 'f', esc(def.label) +
         ((def.client && !staff) ? ' <span class="cf">клиент</span>' : ''));
+      lab.setAttribute('for', 'lf_' + fid);   // подпись связана с полем
       cell.appendChild(lab);
       var inp = el(def.kind === 'area' ? 'textarea' : 'input');
       if (def.kind !== 'area') inp.type = def.kind === 'date' ? 'date' : 'text';
@@ -6636,7 +6919,13 @@ var DOCX = (function () {
   function renderLtrMini() {
     var box = $('ltrMini'), inner = $('ltrMiniIn'), page = $('ltrPage');
     if (!box || !inner || !page) return;
-    inner.innerHTML = '<div class="ltrpage">' + page.innerHTML + '</div>';
+    // копия без id: двойников в документе быть не должно
+    var copy = page.cloneNode(true);
+    copy.removeAttribute('id');
+    var ids = copy.querySelectorAll('[id]');
+    for (var i = 0; i < ids.length; i++) ids[i].removeAttribute('id');
+    clear(inner);
+    inner.appendChild(copy);
     var w = box.clientWidth || 360;
     var k = Math.max(0.35, Math.min(1, w / 794));
     inner.style.transform = 'scale(' + k.toFixed(3) + ')';
@@ -6674,10 +6963,16 @@ var DOCX = (function () {
     // показываются только для выбранной группы — иначе их одиннадцать в ряд.
     var gr = fresh('ltrGroups');
     APP.letterGroups.forEach(function (g) {
-      var gb = el('button', 'pill', esc(g.title));
+      var item = el('div', 'ltracc-i');
+      item.setAttribute('data-grp', g.id);
+      var gb = el('button', 'ltracc-h');
       gb.type = 'button';
       gb.setAttribute('data-grp', g.id);
-      gb.setAttribute('role', 'tab');
+      gb.setAttribute('aria-expanded', 'false');
+      gb.innerHTML = '<span class="la-t">' + esc(g.title) + '</span>' +
+        '<span class="la-c">' +
+        cnt(ltrTplsOfGroup(g.id).length, ['документ', 'документа', 'документов']) +
+        '</span><span class="la-x" aria-hidden="true"></span>';
       gb.addEventListener('click', function () {
         state.ltr.grp = g.id;
         // при смене группы берём первый шаблон из неё
@@ -6686,7 +6981,18 @@ var DOCX = (function () {
         save(); renderLtrPills(); renderLtrFields(); renderLtr();
         pointToTpls();
       });
-      gr.appendChild(gb);
+      var body = el('div', 'ltracc-b');
+      body.hidden = true;
+      if (g.id === ltrGrp()) {
+        var host = el('div', 'pills big');
+        host.id = 'ltrPills';
+        host.setAttribute('role', 'tablist');
+        host.setAttribute('aria-label', 'Шаблон письма');
+        body.appendChild(host);
+      }
+      item.appendChild(gb);
+      item.appendChild(body);
+      gr.appendChild(item);
     });
     renderLtrPills();
     var sel = fresh('ltrSupplier');
@@ -6931,7 +7237,7 @@ var DOCX = (function () {
       divHalfUp(hourRate * holMult * Math.round(holH * 100), 100));
     add('Отпускные, ' + num(z.vacDays) + ' кал. дн.',
       fmt(toCents(num(z.vacDaily))) + ' × ' + num(z.vacDays),
-      toCents(num(z.vacDaily)) * num(z.vacDays));
+      divHalfUp(toCents(num(z.vacDaily)) * Math.round(num(z.vacDays) * 100), 100));
     var sickDays = num(z.sickDays), sDaily = toCents(num(z.sickDaily));
     var pct = sickPct(z.sickYears);
     var sickEmpDays = Math.min(sickDays, 3), sickSfrDays = Math.max(sickDays - 3, 0);
@@ -7795,15 +8101,18 @@ var DOCX = (function () {
     }
     // ПНР под формат станка
     if (kind === 'milling' && it.pnr && it.pnr.meta && it.pnr.meta.group) {
-      var fmt = (machine.meta || {}).format || '';
+      // machFormat, а не fmt: имя fmt занято денежным форматированием
+      var machFormat = (machine.meta || {}).format || '';
       var g = it.pnr.meta.group;
-      var okGroup = (g === 'mini' && (fmt === '0404' || fmt === '0609')) ||
-        (g === '6090' && fmt === '6090') || (g === '1313' && fmt === '1313') ||
-        (g === '1616' && fmt === '1616') || (g === '1325' && fmt === '1325') ||
-        (g === '2030' && (fmt === '2030' || fmt === '2040')) ||
+      var okGroup = (g === 'mini' && (machFormat === '0404' || machFormat === '0609')) ||
+        (g === '6090' && machFormat === '6090') ||
+        (g === '1313' && machFormat === '1313') ||
+        (g === '1616' && machFormat === '1616') ||
+        (g === '1325' && machFormat === '1325') ||
+        (g === '2030' && (machFormat === '2030' || machFormat === '2040')) ||
         g === 'm3' || g === 's4' || g === 'rd' || g === 'miniCab';
       if (!okGroup) {
-        out.push(['warn', 'Группа ПНР не совпадает с форматом станка (' + fmt +
+        out.push(['warn', 'Группа ПНР не совпадает с форматом станка (' + machFormat +
           ') — сверьте строку прайса.']);
       }
     }
@@ -8314,7 +8623,7 @@ var DOCX = (function () {
   }
   // Итог сметы берём из общего расчёта: одна цифра, один источник
   function smetaTotalCents() {
-    try { return totals().itogo; } catch (e) { return 0; }
+    try { return totals().total; } catch (e) { return 0; }
   }
 
   // ------------------------------ НДС ---------------------------------
@@ -8367,8 +8676,9 @@ var DOCX = (function () {
   // Удорожание — надбавка к цене за год договора, а не банковская ставка.
   function leaseCalc() {
     var price = toCents(cnum('clPrice'));
-    var advPct = cnum('clAdv');
-    var months = Math.max(Math.round(cnum('clMonths')), 0);
+    // аванс больше цены и срок в сто лет — это опечатка, а не условия сделки
+    var advPct = Math.min(Math.max(cnum('clAdv'), 0), 100);
+    var months = Math.min(Math.max(Math.round(cnum('clMonths')), 0), 120);
     var up10 = Math.round(cnum('clUp') * 10);        // десятые доли процента
     var advance = divHalfUp(price * Math.round(advPct * 10), 1000);
     var fin = price - advance;                        // сумма финансирования
@@ -8432,14 +8742,16 @@ var DOCX = (function () {
     var power = cnum('ccPower'), kwh = cnum('ccKwh');
     var elec = toCents(power * kwh);
     var gas = toCents(cnum('ccGas'));
-    var nozzle = cnum('ccNozzleH') > 0
-      ? divHalfUp(toCents(cnum('ccNozzle')), Math.round(cnum('ccNozzleH'))) : 0;
-    var glass = cnum('ccGlassH') > 0
-      ? divHalfUp(toCents(cnum('ccGlass')), Math.round(cnum('ccGlassH'))) : 0;
-    var oper = cnum('ccHours') > 0
-      ? divHalfUp(toCents(cnum('ccOper')), Math.round(cnum('ccHours'))) : 0;
-    var amort = cnum('ccLife') > 0
-      ? divHalfUp(toCents(cnum('ccPrice')), Math.round(cnum('ccLife'))) : 0;
+    // делитель округляем заранее и проверяем именно его: «0,4 часа»
+    // проходило условие «> 0», а после округления давало деление на ноль
+    var nozzleH = Math.round(cnum('ccNozzleH'));
+    var glassH = Math.round(cnum('ccGlassH'));
+    var operH = Math.round(cnum('ccHours'));
+    var lifeH = Math.round(cnum('ccLife'));
+    var nozzle = nozzleH > 0 ? divHalfUp(toCents(cnum('ccNozzle')), nozzleH) : 0;
+    var glass = glassH > 0 ? divHalfUp(toCents(cnum('ccGlass')), glassH) : 0;
+    var oper = operH > 0 ? divHalfUp(toCents(cnum('ccOper')), operH) : 0;
+    var amort = lifeH > 0 ? divHalfUp(toCents(cnum('ccPrice')), lifeH) : 0;
     var other = toCents(cnum('ccOther'));
     var rows = [
       ['Электричество', elec, power && kwh
@@ -8457,9 +8769,9 @@ var DOCX = (function () {
     var missing = [];
     if (!power || !kwh) missing.push('потребление и тариф на электричество');
     if (!cfilled('ccGas')) missing.push('газ за час');
-    if (!cnum('ccNozzleH') || !cnum('ccGlassH')) missing.push('ресурс расходников');
-    if (!cnum('ccHours')) missing.push('часы работы оператора');
-    if (!cnum('ccLife')) missing.push('срок службы станка в часах');
+    if (!nozzleH || !glassH) missing.push('ресурс расходников');
+    if (!operH) missing.push('часы работы оператора');
+    if (!lifeH) missing.push('срок службы станка в часах');
     return { rows: rows, sum: sum, missing: missing };
   }
   function renderCost() {
@@ -8504,17 +8816,18 @@ var DOCX = (function () {
     var own = toCents(cnum('crCost'));            // своя себестоимость часа
     var price = toCents(cnum('crPrice'));
     var sell = toCents(cnum('crSell'));           // продажа резки на сторону
-    var ownMonth = own * Math.round(hours * 100) / 100;
-    ownMonth = Math.round(ownMonth);
-    var save = outsource - ownMonth;              // экономия в месяц
+    var ownMonth = Math.round(own * Math.round(hours * 100) / 100);
+    // economy, а не save: имя save занято функцией сохранения черновика
+    var economy = outsource - ownMonth;           // экономия в месяц
     var earn = sell ? Math.round((sell - own) * Math.round(hours * 100) / 100) : 0;
-    var profit = save + earn;
+    var profit = economy + earn;
     var months = profit > 0 ? Math.ceil(price / profit) : 0;
     // сколько часов в месяц нужно, чтобы выйти в ноль по цене подрядчика
-    var perHour = hours > 0 ? divHalfUp(outsource, Math.round(hours)) : 0;
+    var hoursR = Math.round(hours);
+    var perHour = hoursR > 0 ? divHalfUp(outsource, hoursR) : 0;
     var breakeven = (perHour > own && own >= 0 && price)
       ? Math.ceil(price / (perHour - own)) : 0;
-    return { outsource: outsource, ownMonth: ownMonth, save: save, earn: earn,
+    return { outsource: outsource, ownMonth: ownMonth, save: economy, earn: earn,
       profit: profit, months: months, price: price, perHour: perHour,
       own: own, hours: hours, breakeven: breakeven };
   }
@@ -8531,7 +8844,10 @@ var DOCX = (function () {
     totLine(tot, 'Платите подрядчику', fmt(T.outsource) + ' ₽/мес');
     totLine(tot, 'Своя резка', fmt(T.ownMonth) + ' ₽/мес');
     totLine(tot, 'Экономия', fmt(T.save) + ' ₽/мес', 'gain');
-    if (T.earn) totLine(tot, 'Заработок на заказах', fmt(T.earn) + ' ₽/мес', 'gain');
+    if (T.earn) {
+      totLine(tot, T.earn > 0 ? 'Заработок на заказах' : 'Убыток на заказах',
+        fmt(T.earn) + ' ₽/мес', T.earn > 0 ? 'gain' : '');
+    }
     totLine(tot, 'Цена комплекта', fmt(T.price) + ' ₽');
     totLine(tot, 'Срок окупаемости',
       (T.months ? T.months + ' ' + plural(T.months, ['месяц', 'месяца', 'месяцев'])
@@ -8899,7 +9215,7 @@ var DOCX = (function () {
   $('sumBarGo').addEventListener('click', function () { showTab('smeta'); });
   var hash = (location.hash || '').replace('#', '');
   var valid = SECTIONS.map(function (s) { return s.id; }).concat(guidePartIds());
-  showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');
+  showTab(valid.indexOf(hash) >= 0 ? hash : 'home');
   fixNavOffset();
 
   if ('serviceWorker' in navigator) {

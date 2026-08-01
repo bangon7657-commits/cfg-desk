@@ -59,6 +59,8 @@
     supId: '', sups: {}, theme: 'dark',
     // какая часть справочника открыта: подбор по задаче, техника или газ
     guidePart: 'match',
+    // выбранный сценарий на карте инструментов
+    mapFlow: 'all',
     // свой порядок разделов в меню: строки можно перетаскивать
     secOrder: [],
     // калькуляторы: какая часть открыта и что введено в поля
@@ -141,7 +143,7 @@
       if (!Array.isArray(state.build.saved)) state.build.saved = [];
       // черновики до версии 19 не знали про настраиваемые вкладки
       if (!Array.isArray(state.pins)) state.pins = ['home', 'build', 'smeta', 'letters'];
-      // в версии 28 три раздела сведены в «Справочник»: закреплённые вкладки
+      // с версии 28 эти разделы сведены в «Справочник»: закреплённые вкладки
       // со старыми именами переводим на него, повтор убираем
       var MERGED = ['match', 'tech', 'gas', 'shop', 'data', 'quiz'];
       state.pins = state.pins.map(function (id) {
@@ -181,7 +183,7 @@
   // Один источник истины: SECTIONS. Из него строится меню, по нему же
   // проверяется хеш в адресе.
   var SECTIONS = [
-    { id: 'home', title: 'Главная', hint: 'три инструмента менеджера' },
+    { id: 'home', title: 'Песочница', hint: 'карта инструментов и куда идти' },
     { id: 'build', title: 'Конфигуратор', hint: 'слоты комплекта и проверка' },
     { id: 'letters', title: 'Письма', hint: 'возврат, платежи, официальные' },
     { id: 'zp', title: 'Зарплата', hint: 'оклад, переработки, налоги' },
@@ -192,7 +194,7 @@
     { id: 'guide', title: 'Справочник',
       hint: 'подбор, техника, газ, готовность цеха, данные' }
   ];
-  // Справочник собран из трёх бывших разделов. Их прежние имена остались
+  // Справочник собран из бывших самостоятельных разделов. Прежние имена остались
   // адресами частей: ссылка #tech по-прежнему открывает нужную часть.
   var GUIDE_PARTS = [
     { id: 'match', title: 'Подбор по задаче' },
@@ -1852,6 +1854,16 @@
     // значок живёт во вкладке «Смета и ТКП», а её могли снять из строки
     var sBadge = $('smetaBadge');
     if (sBadge) sBadge.textContent = has ? String(state.items.length) : '';
+    var st = $('smetaState');
+    if (st) {
+      st.textContent = has
+        ? cnt(state.items.length, ['позиция', 'позиции', 'позиций']) + ' · ' +
+          fmtRub(T.total) + ' ₽ с НДС'
+        : 'смета пуста';
+    }
+    var rule = $('smetaRule');
+    if (rule) rule.textContent = 'скидка ' + pctText(T.gDisc) +
+      ' · НДС ' + pctText(T.rate);
 
     T.lines.forEach(function (L, i) {
       var tr = d.createElement('tr');
@@ -1966,7 +1978,7 @@
     }
     if (problems.length) {
       cb.className = 'check fail';
-      cb.innerHTML = '<b>Сходимость нарушена — КП не выпускать.</b><ul>' +
+      cb.innerHTML = '<b>Сходимость нарушена — ТКП не выпускать.</b><ul>' +
         problems.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>';
     } else {
       cb.className = 'check good';
@@ -2135,7 +2147,42 @@
 
     // статические «Условия поставки» и «Гарантия и сервис» идут следом
     setStaticSectionNumbers(n, n + 1);
+    renderKpMini();
   }
+
+  // Миниатюра листа справа: лист А4 сжимается по ширине колонки, поэтому
+  // видно, что уедет клиенту, без прокрутки страницы вниз.
+  function renderKpMini() {
+    var box = $('kpMini'), inner = $('kpMiniIn'), doc0 = $('kpDoc');
+    if (!box || !inner || !doc0) return;
+    // копию листа кладём без id: иначе в документе появляются двойники
+    // (#kpPreview и остальные), и любой поиск по id хватает не тот узел
+    var copy = doc0.cloneNode(true);
+    copy.removeAttribute('id');
+    var withId = copy.querySelectorAll('[id]');
+    for (var i = 0; i < withId.length; i++) withId[i].removeAttribute('id');
+    clear(inner);
+    inner.appendChild(copy);
+    var w = box.clientWidth || 360;
+    var k = Math.max(0.3, Math.min(1, w / 794));
+    inner.style.transform = 'scale(' + k.toFixed(3) + ')';
+    var c = $('kpMiniCnt');
+    if (c) c.textContent = state.items.length
+      ? cnt(state.items.length, ['позиция', 'позиции', 'позиций']) +
+        ' · масштаб ' + Math.round(k * 100) + ' %'
+      : 'смета пуста';
+  }
+  (function () {
+    var go = $('kpMiniGo'), box = $('kpMini');
+    function jump() {
+      var st = d.querySelector('#p-smeta .kpstep');
+      if (!st) return;
+      try { st.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      catch (e) { d.documentElement.scrollTop = st.offsetTop; }
+    }
+    if (go) go.addEventListener('click', jump);
+    if (box) box.addEventListener('click', jump);
+  }());
 
   // Номера двух статических разделов зависят от варианта ТКП
   function setStaticSectionNumbers(a, b) {
@@ -3041,10 +3088,10 @@
       });
       if (openBlockers.length) {
         out.className = 'check fail';
-        out.innerHTML = '<b>КП не выпускать: не закрыто блокеров — ' + openBlockers.length +
+        out.innerHTML = '<b>ТКП не выпускать: не закрыто блокеров — ' + openBlockers.length +
           ' из ' + totalBlockers + '.</b><ul>' +
           openBlockers.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') +
-          '</ul>Нет ввода 380 В — нет сделки. Проверять до КП, а не на монтаже.';
+          '</ul>Нет ввода 380 В — нет сделки. Проверять до ТКП, а не на монтаже.';
       } else {
         out.className = 'check good';
         out.innerHTML = '<b>Блокеры закрыты.</b> Осталось непроверенных пунктов: ' + openOther +
@@ -3368,27 +3415,190 @@
   });
 
   // =====================================================================
-  //                    ГЛАВНАЯ: три плитки-инструмента
+  //                 ПЕСОЧНИЦА: карта инструментов
+  // Раньше здесь были плитки и сухой список разделов. Теперь карта
+  // сценариев: слева направо — как идёт работа. У каждой карточки написано,
+  // что она делает, что ей нужно на входе и куда идти дальше. Поиск ищет
+  // и по названию, и по описанию, и по ключевым словам, чтобы человек нашёл
+  // инструмент словами задачи: «НДС», «толщина», «отпуск».
   // =====================================================================
-  (function () {
-    var tiles = $('p-home').querySelectorAll('.tile');
-    for (var i = 0; i < tiles.length; i++) {
-      (function (b) {
-        b.addEventListener('click', function () { showTab(b.getAttribute('data-go')); });
-      }(tiles[i]));
-    }
-    var map = fresh('homeMap');
-    SECTIONS.forEach(function (sec) {
-      if (sec.id === 'home') return;
-      var row = el('div', 'maprow');
-      row.innerHTML = '<b>' + esc(sec.title) + '</b><span class="muted">' +
-        esc(sec.hint) + '</span>';
-      var b = el('button', 'btn mini sec', 'Открыть');
-      b.type = 'button';
-      b.addEventListener('click', function () { showTab(sec.id); });
-      row.appendChild(b);
-      map.appendChild(row);
+  var MAP_FLOWS = [
+    { id: 'sale', title: 'Продажа', hint: 'от задачи клиента до подписи',
+      cards: [
+        { go: 'guide', part: 'match', title: 'Подбор по задаче',
+          what: 'Материал и толщина → мощность с запасом и две модели',
+          need: 'знать, что режет клиент',
+          next: 'дальше — конфигуратор',
+          keys: 'толщина материал мощность подбор модель сталь нержавейка' },
+        { go: 'build', title: 'Конфигуратор',
+          what: 'Комплект по слотам: станок, обвязка, ПНР. Проверка совместимости',
+          need: 'выбранная модель',
+          next: 'кнопка «Перенести в смету»',
+          keys: 'сборка слоты комплект компрессор чиллер стабилизатор пнр опоры' },
+        { go: 'smeta', title: 'Смета и ТКП',
+          what: 'Позиции, скидки, НДС, лист предложения и файл для Word',
+          need: 'позиции из конфигуратора',
+          next: 'скачать .docx или напечатать в PDF',
+          keys: 'смета ткп кп скидка ндс word docx печать счёт итого' },
+        { go: 'calc', part: 'roi', title: 'Окупаемость и лизинг',
+          what: 'Срок возврата вложений, платёж по лизингу, график',
+          need: 'цену комплекта и загрузку',
+          next: 'цифры — в разговор и в ТКП',
+          keys: 'окупаемость лизинг рассрочка платёж график экономия выгода' }
+      ] },
+    { id: 'docs', title: 'Документы и деньги', hint: 'бумаги, которые нужны сегодня',
+      cards: [
+        { go: 'letters', title: 'Письма по оплатам',
+          what: 'Возврат ошибочного платежа, уточнение назначения, перезачёт',
+          need: 'реквизиты и номер поручения',
+          next: 'печать или .docx на бланке',
+          keys: 'письмо возврат платёж назначение перезачёт официальное бланк' },
+        { go: 'letters', title: 'Кадровые документы',
+          what: 'Заявления и служебные записки: отпуск, врач, отгул',
+          need: 'даты и причину',
+          next: 'подписать у руководителя',
+          keys: 'кадровые заявление записка отпуск врач отгул сотрудник' },
+        { go: 'zp', title: 'Зарплата',
+          what: 'Оклад по дням, переработки, дежурство, отпуск, больничный, аванс',
+          need: 'оклад и отработанные дни',
+          next: 'печать расчёта',
+          keys: 'зарплата оклад ндфл аванс переработка больничный отпуск дежурство' },
+        { go: 'calc', part: 'nds', title: 'Проверка НДС',
+          what: 'Выделить налог из суммы или начислить сверху, сумма прописью',
+          need: 'сумму из счёта',
+          next: 'сверить со счётом',
+          keys: 'ндс налог прописью счёт ставка 22 20 процент' }
+      ] },
+    { id: 'know', title: 'Справка и обучение', hint: 'когда нужен факт, а не догадка',
+      cards: [
+        { go: 'guide', part: 'tech', title: 'Техника простым языком',
+          what: 'Толщины по мощностям, серии A/E/S, что внутри станка',
+          need: 'ничего',
+          next: 'говорить клиенту рабочие толщины, а не предельные',
+          keys: 'техника толщина серия комплектация голова контроллер труборез' },
+        { go: 'guide', part: 'gas', title: 'Газ и стоимость владения',
+          what: 'Расход по соплам, баллоны в час, деньги за месяц',
+          need: 'сопло, газ, часы резки',
+          next: 'аргумент против «дешёвого» станка',
+          keys: 'газ азот кислород баллон расход владение сопло' },
+        { go: 'calc', part: 'cost', title: 'Час работы станка',
+          what: 'Электричество, газ, расходники, оператор, амортизация',
+          need: 'тариф и цены расходников',
+          next: 'себестоимость → в окупаемость',
+          keys: 'себестоимость час машиночас электричество расходники амортизация' },
+        { go: 'guide', part: 'shop', title: 'Готовность цеха',
+          what: 'Что должно быть на площадке до приезда монтажников',
+          need: 'ничего',
+          next: 'отправить клиенту список',
+          keys: 'цех площадка монтаж пнр электрика вентиляция фундамент' },
+        { go: 'guide', part: 'quiz', title: 'Тренажёр',
+          what: 'Десять вопросов на разминку или экзамен на двадцать пять',
+          need: 'пять минут',
+          next: 'разбор ошибок со ссылкой на справку',
+          keys: 'тренажёр экзамен вопросы проверить себя обучение новичок' },
+        { go: 'guide', part: 'data', title: 'Данные и пробелы',
+          what: 'Откуда цифры, где их нет и что нельзя говорить клиенту',
+          need: 'ничего',
+          next: 'сомнительное — уточнять, а не придумывать',
+          keys: 'данные источники прайс расхождения пробелы наценка' }
+      ] }
+  ];
+  function mapCardsAll() {
+    var out = [];
+    MAP_FLOWS.forEach(function (f) {
+      f.cards.forEach(function (c) { out.push({ flow: f, card: c }); });
     });
+    return out;
+  }
+  function mapGo(c) {
+    showTab(c.go);
+    if (c.part) showGuidePart && c.go === 'guide' && showGuidePart(c.part);
+    if (c.part && c.go === 'calc') showCalcPart(c.part);
+  }
+  function renderMap() {
+    var box = $('mapFlows');
+    if (!box) return;
+    clear(box);
+    var q = ($('mapSearch') && $('mapSearch').value || '').trim().toLowerCase();
+    var flow = state.mapFlow || 'all';
+    var shown = 0;
+    MAP_FLOWS.forEach(function (f) {
+      if (flow !== 'all' && flow !== f.id) return;
+      var cards = f.cards.filter(function (c) {
+        if (!q) return true;
+        return (c.title + ' ' + c.what + ' ' + c.keys + ' ' + f.title)
+          .toLowerCase().indexOf(q) >= 0;
+      });
+      if (!cards.length) return;
+      var wrap = el('div', 'mapflow');
+      var head = el('div', 'mapflow-h');
+      head.innerHTML = '<b>' + esc(f.title) + '</b><span class="muted">' +
+        esc(f.hint) + '</span>';
+      wrap.appendChild(head);
+      var grid = el('div', 'mapgrid');
+      cards.forEach(function (c) {
+        shown++;
+        var b = el('button', 'mapcard');
+        b.type = 'button';
+        b.setAttribute('data-go', c.go + (c.part ? ':' + c.part : ''));
+        b.innerHTML = '<span class="mc-t">' + esc(c.title) + '</span>' +
+          '<span class="mc-w">' + esc(c.what) + '</span>' +
+          '<span class="mc-n"><i>нужно:</i> ' + esc(c.need) + '</span>' +
+          '<span class="mc-x">' + esc(c.next) + '</span>' +
+          '<span class="mc-a">Открыть →</span>';
+        b.addEventListener('click', function () { mapGo(c); });
+        grid.appendChild(b);
+      });
+      wrap.appendChild(grid);
+      box.appendChild(wrap);
+    });
+    var em = $('mapEmpty');
+    if (em) em.hidden = shown > 0;
+    var cn = $('mapCnt');
+    if (cn) {
+      cn.textContent = q || flow !== 'all'
+        ? cnt(shown, ['инструмент', 'инструмента', 'инструментов'])
+        : cnt(mapCardsAll().length, ['инструмент', 'инструмента', 'инструментов']) +
+          ' в ' + cnt(MAP_FLOWS.length, ['сценарии', 'сценариях', 'сценариях']);
+    }
+  }
+  (function () {
+    if (!d.getElementById('mapFlows')) return;
+    var fl = fresh('mapFilters');
+    var list = [{ id: 'all', title: 'Всё' }].concat(MAP_FLOWS.map(function (f) {
+      return { id: f.id, title: f.title };
+    }));
+    list.forEach(function (x) {
+      var b = el('button', 'pill', x.title);
+      b.type = 'button';
+      b.setAttribute('data-flow', x.id);
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', function () {
+        state.mapFlow = x.id;
+        save();
+        var bs = fl.querySelectorAll('button');
+        for (var i = 0; i < bs.length; i++) {
+          var on = bs[i].getAttribute('data-flow') === x.id;
+          bs[i].className = on ? 'pill on' : 'pill';
+          bs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+        }
+        renderMap();
+      });
+      fl.appendChild(b);
+    });
+    var cur = state.mapFlow || 'all';
+    var start = fl.querySelector('button[data-flow="' + cur + '"]') ||
+      fl.querySelector('button');
+    if (start) {
+      start.className = 'pill on';
+      start.setAttribute('aria-selected', 'true');
+    }
+    var srch = $('mapSearch');
+    if (srch) {
+      srch.addEventListener('input', renderMap);
+      srch.addEventListener('search', renderMap);
+    }
+    renderMap();
   }());
 
   // =====================================================================
@@ -3523,8 +3733,26 @@
       }
     }, 3200);
   }
+  // Плашки-группы: у каждой свой список документов, раскрыта одна.
+  // Нажал «Кадровые документы» — под кнопкой появились её заявления.
   function renderLtrPills() {
-    var pl = fresh('ltrPills'), gid = ltrGrp();
+    var gid = ltrGrp();
+    // контейнер плиток один: переносим его в открытую группу
+    var host = $('ltrPills');
+    var target = $('ltrGroups').querySelector('.ltracc-i[data-grp="' + gid +
+      '"] .ltracc-b');
+    if (host && target && host.parentNode !== target) target.appendChild(host);
+    var accs = $('ltrGroups').querySelectorAll('.ltracc-i');
+    for (var k = 0; k < accs.length; k++) {
+      var id = accs[k].getAttribute('data-grp');
+      var open = id === gid;
+      accs[k].classList.toggle('open', open);
+      var head = accs[k].querySelector('button.ltracc-h');
+      if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      var body = accs[k].querySelector('.ltracc-b');
+      if (body) body.hidden = !open;
+    }
+    var pl = fresh('ltrPills');
     ltrTplsOfGroup(gid).forEach(function (t) {
       var b = el('button', 'pill', esc(t.title));
       b.type = 'button';
@@ -3537,12 +3765,6 @@
       });
       pl.appendChild(b);
     });
-    var gb = $('ltrGroups').querySelectorAll('button');
-    for (var i = 0; i < gb.length; i++) {
-      var on = gb[i].getAttribute('data-grp') === gid;
-      gb[i].className = on ? 'pill on' : 'pill';
-      gb[i].setAttribute('aria-selected', on ? 'true' : 'false');
-    }
   }
   function renderLtrFields() {
     var box = fresh('ltrFields'), tpl = ltrTpl();
@@ -3556,6 +3778,7 @@
       var cell = el('div', (def.client && !staff) ? 'clientfield' : '');
       var lab = el('label', 'f', esc(def.label) +
         ((def.client && !staff) ? ' <span class="cf">клиент</span>' : ''));
+      lab.setAttribute('for', 'lf_' + fid);   // подпись связана с полем
       cell.appendChild(lab);
       var inp = el(def.kind === 'area' ? 'textarea' : 'input');
       if (def.kind !== 'area') inp.type = def.kind === 'date' ? 'date' : 'text';
@@ -3696,7 +3919,13 @@
   function renderLtrMini() {
     var box = $('ltrMini'), inner = $('ltrMiniIn'), page = $('ltrPage');
     if (!box || !inner || !page) return;
-    inner.innerHTML = '<div class="ltrpage">' + page.innerHTML + '</div>';
+    // копия без id: двойников в документе быть не должно
+    var copy = page.cloneNode(true);
+    copy.removeAttribute('id');
+    var ids = copy.querySelectorAll('[id]');
+    for (var i = 0; i < ids.length; i++) ids[i].removeAttribute('id');
+    clear(inner);
+    inner.appendChild(copy);
     var w = box.clientWidth || 360;
     var k = Math.max(0.35, Math.min(1, w / 794));
     inner.style.transform = 'scale(' + k.toFixed(3) + ')';
@@ -3734,10 +3963,16 @@
     // показываются только для выбранной группы — иначе их одиннадцать в ряд.
     var gr = fresh('ltrGroups');
     APP.letterGroups.forEach(function (g) {
-      var gb = el('button', 'pill', esc(g.title));
+      var item = el('div', 'ltracc-i');
+      item.setAttribute('data-grp', g.id);
+      var gb = el('button', 'ltracc-h');
       gb.type = 'button';
       gb.setAttribute('data-grp', g.id);
-      gb.setAttribute('role', 'tab');
+      gb.setAttribute('aria-expanded', 'false');
+      gb.innerHTML = '<span class="la-t">' + esc(g.title) + '</span>' +
+        '<span class="la-c">' +
+        cnt(ltrTplsOfGroup(g.id).length, ['документ', 'документа', 'документов']) +
+        '</span><span class="la-x" aria-hidden="true"></span>';
       gb.addEventListener('click', function () {
         state.ltr.grp = g.id;
         // при смене группы берём первый шаблон из неё
@@ -3746,7 +3981,18 @@
         save(); renderLtrPills(); renderLtrFields(); renderLtr();
         pointToTpls();
       });
-      gr.appendChild(gb);
+      var body = el('div', 'ltracc-b');
+      body.hidden = true;
+      if (g.id === ltrGrp()) {
+        var host = el('div', 'pills big');
+        host.id = 'ltrPills';
+        host.setAttribute('role', 'tablist');
+        host.setAttribute('aria-label', 'Шаблон письма');
+        body.appendChild(host);
+      }
+      item.appendChild(gb);
+      item.appendChild(body);
+      gr.appendChild(item);
     });
     renderLtrPills();
     var sel = fresh('ltrSupplier');
@@ -3991,7 +4237,7 @@
       divHalfUp(hourRate * holMult * Math.round(holH * 100), 100));
     add('Отпускные, ' + num(z.vacDays) + ' кал. дн.',
       fmt(toCents(num(z.vacDaily))) + ' × ' + num(z.vacDays),
-      toCents(num(z.vacDaily)) * num(z.vacDays));
+      divHalfUp(toCents(num(z.vacDaily)) * Math.round(num(z.vacDays) * 100), 100));
     var sickDays = num(z.sickDays), sDaily = toCents(num(z.sickDaily));
     var pct = sickPct(z.sickYears);
     var sickEmpDays = Math.min(sickDays, 3), sickSfrDays = Math.max(sickDays - 3, 0);
@@ -4855,15 +5101,18 @@
     }
     // ПНР под формат станка
     if (kind === 'milling' && it.pnr && it.pnr.meta && it.pnr.meta.group) {
-      var fmt = (machine.meta || {}).format || '';
+      // machFormat, а не fmt: имя fmt занято денежным форматированием
+      var machFormat = (machine.meta || {}).format || '';
       var g = it.pnr.meta.group;
-      var okGroup = (g === 'mini' && (fmt === '0404' || fmt === '0609')) ||
-        (g === '6090' && fmt === '6090') || (g === '1313' && fmt === '1313') ||
-        (g === '1616' && fmt === '1616') || (g === '1325' && fmt === '1325') ||
-        (g === '2030' && (fmt === '2030' || fmt === '2040')) ||
+      var okGroup = (g === 'mini' && (machFormat === '0404' || machFormat === '0609')) ||
+        (g === '6090' && machFormat === '6090') ||
+        (g === '1313' && machFormat === '1313') ||
+        (g === '1616' && machFormat === '1616') ||
+        (g === '1325' && machFormat === '1325') ||
+        (g === '2030' && (machFormat === '2030' || machFormat === '2040')) ||
         g === 'm3' || g === 's4' || g === 'rd' || g === 'miniCab';
       if (!okGroup) {
-        out.push(['warn', 'Группа ПНР не совпадает с форматом станка (' + fmt +
+        out.push(['warn', 'Группа ПНР не совпадает с форматом станка (' + machFormat +
           ') — сверьте строку прайса.']);
       }
     }
@@ -5374,7 +5623,7 @@
   }
   // Итог сметы берём из общего расчёта: одна цифра, один источник
   function smetaTotalCents() {
-    try { return totals().itogo; } catch (e) { return 0; }
+    try { return totals().total; } catch (e) { return 0; }
   }
 
   // ------------------------------ НДС ---------------------------------
@@ -5427,8 +5676,9 @@
   // Удорожание — надбавка к цене за год договора, а не банковская ставка.
   function leaseCalc() {
     var price = toCents(cnum('clPrice'));
-    var advPct = cnum('clAdv');
-    var months = Math.max(Math.round(cnum('clMonths')), 0);
+    // аванс больше цены и срок в сто лет — это опечатка, а не условия сделки
+    var advPct = Math.min(Math.max(cnum('clAdv'), 0), 100);
+    var months = Math.min(Math.max(Math.round(cnum('clMonths')), 0), 120);
     var up10 = Math.round(cnum('clUp') * 10);        // десятые доли процента
     var advance = divHalfUp(price * Math.round(advPct * 10), 1000);
     var fin = price - advance;                        // сумма финансирования
@@ -5492,14 +5742,16 @@
     var power = cnum('ccPower'), kwh = cnum('ccKwh');
     var elec = toCents(power * kwh);
     var gas = toCents(cnum('ccGas'));
-    var nozzle = cnum('ccNozzleH') > 0
-      ? divHalfUp(toCents(cnum('ccNozzle')), Math.round(cnum('ccNozzleH'))) : 0;
-    var glass = cnum('ccGlassH') > 0
-      ? divHalfUp(toCents(cnum('ccGlass')), Math.round(cnum('ccGlassH'))) : 0;
-    var oper = cnum('ccHours') > 0
-      ? divHalfUp(toCents(cnum('ccOper')), Math.round(cnum('ccHours'))) : 0;
-    var amort = cnum('ccLife') > 0
-      ? divHalfUp(toCents(cnum('ccPrice')), Math.round(cnum('ccLife'))) : 0;
+    // делитель округляем заранее и проверяем именно его: «0,4 часа»
+    // проходило условие «> 0», а после округления давало деление на ноль
+    var nozzleH = Math.round(cnum('ccNozzleH'));
+    var glassH = Math.round(cnum('ccGlassH'));
+    var operH = Math.round(cnum('ccHours'));
+    var lifeH = Math.round(cnum('ccLife'));
+    var nozzle = nozzleH > 0 ? divHalfUp(toCents(cnum('ccNozzle')), nozzleH) : 0;
+    var glass = glassH > 0 ? divHalfUp(toCents(cnum('ccGlass')), glassH) : 0;
+    var oper = operH > 0 ? divHalfUp(toCents(cnum('ccOper')), operH) : 0;
+    var amort = lifeH > 0 ? divHalfUp(toCents(cnum('ccPrice')), lifeH) : 0;
     var other = toCents(cnum('ccOther'));
     var rows = [
       ['Электричество', elec, power && kwh
@@ -5517,9 +5769,9 @@
     var missing = [];
     if (!power || !kwh) missing.push('потребление и тариф на электричество');
     if (!cfilled('ccGas')) missing.push('газ за час');
-    if (!cnum('ccNozzleH') || !cnum('ccGlassH')) missing.push('ресурс расходников');
-    if (!cnum('ccHours')) missing.push('часы работы оператора');
-    if (!cnum('ccLife')) missing.push('срок службы станка в часах');
+    if (!nozzleH || !glassH) missing.push('ресурс расходников');
+    if (!operH) missing.push('часы работы оператора');
+    if (!lifeH) missing.push('срок службы станка в часах');
     return { rows: rows, sum: sum, missing: missing };
   }
   function renderCost() {
@@ -5564,17 +5816,18 @@
     var own = toCents(cnum('crCost'));            // своя себестоимость часа
     var price = toCents(cnum('crPrice'));
     var sell = toCents(cnum('crSell'));           // продажа резки на сторону
-    var ownMonth = own * Math.round(hours * 100) / 100;
-    ownMonth = Math.round(ownMonth);
-    var save = outsource - ownMonth;              // экономия в месяц
+    var ownMonth = Math.round(own * Math.round(hours * 100) / 100);
+    // economy, а не save: имя save занято функцией сохранения черновика
+    var economy = outsource - ownMonth;           // экономия в месяц
     var earn = sell ? Math.round((sell - own) * Math.round(hours * 100) / 100) : 0;
-    var profit = save + earn;
+    var profit = economy + earn;
     var months = profit > 0 ? Math.ceil(price / profit) : 0;
     // сколько часов в месяц нужно, чтобы выйти в ноль по цене подрядчика
-    var perHour = hours > 0 ? divHalfUp(outsource, Math.round(hours)) : 0;
+    var hoursR = Math.round(hours);
+    var perHour = hoursR > 0 ? divHalfUp(outsource, hoursR) : 0;
     var breakeven = (perHour > own && own >= 0 && price)
       ? Math.ceil(price / (perHour - own)) : 0;
-    return { outsource: outsource, ownMonth: ownMonth, save: save, earn: earn,
+    return { outsource: outsource, ownMonth: ownMonth, save: economy, earn: earn,
       profit: profit, months: months, price: price, perHour: perHour,
       own: own, hours: hours, breakeven: breakeven };
   }
@@ -5591,7 +5844,10 @@
     totLine(tot, 'Платите подрядчику', fmt(T.outsource) + ' ₽/мес');
     totLine(tot, 'Своя резка', fmt(T.ownMonth) + ' ₽/мес');
     totLine(tot, 'Экономия', fmt(T.save) + ' ₽/мес', 'gain');
-    if (T.earn) totLine(tot, 'Заработок на заказах', fmt(T.earn) + ' ₽/мес', 'gain');
+    if (T.earn) {
+      totLine(tot, T.earn > 0 ? 'Заработок на заказах' : 'Убыток на заказах',
+        fmt(T.earn) + ' ₽/мес', T.earn > 0 ? 'gain' : '');
+    }
     totLine(tot, 'Цена комплекта', fmt(T.price) + ' ₽');
     totLine(tot, 'Срок окупаемости',
       (T.months ? T.months + ' ' + plural(T.months, ['месяц', 'месяца', 'месяцев'])
@@ -5959,7 +6215,7 @@
   $('sumBarGo').addEventListener('click', function () { showTab('smeta'); });
   var hash = (location.hash || '').replace('#', '');
   var valid = SECTIONS.map(function (s) { return s.id; }).concat(guidePartIds());
-  showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');
+  showTab(valid.indexOf(hash) >= 0 ? hash : 'home');
   fixNavOffset();
 
   if ('serviceWorker' in navigator) {

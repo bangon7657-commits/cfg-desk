@@ -196,11 +196,6 @@ a{color:var(--or2)}
 .step-t{font-size:16.5px;font-weight:700;color:var(--tx)}
 .step-t small{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:1px}
 /* ---------------- Главная: три плитки ---------------- */
-.hero{background:none;border:0;padding:6px 0 2px;margin-bottom:14px}
-.hero h1::before{content:"";display:inline-block;width:6px;height:22px;
-  background:var(--or);border-radius:3px;margin-right:10px;vertical-align:-3px}
-.hero h1{margin:0 0 6px;font-size:24px;color:var(--tx)}
-.hero p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
 /* Тренажёр: полоса прогресса, крупные варианты ответа, разбор ошибок */
 .quizbar{height:6px;border-radius:4px;background:var(--bg4);overflow:hidden;
   margin:4px 0 14px}
@@ -263,11 +258,25 @@ a{color:var(--or2)}
 .hint-det .det-b{padding:0 12px 10px;display:flex;flex-direction:column;gap:8px}
 
 /* Миниатюра письма в правой колонке: лист А4 сжат по ширине колонки */
-/* Группы шаблонов писем: узкие пилюли над крупными плитками */
-.ltrgroups{display:flex;flex-direction:column;gap:12px;align-items:flex-start;
-  margin:0 0 18px}
-.ltrgroups .pills{margin-bottom:0}
-.ltrgroups #ltrGroups .pill{padding:10px 16px}
+/* Письма: группы-плашки. Заголовок всегда виден, список документов
+   раскрывается под нажатой группой. */
+.ltracc{display:flex;flex-direction:column;gap:10px;margin:0 0 18px}
+.ltracc-i{border:1px solid var(--line2);border-radius:12px;background:var(--bg2);
+  overflow:hidden}
+.ltracc-i.open{border-color:var(--or)}
+.ltracc-h{display:flex;align-items:center;gap:12px;width:100%;font:inherit;
+  font-size:16px;font-weight:700;padding:14px 16px;border:0;cursor:pointer;
+  background:none;color:var(--tx);text-align:left}
+.ltracc-h:hover{color:var(--or2)}
+.ltracc-i.open .ltracc-h{color:var(--or);background:var(--orbg)}
+.ltracc-h .la-c{font-size:12.5px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px}
+.ltracc-h .la-x{margin-left:auto;width:12px;height:12px;flex:0 0 auto;
+  border-right:2px solid currentColor;border-bottom:2px solid currentColor;
+  transform:rotate(45deg) translateY(-2px);transition:transform .16s}
+.ltracc-i.open .ltracc-h .la-x{transform:rotate(225deg) translateY(-2px)}
+.ltracc-b{padding:4px 16px 16px}
+.ltracc-b .pills{margin:0}
 /* После выбора группы над плитками шаблонов на пару секунд всплывают стрелки:
    подсказка, что выбирать дальше. Стрелки появляются по очереди. */
 .pill.point{position:relative}
@@ -295,22 +304,45 @@ a{color:var(--or2)}
 .lp-sign.staff{display:flex;gap:26px;align-items:flex-end;justify-content:space-between}
 .lp-sign.staff .lp-line{min-width:150px;text-align:center}
 .lp-sign.staff .lp-hint{text-align:center;margin-top:2px}
+/* Миниатюра листа ТКП в правой колонке сметы: тот же приём, что в письмах */
+.kpmini{margin-top:10px;border:1px solid var(--line2);border-radius:8px;
+  background:#fff;overflow:hidden;cursor:zoom-in;height:460px}
+.kpmini-in{width:794px;transform-origin:top left}
+@media(max-width:999px){.kpmini{height:320px}}
+@media print{.kpmini,#kpMiniGo{display:none}}
 .ltrmini{margin-top:10px;border:1px solid var(--line2);border-radius:8px;
   background:#fff;overflow:hidden;cursor:zoom-in;height:420px}
 .ltrmini-in{width:794px;transform-origin:top left}
 @media(max-width:999px){.ltrmini{height:320px}}
 @media print{.ltrmini,#ltrMiniGo{display:none}}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;
-  margin-bottom:18px}
-.tile{display:flex;flex-direction:column;gap:6px;text-align:left;padding:18px;
-  border:1px solid var(--line);border-radius:14px;background:var(--bg2);cursor:pointer;
-  transition:.14s;font:inherit;color:inherit}
-.tile:hover{border-color:var(--or);transform:translateY(-2px)}
-.tile-n{width:28px;height:28px;border-radius:50%;background:var(--or);color:var(--onor);
-  font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
-.tile-t{font-size:18px;font-weight:700;color:var(--tx)}
-.tile-d{font-size:13px;color:var(--muted);line-height:1.5}
-.tile-a{margin-top:auto;font-size:13px;font-weight:600;color:var(--or)}
+/* Песочница: поиск, сценарии, карточки инструментов. Карточка отвечает на
+   три вопроса — что делает, что ей нужно, что дальше. */
+.maptop{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.maptop input[type=search]{width:100%;font:inherit;font-size:16px;padding:13px 15px;
+  border:1px solid var(--line2);border-radius:10px;background:var(--bg4);color:var(--tx)}
+.maptop input[type=search]:focus{outline:0;border-color:var(--or);
+  box-shadow:0 0 0 3px rgba(255,122,24,.22)}
+.maptop .pills{margin:0}
+.mapflow{margin-bottom:22px}
+.mapflow-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.mapflow-h b{font-size:15px;text-transform:uppercase;letter-spacing:.6px;color:var(--or)}
+.mapflow-h .muted{font-size:13.5px}
+.mapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:12px}
+.mapcard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:15px 16px;
+  border:1px solid var(--line);border-radius:13px;background:var(--bg2);cursor:pointer;
+  font:inherit;color:inherit;transition:.14s}
+.mapcard:hover{border-color:var(--or);transform:translateY(-2px);
+  box-shadow:0 10px 24px var(--shadow)}
+.mapcard .mc-t{font-size:16px;font-weight:700;color:var(--tx)}
+.mapcard .mc-w{font-size:13.5px;color:var(--tx2);line-height:1.45}
+.mapcard .mc-n{font-size:12.5px;color:var(--muted)}
+.mapcard .mc-n i{font-style:normal;text-transform:uppercase;letter-spacing:.5px;
+  font-size:11px;color:var(--or2)}
+.mapcard .mc-x{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line2);
+  padding-top:6px;margin-top:2px}
+.mapcard .mc-a{font-size:13px;font-weight:700;color:var(--or2);margin-top:auto}
+@media(max-width:560px){.mapgrid{grid-template-columns:1fr}}
+
 .maprow{display:flex;gap:10px;align-items:center;justify-content:space-between;
   padding:8px 0;border-bottom:1px dashed var(--line2);font-size:13.5px;flex-wrap:wrap}
 .maprow b{color:var(--tx)}

@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 31', /const CACHE = 'cfg-v31'/.test(swTxt),
+check('кеш: версия поднята до 32', /const CACHE = 'cfg-v32'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1087,17 +1087,44 @@ check('сборка: в ней нет корзины, оплаты и консу
 
 // ---- главная, письма, зарплата ----
 win.document.querySelector('#tabs button[data-t="home"]').click();
-check('главная: три плитки-инструмента',
-  doc.querySelectorAll('#p-home .tile').length === 3,
-  'плиток ' + doc.querySelectorAll('#p-home .tile').length);
-check('главная: у плиток есть переходы',
-  ['build', 'letters', 'zp'].every(k =>
-    !!doc.querySelector('#p-home .tile[data-go="' + k + '"]')), '');
-check('главная: карта разделов построена',
-  doc.querySelectorAll('#homeMap .maprow').length >= 6,
-  'строк ' + doc.querySelectorAll('#homeMap .maprow').length);
-doc.querySelector('#p-home .tile[data-go="letters"]').click();
-check('главная: плитка открывает письма',
+check('песочница: раздел назван «Песочница»',
+  /Песочница/.test(textOf(doc, '#p-home .btitle')) &&
+  /Песочница/.test(doc.querySelector('#menuList button[data-t="home"]').textContent),
+  textOf(doc, '#p-home .btitle'));
+check('песочница: карта собрана по сценариям',
+  doc.querySelectorAll('#mapFlows .mapflow').length === 3 &&
+  doc.querySelectorAll('#mapFlows .mapcard').length >= 12,
+  'сценариев ' + doc.querySelectorAll('#mapFlows .mapflow').length +
+  ', карточек ' + doc.querySelectorAll('#mapFlows .mapcard').length);
+check('песочница: у карточки написано что делает, что нужно и что дальше',
+  (function () {
+    const c = doc.querySelector('#mapFlows .mapcard');
+    return !!(c.querySelector('.mc-t') && c.querySelector('.mc-w') &&
+      c.querySelector('.mc-n') && c.querySelector('.mc-x'));
+  }()), '');
+check('песочница: фильтры сценариев на месте',
+  [...doc.querySelectorAll('#mapFilters button')].map(b => b.textContent).join('|') ===
+  'Всё|Продажа|Документы и деньги|Справка и обучение',
+  [...doc.querySelectorAll('#mapFilters button')].map(b => b.textContent).join('|'));
+(function () {
+  // поиск словами задачи: «ндс» оставляет только калькулятор НДС
+  const q = win.document.getElementById('mapSearch');
+  q.value = 'ндс';
+  q.dispatchEvent(new win.Event('input'));
+  const titles = [...doc.querySelectorAll('#mapFlows .mapcard .mc-t')]
+    .map(x => x.textContent);
+  check('песочница: поиск находит инструмент словами задачи',
+    titles.length >= 1 && titles.join('|').indexOf('НДС') >= 0, titles.join('|'));
+  q.value = 'абракадабра';
+  q.dispatchEvent(new win.Event('input'));
+  check('песочница: на пустой выдаче показывает подсказку',
+    !doc.getElementById('mapEmpty').hidden &&
+    doc.querySelectorAll('#mapFlows .mapcard').length === 0, '');
+  q.value = '';
+  q.dispatchEvent(new win.Event('input'));
+}());
+doc.querySelector('#mapFlows .mapcard[data-go="letters"]').click();
+check('песочница: карточка открывает нужный раздел',
   doc.getElementById('p-letters').classList.contains('active'), '');
 
 // письма
@@ -1380,8 +1407,13 @@ check('подбор: менеджер сделки в правой колонк�
   !!doc.querySelector('#p-cfg .cfgside .mgr-card #mgrName'), '');
 check('подбор: длинный лид убран в свёрнутую справку',
   !!doc.getElementById('cfgAbout') && !doc.querySelector('#p-cfg > p.lead'), '');
-check('главная: плашка без логотипа и рамки',
-  !doc.querySelector('#p-home .hero img') && /\.hero\{background:none;border:0/.test(src), '');
+check('id в документе не повторяются', (function () {
+  const all = [...doc.querySelectorAll('[id]')].map(n => n.id);
+  return all.filter((x, i) => all.indexOf(x) !== i).length === 0;
+}()), (function () {
+  const all = [...doc.querySelectorAll('[id]')].map(n => n.id);
+  return all.filter((x, i) => all.indexOf(x) !== i).slice(0, 5).join(', ');
+}()));
 check('навигация: остальные разделы живут в кнопке «Разделы»',
   doc.querySelectorAll('#menuList button[data-t]').length === 8 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
@@ -1493,6 +1525,17 @@ check('окупаемость: есть объяснение для клиент
   /Час у подрядчика/.test(textOf(doc, '#crStory')) &&
   /Точка безубыточности/.test(textOf(doc, '#crStory')),
   textOf(doc, '#crStory').slice(0, 160));
+(function () {
+  // в смете к этому моменту есть позиции: кнопка обязана подставить их итог
+  menuGo('calc');
+  doc.querySelector('#calcTabs button[data-sub="lease"]').click();
+  win.document.getElementById('clPrice').value = '';
+  doc.getElementById('clFromSmeta').click();
+  const v = win.document.getElementById('clPrice').value;
+  check('калькуляторы: «взять итог сметы» подставляет сумму, а не ноль',
+    /\d/.test(v) && !/NaN|Infinity/.test(v) &&
+    !/Смета пуста/.test(textOf(doc, '#toastText') || ''), v);
+}());
 check('калькуляторы: ничего не выдумано — источники подписаны',
   /лизингодател/i.test(textOf(doc, '#clSrc')) &&
   /погонный метр/.test(textOf(doc, '#crMarket')), '');
@@ -1588,23 +1631,35 @@ check('меню «Разделы» ложится поверх шапки и н�
 // ---- v24: кадровые документы в письмах, кнопки под миниатюрой ----
 menuGo('letters');
 check('письма: две группы шаблонов',
-  [...doc.querySelectorAll('#ltrGroups button')].map(b => b.textContent).join('|') ===
-  'Письма по оплатам|Кадровые документы',
-  [...doc.querySelectorAll('#ltrGroups button')].map(b => b.textContent).join('|'));
+  [...doc.querySelectorAll('#ltrGroups .ltracc-h .la-t')].map(b => b.textContent)
+    .join('|') === 'Письма по оплатам|Кадровые документы',
+  [...doc.querySelectorAll('#ltrGroups .ltracc-h .la-t')].map(b => b.textContent)
+    .join('|'));
 check('письма: в первой группе четыре письма по оплатам',
   doc.querySelectorAll('#ltrPills button').length === 4, '');
-check('письма: кнопки групп такого же размера, как плитки шаблонов',
-  doc.getElementById('ltrGroups').className.indexOf('big') >= 0 &&
-  doc.getElementById('ltrPills').className.indexOf('big') >= 0, '');
-check('письма: группы стоят слева под заголовком, а не справа в шапке',
-  !doc.querySelector('#p-letters .bhead .ltrgroups') &&
-  !!doc.querySelector('#p-letters > .ltrgroups') &&
-  /\.ltrgroups\{[^}]*align-items:flex-start/.test(src.replace(/\s+/g, '')) &&
-  !/\.ltrgroups\{[^}]*align-items:flex-end/.test(src.replace(/\s+/g, '')), '');
-check('письма: группы идут выше плиток с шаблонами',
-  doc.querySelector('#p-letters > .ltrgroups').firstElementChild.id === 'ltrGroups',
-  doc.querySelector('#p-letters > .ltrgroups').firstElementChild.id);
-doc.querySelector('#ltrGroups button[data-grp="staff"]').click();
+check('письма: группы — раскрывающиеся плашки слева под заголовком',
+  !!doc.querySelector('#p-letters > .ltracc#ltrGroups') &&
+  doc.querySelectorAll('#ltrGroups .ltracc-i').length === 2 &&
+  doc.querySelectorAll('#ltrGroups button.ltracc-h').length === 2, '');
+check('письма: в заголовке группы видно, сколько в ней документов',
+  /4 документа/.test(doc.querySelector('#ltrGroups .ltracc-i[data-grp="client"] .la-c')
+    .textContent) &&
+  /7 документов/.test(doc.querySelector('#ltrGroups .ltracc-i[data-grp="staff"] .la-c')
+    .textContent),
+  doc.querySelector('#ltrGroups .la-c').textContent);
+check('письма: список документов лежит внутри открытой группы',
+  !!doc.querySelector('#ltrGroups .ltracc-i[data-grp="client"].open #ltrPills') &&
+  doc.querySelector('#ltrGroups .ltracc-i[data-grp="staff"] .ltracc-b').hidden, '');
+doc.querySelector('#ltrGroups button.ltracc-h[data-grp="staff"]').click();
+check('письма: нажатие на плашку раскрывает её документы',
+  !!doc.querySelector('#ltrGroups .ltracc-i[data-grp="staff"].open #ltrPills') &&
+  doc.querySelector('#ltrGroups .ltracc-i[data-grp="client"] .ltracc-b').hidden &&
+  doc.querySelector('#ltrGroups button.ltracc-h[data-grp="staff"]')
+    .getAttribute('aria-expanded') === 'true', '');
+check('письма: среди кадровых есть визит к врачу',
+  [...doc.querySelectorAll('#ltrPills button')].map(b => b.textContent)
+    .join('|').toLowerCase().indexOf('врач') >= 0,
+  [...doc.querySelectorAll('#ltrPills button')].map(b => b.textContent).join('|'));
 check('письма: в кадровой группе семь документов',
   doc.querySelectorAll('#ltrPills button').length === 7,
   [...doc.querySelectorAll('#ltrPills button')].map(b => b.textContent).join('|'));
@@ -1664,14 +1719,14 @@ check('письма: кнопки печати идут под миниатюр�
   const kids = [...card.children].map(x => x.id || x.className);
   return kids.indexOf('ltrMini') < kids.indexOf('btns noprint');
 }()), '');
-doc.querySelector('#ltrGroups button[data-grp="client"]').click();
+doc.querySelector('#ltrGroups button.ltracc-h[data-grp="client"]').click();
 
 // ---- v22: справка в смете, компактные фильтры, параметры в названии, миниатюра ----
 menuGo('smeta');
 check('смета: пояснения убраны в свёрнутую справку',
   !!doc.getElementById('smetaHints') &&
   !doc.getElementById('smetaHints').hasAttribute('open') &&
-  doc.querySelectorAll('#smetaHints .note').length === 2, '');
+  doc.querySelectorAll('#smetaHints .note').length >= 2, '');
 check('диалог: поиск идёт выше фильтров конфигурации', (function () {
   const box = doc.querySelector('#pickModal .modal-box');
   const kids = [...box.children].map(x => x.id || x.className);
@@ -1765,6 +1820,12 @@ check('плашка видна на каждой вкладке — лежит �
   oath.parentNode === doc.querySelector('.wrap'), oath.parentNode.className);
 check('плашка на мобильном тоже приподнята',
   /\.oath\{width:104px;right:10px;bottom:48px/.test(src.replace(/\s+/g, '')), '');
+check('плашка ведёт на бесполезный интернет и открывается безопасно',
+  oath.tagName === 'A' && oath.getAttribute('href') === 'https://theuselessweb.com/' &&
+  oath.getAttribute('target') === '_blank' &&
+  /noopener/.test(oath.getAttribute('rel') || '') &&
+  /noreferrer/.test(oath.getAttribute('rel') || ''),
+  oath.tagName + ' ' + oath.getAttribute('href'));
 check('главная: подсказка про шалость появляется при наведении',
   /Торжественно клянусь, что замышляю только шалость/.test(
     oath.querySelector('.oath-tip').textContent) &&
@@ -1978,7 +2039,9 @@ doc.getElementById('saveDot').textContent = '';
   'quizErrors', 'quizHero'].forEach(id => {
   const n = doc.getElementById(id); if (n) n.innerHTML = '';
 });
-['ndsHint', 'clCnt', 'quizNum', 'quizScore', 'quizQ', 'quizBest']
+const mapS = doc.getElementById('mapSearch');
+if (mapS) mapS.value = '';
+['ndsHint', 'clCnt', 'quizNum', 'quizScore', 'quizQ', 'quizBest', 'mapCnt']
   .forEach(id => { const n = doc.getElementById(id); if (n) n.textContent = ''; });
 const quizBarNode = doc.getElementById('quizBar');
 if (quizBarNode) quizBarNode.removeAttribute('style');

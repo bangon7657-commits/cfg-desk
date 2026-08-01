@@ -630,7 +630,7 @@ SUPPLIER_FIELDS = [
     ('addr_legal', 'Юр. адрес'), ('addr_fact', 'Факт. адрес'),
 ]
 SUPPLIER_FORM = ''.join(
-    f'<div style="flex:1 1 240px"><label class="f">{esc(t)}</label>'
+    f'<div style="flex:1 1 240px"><label class="f" for="sup_{k}">{esc(t)}</label>'
     f'<input type="text" id="sup_{k}" data-sup="{k}"></div>'
     for k, t in SUPPLIER_FIELDS)
 

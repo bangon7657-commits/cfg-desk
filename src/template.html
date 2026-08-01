@@ -67,55 +67,43 @@
 <div class="wrap">
 
 <!-- ================= ГЛАВНАЯ ================= -->
-<span class="nojs-title">Главная</span>
+<span class="nojs-title">Песочница</span>
 <section class="panel active" id="p-home">
-  <div class="hero">
-    <h1>Рабочий стол менеджера</h1>
-    <p>Три инструмента: подобрать оборудование и выпустить ТКП, напечатать письмо
-      или уведомление, посчитать зарплату. Всё считается в браузере, ничего
-      не уходит на сервер.</p>
-    <!-- Плашка-шалость: лента со следами, при наведении подсказка. Фон
-         прозрачный, чернила и бумага берутся из переменных темы. -->
-    
-  </div>
-  <div class="tiles">
-    <button class="tile" type="button" data-go="build">
-      <span class="tile-n">1</span>
-      <span class="tile-t">Конфигуратор и КП</span>
-      <span class="tile-d">Слоты комплекта, проверка сборки, смета и ТКП в Word.
-        Из конфигуратора — кнопка «Перенести в смету».</span>
-      <span class="tile-a">Открыть конфигуратор →</span>
-    </button>
-    <button class="tile" type="button" data-go="letters">
-      <span class="tile-n">2</span>
-      <span class="tile-t">Письма и уведомления</span>
-      <span class="tile-d">Возврат платежа, уточнение назначения, перезачёт,
-        официальное письмо. Текст правится, печать и .docx на фирменном бланке.</span>
-      <span class="tile-a">Открыть письма →</span>
-    </button>
-    <button class="tile" type="button" data-go="zp">
-      <span class="tile-n">3</span>
-      <span class="tile-t">Расчёт зарплаты</span>
-      <span class="tile-d">Оклад по дням, переработки, выходные, отпуск, больничный,
-        аванс, НДФЛ и внутренний налог. Печать расчёта.</span>
-      <span class="tile-a">Открыть расчёт →</span>
-    </button>
-  </div>
-  <div class="card">
-    <div class="cardhead"><h2>Что где лежит</h2></div>
-    <div id="homeMap"></div>
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Песочница</h1>
+      <p class="lead">Карта инструментов: что где лежит, зачем нужно и что делать
+        следующим шагом. Всё считается в браузере, наружу ничего не уходит.</p>
+    </div>
+    <span class="pill on" id="mapCnt"></span>
   </div>
 
+  <!-- Поиск по карте: набираешь «НДС» или «письмо» — остаются нужные карточки -->
+  <div class="maptop">
+    <input type="search" id="mapSearch" placeholder="Что нужно сделать? НДС, письмо, окупаемость, толщина…"
+      aria-label="поиск по инструментам">
+    <div class="pills" id="mapFilters" role="tablist" aria-label="Чем занимаемся"></div>
+  </div>
+
+  <!-- Три сценария работы: продажа, документы, справка. Внутри — карточки
+       инструментов с назначением и переходом. -->
+  <div id="mapFlows"></div>
+
+  <div class="card" id="mapEmpty" hidden>
+    <div class="cardhead"><h2>Ничего не нашлось</h2></div>
+    <p class="muted">Попробуйте другое слово: «смета», «зарплата», «газ», «лизинг».</p>
+  </div>
 </section>
 
 <!-- Плашка-клятва в правом нижнем углу: обработанный рисунок как маска,
      цвет берётся из темы. Лежит вне панелей, поэтому видна на каждой вкладке;
      в печать не идёт. -->
-<div class="oath" id="oath" tabindex="0" role="img"
-  aria-label="Торжественно клянусь, что замышляю только шалость">
-  <div class="oath-scan" id="oathScan"></div>
+<a class="oath" id="oath" href="https://theuselessweb.com/" target="_blank"
+  rel="noopener noreferrer"
+  aria-label="Торжественно клянусь, что замышляю только шалость — открыть бесполезный сайт">
+  <span class="oath-scan" id="oathScan"></span>
   <span class="oath-tip">Торжественно клянусь, что замышляю только шалость</span>
-</div>
+</a>
 
 <!-- ================= ПИСЬМА ================= -->
 <span class="nojs-title">Письма</span>
@@ -125,12 +113,9 @@
       <h1 class="btitle">Письма и уведомления</h1>
     </div>
   </div>
-  <!-- Группы и шаблоны идут слева под заголовком: сначала выбираем группу,
-       под ней раскрываются письма этой группы. -->
-  <div class="ltrgroups">
-    <div class="pills big" id="ltrGroups" role="tablist" aria-label="Группа шаблонов"></div>
-    <div class="pills big" id="ltrPills" role="tablist" aria-label="Шаблон письма"></div>
-  </div>
+  <!-- Группы — раскрывающиеся плашки: нажал «Кадровые документы» — под самой
+       кнопкой раскрылись её документы. Открыта всегда одна группа. -->
+  <div class="ltracc" id="ltrGroups" aria-label="Группы шаблонов"></div>
 
   <div class="cfggrid">
   <div class="cfgmain">
@@ -138,9 +123,9 @@
       <div class="cardhead"><h2 id="ltrTitle">Шаблон</h2>
         <span class="spec-cnt" id="ltrHint"></span></div>
       <div class="row">
-        <div style="flex:2 1 300px"><label class="f">Наше юрлицо — адресат письма</label>
+        <div style="flex:2 1 300px"><label class="f" for="ltrSupplier">Наше юрлицо — адресат письма</label>
           <select id="ltrSupplier"></select></div>
-        <div style="flex:2 1 260px"><label class="f">Руководитель в шапке</label>
+        <div style="flex:2 1 260px"><label class="f" for="ltrCeo">Руководитель в шапке</label>
           <input type="text" id="ltrCeo" placeholder="подставится из реквизитов"></div>
       </div>
       <div id="ltrFields"></div>
@@ -213,19 +198,19 @@
     <div class="card">
       <div class="cardhead"><h2>Оклад и норма месяца</h2></div>
       <div class="row">
-        <div><label class="f">Оклад за полный месяц, ₽</label>
+        <div><label class="f" for="zpSalary">Оклад за полный месяц, ₽</label>
           <input type="text" id="zpSalary" inputmode="decimal"></div>
-        <div><label class="f">Оклад указан</label><select id="zpMode">
+        <div><label class="f" for="zpMode">Оклад указан</label><select id="zpMode">
           <option value="gross">Грязными — до налогов</option>
           <option value="net">Чистыми — на руки</option></select></div>
-        <div><label class="f">Месяц</label><select id="zpMonth"></select></div>
+        <div><label class="f" for="zpMonth">Месяц</label><select id="zpMonth"></select></div>
       </div>
       <div class="row">
-        <div><label class="f">Норма рабочих дней</label>
+        <div><label class="f" for="zpNormDays">Норма рабочих дней</label>
           <input type="text" id="zpNormDays" inputmode="numeric"></div>
-        <div><label class="f">Норма часов</label>
+        <div><label class="f" for="zpNormHours">Норма часов</label>
           <input type="text" id="zpNormHours" inputmode="numeric"></div>
-        <div><label class="f">Отработано дней</label>
+        <div><label class="f" for="zpWorked">Отработано дней</label>
           <input type="text" id="zpWorked" inputmode="decimal"></div>
       </div>
       <div class="btns noprint">
@@ -234,9 +219,9 @@
       <div id="zpNormWarn"></div>
       <div class="cardsub">Аванс</div>
       <div class="row">
-        <div><label class="f">Отработано дней с 1 по 15</label>
+        <div><label class="f" for="zpHalfDays">Отработано дней с 1 по 15</label>
           <input type="text" id="zpHalfDays" inputmode="decimal"></div>
-        <div><label class="f">Аванс выплачен суммой, ₽</label>
+        <div><label class="f" for="zpAdvManual">Аванс выплачен суммой, ₽</label>
           <input type="text" id="zpAdvManual" inputmode="decimal"
             placeholder="пусто — считать по дням"></div>
       </div>
@@ -248,18 +233,18 @@
     <div class="card">
       <div class="cardhead"><h2>Надбавки и удержания</h2></div>
       <div class="row">
-        <div><label class="f">Бонус, ₽</label><input type="text" id="zpBonus" inputmode="decimal"></div>
-        <div><label class="f">Дежурство, ₽</label>
+        <div><label class="f" for="zpBonus">Бонус, ₽</label><input type="text" id="zpBonus" inputmode="decimal"></div>
+        <div><label class="f" for="zpDuty">Дежурство, ₽</label>
           <input type="text" id="zpDuty" inputmode="decimal"></div>
-        <div><label class="f">Штраф, ₽</label><input type="text" id="zpPenalty" inputmode="decimal"></div>
+        <div><label class="f" for="zpPenalty">Штраф, ₽</label><input type="text" id="zpPenalty" inputmode="decimal"></div>
       </div>
       <div class="cardsub">Переработки и работа в выходные</div>
       <div class="row">
-        <div><label class="f">Сверхурочные ×1,5, ч</label>
+        <div><label class="f" for="zpOt15">Сверхурочные ×1,5, ч</label>
           <input type="text" id="zpOt15" inputmode="decimal"></div>
-        <div><label class="f">Сверхурочные ×2, ч</label>
+        <div><label class="f" for="zpOt20">Сверхурочные ×2, ч</label>
           <input type="text" id="zpOt20" inputmode="decimal"></div>
-        <div><label class="f">Часы в выходные и праздники</label>
+        <div><label class="f" for="zpHolH">Часы в выходные и праздники</label>
           <input type="text" id="zpHolH" inputmode="decimal"></div>
       </div>
       <label class="chk"><input type="checkbox" id="zpHolOver">
@@ -270,23 +255,23 @@
         <summary>Отпуск и больничный</summary>
         <div class="det-b">
           <div class="row">
-            <div><label class="f">Дней отпуска</label>
+            <div><label class="f" for="zpVacDays">Дней отпуска</label>
               <input type="text" id="zpVacDays" inputmode="numeric"></div>
-            <div><label class="f">Средний дневной, ₽</label>
+            <div><label class="f" for="zpVacDaily">Средний дневной, ₽</label>
               <input type="text" id="zpVacDaily" inputmode="decimal"></div>
-            <div><label class="f">Заработок за 12 мес., ₽</label>
+            <div><label class="f" for="zpVacEarn">Заработок за 12 мес., ₽</label>
               <input type="text" id="zpVacEarn" inputmode="decimal" placeholder="÷ 12 ÷ 29,3"></div>
           </div>
           <div class="row">
-            <div><label class="f">Дней больничного</label>
+            <div><label class="f" for="zpSickDays">Дней больничного</label>
               <input type="text" id="zpSickDays" inputmode="numeric"></div>
-            <div><label class="f">Средний дневной, ₽</label>
+            <div><label class="f" for="zpSickDaily">Средний дневной, ₽</label>
               <input type="text" id="zpSickDaily" inputmode="decimal"></div>
-            <div><label class="f">Заработок за 2 года, ₽</label>
+            <div><label class="f" for="zpSickEarn">Заработок за 2 года, ₽</label>
               <input type="text" id="zpSickEarn" inputmode="decimal" placeholder="÷ 730"></div>
           </div>
           <div class="row">
-            <div><label class="f">Страховой стаж, лет</label>
+            <div><label class="f" for="zpSickYears">Страховой стаж, лет</label>
               <input type="text" id="zpSickYears" inputmode="numeric"></div>
           </div>
           <div class="btns noprint">
@@ -302,9 +287,9 @@
         <summary>Ставки налогов</summary>
         <div class="det-b">
           <div class="row">
-            <div><label class="f">НДФЛ, %</label>
+            <div><label class="f" for="zpNdfl">НДФЛ, %</label>
               <input type="text" id="zpNdfl" inputmode="decimal"></div>
-            <div><label class="f">Внутренний налог компании, %</label>
+            <div><label class="f" for="zpInternal">Внутренний налог компании, %</label>
               <input type="text" id="zpInternal" inputmode="decimal"></div>
           </div>
           <div class="note small">__ZP_NOTE__</div>
@@ -376,7 +361,7 @@
     <div class="card">
       <div class="cardhead"><h2>Мои сборки</h2></div>
       <div class="row">
-        <div style="flex:2 1 260px"><label class="f">Название</label>
+        <div style="flex:2 1 260px"><label class="f" for="buildName">Название</label>
           <input type="text" id="buildName" placeholder="Волокно 1530 6 кВт под ключ"></div>
         <div style="align-self:end"><button class="btn sec" type="button" id="buildSave">Сохранить</button></div>
       </div>
@@ -455,20 +440,20 @@
         <div class="step-t">Конфигурация волоконного станка<small>серия, формат, мощность, модули</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div><label class="f">Серия</label><select id="fSeries"></select></div>
-          <div><label class="f">Формат поля</label><select id="fFormat"></select></div>
-          <div><label class="f">Мощность источника</label><select id="fPower"></select></div>
+          <div><label class="f" for="fSeries">Серия</label><select id="fSeries"></select></div>
+          <div><label class="f" for="fFormat">Формат поля</label><select id="fFormat"></select></div>
+          <div><label class="f" for="fPower">Мощность источника</label><select id="fPower"></select></div>
         </div>
         <div class="row">
-          <div><label class="f">Сменный стол</label><select id="fTable">
+          <div><label class="f" for="fTable">Сменный стол</label><select id="fTable">
             <option value="0">нет</option><option value="1">да</option></select></div>
-          <div><label class="f">RD-модуль (труборез, поворотная ось)</label><select id="fRot">
+          <div><label class="f" for="fRot">RD-модуль (труборез, поворотная ось)</label><select id="fRot">
             <option value="">нет</option><option value="6-160">rotary 6-160</option>
             <option value="6-240">rotary 6-240</option><option value="6-360">rotary 6-360</option>
           </select></div>
         </div>
         <div class="row">
-          <div style="flex:2 1 340px"><label class="f">Приводы (сервомоторы)</label>
+          <div style="flex:2 1 340px"><label class="f" for="fServo">Приводы (сервомоторы)</label>
             <select id="fServo"></select></div>
         </div>
         <div class="think-box" id="servoOut"></div>
@@ -483,7 +468,7 @@
       <div class="step-b">
         <div id="fOut"></div>
         <div class="matches" id="fMatches"></div>
-        <div class="btns noprint"><button class="btn" id="fAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn" id="fAdd">Добавить в смету</button></div>
         <div class="note">В цену волоконного станка входят контроллер FSCUT, лазерная голова BLT
           и чиллер CWFL, подобранные под мощность источника. __FIBER_A_NOTE__</div>
         <div class="note alert"><b>Чего в прайсе нет — только к менеджеру:</b>
@@ -501,12 +486,12 @@
       <div class="step-t">Компрессор<small>для резки воздухом и пневматики станка</small></div></div>
     <div class="step-b">
       <div class="row">
-        <div style="flex:3 1 340px"><label class="f">Модель</label>
+        <div style="flex:3 1 340px"><label class="f" for="kitCompressor">Модель</label>
           <select id="kitCompressor"></select></div>
       </div>
       <div class="think-box" id="compressorOut"></div>
       <div class="btns noprint">
-        <button class="btn" id="compressorAdd">Добавить в смету</button></div>
+        <button type="button" class="btn" id="compressorAdd">Добавить в смету</button></div>
       <div class="scroll">__COMPRESSOR_TABLE__</div>
     </div>
   </div>
@@ -516,12 +501,12 @@
       <div class="step-t">Дымоуловитель<small>вытяжка в комплекте станка есть, но фильтрации у неё нет</small></div></div>
     <div class="step-b">
       <div class="row">
-        <div style="flex:3 1 340px"><label class="f">Модель</label>
+        <div style="flex:3 1 340px"><label class="f" for="kitExtraction">Модель</label>
           <select id="kitExtraction"></select></div>
       </div>
       <div class="think-box" id="extractionOut"></div>
       <div class="btns noprint">
-        <button class="btn" id="extractionAdd">Добавить в смету</button></div>
+        <button type="button" class="btn" id="extractionAdd">Добавить в смету</button></div>
       <div class="scroll">__EXTRACTION_TABLE__</div>
     </div>
   </div>
@@ -531,12 +516,12 @@
       <div class="step-t">Криоцилиндр вместо баллонов<small>когда азота нужно много</small></div></div>
     <div class="step-b">
       <div class="row">
-        <div style="flex:3 1 340px"><label class="f">Позиция</label>
+        <div style="flex:3 1 340px"><label class="f" for="kitCryo">Позиция</label>
           <select id="kitCryo"></select></div>
       </div>
       <div class="think-box" id="cryoOut"></div>
       <div class="btns noprint">
-        <button class="btn" id="cryoAdd">Добавить в смету</button></div>
+        <button type="button" class="btn" id="cryoAdd">Добавить в смету</button></div>
       <div class="note">__CRYO_NOTE__</div>
       <div class="scroll">__CRYO_TABLE__</div>
       <details><summary>Характеристики газификатора</summary>
@@ -549,7 +534,7 @@
       <div class="step-t">Стабилизатор напряжения<small>условие гарантии, а не опция</small></div></div>
     <div class="step-b">
       <div class="row">
-        <div style="flex:3 1 340px"><label class="f">Модель</label>
+        <div style="flex:3 1 340px"><label class="f" for="kitStab">Модель</label>
           <select id="kitStab"></select></div>
         <div style="flex:0 0 auto;align-self:flex-end">
           <label class="chk"><input type="checkbox" id="stabAll">
@@ -557,7 +542,7 @@
       </div>
       <div class="think-box" id="stabOut"></div>
       <div class="btns noprint">
-        <button class="btn" id="stabAdd">Добавить в смету</button></div>
+        <button type="button" class="btn" id="stabAdd">Добавить в смету</button></div>
       <div class="note">__STAB_NOTE__</div>
       <div class="note internal">__STAB_WELD_NOTE__</div>
       <div class="scroll">__STAB_TABLE__</div>
@@ -616,11 +601,11 @@
         <div class="step-t">Конфигурация фрезерного станка<small>формат поля, затем конкретная сборка</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div><label class="f">Формат поля</label><select id="mFormat"></select></div>
-          <div style="flex:2 1 320px"><label class="f">Сборка</label><select id="mConfig"></select></div>
+          <div><label class="f" for="mFormat">Формат поля</label><select id="mFormat"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="mConfig">Сборка</label><select id="mConfig"></select></div>
         </div>
         <div class="row internal">
-          <div><label class="f">Какой ценник берём</label><select id="priceMode">
+          <div><label class="f" for="priceMode">Какой ценник берём</label><select id="priceMode">
             <option value="order">Под заказ — завод, __DELIVERY_ORDER__</option>
             <option value="stock">Из наличия — склад</option></select></div>
         </div>
@@ -633,7 +618,7 @@
       <div class="step-b">
         <div id="mOut"></div>
         <div class="matches" id="mMatches"></div>
-        <div class="btns noprint"><button class="btn" id="mAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn" id="mAdd">Добавить в смету</button></div>
       </div>
     </div>
 
@@ -651,8 +636,8 @@
         <div class="step-t">ПНР и обучение<small>платные услуги — не обещать как бесплатное преимущество</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div style="flex:2 1 300px"><label class="f">Станок</label><select id="pnrModel"></select></div>
-          <div><label class="f">Что включить</label><select id="pnrKind">
+          <div style="flex:2 1 300px"><label class="f" for="pnrModel">Станок</label><select id="pnrModel"></select></div>
+          <div><label class="f" for="pnrKind">Что включить</label><select id="pnrKind">
             <option value="pnr">ПНР</option>
             <option value="plus1">ПНР +1 день</option>
             <option value="plus2">ПНР +2 дня</option>
@@ -662,7 +647,7 @@
         </div>
         <label class="chk"><input type="checkbox" id="thirdParty"> Сторонний станок — коэффициент ×1,2</label>
         <div class="think-box" id="pnrOut"></div>
-        <div class="btns noprint"><button class="btn sec" id="pnrAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="pnrAdd">Добавить в смету</button></div>
         <div class="note"><b>Общие условия:</b><ul>__PNR_TERMS__</ul></div>
       </div>
     </div>
@@ -672,8 +657,8 @@
         <div class="step-t">Аспирация BELMASH<small>полный ряд с характеристиками · розница ×1,2</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="aspModel"></select></div>
-          <div><label class="f">Питание</label><select id="aspVolt"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="aspModel">Модель</label><select id="aspModel"></select></div>
+          <div><label class="f" for="aspVolt">Питание</label><select id="aspVolt"></select></div>
         </div>
         <div class="specbox" id="aspSpec"></div>
         <div class="btns noprint"><button class="btn sec" type="button" id="aspAdd">Добавить в смету</button></div>
@@ -691,14 +676,14 @@
         <div class="step-t">Выбор CO₂-станка<small>бренд, затем модель — цены с сайта, __CO2_DATE__</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div><label class="f">Бренд</label><select id="cBrand">
+          <div><label class="f" for="cBrand">Бренд</label><select id="cBrand">
             <option value="Wattsan">Wattsan</option>
             <option value="Zerder">Zerder — бюджетный</option></select></div>
-          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="cModel"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="cModel">Модель</label><select id="cModel"></select></div>
         </div>
         <div id="cOut"></div>
         <div class="matches" id="cMatches"></div>
-        <div class="btns noprint"><button class="btn" id="cAdd">Добавить в смету</button>
+        <div class="btns noprint"><button type="button" class="btn" id="cAdd">Добавить в смету</button>
           <button class="btn sec" type="button" id="cNext">Дальше: чиллер</button></div>
         <div class="note">__CO2_NOTE__</div>
         <div class="note alert">__CO2_SITE_WARNING__</div>
@@ -712,10 +697,10 @@
         <div class="step-t">Чиллер<small>в цену CO₂ не входит — считаем отдельной строкой</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="cChiller"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="cChiller">Модель</label><select id="cChiller"></select></div>
         </div>
         <div class="think-box" id="cChillerOut"></div>
-        <div class="btns noprint"><button class="btn sec" id="cChillerAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="cChillerAdd">Добавить в смету</button></div>
         <div class="note alert">__CHILLER_NOTE__</div>
       </div>
     </div>
@@ -725,17 +710,17 @@
         <div class="step-t">Стабилизатор напряжения<small>условие гарантии, а не опция</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div><label class="f">Бренд</label><select id="cStabBrand"></select></div>
-          <div style="flex:2 1 320px"><label class="f">Модель из полного ряда</label>
+          <div><label class="f" for="cStabBrand">Бренд</label><select id="cStabBrand"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="cStabFull">Модель из полного ряда</label>
             <select id="cStabFull"></select></div>
         </div>
         <div class="specbox" id="cStabSpec"></div>
         <div class="btns noprint"><button class="btn sec" type="button" id="cStabFullAdd">Добавить выбранную модель</button></div>
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Или модель из прайса опций</label><select id="cStab"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="cStab">Или модель из прайса опций</label><select id="cStab"></select></div>
         </div>
         <div class="think-box" id="cStabOut"></div>
-        <div class="btns noprint"><button class="btn sec" id="cStabAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="cStabAdd">Добавить в смету</button></div>
         <div class="note">Мощность станка по CO₂ в данных не записана, поэтому приложение
           не проверяет стабилизатор на проходимость: сверяйте по паспорту станка.</div>
       </div>
@@ -746,9 +731,9 @@
         <div class="step-t">ПНР и обучение<small>цены по CO₂ в прайсе сервиса нет</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Услуга</label><select id="cPnr"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="cPnr">Услуга</label><select id="cPnr"></select></div>
         </div>
-        <div class="btns noprint"><button class="btn sec" id="cPnrAdd">Добавить строкой без цены</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="cPnrAdd">Добавить строкой без цены</button></div>
         <div class="note alert">__PNR_NO_PRICE_NOTE__</div>
       </div>
     </div>
@@ -761,17 +746,17 @@
         <div class="step-t">Выбор маркиратора<small>серия, затем модель — прайс __MARKER_DATE__</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div><label class="f">Серия</label><select id="kSeries"></select></div>
-          <div style="flex:2 1 300px"><label class="f">Модель</label><select id="kModel"></select></div>
+          <div><label class="f" for="kSeries">Серия</label><select id="kSeries"></select></div>
+          <div style="flex:2 1 300px"><label class="f" for="kModel">Модель</label><select id="kModel"></select></div>
         </div>
         <div class="row internal">
-          <div><label class="f">Какой ценник берём</label><select id="kMode">
+          <div><label class="f" for="kMode">Какой ценник берём</label><select id="kMode">
             <option value="order">Под заказ — завод, __DELIVERY_ORDER__</option>
             <option value="stock">Из наличия — склад</option></select></div>
         </div>
         <div id="kOut"></div>
         <div class="matches" id="kMatches"></div>
-        <div class="btns noprint"><button class="btn" id="kAdd">Добавить в смету</button>
+        <div class="btns noprint"><button type="button" class="btn" id="kAdd">Добавить в смету</button>
           <button class="btn sec" type="button" id="kNext">Дальше: поворотная ось</button></div>
         <div class="note">__MARKER_NOTE__</div>
         <div class="note stop"><b>Чего в прайсе нет:</b><ul>__MARKER_MISSING__</ul></div>
@@ -783,10 +768,10 @@
         <div class="step-t">Поворотное устройство<small>подбирается по детали — цен в прайсе нет</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Тип</label><select id="kRot"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="kRot">Тип</label><select id="kRot"></select></div>
         </div>
         <div class="think-box" id="kRotOut"></div>
-        <div class="btns noprint"><button class="btn sec" id="kRotAdd">Добавить строкой без цены</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="kRotAdd">Добавить строкой без цены</button></div>
         <div class="note alert">__MARKER_ROTARY_NOTE__</div>
       </div>
     </div>
@@ -796,10 +781,10 @@
         <div class="step-t">Стабилизатор напряжения<small>маркиратор — 220 В, хватает младших моделей</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Модель</label><select id="kStab"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="kStab">Модель</label><select id="kStab"></select></div>
         </div>
         <div class="think-box" id="kStabOut"></div>
-        <div class="btns noprint"><button class="btn sec" id="kStabAdd">Добавить в смету</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="kStabAdd">Добавить в смету</button></div>
         <div class="note">Потребление маркиратора в данных не записано — приложение
           не считает запас по мощности за вас.</div>
       </div>
@@ -810,9 +795,9 @@
         <div class="step-t">ПНР и обучение<small>цены по маркираторам в прайсе сервиса нет</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Услуга</label><select id="kPnr"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="kPnr">Услуга</label><select id="kPnr"></select></div>
         </div>
-        <div class="btns noprint"><button class="btn sec" id="kPnrAdd">Добавить строкой без цены</button></div>
+        <div class="btns noprint"><button type="button" class="btn sec" id="kPnrAdd">Добавить строкой без цены</button></div>
         <div class="note alert">__PNR_NO_PRICE_NOTE_2__</div>
       </div>
     </div>
@@ -823,11 +808,11 @@
       <div class="step-t">Своя позиция<small>всё, чего нет в прайсе: доставка, оснастка, ЗИП, монтаж</small></div></div>
     <div class="step-b">
       <div class="row">
-        <div style="flex:2 1 320px"><label class="f">Наименование</label>
+        <div style="flex:2 1 320px"><label class="f" for="freeName">Наименование</label>
           <input type="text" id="freeName" placeholder="Доставка до Екатеринбурга"></div>
-        <div><label class="f">Цена, ₽</label>
+        <div><label class="f" for="freePrice">Цена, ₽</label>
           <input type="text" id="freePrice" inputmode="decimal" placeholder="0"></div>
-        <div><label class="f">Тип строки</label><select id="freeType">
+        <div><label class="f" for="freeType">Тип строки</label><select id="freeType">
           <option value="eq">Оборудование</option>
           <option value="opt">Опция</option>
           <option value="srv">Услуга</option></select></div>
@@ -845,15 +830,15 @@
     <div class="cardhead"><h2>Менеджер сделки</h2>
       <button class="btn mini sec" type="button" id="mgrReset">По умолчанию</button></div>
     <div class="row tight">
-      <div><label class="f">Имя и фамилия</label>
+      <div><label class="f" for="mgrName">Имя и фамилия</label>
         <input type="text" id="mgrName" placeholder="__MGR_NAME__"></div>
-      <div><label class="f">Должность</label>
+      <div><label class="f" for="mgrRole">Должность</label>
         <input type="text" id="mgrRole" placeholder="__MGR_ROLE__"></div>
     </div>
     <div class="row tight">
-      <div><label class="f">Телефон</label>
+      <div><label class="f" for="mgrPhone">Телефон</label>
         <input type="text" id="mgrPhone" placeholder="__MGR_PHONE__"></div>
-      <div><label class="f">Почта</label>
+      <div><label class="f" for="mgrEmail">Почта</label>
         <input type="text" id="mgrEmail" placeholder="__MGR_EMAIL__"></div>
     </div>
     <div class="note small" id="mgrOut"></div>
@@ -928,97 +913,98 @@
 <!-- ================= СМЕТА И ТКП ================= -->
 <span class="nojs-title">Смета и ТКП</span>
 <section class="panel" id="p-smeta">
-  <p class="lead">Скидка применяется к каждой позиции и может быть переопределена построчно.
-    НДС выделяется изнутри: НДС = сумма × ставка ÷ (100 + ставка). Расчёт показан пошагово,
-    сходимость перепроверяется тремя независимыми способами.</p>
+  <div class="bhead noprint">
+    <div>
+      <h1 class="btitle">Смета и ТКП</h1>
+      <p class="lead">Считаем позиции, собираем предложение, забираем файл.</p>
+    </div>
+    <span class="pill on" id="smetaState"></span>
+  </div>
 
-  <div class="step noprint">
-    <div class="step-h"><div class="step-n">1</div>
-      <div class="step-t">Скидка и НДС<small>скидка по умолчанию для новых позиций</small></div></div>
-    <div class="step-b">
+  <!-- Слева работа со сметой, справа лист ТКП живьём: видно, что уедет
+       клиенту, и не надо прокручивать страницу вниз. -->
+  <div class="cfggrid noprint">
+  <div class="cfgmain">
+    <div class="card">
+      <div class="cardhead"><h2>Скидка и НДС</h2>
+        <span class="spec-cnt" id="smetaRule"></span></div>
       <div class="row">
-        <div><label class="f">Скидка по умолчанию, %</label><select id="discount"></select></div>
-        <div><label class="f">Ставка НДС, %</label>
+        <div><label class="f" for="discount">Скидка по умолчанию, %</label><select id="discount"></select></div>
+        <div><label class="f" for="ndsRate">Ставка НДС, %</label>
           <select id="ndsRate">
             <option value="220">22</option><option value="200">20</option>
             <option value="100">10</option><option value="50">5</option><option value="0">0</option>
           </select></div>
-        <div class="internal"><label class="f">Лестница уступок</label>
-          <div class="muted" style="padding-top:10px">5 % → 2 % → 1 %. Не начинать с максимума.
-            Максимум в приложении — __MAX_DISC__ %.</div></div>
       </div>
-      <!-- Пояснения занимали место над таблицей: убраны в свёрнутую справку. -->
       <details class="hint-det" id="smetaHints">
-        <summary>Правила скидки и сроки — справка</summary>
+        <summary>Как считается и когда скидка не идёт</summary>
         <div class="det-b">
-          <div class="note">Скидка по умолчанию идёт на оборудование и опции.
-            ПНР и обучение — платные услуги по прайсу, они по умолчанию без скидки.
-            Нужна скидка и на услуги — поставьте её в строке сметы вручную.</div>
-          <div class="note internal">Счёт фиксирует цену и наличие на __INVOICE_DAYS__ дней.
-            Срок действия ТКП — __KP_DAYS__ дней. Оплата в ТКП печатается так:
-            __PAY_TERMS__</div>
+          <div class="note">Скидка идёт на оборудование и опции. ПНР и обучение —
+            платные услуги по прайсу, по умолчанию без скидки: нужна — поставьте
+            её в строке сметы.</div>
+          <div class="note internal">Лестница уступок: 5 % → 2 % → 1 %, не начинать
+            с максимума. Максимум в приложении — __MAX_DISC__ %.</div>
+          <div class="note internal">Счёт держит цену __INVOICE_DAYS__ дней, ТКП —
+            __KP_DAYS__ дней. НДС выделяется изнутри: сумма × ставка ÷ (100 + ставка),
+            сходимость проверяется тремя способами.</div>
+          <div class="note small">Оплата в ТКП печатается так: __PAY_TERMS__</div>
         </div>
       </details>
     </div>
-  </div>
 
-  <div class="step noprint">
-    <div class="step-h"><div class="step-n">2</div>
-      <div class="step-t">Позиции сметы<small>цену и количество можно править прямо в строке — итог и НДС пересчитаются</small></div></div>
-    <div class="step-b">
+    <div class="card">
+      <div class="cardhead"><h2>Позиции</h2>
+        <span class="spec-cnt">цену и количество правьте в строке</span></div>
       <div class="scroll" id="smetaWrap"><table id="smetaTable"><thead><tr>
         <th style="width:40%">Наименование</th><th>Кол-во</th><th>Цена, ₽</th>
         <th>Скидка, %</th><th>Со скидкой</th><th>Сумма</th><th class="noprint"></th>
       </tr></thead><tbody id="smetaBody"></tbody></table></div>
-      <div id="smetaEmpty" class="empty">Смета пуста. Добавьте позиции на вкладке «Конфигуратор».</div>
+      <div id="smetaEmpty" class="empty">Смета пуста. Добавьте позиции в конфигураторе.</div>
       <div id="totals" class="totals"></div>
       <div id="propis" class="propis"></div>
       <div id="checkBlock"></div>
-      <div class="btns noprint">
-        <button class="btn" id="btnWord">Скачать ТКП для Word</button>
-        <button class="btn" id="btnPrint">PDF — печать → «Сохранить как PDF»</button>
-        <button class="btn sec" id="btnSend">Отправить файлом</button>
-        <button class="btn sec" id="btnJson">Скопировать JSON для скилла</button>
-        <button class="btn danger" id="btnClear">Очистить смету</button>
-      </div>
-      <div class="note">Файл — настоящий <b>.docx</b>: открывается в Word (в том числе
-        на телефоне), LibreOffice и Google Документах, правится как обычный документ.
-        PDF получается печатью: в диалоге выберите «Сохранить как PDF».
-        «Отправить файлом» на телефоне открывает системное «Поделиться»
-        (Telegram, WhatsApp, почта), на компьютере скачивает файл — отправьте его
-        вложением.</div>
-      <textarea id="jsonOut" class="noprint" rows="8" style="margin-top:12px;display:none;
-        font-family:ui-monospace,Consolas,monospace;font-size:12.5px"></textarea>
     </div>
-  </div>
 
-  <div class="step kpstep">
-    <div class="step-h"><div class="step-n">3</div>
-      <div class="step-t">Шапка ТКП и предпросмотр<small>печать берёт только этот блок</small></div></div>
-    <div class="step-b">
-      <div class="row noprint">
-        <div style="flex:2 1 260px"><label class="f">Клиент</label><input type="text" id="kpClient" placeholder="ООО «Ромашка»"></div>
-        <div><label class="f">ИНН</label><input type="text" id="kpInn" placeholder="7801234567"></div>
-        <div><label class="f">Исх. номер</label><input type="text" id="kpNum" placeholder="1207"></div>
+    <div class="card">
+      <div class="cardhead"><h2>Шапка предложения</h2>
+        <span class="spec-cnt">попадёт в первый лист ТКП</span></div>
+      <div class="row">
+        <div style="flex:2 1 260px"><label class="f" for="kpClient">Клиент</label><input type="text" id="kpClient" placeholder="ООО «Ромашка»"></div>
+        <div><label class="f" for="kpInn">ИНН</label><input type="text" id="kpInn" placeholder="7801234567"></div>
+        <div><label class="f" for="kpNum">Исх. номер</label><input type="text" id="kpNum" placeholder="1207"></div>
+        <div><label class="f" for="kpDate">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
       </div>
-      <div class="row noprint">
-        <div><label class="f">Контакт</label><input type="text" id="kpContact" placeholder="Иван Петров"></div>
-        <div><label class="f">Телефон клиента</label><input type="text" id="kpPhone" placeholder="+7 900 000-00-00"></div>
-        <div><label class="f">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
-        <div><label class="f">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
-      </div>
-      <div class="row noprint">
-        <div style="flex:2 1 300px"><label class="f">Вариант ТКП</label>
+      <details class="hint-det">
+        <summary>Контакт, примечание, заголовок</summary>
+        <div class="det-b">
+          <div class="row">
+            <div><label class="f" for="kpContact">Контакт</label><input type="text" id="kpContact" placeholder="Иван Петров"></div>
+            <div><label class="f" for="kpPhone">Телефон клиента</label><input type="text" id="kpPhone" placeholder="+7 900 000-00-00"></div>
+            <div><label class="f" for="kpNote">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
+          </div>
+          <div class="row">
+            <div><label class="f" for="kpTitle">Заголовок предложения</label>
+              <input type="text" id="kpTitle" placeholder="подставится первая позиция сметы"></div>
+          </div>
+        </div>
+      </details>
+      <div class="cardsub">Вариант, поставщик, срок</div>
+      <div class="row">
+        <div style="flex:2 1 240px"><label class="f" for="kpMode">Вариант ТКП</label>
           <select id="kpMode"></select></div>
-        <div style="flex:3 1 340px" id="kpModeHint" class="muted"></div>
-      </div>
-      <div class="row noprint">
-        <div style="flex:2 1 300px"><label class="f">Поставщик в ТКП</label>
+        <div style="flex:2 1 240px"><label class="f" for="kpSupplier">Поставщик</label>
           <select id="kpSupplier">__SUPPLIER_OPTIONS__</select></div>
-        <div style="flex:0 0 auto;align-self:flex-end">
-          <button class="btn sec" type="button" id="supEdit">Реквизиты поставщика</button></div>
+        <div style="flex:2 1 240px"><label class="f" for="kpTerm">Срок поставки</label>
+          <select id="kpTerm">
+            <option value="order">Под заказ — __DELIVERY_ORDER__</option>
+            <option value="stock">Из наличия — со склада</option>
+          </select></div>
       </div>
-      <details class="det noprint" id="supBox">
+      <div class="muted small" id="kpModeHint"></div>
+      <div class="btns">
+        <button class="btn mini sec" type="button" id="supEdit">Реквизиты поставщика</button>
+      </div>
+      <details class="det" id="supBox">
         <summary class="det-h">Реквизиты поставщика<small>сохраняются в этом браузере</small></summary>
         <div class="det-b">
           <div class="note alert">__SUPPLIER_NOTE__</div>
@@ -1029,17 +1015,47 @@
           <div id="supWarn" class="note"></div>
         </div>
       </details>
-      <div class="row noprint">
-        <div style="flex:2 1 300px"><label class="f">Срок поставки в ТКП</label>
-          <select id="kpTerm">
-            <option value="order">Под заказ — __DELIVERY_ORDER__</option>
-            <option value="stock">Из наличия — со склада</option>
-          </select></div>
-        <div style="flex:3 1 320px"><label class="f">Заголовок предложения</label>
-          <input type="text" id="kpTitle" placeholder="подставится первая позиция сметы"></div>
-      </div>
+    </div>
+  </div>
 
-      <!-- Лист ТКП. Оформление повторяет мастер-шаблон скилла lasercut-kp:
+  <aside class="cfgside">
+    <div class="card spec-card">
+      <div class="cardhead"><h2>Лист ТКП</h2>
+        <span class="spec-cnt" id="kpMiniCnt"></span></div>
+      <div class="kpmini" id="kpMini" title="Открыть предпросмотр целиком">
+        <div class="kpmini-in" id="kpMiniIn"></div>
+      </div>
+      <div class="btns">
+        <button type="button" class="btn mini" id="btnWord">Скачать для Word</button>
+        <button type="button" class="btn mini" id="btnPrint">Печать или PDF</button>
+        <button type="button" class="btn mini sec" id="btnSend">Отправить файлом</button>
+      </div>
+      <div class="btns">
+        <button class="btn mini sec" type="button" id="kpMiniGo">Открыть целиком</button>
+        <button type="button" class="btn mini sec" id="btnJson">JSON для скилла</button>
+        <button type="button" class="btn mini danger" id="btnClear">Очистить смету</button>
+      </div>
+      <details class="hint-det">
+        <summary>Чем отличаются файл и печать</summary>
+        <div class="det-b">
+          <div class="note small">Файл — настоящий .docx: открывается в Word, в том
+            числе на телефоне, и правится как обычный документ. PDF получается
+            печатью: в диалоге выберите «Сохранить как PDF». «Отправить файлом»
+            на телефоне открывает системное «Поделиться», на компьютере скачивает
+            файл.</div>
+        </div>
+      </details>
+      <textarea id="jsonOut" rows="6" style="margin-top:10px;display:none;
+        font-family:ui-monospace,Consolas,monospace;font-size:12px"></textarea>
+    </div>
+  </aside>
+  </div>
+
+  <div class="step kpstep">
+    <div class="step-h"><div class="step-n">3</div>
+      <div class="step-t">Шапка ТКП и предпросмотр<small>печать берёт только этот блок</small></div></div>
+    <div class="step-b">
+            <!-- Лист ТКП. Оформление повторяет мастер-шаблон скилла lasercut-kp:
            тёмно-синие плашки разделов, светло-голубые заливки, Calibri, A4.
            Шапка, постоянные разделы и подвал — статика, поэтому печатаются
            даже если скрипт не запустился. -->
@@ -1087,11 +1103,11 @@
         <div class="cardhead"><h2>Проверка НДС</h2>
           <span class="spec-cnt" id="ndsHint"></span></div>
         <div class="row">
-          <div><label class="f">Сумма, ₽</label>
+          <div><label class="f" for="cnSum">Сумма, ₽</label>
             <input type="text" id="cnSum" inputmode="decimal"
               placeholder="например 3 010 400"></div>
-          <div><label class="f">Ставка</label><select id="cnRate"></select></div>
-          <div><label class="f">Что известно</label><select id="cnMode">
+          <div><label class="f" for="cnRate">Ставка</label><select id="cnRate"></select></div>
+          <div><label class="f" for="cnMode">Что известно</label><select id="cnMode">
             <option value="in">Сумма с НДС — выделить налог</option>
             <option value="out">Сумма без НДС — начислить сверху</option>
           </select></div>
@@ -1125,13 +1141,13 @@
       <div class="card">
         <div class="cardhead"><h2>Условия договора</h2></div>
         <div class="row">
-          <div><label class="f">Цена комплекта, ₽</label>
+          <div><label class="f" for="clPrice">Цена комплекта, ₽</label>
             <input type="text" id="clPrice" inputmode="decimal"></div>
-          <div><label class="f">Аванс, %</label>
+          <div><label class="f" for="clAdv">Аванс, %</label>
             <input type="text" id="clAdv" inputmode="decimal"></div>
-          <div><label class="f">Срок, месяцев</label>
+          <div><label class="f" for="clMonths">Срок, месяцев</label>
             <input type="text" id="clMonths" inputmode="numeric"></div>
-          <div><label class="f">Удорожание, % в год</label>
+          <div><label class="f" for="clUp">Удорожание, % в год</label>
             <input type="text" id="clUp" inputmode="decimal"></div>
         </div>
         <div class="btns noprint">
@@ -1167,13 +1183,13 @@
       <div class="card">
         <div class="cardhead"><h2>Станок и энергия</h2></div>
         <div class="row">
-          <div><label class="f">Потребление, кВт</label>
+          <div><label class="f" for="ccPower">Потребление, кВт</label>
             <input type="text" id="ccPower" inputmode="decimal"
               placeholder="из паспорта"></div>
-          <div><label class="f">Тариф, ₽/кВт·ч</label>
+          <div><label class="f" for="ccKwh">Тариф, ₽/кВт·ч</label>
             <input type="text" id="ccKwh" inputmode="decimal"
               placeholder="из счёта энергосбыта"></div>
-          <div><label class="f">Газ, ₽/час</label>
+          <div><label class="f" for="ccGas">Газ, ₽/час</label>
             <input type="text" id="ccGas" inputmode="decimal"
               placeholder="из части «Газ и владение»"></div>
         </div>
@@ -1181,31 +1197,31 @@
       <div class="card">
         <div class="cardhead"><h2>Расходники</h2></div>
         <div class="row">
-          <div><label class="f">Сопло, ₽</label>
+          <div><label class="f" for="ccNozzle">Сопло, ₽</label>
             <input type="text" id="ccNozzle" inputmode="decimal"></div>
-          <div><label class="f">Ресурс сопла, ч</label>
+          <div><label class="f" for="ccNozzleH">Ресурс сопла, ч</label>
             <input type="text" id="ccNozzleH" inputmode="decimal"></div>
-          <div><label class="f">Защитное стекло, ₽</label>
+          <div><label class="f" for="ccGlass">Защитное стекло, ₽</label>
             <input type="text" id="ccGlass" inputmode="decimal"></div>
-          <div><label class="f">Ресурс стекла, ч</label>
+          <div><label class="f" for="ccGlassH">Ресурс стекла, ч</label>
             <input type="text" id="ccGlassH" inputmode="decimal"></div>
         </div>
       </div>
       <div class="card">
         <div class="cardhead"><h2>Оператор и амортизация</h2></div>
         <div class="row">
-          <div><label class="f">Оператор, ₽/мес</label>
+          <div><label class="f" for="ccOper">Оператор, ₽/мес</label>
             <input type="text" id="ccOper" inputmode="decimal"></div>
-          <div><label class="f">Часов работы в месяц</label>
+          <div><label class="f" for="ccHours">Часов работы в месяц</label>
             <input type="text" id="ccHours" inputmode="decimal"></div>
         </div>
         <div class="row">
-          <div><label class="f">Цена комплекта, ₽</label>
+          <div><label class="f" for="ccPrice">Цена комплекта, ₽</label>
             <input type="text" id="ccPrice" inputmode="decimal"></div>
-          <div><label class="f">Срок службы, часов</label>
+          <div><label class="f" for="ccLife">Срок службы, часов</label>
             <input type="text" id="ccLife" inputmode="decimal"
               placeholder="например 20 000"></div>
-          <div><label class="f">Прочее, ₽/час</label>
+          <div><label class="f" for="ccOther">Прочее, ₽/час</label>
             <input type="text" id="ccOther" inputmode="decimal"
               placeholder="аренда, обслуживание"></div>
         </div>
@@ -1237,18 +1253,18 @@
       <div class="card">
         <div class="cardhead"><h2>Как сейчас и как будет</h2></div>
         <div class="row">
-          <div><label class="f">Платите подрядчику, ₽/мес</label>
+          <div><label class="f" for="crOut">Платите подрядчику, ₽/мес</label>
             <input type="text" id="crOut" inputmode="decimal"></div>
-          <div><label class="f">Часов резки в месяц</label>
+          <div><label class="f" for="crHours">Часов резки в месяц</label>
             <input type="text" id="crHours" inputmode="decimal"></div>
-          <div><label class="f">Своя себестоимость, ₽/час</label>
+          <div><label class="f" for="crCost">Своя себестоимость, ₽/час</label>
             <input type="text" id="crCost" inputmode="decimal"
               placeholder="из расчёта часа"></div>
         </div>
         <div class="row">
-          <div><label class="f">Цена комплекта, ₽</label>
+          <div><label class="f" for="crPrice">Цена комплекта, ₽</label>
             <input type="text" id="crPrice" inputmode="decimal"></div>
-          <div><label class="f">Продаёте резку на сторону, ₽/час</label>
+          <div><label class="f" for="crSell">Продаёте резку на сторону, ₽/час</label>
             <input type="text" id="crSell" inputmode="decimal"
               placeholder="если планируете загружать станок заказами"></div>
         </div>
@@ -1313,8 +1329,8 @@
         <div class="step-t">Что режем<small>мощность считается с обязательным запасом __RESERVE__ % — требование завода</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div><label class="f">Материал</label><select id="mtMaterial"></select></div>
-          <div><label class="f">Рабочая толщина, мм</label>
+          <div><label class="f" for="mtMaterial">Материал</label><select id="mtMaterial"></select></div>
+          <div><label class="f" for="mtThick">Рабочая толщина, мм</label>
             <input type="number" id="mtThick" min="0.5" max="80" step="0.5" value="6"></div>
         </div>
       </div>
@@ -1333,8 +1349,8 @@
         <div class="step-t">Задача клиента<small>формулировки взяты из матрицы подбора скилла</small></div></div>
       <div class="step-b">
         <div class="row">
-          <div style="flex:2 1 320px"><label class="f">Что делает клиент</label><select id="mkTask"></select></div>
-          <div><label class="f">Размер заготовки</label><select id="mkSize"></select></div>
+          <div style="flex:2 1 320px"><label class="f" for="mkTask">Что делает клиент</label><select id="mkTask"></select></div>
+          <div><label class="f" for="mkSize">Размер заготовки</label><select id="mkSize"></select></div>
         </div>
         <label class="chk"><input type="checkbox" id="mkVac"> Нужен вакуумный стол — листовые заготовки</label>
       </div>
@@ -1427,13 +1443,13 @@
       <div class="step-t">Режим резки<small>сопло и газ определяют расход</small></div></div>
     <div class="step-b">
       <div class="row">
-        <div><label class="f">Сопло</label><select id="gNozzle"></select></div>
-        <div><label class="f">Газ</label><select id="gGas">
+        <div><label class="f" for="gNozzle">Сопло</label><select id="gNozzle"></select></div>
+        <div><label class="f" for="gGas">Газ</label><select id="gGas">
           <option value="o2">Кислород — углеродистая сталь</option>
           <option value="n2">Азот — нержавейка, алюминий</option></select></div>
-        <div><label class="f">Часов резки в месяц</label>
+        <div><label class="f" for="gHours">Часов резки в месяц</label>
           <input type="number" id="gHours" min="1" max="700" value="80"></div>
-        <div><label class="f">Цена баллона 40 л, ₽</label>
+        <div><label class="f" for="gPrice">Цена баллона 40 л, ₽</label>
           <input type="number" id="gPrice" min="0" step="50" placeholder="ввести вручную"></div>
       </div>
       <div class="note alert">__GAS_PRICE_MISSING__</div>
