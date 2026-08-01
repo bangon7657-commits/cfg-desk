@@ -80,13 +80,13 @@ check('вкладки по умолчанию: главная, конфигур�
     .map(b => b.getAttribute('data-t')).join(','));
 check('у каждой вкладки есть крестик снятия',
   doc.querySelectorAll('#tabs button[data-t] .tabx').length === 4, '');
-check('панелей 11', doc.querySelectorAll('.panel').length === 11,
+check('панелей 9', doc.querySelectorAll('.panel').length === 9,
   'найдено ' + doc.querySelectorAll('.panel').length);
-check('в кнопке «Разделы» все 11 разделов',
-  doc.querySelectorAll('#menuList button[data-t]').length === 11,
+check('в кнопке «Разделы» все 9 разделов',
+  doc.querySelectorAll('#menuList button[data-t]').length === 9,
   'найдено ' + doc.querySelectorAll('#menuList button[data-t]').length);
 check('в меню у каждого раздела кнопка закрепления',
-  doc.querySelectorAll('#menuList button[data-pin]').length === 11 &&
+  doc.querySelectorAll('#menuList button[data-pin]').length === 9 &&
   [...doc.querySelectorAll('#menuList button[data-pin]')]
     .filter(b => b.getAttribute('aria-pressed') === 'true').length === 4, '');
 check('в меню есть счётчик и сброс вкладок',
@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 27', /const CACHE = 'cfg-v27'/.test(swTxt),
+check('кеш: версия поднята до 28', /const CACHE = 'cfg-v28'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -595,7 +595,7 @@ check('стабилизатор: добавляется в смету',
 
 
 // ---- вкладка «Техника» ----
-const techTxt = doc.getElementById('p-tech').textContent.replace(/\s+/g, ' ');
+const techTxt = doc.getElementById('g-tech').textContent.replace(/\s+/g, ' ');
 check('техника: рабочие толщины и предел разделены',
   /Рабочие толщины/.test(techTxt) && /Предел по заводским таблицам/.test(techTxt), '');
 check('техника: 3 кВт — 22 мм по стали, 12 кВт — 40 мм',
@@ -1379,8 +1379,47 @@ check('подбор: длинный лид убран в свёрнутую сп
 check('главная: плашка без логотипа и рамки',
   !doc.querySelector('#p-home .hero img') && /\.hero\{background:none;border:0/.test(src), '');
 check('навигация: остальные разделы живут в кнопке «Разделы»',
-  doc.querySelectorAll('#menuList button[data-t]').length === 11 &&
+  doc.querySelectorAll('#menuList button[data-t]').length === 9 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
+
+// ---- v28: три раздела сведены в «Справочник», меню поверх всего ----
+menuGo('guide');
+check('справочник: одна панель вместо трёх прежних',
+  !!doc.getElementById('p-guide') && !doc.getElementById('p-match') &&
+  !doc.getElementById('p-tech') && !doc.getElementById('p-gas') &&
+  doc.getElementById('p-guide').classList.contains('active'), '');
+check('справочник: три части и переключатель над ними',
+  [...doc.querySelectorAll('#guideTabs button')].map(b => b.textContent).join('|') ===
+  'Подбор по задаче|Техника|Газ и владение',
+  [...doc.querySelectorAll('#guideTabs button')].map(b => b.textContent).join('|'));
+const gShown = () => [...doc.querySelectorAll('#p-guide .subpanel')]
+  .filter(n => n.classList.contains('active')).map(n => n.id).join(',');
+check('справочник: по умолчанию открыт подбор по задаче', gShown() === 'g-match', gShown());
+doc.querySelector('#guideTabs button[data-sub="gas"]').click();
+check('справочник: переключение показывает только выбранную часть',
+  gShown() === 'g-gas' &&
+  doc.querySelector('#guideTabs button[data-sub="gas"]').className === 'pill on', gShown());
+check('справочник: расчёт газа работает внутри части',
+  /Баллонов в час/.test(textOf(doc, '#gasOut')),
+  (textOf(doc, '#gasOut') || '').slice(0, 80));
+doc.querySelector('#guideTabs button[data-sub="tech"]').click();
+check('справочник: техника открывается и таблицы на месте',
+  gShown() === 'g-tech' && /Рабочие толщины/.test(doc.getElementById('g-tech').textContent),
+  gShown());
+check('справочник: части прячутся стилем, а не разметкой',
+  /\.subpanel\{display:none\}/.test(src.replace(/\s+/g, '')) &&
+  /\.subpanel\.active\{display:block\}/.test(src.replace(/\s+/g, '')), '');
+menuGo('smeta');
+win.location.hash = '#gas';
+win.dispatchEvent(new win.Event('hashchange'));
+check('справочник: старый адрес #gas ведёт в справочник, на часть про газ',
+  doc.getElementById('p-guide').classList.contains('active') && gShown() === 'g-gas',
+  gShown());
+check('меню «Разделы» ложится поверх шапки и нижней панели',
+  /nav\{[^}]*z-index:50/.test(src.replace(/\s+/g, '')) &&
+  /\.menulist\{[^}]*z-index:70/.test(src.replace(/\s+/g, '')) &&
+  /header\{[^}]*z-index:30/.test(src.replace(/\s+/g, '')) &&
+  /\.sumbar\{[^}]*z-index:40/.test(src.replace(/\s+/g, '')), '');
 
 // ---- v24: кадровые документы в письмах, кнопки под миниатюрой ----
 menuGo('letters');
@@ -1676,17 +1715,17 @@ doc.querySelector('#buildKinds button[data-kind="fiber"]').click();
 const pinBtn = id => doc.querySelector('#menuList button[data-pin="' + id + '"]');
 const tabIds = () => [...doc.querySelectorAll('#tabs button[data-t]')]
   .map(b => b.getAttribute('data-t')).join(',');
-pinBtn('gas').click();
+pinBtn('guide').click();
 check('вкладки: пятую закрепить нельзя, приложение предупреждает',
   tabIds() === 'home,build,smeta,letters' &&
   /Уже 4 вкладки/.test(textOf(doc, '#toastText') || ''),
   tabIds() + ' | ' + textOf(doc, '#toastText'));
 doc.querySelector('#tabs button[data-t="letters"] .tabx').click();
 check('вкладки: крестик снимает вкладку', tabIds() === 'home,build,smeta', tabIds());
-pinBtn('gas').click();
+pinBtn('guide').click();
 check('вкладки: звёздочка в меню закрепляет раздел',
-  tabIds() === 'home,build,smeta,gas' &&
-  pinBtn('gas').getAttribute('aria-pressed') === 'true', tabIds());
+  tabIds() === 'home,build,smeta,guide' &&
+  pinBtn('guide').getAttribute('aria-pressed') === 'true', tabIds());
 check('вкладки: у незакреплённого раздела звёздочка пустая',
   pinBtn('letters').getAttribute('aria-pressed') === 'false', '');
 doc.getElementById('menuList').querySelector('.mfoot button').click();
@@ -1809,7 +1848,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 11,
+  doc2.querySelectorAll('.nojs-title').length === 9,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('3 010 400') >= 0);
 check('пререндер: смета пуста при открытии',

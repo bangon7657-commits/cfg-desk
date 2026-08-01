@@ -82,8 +82,10 @@ body.demo .demo-banner{display:flex;gap:14px;align-items:center;justify-content:
    заливается фирменным оранжевым и читается сразу. Меню в кнопке «Разделы»
    держит все шесть разделов; текст в нём мелкий и в одну строку, подсказка —
    ещё мельче, чтобы список не разрастался. */
+/* Полоса вкладок стоит выше всего остального: раскрытое меню «Разделы»
+   должно ложиться поверх шапки, нижней панели сметы и любых карточек. */
 nav{display:none;background:var(--bg2);border-bottom:1px solid var(--line);
-  position:sticky;top:63px;z-index:29}
+  position:sticky;top:63px;z-index:50}
 body.js nav{display:block}
 /* Кнопка «Разделы» прижата к самому левому краю окна: строка навигации не
    ограничена шириной колонки текста, слева почти нет отступа. Раскрытое меню
@@ -118,7 +120,7 @@ body.js nav{display:block}
 .menubtn:hover{background:var(--or);color:var(--onor)}
 .menubtn:hover::before{background:var(--onor);
   box-shadow:0 -6px 0 var(--onor), 0 6px 0 var(--onor)}
-.menulist{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:40;
+.menulist{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:70;
   min-width:288px;padding:6px;border-radius:13px;border:1px solid var(--line2);
   background:color-mix(in srgb, var(--bg2) 97%, transparent);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
@@ -192,6 +194,12 @@ a{color:var(--or2)}
   background:var(--or);border-radius:3px;margin-right:10px;vertical-align:-3px}
 .hero h1{margin:0 0 6px;font-size:24px;color:var(--tx)}
 .hero p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+/* Справочник: три части в одном разделе — показываем ту, что выбрана */
+.subtabs{margin:0 0 18px}
+.subpanel{display:none}
+.subpanel.active{display:block}
+.subpanel>.lead:first-child{margin-top:0}
+
 /* Плашка-клятва: обработанный рисунок как маска — бумага убрана, цвет чернил
    даёт CSS, поэтому она живёт и в тёмной, и в светлой теме. Место — правый
    нижний угол окна, приподнята над краем; блок лежит вне панелей, поэтому

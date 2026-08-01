@@ -93,8 +93,10 @@ body.demo .demo-banner{display:flex;gap:14px;align-items:center;justify-content:
    заливается фирменным оранжевым и читается сразу. Меню в кнопке «Разделы»
    держит все шесть разделов; текст в нём мелкий и в одну строку, подсказка —
    ещё мельче, чтобы список не разрастался. */
+/* Полоса вкладок стоит выше всего остального: раскрытое меню «Разделы»
+   должно ложиться поверх шапки, нижней панели сметы и любых карточек. */
 nav{display:none;background:var(--bg2);border-bottom:1px solid var(--line);
-  position:sticky;top:63px;z-index:29}
+  position:sticky;top:63px;z-index:50}
 body.js nav{display:block}
 /* Кнопка «Разделы» прижата к самому левому краю окна: строка навигации не
    ограничена шириной колонки текста, слева почти нет отступа. Раскрытое меню
@@ -129,7 +131,7 @@ body.js nav{display:block}
 .menubtn:hover{background:var(--or);color:var(--onor)}
 .menubtn:hover::before{background:var(--onor);
   box-shadow:0 -6px 0 var(--onor), 0 6px 0 var(--onor)}
-.menulist{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:40;
+.menulist{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:70;
   min-width:288px;padding:6px;border-radius:13px;border:1px solid var(--line2);
   background:color-mix(in srgb, var(--bg2) 97%, transparent);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
@@ -203,6 +205,12 @@ a{color:var(--or2)}
   background:var(--or);border-radius:3px;margin-right:10px;vertical-align:-3px}
 .hero h1{margin:0 0 6px;font-size:24px;color:var(--tx)}
 .hero p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+/* Справочник: три части в одном разделе — показываем ту, что выбрана */
+.subtabs{margin:0 0 18px}
+.subpanel{display:none}
+.subpanel.active{display:block}
+.subpanel>.lead:first-child{margin-top:0}
+
 /* Плашка-клятва: обработанный рисунок как маска — бумага убрана, цвет чернил
    даёт CSS, поэтому она живёт и в тёмной, и в светлой теме. Место — правый
    нижний угол окна, приподнята над краем; блок лежит вне панелей, поэтому
@@ -945,7 +953,7 @@ body.demo .internal{display:none !important}
          Строка вкладок — только частые: так на телефоне не нужно листать. -->
     <div class="navmenu">
       <button type="button" class="menubtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Разделы</button>
-      <div class="menulist" id="menuList" role="menu"><div class="mrow"><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Главная</span><small>три инструмента менеджера</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="cfg" role="menuitem" aria-selected="false"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="smeta" role="menuitem" aria-selected="true"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="match" role="menuitem" aria-selected="false"><span>Подбор по задаче</span><small>толщина и материал</small></button><button type="button" class="pinbtn" data-pin="match" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="gas" role="menuitem" aria-selected="false"><span>Газ и владение</span><small>расход и стоимость</small></button><button type="button" class="pinbtn" data-pin="gas" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="tech" role="menuitem" aria-selected="false"><span>Техника</span><small>что режет и что внутри</small></button><button type="button" class="pinbtn" data-pin="tech" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="shop" role="menuitem" aria-selected="false"><span>Готовность цеха</span><small>блокеры до монтажа</small></button><button type="button" class="pinbtn" data-pin="shop" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="data" role="menuitem" aria-selected="false"><span>Данные</span><small>прайсы, источники, расхождения</small></button><button type="button" class="pinbtn" data-pin="data" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 4</span><button type="button">Вернуть по умолчанию</button></div></div>
+      <div class="menulist" id="menuList" role="menu"><div class="mrow"><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Главная</span><small>три инструмента менеджера</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="cfg" role="menuitem" aria-selected="false"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="smeta" role="menuitem" aria-selected="true"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow"><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор по задаче, техника, газ и владение</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="shop" role="menuitem" aria-selected="false"><span>Готовность цеха</span><small>блокеры до монтажа</small></button><button type="button" class="pinbtn" data-pin="shop" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow"><button type="button" data-t="data" role="menuitem" aria-selected="false"><span>Данные</span><small>прайсы, источники, расхождения</small></button><button type="button" class="pinbtn" data-pin="data" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 4</span><button type="button">Вернуть по умолчанию</button></div></div>
     </div>
     <!-- Строка вкладок собирается скриптом из закреплённых разделов: до
          четырёх, выбор и снятие — через меню «Разделы» и крестик на вкладке. -->
@@ -992,7 +1000,7 @@ body.demo .internal{display:none !important}
   </div>
   <div class="card">
     <div class="cardhead"><h2>Что где лежит</h2></div>
-    <div id="homeMap"><div class="maprow"><b>Конфигуратор</b><span class="muted">слоты комплекта и проверка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Письма</b><span class="muted">возврат, платежи, официальные</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Зарплата</b><span class="muted">оклад, переработки, налоги</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Подбор и цены</b><span class="muted">станок, обвязка, техничка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Смета и ТКП</b><span class="muted">позиции, скидки, файл</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Подбор по задаче</b><span class="muted">толщина и материал</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Газ и владение</b><span class="muted">расход и стоимость</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Техника</b><span class="muted">что режет и что внутри</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Готовность цеха</b><span class="muted">блокеры до монтажа</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Данные</b><span class="muted">прайсы, источники, расхождения</span><button class="btn mini sec" type="button">Открыть</button></div></div>
+    <div id="homeMap"><div class="maprow"><b>Конфигуратор</b><span class="muted">слоты комплекта и проверка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Письма</b><span class="muted">возврат, платежи, официальные</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Зарплата</b><span class="muted">оклад, переработки, налоги</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Подбор и цены</b><span class="muted">станок, обвязка, техничка</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Смета и ТКП</b><span class="muted">позиции, скидки, файл</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Справочник</b><span class="muted">подбор по задаче, техника, газ и владение</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Готовность цеха</b><span class="muted">блокеры до монтажа</span><button class="btn mini sec" type="button">Открыть</button></div><div class="maprow"><b>Данные</b><span class="muted">прайсы, источники, расхождения</span><button class="btn mini sec" type="button">Открыть</button></div></div>
   </div>
 
 </section>
@@ -1949,9 +1957,22 @@ body.demo .internal{display:none !important}
   </div>
 </section>
 
-<!-- ================= ПОДБОР ================= -->
-<span class="nojs-title">Подбор по задаче</span>
-<section class="panel" id="p-match">
+
+<!-- ================= СПРАВОЧНИК =================
+     Три бывшие вкладки — «Подбор по задаче», «Техника» и «Газ и владение» —
+     сведены в один раздел: наверху переключатель, ниже одна из трёх частей. -->
+<span class="nojs-title">Справочник</span>
+<section class="panel" id="p-guide">
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Справочник</h1>
+      <p class="lead">Подбор станка под задачу, техника простым языком и расчёт
+        газа со стоимостью владения — в одном разделе.</p>
+    </div>
+  </div>
+  <div class="pills big subtabs" id="guideTabs" role="tablist" aria-label="Часть справочника"><button class="pill" type="button" data-sub="match" role="tab" aria-selected="false">Подбор по задаче</button><button class="pill" type="button" data-sub="tech" role="tab" aria-selected="false">Техника</button><button class="pill on" type="button" data-sub="gas" role="tab" aria-selected="true">Газ и владение</button></div>
+
+  <div class="subpanel" id="g-match" role="tabpanel">
   <p class="lead">Правило скилла: предлагать не больше двух моделей.
     Подбор доводит до конкретной сборки из прайса, дальше — «Добавить в смету».</p>
 
@@ -2037,6 +2058,85 @@ body.demo .internal{display:none !important}
     <summary>Чего в этой версии нет</summary>
     <div class="det-b"><div class="miss"><b>CO₂ по неметаллу</b><span>Реклама, сувенирка, ткань, картон, оргстекло — вся линейка CO₂ в первую версию не заведена</span></div><div class="miss"><b>Маркеры</b><span>FL / UV / RF / MOPA — не в этой версии</span></div><div class="miss"><b>Сварка и очистка</b><span>G1 / G2 / CW / CL — не в этой версии</span></div><div class="miss"><b>Труборезы</b><span>Ни одной цены и характеристики в источнике</span></div><div class="miss"><b>Виниловая плёнка</b><span>Не наш профиль</span></div><div class="miss"><b>ПВХ-плёнка на CO₂</b><span>Запрещено — хлор</span></div></div>
   </details>
+  </div>
+
+  <div class="subpanel" id="g-tech" role="tabpanel">
+  <p class="lead">Здесь то, что обычно спрашивает клиент: что станок режет, какой толщины, что стоит внутри, сколько весит и что нужно подготовить в цеху. Пределы взяты из заводских таблиц режимов, рабочие значения — с карточек товара: это разные числа, и мы их не смешиваем.</p>
+
+  <h2>Сколько режет волокно</h2>
+  <div class="card">
+    <h3>Рабочие толщины — то, что говорим клиенту</h3>
+    <div class="scroll"><table class=""><thead><tr><th>Модель</th><th>Чёрная сталь</th><th>Нержавейка</th><th>Алюминий</th><th>Латунь</th></tr></thead><tbody><tr><td><b>Wattsan 1309 mini (до 3 кВт)</b></td><td>до 16 мм</td><td>до 8 мм</td><td>—</td><td>—</td></tr><tr><td><b>Wattsan 1530E (до 3 кВт)</b></td><td>до 20 мм</td><td>до 8 мм</td><td>до 6 мм</td><td>до 5 мм</td></tr><tr><td><b>Wattsan 1325S (6 кВт)</b></td><td>до 22 мм</td><td>до 16 мм</td><td>—</td><td>—</td></tr><tr><td><b>Wattsan HARD (до 20 кВт)</b></td><td>до 60 мм</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>
+    <h3>Предел по заводским таблицам режимов</h3>
+    <div class="scroll"><table class=""><thead><tr><th>Мощность источника</th><th>Чёрная сталь</th><th>Нержавейка</th><th>Алюминий</th><th>Латунь</th><th>Медь</th></tr></thead><tbody><tr><td><b>3000 Вт</b></td><td>22 мм</td><td>10 мм</td><td>8 мм</td><td>6 мм</td><td>—</td></tr><tr><td><b>6000 Вт</b></td><td>25 мм (30 мм с оптикой 75 µm)</td><td>20 мм</td><td>16 мм (20 мм с оптикой 75 µm)</td><td>12 мм</td><td>5–6 мм</td></tr><tr><td><b>12000 Вт</b></td><td>40 мм</td><td>40 мм</td><td>40 мм</td><td>16 мм</td><td>10 мм</td></tr></tbody></table></div>
+    <div class="note alert">Это предел из таблиц, а не режим на каждый день. Завод прямо пишет: на максимальной мощности станок работает лишь короткое время, выбирать нужно с запасом не менее 30 %. Сталь на максимуме режется кислородом, нержавейка и алюминий — азотом. Комфортный поток — примерно вдвое меньше предела.</div>
+  </div>
+
+  <h2>Серии волокна: чем отличаются</h2>
+  <div class="card">
+    <div class="advice"><b>A — компактная</b><span>Режет 3–4 мм в режиме 24/7, разово до 15 мм с точностью ±0,01 мм. Рама из толстостенных профильных труб, ускорение до 1G при 80 м/мин, электрика Siemens, голова и контроллер Raytools, автосмазка с датчиком уровня. Источник Raycus серии S-CE — та, что ремонтируется в лаборатории в Москве. Масса 1530A — 2000 кг.</span></div><div class="advice"><b>E — базовая</b><span>Холостые 80 м/мин, ускорение 1G, источник до 2–3 кВт, станина из листа 6–8 мм. Единственная серия, где рабочее поле делают под заказ под нестандартную задачу. Цен в прайсе нет — через менеджера.</span></div><div class="advice"><b>S — лист и трубы</b><span>По паспорту 1000–6000 Вт, в прайсе 3000 / 6000 / 12000 Вт. Механика тяжелее, чем у A: приводы по Y мощнее и их два, направляющие 30 мм против 25. На неё ставится модуль трубореза RD и сменный стол 1650×3215 мм.</span></div><div class="advice"><b>HARD — верх линейки</b><span>Источник до 30 кВт. HARD 2040: IPG 10 кВт (до 20), поле 2000×4000, режет до 60 мм по сайту, вес 8 тонн. Заводские таблицы при 30 кВт дают до 80 мм по стали — сайт консервативнее. Цен нет, подбор через менеджера.</span></div>
+  </div>
+
+  <h2>Почему S дороже A</h2>
+  <div class="card">
+    <p class="muted">Главный вопрос клиента — «поле и мощность те же, почему S дороже почти на миллион». Ответ: это другая механика, а не урезанная комплектация. Если нужен только тонкий лист в небольшом цеху, A честнее и дешевле.</p>
+    <div class="scroll"><table class=""><thead><tr><th>Узел</th><th>Серия A (1530A)</th><th>Серия S (1313S / 1325S / 1530S)</th></tr></thead><tbody><tr><td><b>Двигатели</b></td><td>Серво DELTA: Y — 750 Вт ×2, X — 750 Вт, Z — 400 Вт</td><td>Серво: Y — 1500 Вт ×2, X — 1000 Вт, Z — 400 Вт</td></tr><tr><td><b>Направляющие XY / Z</b></td><td>Hiwin 25 / Hiwin 15</td><td>30 / 20 мм</td></tr><tr><td><b>Редукторы XY</b></td><td>TVB090-L1-05-S2-P2, планетарный 1:5</td><td>Nidec-Shimpo, планетарный</td></tr><tr><td><b>Стойка ЧПУ</b></td><td>Raytools XC3000S</td><td>FSCUT 2000E</td></tr><tr><td><b>Голова</b></td><td>Raytools Bm110</td><td>Bm110 / BM06K / Boci310 / Boci421</td></tr><tr><td><b>Источник</b></td><td>Raycus RFL-C1500S-CE / C2000S-CE / C3000S-CE</td><td>IPG, Maxphotonics, Raycus — на выбор</td></tr><tr><td><b>Мощность по паспорту</b></td><td>1500 / 2000 / 3000 Вт</td><td>1000–6000 Вт</td></tr><tr><td><b>Сменный стол</b></td><td>нет</td><td>опция, 1650×3215 мм</td></tr><tr><td><b>Труборез RD</b></td><td>нет</td><td>да</td></tr><tr><td><b>Вес</b></td><td>2000 кг</td><td>более 1500 кг (точной цифры в источниках нет)</td></tr></tbody></table></div>
+  </div>
+
+  <h2>Труборез RD: что влезает</h2>
+  <div class="card">
+    <div class="scroll"><table class=""><thead><tr><th>Параметр заготовки</th><th>Значение</th></tr></thead><tbody><tr><td>Круглая труба, диаметр до</td><td><b>220 мм</b></td></tr><tr><td>Квадратная труба, сторона до</td><td><b>140 мм</b></td></tr><tr><td>Длина трубы до</td><td><b>6 м</b></td></tr><tr><td>Минимальный остаток</td><td><b>20 мм</b></td></tr></tbody></table></div>
+    <div class="note alert">Цифры 160 / 240 / 360 в названии модуля в источниках не расшифрованы — в разговоре опирайтесь на паспорт: 220 мм круг, 140 мм квадрат, 6 м длина. Станку с RD нужна пневмолиния 3–6 атм: без неё труборез и зональное дымоудаление не работают.</div>
+  </div>
+
+  <h2>Фрезерные станки: характеристики по моделям</h2>
+  <div class="card">
+    <div class="scroll"><table class=""><thead><tr><th>Модель</th><th>Шпиндель</th><th>Цанга</th><th>Охлаждение</th><th>Ход Z</th><th>Стойка ЧПУ</th><th>Масса</th></tr></thead><tbody><tr><td><b>0404 mini</b></td><td>GDZ-80-1.5, 24 000 об/мин, 1,5 кВт</td><td>ER-11</td><td>водяное</td><td>120 мм</td><td>NcStudio</td><td>92 кг</td></tr><tr><td><b>0609 mini</b></td><td>GDZ-80-1.5, 1,5 кВт</td><td>ER-11</td><td>водяное</td><td>120 мм</td><td>NcStudio</td><td>135 кг</td></tr><tr><td><b>A1 6090</b></td><td>GDZ-80-1.5, 1,5 кВт</td><td>ER-11</td><td>водяное</td><td>240 мм</td><td>A11 (в карточке указан NcStudio — устаревшие данные)</td><td>400 кг</td></tr><tr><td><b>M1 6090</b></td><td>GDZ-80-2.2, 2,2 кВт</td><td>ER-20</td><td>водяное</td><td>340 мм</td><td>A11</td><td>500 кг</td></tr><tr><td><b>A1 1313</b></td><td>2,2 кВт</td><td>уточнить</td><td>—</td><td>уточнить</td><td>A11</td><td>540 кг</td></tr><tr><td><b>M1 1313</b></td><td>GDZ-100, 3 кВт</td><td>ER-20</td><td>водяное</td><td>340 мм</td><td>A11</td><td>650 кг</td></tr><tr><td><b>A1 1325</b></td><td>GDZ-100-3.2, 3,2 кВт</td><td>ER-20</td><td>водяное</td><td>200 или 240 мм — спорят</td><td>A11</td><td>720 кг</td></tr><tr><td><b>M1 1325</b></td><td>4,5 кВт</td><td>ER-20</td><td>—</td><td>350 мм</td><td>A11</td><td>880 кг</td></tr><tr><td><b>M1 1325 RD</b></td><td>4,5 кВт по прайсу или 5,5 кВт по сайту — спорят</td><td>ER-32</td><td>воздушное</td><td>350 мм</td><td>A18</td><td>1550 кг</td></tr><tr><td><b>A1 1616</b></td><td>3 кВт</td><td>уточнить</td><td>—</td><td>уточнить</td><td>A11</td><td>620 кг</td></tr><tr><td><b>M1 1616</b></td><td>GDZ-100-3.2, 3,2 кВт</td><td>ER-20</td><td>водяное</td><td>340 мм</td><td>A11</td><td>730 кг</td></tr><tr><td><b>M1 2030</b></td><td>GDZ120×103-6, 18 000 об/мин, 6 кВт</td><td>ER-32</td><td>воздушное</td><td>340 мм</td><td>A11</td><td>1140 кг</td></tr><tr><td><b>M1 2040</b></td><td>уточнить</td><td>уточнить</td><td>—</td><td>уточнить</td><td>A11</td><td>1370 кг</td></tr><tr><td><b>M1 2060</b></td><td>6 кВт</td><td>—</td><td>воздушное</td><td>—</td><td>A11</td><td>1810 кг</td></tr><tr><td><b>M3 1313 / 1325 / 1616</b></td><td>4,5–7,5 кВт</td><td>ER-32</td><td>—</td><td>—</td><td>Syntec / NC8</td><td>980 / 1260 / 1100 кг</td></tr><tr><td><b>M3 2030 / 2040 / 2060</b></td><td>4,5–7,5 кВт</td><td>ER-32</td><td>—</td><td>—</td><td>Syntec / NC8</td><td>1580 / 1850 / 2300 кг</td></tr></tbody></table></div>
+    <p class="muted">Общее по всей линейке: привод X и Y — зубчатая кривозубая рейка, Z — ШВП, направляющие Hiwin 20, смазка ручная, питание 220 В (у вакуумных версий 380 В). Габариты и массы — из файла «Массы и габариты»; габариты из карточки товара расходятся с ним по всему ряду, карточку по габаритам не используем.</p>
+    <h3>Что берёт по материалам</h3>
+    <div class="scroll"><table class=""><thead><tr><th>Материал</th><th>A1</th><th>M1</th><th>M3</th></tr></thead><tbody><tr><td>МДФ, фанера, мягкое дерево</td><td>да</td><td>да</td><td>да</td></tr><tr><td>Твёрдые породы: дуб, бук, ясень</td><td>медленно</td><td>да</td><td>да</td></tr><tr><td>Акрил, пластик, алюминий</td><td>да</td><td>да</td><td>да</td></tr><tr><td>Глубокая 3D-фрезеровка</td><td>с оговорками</td><td>да</td><td>да</td></tr><tr><td>Металл, толстый алюминий</td><td>нет</td><td>только тонкий лист</td><td>да</td></tr></tbody></table></div>
+  </div>
+  </div>
+
+  <div class="subpanel active" id="g-gas" role="tabpanel">
+  <p class="lead">Азот дороже кислорода не в цене за баллон, а в потоке. Это разговор
+    про полную стоимость владения — и он объясняет, почему сравнивать станки
+    только по цене бессмысленно.</p>
+
+  <div class="step">
+    <div class="step-h"><div class="step-n">1</div>
+      <div class="step-t">Режим резки<small>сопло и газ определяют расход</small></div></div>
+    <div class="step-b has-think"><div class="doing">
+      <div class="row">
+        <div><label class="f">Сопло</label><select id="gNozzle"><option value="0">Сопло 1,0 мм</option><option value="1">Сопло 2,0 мм</option><option value="2">Сопло 3,0 мм</option><option value="3">Сопло 5,0 мм</option></select></div>
+        <div><label class="f">Газ</label><select id="gGas">
+          <option value="o2">Кислород — углеродистая сталь</option>
+          <option value="n2">Азот — нержавейка, алюминий</option></select></div>
+        <div><label class="f">Часов резки в месяц</label>
+          <input type="number" id="gHours" min="1" max="700" value="80"></div>
+        <div><label class="f">Цена баллона 40 л, ₽</label>
+          <input type="number" id="gPrice" min="0" step="50" placeholder="ввести вручную"></div>
+      </div>
+      
+    </div><div class="think"><div class="note alert">Цены баллона в данных нет — вводится вручную. Приложение считает только расход, не деньги за газ.</div></div></div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="step-n">2</div>
+      <div class="step-t">Расход и деньги<small>расход из заводской таблицы, цена — ваша</small></div></div>
+    <div class="step-b has-think"><div class="doing"></div><div class="think"><div class="think-box" id="gasOut"><div class="calcsteps"><div>Поток: <b>1101–1354 л/мин</b></div><div>Баллонов в час: <b>10,5–12,9</b></div><div>За 80 ч: <b>840–1032 баллонов</b></div><div>Цена баллона не введена — стоимость не считается. В источнике этой цены нет.</div></div><div class="note alert">Это 10,5–12,9 баллонов в час. Нужен криоцилиндр или газогенератор — иначе логистика баллонов съест экономику.</div></div></div></div>
+  </div>
+
+  <details>
+    <summary>Заводская таблица расхода и требования к газу</summary>
+    <div class="det-b">
+      <div class="scroll"><table class=""><thead><tr><th>Сопло</th><th>Кислород (сталь)</th><th>Баллонов/ч</th><th>Азот (нержавейка, алюминий)</th><th>Баллонов/ч</th></tr></thead><tbody><tr><td><b>1,0 мм</b></td><td>13 л/мин</td><td>0,12–0,12</td><td>122–150 л/мин</td><td><b>1,2–1,4</b></td></tr><tr><td><b>2,0 мм</b></td><td>54–71 л/мин</td><td>0,5–0,7</td><td>489–602 л/мин</td><td><b>4,7–5,7</b></td></tr><tr><td><b>3,0 мм</b></td><td>121–160 л/мин</td><td>1,2–1,5</td><td>1101–1354 л/мин</td><td><b>10,5–12,9</b></td></tr><tr><td><b>5,0 мм</b></td><td>335–446 л/мин</td><td>3,2–4,2</td><td>2587–3762 л/мин</td><td><b>24,6–35,8</b></td></tr></tbody></table></div>
+      <div class="note"><ul><li>Баллон = 40 л / 6 м³ (по таблице расхода газа завода)</li><li>Давление: кислород 0,5–1 бар, азот 10–15 бар</li><li>Чистота: O₂ 99,99 % · N₂ 99,999 % · сжатый воздух 99,999 %</li><li>Вода &lt; 5 ppm, углеводороды &lt; 1 ppm</li><li>Ресивер ≥ 500 л при ≥ 1,2 МПа, фильтр 1 мкм на баллонах</li><li>Влаго- и маслоотделитель обязателен — без него оптика горит быстро</li></ul></div>
+      <h3>Как это использовать в разговоре</h3>
+      <div class="advice"><b>Нержавейка азотом, сопло 3 мм</b><span>Это 10–13 баллонов в час. Нужен криоцилиндр или газогенератор — иначе логистика баллонов съест экономику.</span></div><div class="advice"><b>Материал допускает воздух</b><span>Компрессор подбирается по столбцу «поток, л/мин» — тот же, что у азота. Ресивер ≥ 500 л.</span></div>
+    </div>
+  </details>
+  </div>
 </section>
 
 <!-- ================= ГОТОВНОСТЬ ЦЕХА ================= -->
@@ -2086,87 +2186,7 @@ body.demo .internal{display:none !important}
 
 
 
-<!-- ================= ТЕХНИКА ================= -->
-<span class="nojs-title">Техника простым языком</span>
-<section class="panel" id="p-tech">
-  <p class="lead">Здесь то, что обычно спрашивает клиент: что станок режет, какой толщины, что стоит внутри, сколько весит и что нужно подготовить в цеху. Пределы взяты из заводских таблиц режимов, рабочие значения — с карточек товара: это разные числа, и мы их не смешиваем.</p>
 
-  <h2>Сколько режет волокно</h2>
-  <div class="card">
-    <h3>Рабочие толщины — то, что говорим клиенту</h3>
-    <div class="scroll"><table class=""><thead><tr><th>Модель</th><th>Чёрная сталь</th><th>Нержавейка</th><th>Алюминий</th><th>Латунь</th></tr></thead><tbody><tr><td><b>Wattsan 1309 mini (до 3 кВт)</b></td><td>до 16 мм</td><td>до 8 мм</td><td>—</td><td>—</td></tr><tr><td><b>Wattsan 1530E (до 3 кВт)</b></td><td>до 20 мм</td><td>до 8 мм</td><td>до 6 мм</td><td>до 5 мм</td></tr><tr><td><b>Wattsan 1325S (6 кВт)</b></td><td>до 22 мм</td><td>до 16 мм</td><td>—</td><td>—</td></tr><tr><td><b>Wattsan HARD (до 20 кВт)</b></td><td>до 60 мм</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>
-    <h3>Предел по заводским таблицам режимов</h3>
-    <div class="scroll"><table class=""><thead><tr><th>Мощность источника</th><th>Чёрная сталь</th><th>Нержавейка</th><th>Алюминий</th><th>Латунь</th><th>Медь</th></tr></thead><tbody><tr><td><b>3000 Вт</b></td><td>22 мм</td><td>10 мм</td><td>8 мм</td><td>6 мм</td><td>—</td></tr><tr><td><b>6000 Вт</b></td><td>25 мм (30 мм с оптикой 75 µm)</td><td>20 мм</td><td>16 мм (20 мм с оптикой 75 µm)</td><td>12 мм</td><td>5–6 мм</td></tr><tr><td><b>12000 Вт</b></td><td>40 мм</td><td>40 мм</td><td>40 мм</td><td>16 мм</td><td>10 мм</td></tr></tbody></table></div>
-    <div class="note alert">Это предел из таблиц, а не режим на каждый день. Завод прямо пишет: на максимальной мощности станок работает лишь короткое время, выбирать нужно с запасом не менее 30 %. Сталь на максимуме режется кислородом, нержавейка и алюминий — азотом. Комфортный поток — примерно вдвое меньше предела.</div>
-  </div>
-
-  <h2>Серии волокна: чем отличаются</h2>
-  <div class="card">
-    <div class="advice"><b>A — компактная</b><span>Режет 3–4 мм в режиме 24/7, разово до 15 мм с точностью ±0,01 мм. Рама из толстостенных профильных труб, ускорение до 1G при 80 м/мин, электрика Siemens, голова и контроллер Raytools, автосмазка с датчиком уровня. Источник Raycus серии S-CE — та, что ремонтируется в лаборатории в Москве. Масса 1530A — 2000 кг.</span></div><div class="advice"><b>E — базовая</b><span>Холостые 80 м/мин, ускорение 1G, источник до 2–3 кВт, станина из листа 6–8 мм. Единственная серия, где рабочее поле делают под заказ под нестандартную задачу. Цен в прайсе нет — через менеджера.</span></div><div class="advice"><b>S — лист и трубы</b><span>По паспорту 1000–6000 Вт, в прайсе 3000 / 6000 / 12000 Вт. Механика тяжелее, чем у A: приводы по Y мощнее и их два, направляющие 30 мм против 25. На неё ставится модуль трубореза RD и сменный стол 1650×3215 мм.</span></div><div class="advice"><b>HARD — верх линейки</b><span>Источник до 30 кВт. HARD 2040: IPG 10 кВт (до 20), поле 2000×4000, режет до 60 мм по сайту, вес 8 тонн. Заводские таблицы при 30 кВт дают до 80 мм по стали — сайт консервативнее. Цен нет, подбор через менеджера.</span></div>
-  </div>
-
-  <h2>Почему S дороже A</h2>
-  <div class="card">
-    <p class="muted">Главный вопрос клиента — «поле и мощность те же, почему S дороже почти на миллион». Ответ: это другая механика, а не урезанная комплектация. Если нужен только тонкий лист в небольшом цеху, A честнее и дешевле.</p>
-    <div class="scroll"><table class=""><thead><tr><th>Узел</th><th>Серия A (1530A)</th><th>Серия S (1313S / 1325S / 1530S)</th></tr></thead><tbody><tr><td><b>Двигатели</b></td><td>Серво DELTA: Y — 750 Вт ×2, X — 750 Вт, Z — 400 Вт</td><td>Серво: Y — 1500 Вт ×2, X — 1000 Вт, Z — 400 Вт</td></tr><tr><td><b>Направляющие XY / Z</b></td><td>Hiwin 25 / Hiwin 15</td><td>30 / 20 мм</td></tr><tr><td><b>Редукторы XY</b></td><td>TVB090-L1-05-S2-P2, планетарный 1:5</td><td>Nidec-Shimpo, планетарный</td></tr><tr><td><b>Стойка ЧПУ</b></td><td>Raytools XC3000S</td><td>FSCUT 2000E</td></tr><tr><td><b>Голова</b></td><td>Raytools Bm110</td><td>Bm110 / BM06K / Boci310 / Boci421</td></tr><tr><td><b>Источник</b></td><td>Raycus RFL-C1500S-CE / C2000S-CE / C3000S-CE</td><td>IPG, Maxphotonics, Raycus — на выбор</td></tr><tr><td><b>Мощность по паспорту</b></td><td>1500 / 2000 / 3000 Вт</td><td>1000–6000 Вт</td></tr><tr><td><b>Сменный стол</b></td><td>нет</td><td>опция, 1650×3215 мм</td></tr><tr><td><b>Труборез RD</b></td><td>нет</td><td>да</td></tr><tr><td><b>Вес</b></td><td>2000 кг</td><td>более 1500 кг (точной цифры в источниках нет)</td></tr></tbody></table></div>
-  </div>
-
-  <h2>Труборез RD: что влезает</h2>
-  <div class="card">
-    <div class="scroll"><table class=""><thead><tr><th>Параметр заготовки</th><th>Значение</th></tr></thead><tbody><tr><td>Круглая труба, диаметр до</td><td><b>220 мм</b></td></tr><tr><td>Квадратная труба, сторона до</td><td><b>140 мм</b></td></tr><tr><td>Длина трубы до</td><td><b>6 м</b></td></tr><tr><td>Минимальный остаток</td><td><b>20 мм</b></td></tr></tbody></table></div>
-    <div class="note alert">Цифры 160 / 240 / 360 в названии модуля в источниках не расшифрованы — в разговоре опирайтесь на паспорт: 220 мм круг, 140 мм квадрат, 6 м длина. Станку с RD нужна пневмолиния 3–6 атм: без неё труборез и зональное дымоудаление не работают.</div>
-  </div>
-
-  <h2>Фрезерные станки: характеристики по моделям</h2>
-  <div class="card">
-    <div class="scroll"><table class=""><thead><tr><th>Модель</th><th>Шпиндель</th><th>Цанга</th><th>Охлаждение</th><th>Ход Z</th><th>Стойка ЧПУ</th><th>Масса</th></tr></thead><tbody><tr><td><b>0404 mini</b></td><td>GDZ-80-1.5, 24 000 об/мин, 1,5 кВт</td><td>ER-11</td><td>водяное</td><td>120 мм</td><td>NcStudio</td><td>92 кг</td></tr><tr><td><b>0609 mini</b></td><td>GDZ-80-1.5, 1,5 кВт</td><td>ER-11</td><td>водяное</td><td>120 мм</td><td>NcStudio</td><td>135 кг</td></tr><tr><td><b>A1 6090</b></td><td>GDZ-80-1.5, 1,5 кВт</td><td>ER-11</td><td>водяное</td><td>240 мм</td><td>A11 (в карточке указан NcStudio — устаревшие данные)</td><td>400 кг</td></tr><tr><td><b>M1 6090</b></td><td>GDZ-80-2.2, 2,2 кВт</td><td>ER-20</td><td>водяное</td><td>340 мм</td><td>A11</td><td>500 кг</td></tr><tr><td><b>A1 1313</b></td><td>2,2 кВт</td><td>уточнить</td><td>—</td><td>уточнить</td><td>A11</td><td>540 кг</td></tr><tr><td><b>M1 1313</b></td><td>GDZ-100, 3 кВт</td><td>ER-20</td><td>водяное</td><td>340 мм</td><td>A11</td><td>650 кг</td></tr><tr><td><b>A1 1325</b></td><td>GDZ-100-3.2, 3,2 кВт</td><td>ER-20</td><td>водяное</td><td>200 или 240 мм — спорят</td><td>A11</td><td>720 кг</td></tr><tr><td><b>M1 1325</b></td><td>4,5 кВт</td><td>ER-20</td><td>—</td><td>350 мм</td><td>A11</td><td>880 кг</td></tr><tr><td><b>M1 1325 RD</b></td><td>4,5 кВт по прайсу или 5,5 кВт по сайту — спорят</td><td>ER-32</td><td>воздушное</td><td>350 мм</td><td>A18</td><td>1550 кг</td></tr><tr><td><b>A1 1616</b></td><td>3 кВт</td><td>уточнить</td><td>—</td><td>уточнить</td><td>A11</td><td>620 кг</td></tr><tr><td><b>M1 1616</b></td><td>GDZ-100-3.2, 3,2 кВт</td><td>ER-20</td><td>водяное</td><td>340 мм</td><td>A11</td><td>730 кг</td></tr><tr><td><b>M1 2030</b></td><td>GDZ120×103-6, 18 000 об/мин, 6 кВт</td><td>ER-32</td><td>воздушное</td><td>340 мм</td><td>A11</td><td>1140 кг</td></tr><tr><td><b>M1 2040</b></td><td>уточнить</td><td>уточнить</td><td>—</td><td>уточнить</td><td>A11</td><td>1370 кг</td></tr><tr><td><b>M1 2060</b></td><td>6 кВт</td><td>—</td><td>воздушное</td><td>—</td><td>A11</td><td>1810 кг</td></tr><tr><td><b>M3 1313 / 1325 / 1616</b></td><td>4,5–7,5 кВт</td><td>ER-32</td><td>—</td><td>—</td><td>Syntec / NC8</td><td>980 / 1260 / 1100 кг</td></tr><tr><td><b>M3 2030 / 2040 / 2060</b></td><td>4,5–7,5 кВт</td><td>ER-32</td><td>—</td><td>—</td><td>Syntec / NC8</td><td>1580 / 1850 / 2300 кг</td></tr></tbody></table></div>
-    <p class="muted">Общее по всей линейке: привод X и Y — зубчатая кривозубая рейка, Z — ШВП, направляющие Hiwin 20, смазка ручная, питание 220 В (у вакуумных версий 380 В). Габариты и массы — из файла «Массы и габариты»; габариты из карточки товара расходятся с ним по всему ряду, карточку по габаритам не используем.</p>
-    <h3>Что берёт по материалам</h3>
-    <div class="scroll"><table class=""><thead><tr><th>Материал</th><th>A1</th><th>M1</th><th>M3</th></tr></thead><tbody><tr><td>МДФ, фанера, мягкое дерево</td><td>да</td><td>да</td><td>да</td></tr><tr><td>Твёрдые породы: дуб, бук, ясень</td><td>медленно</td><td>да</td><td>да</td></tr><tr><td>Акрил, пластик, алюминий</td><td>да</td><td>да</td><td>да</td></tr><tr><td>Глубокая 3D-фрезеровка</td><td>с оговорками</td><td>да</td><td>да</td></tr><tr><td>Металл, толстый алюминий</td><td>нет</td><td>только тонкий лист</td><td>да</td></tr></tbody></table></div>
-  </div>
-</section>
-
-<!-- ================= ГАЗ ================= -->
-<span class="nojs-title">Газ и владение</span>
-<section class="panel" id="p-gas">
-  <p class="lead">Азот дороже кислорода не в цене за баллон, а в потоке. Это разговор
-    про полную стоимость владения — и он объясняет, почему сравнивать станки
-    только по цене бессмысленно.</p>
-
-  <div class="step">
-    <div class="step-h"><div class="step-n">1</div>
-      <div class="step-t">Режим резки<small>сопло и газ определяют расход</small></div></div>
-    <div class="step-b has-think"><div class="doing">
-      <div class="row">
-        <div><label class="f">Сопло</label><select id="gNozzle"><option value="0">Сопло 1,0 мм</option><option value="1">Сопло 2,0 мм</option><option value="2">Сопло 3,0 мм</option><option value="3">Сопло 5,0 мм</option></select></div>
-        <div><label class="f">Газ</label><select id="gGas">
-          <option value="o2">Кислород — углеродистая сталь</option>
-          <option value="n2">Азот — нержавейка, алюминий</option></select></div>
-        <div><label class="f">Часов резки в месяц</label>
-          <input type="number" id="gHours" min="1" max="700" value="80"></div>
-        <div><label class="f">Цена баллона 40 л, ₽</label>
-          <input type="number" id="gPrice" min="0" step="50" placeholder="ввести вручную"></div>
-      </div>
-      
-    </div><div class="think"><div class="note alert">Цены баллона в данных нет — вводится вручную. Приложение считает только расход, не деньги за газ.</div></div></div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="step-n">2</div>
-      <div class="step-t">Расход и деньги<small>расход из заводской таблицы, цена — ваша</small></div></div>
-    <div class="step-b has-think"><div class="doing"></div><div class="think"><div class="think-box" id="gasOut"><div class="calcsteps"><div>Поток: <b>1101–1354 л/мин</b></div><div>Баллонов в час: <b>10,5–12,9</b></div><div>За 80 ч: <b>840–1032 баллонов</b></div><div>Цена баллона не введена — стоимость не считается. В источнике этой цены нет.</div></div><div class="note alert">Это 10,5–12,9 баллонов в час. Нужен криоцилиндр или газогенератор — иначе логистика баллонов съест экономику.</div></div></div></div>
-  </div>
-
-  <details>
-    <summary>Заводская таблица расхода и требования к газу</summary>
-    <div class="det-b">
-      <div class="scroll"><table class=""><thead><tr><th>Сопло</th><th>Кислород (сталь)</th><th>Баллонов/ч</th><th>Азот (нержавейка, алюминий)</th><th>Баллонов/ч</th></tr></thead><tbody><tr><td><b>1,0 мм</b></td><td>13 л/мин</td><td>0,12–0,12</td><td>122–150 л/мин</td><td><b>1,2–1,4</b></td></tr><tr><td><b>2,0 мм</b></td><td>54–71 л/мин</td><td>0,5–0,7</td><td>489–602 л/мин</td><td><b>4,7–5,7</b></td></tr><tr><td><b>3,0 мм</b></td><td>121–160 л/мин</td><td>1,2–1,5</td><td>1101–1354 л/мин</td><td><b>10,5–12,9</b></td></tr><tr><td><b>5,0 мм</b></td><td>335–446 л/мин</td><td>3,2–4,2</td><td>2587–3762 л/мин</td><td><b>24,6–35,8</b></td></tr></tbody></table></div>
-      <div class="note"><ul><li>Баллон = 40 л / 6 м³ (по таблице расхода газа завода)</li><li>Давление: кислород 0,5–1 бар, азот 10–15 бар</li><li>Чистота: O₂ 99,99 % · N₂ 99,999 % · сжатый воздух 99,999 %</li><li>Вода &lt; 5 ppm, углеводороды &lt; 1 ppm</li><li>Ресивер ≥ 500 л при ≥ 1,2 МПа, фильтр 1 мкм на баллонах</li><li>Влаго- и маслоотделитель обязателен — без него оптика горит быстро</li></ul></div>
-      <h3>Как это использовать в разговоре</h3>
-      <div class="advice"><b>Нержавейка азотом, сопло 3 мм</b><span>Это 10–13 баллонов в час. Нужен криоцилиндр или газогенератор — иначе логистика баллонов съест экономику.</span></div><div class="advice"><b>Материал допускает воздух</b><span>Компрессор подбирается по столбцу «поток, л/мин» — тот же, что у азота. Ресивер ≥ 500 л.</span></div>
-    </div>
-  </details>
-</section>
 
 <!-- ================= ДАННЫЕ ================= -->
 <span class="nojs-title">Данные</span>
@@ -2708,6 +2728,8 @@ var DOCX = (function () {
     mode: 'order', cat: 'fiber', mtCat: 'fiber',
     // поставщик в ТКП и правки его реквизитов, тема оформления
     supId: '', sups: {}, theme: 'dark',
+    // какая часть справочника открыта: подбор по задаче, техника или газ
+    guidePart: 'match',
     // приводы серии S и выбранная обвязка волокна
     servo: '', kit: { compressor: '', extraction: '', cryo: '', stab: '' },
     // имя и контакты менеджера сделки: пустые поля = менеджер из данных
@@ -2775,6 +2797,14 @@ var DOCX = (function () {
       if (!Array.isArray(state.build.saved)) state.build.saved = [];
       // черновики до версии 19 не знали про настраиваемые вкладки
       if (!Array.isArray(state.pins)) state.pins = ['home', 'build', 'smeta', 'letters'];
+      // в версии 28 три раздела сведены в «Справочник»: закреплённые вкладки
+      // со старыми именами переводим на него, повтор убираем
+      state.pins = state.pins.map(function (id) {
+        return (id === 'match' || id === 'tech' || id === 'gas') ? 'guide' : id;
+      }).filter(function (id, i, all) { return all.indexOf(id) === i; });
+      if (['match', 'tech', 'gas'].indexOf(state.guidePart) < 0) {
+        state.guidePart = 'match';
+      }
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
   if (!state.zp || typeof state.zp !== 'object') state.zp = zpDefaults();
@@ -2807,12 +2837,21 @@ var DOCX = (function () {
     { id: 'zp', title: 'Зарплата', hint: 'оклад, переработки, налоги' },
     { id: 'cfg', title: 'Подбор и цены', hint: 'станок, обвязка, техничка' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
-    { id: 'match', title: 'Подбор по задаче', hint: 'толщина и материал' },
-    { id: 'gas', title: 'Газ и владение', hint: 'расход и стоимость' },
-    { id: 'tech', title: 'Техника', hint: 'что режет и что внутри' },
+    { id: 'guide', title: 'Справочник',
+      hint: 'подбор по задаче, техника, газ и владение' },
     { id: 'shop', title: 'Готовность цеха', hint: 'блокеры до монтажа' },
     { id: 'data', title: 'Данные', hint: 'прайсы, источники, расхождения' }
   ];
+  // Справочник собран из трёх бывших разделов. Их прежние имена остались
+  // адресами частей: ссылка #tech по-прежнему открывает нужную часть.
+  var GUIDE_PARTS = [
+    { id: 'match', title: 'Подбор по задаче' },
+    { id: 'tech', title: 'Техника' },
+    { id: 'gas', title: 'Газ и владение' }
+  ];
+  function guidePartIds() {
+    return GUIDE_PARTS.map(function (g) { return g.id; });
+  }
   var PINS_MAX = 4;
   var PINS_DEF = ['home', 'build', 'smeta', 'letters'];
   var curTab = 'cfg';
@@ -2945,7 +2984,7 @@ var DOCX = (function () {
 
   window.addEventListener('hashchange', function () {
     var h = (location.hash || '').replace('#', '');
-    var ok = false;
+    var ok = guidePartIds().indexOf(h) >= 0;
     SECTIONS.forEach(function (s) { if (s.id === h) ok = true; });
     if (ok) showTab(h);
   });
@@ -2984,18 +3023,60 @@ var DOCX = (function () {
     var inTabs = pins().indexOf(name) >= 0;
     $('menuBtn').textContent = inTabs ? 'Разделы' : secTitle(name);
   }
+  // Часть справочника: рисуем переключатель и показываем нужный блок
+  function showGuidePart(part) {
+    if (guidePartIds().indexOf(part) < 0) part = 'match';
+    state.guidePart = part;
+    save();
+    var box = d.getElementById('guideTabs');
+    if (!box) return;
+    var bs = box.querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) {
+      var on = bs[i].getAttribute('data-sub') === part;
+      bs[i].className = on ? 'pill on' : 'pill';
+      bs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+    GUIDE_PARTS.forEach(function (g) {
+      var n = d.getElementById('g-' + g.id);
+      if (n) n.classList.toggle('active', g.id === part);
+    });
+  }
+  (function () {
+    if (!d.getElementById('guideTabs')) return;
+    var box = fresh('guideTabs');   // очищаем: пререндер запускает файл дважды
+    GUIDE_PARTS.forEach(function (g) {
+      var b = el('button', 'pill', g.title);
+      b.type = 'button';
+      b.setAttribute('data-sub', g.id);
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', function () {
+        showGuidePart(g.id);
+        try {
+          if (location.hash !== '#' + g.id) history.replaceState(null, '', '#' + g.id);
+        } catch (e) { /* file:// — адрес не трогаем */ }
+      });
+      box.appendChild(b);
+    });
+  }());
   function showTab(name) {
+    // прежние адреса частей справочника ведут в справочник, на нужную часть
+    var part = '';
+    if (guidePartIds().indexOf(name) >= 0) { part = name; name = 'guide'; }
     curTab = name;
     markTab(name);
+    if (name === 'guide') showGuidePart(part || state.guidePart || 'match');
     var panels = d.querySelectorAll('.panel');
     for (var j = 0; j < panels.length; j++) {
       panels[j].classList.toggle('active', panels[j].id === 'p-' + name);
     }
     // При открытии файла с диска (file://) браузер запрещает replaceState и
     // бросает SecurityError. Раньше это валило остаток инициализации.
+    var hashName = (name === 'guide') ? (state.guidePart || 'match') : name;
     try {
-      if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
-    } catch (e) { location.hash = name; }
+      if (location.hash !== '#' + hashName) {
+        history.replaceState(null, '', '#' + hashName);
+      }
+    } catch (e) { location.hash = hashName; }
     // не window.scrollTo — в jsdom он не реализован и валит проверку сборки
     d.documentElement.scrollTop = 0;
     d.body.scrollTop = 0;
@@ -7778,7 +7859,7 @@ var DOCX = (function () {
   thinkify();
   $('sumBarGo').addEventListener('click', function () { showTab('smeta'); });
   var hash = (location.hash || '').replace('#', '');
-  var valid = SECTIONS.map(function (s) { return s.id; });
+  var valid = SECTIONS.map(function (s) { return s.id; }).concat(guidePartIds());
   showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');
   fixNavOffset();
 

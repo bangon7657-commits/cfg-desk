@@ -1062,9 +1062,23 @@
   </div>
 </section>
 
-<!-- ================= ПОДБОР ================= -->
-<span class="nojs-title">Подбор по задаче</span>
-<section class="panel" id="p-match">
+
+<!-- ================= СПРАВОЧНИК =================
+     Три бывшие вкладки — «Подбор по задаче», «Техника» и «Газ и владение» —
+     сведены в один раздел: наверху переключатель, ниже одна из трёх частей. -->
+<span class="nojs-title">Справочник</span>
+<section class="panel" id="p-guide">
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Справочник</h1>
+      <p class="lead">Подбор станка под задачу, техника простым языком и расчёт
+        газа со стоимостью владения — в одном разделе.</p>
+    </div>
+  </div>
+  <div class="pills big subtabs" id="guideTabs" role="tablist"
+    aria-label="Часть справочника"></div>
+
+  <div class="subpanel active" id="g-match" role="tabpanel">
   <p class="lead">Правило скилла: предлагать не больше двух моделей.
     Подбор доводит до конкретной сборки из прайса, дальше — «Добавить в смету».</p>
 
@@ -1150,6 +1164,85 @@
     <summary>Чего в этой версии нет</summary>
     <div class="det-b">__OUT_OF_SCOPE__</div>
   </details>
+  </div>
+
+  <div class="subpanel" id="g-tech" role="tabpanel">
+  <p class="lead">__TECH_INTRO__</p>
+
+  <h2>Сколько режет волокно</h2>
+  <div class="card">
+    <h3>Рабочие толщины — то, что говорим клиенту</h3>
+    <div class="scroll">__TECH_CUT_WORK_TABLE__</div>
+    <h3>Предел по заводским таблицам режимов</h3>
+    <div class="scroll">__TECH_CUT_MAX_TABLE__</div>
+    <div class="note alert">__TECH_CUT_MAX_NOTE__</div>
+  </div>
+
+  <h2>Серии волокна: чем отличаются</h2>
+  <div class="card">
+    __TECH_SERIES__
+  </div>
+
+  <h2>Почему S дороже A</h2>
+  <div class="card">
+    <p class="muted">__TECH_A_VS_S_ANSWER__</p>
+    <div class="scroll">__TECH_A_VS_S_TABLE__</div>
+  </div>
+
+  <h2>Труборез RD: что влезает</h2>
+  <div class="card">
+    <div class="scroll">__TECH_RD_TABLE__</div>
+    <div class="note alert">__TECH_RD_NOTE__</div>
+  </div>
+
+  <h2>Фрезерные станки: характеристики по моделям</h2>
+  <div class="card">
+    <div class="scroll">__TECH_MILL_TABLE__</div>
+    <p class="muted">__TECH_MILL_COMMON__</p>
+    <h3>Что берёт по материалам</h3>
+    <div class="scroll">__TECH_MILL_MAT_TABLE__</div>
+  </div>
+  </div>
+
+  <div class="subpanel" id="g-gas" role="tabpanel">
+  <p class="lead">Азот дороже кислорода не в цене за баллон, а в потоке. Это разговор
+    про полную стоимость владения — и он объясняет, почему сравнивать станки
+    только по цене бессмысленно.</p>
+
+  <div class="step">
+    <div class="step-h"><div class="step-n">1</div>
+      <div class="step-t">Режим резки<small>сопло и газ определяют расход</small></div></div>
+    <div class="step-b">
+      <div class="row">
+        <div><label class="f">Сопло</label><select id="gNozzle"></select></div>
+        <div><label class="f">Газ</label><select id="gGas">
+          <option value="o2">Кислород — углеродистая сталь</option>
+          <option value="n2">Азот — нержавейка, алюминий</option></select></div>
+        <div><label class="f">Часов резки в месяц</label>
+          <input type="number" id="gHours" min="1" max="700" value="80"></div>
+        <div><label class="f">Цена баллона 40 л, ₽</label>
+          <input type="number" id="gPrice" min="0" step="50" placeholder="ввести вручную"></div>
+      </div>
+      <div class="note alert">__GAS_PRICE_MISSING__</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="step-n">2</div>
+      <div class="step-t">Расход и деньги<small>расход из заводской таблицы, цена — ваша</small></div></div>
+    <div class="step-b"><div class="think-box" id="gasOut"></div></div>
+  </div>
+
+  <details>
+    <summary>Заводская таблица расхода и требования к газу</summary>
+    <div class="det-b">
+      <div class="scroll">__GAS_TABLE__</div>
+      <div class="note"><ul>__GAS_FACTS__</ul></div>
+      <h3>Как это использовать в разговоре</h3>
+      __GAS_ADVICE__
+    </div>
+  </details>
+  </div>
 </section>
 
 <!-- ================= ГОТОВНОСТЬ ЦЕХА ================= -->
@@ -1199,87 +1292,7 @@
 
 
 
-<!-- ================= ТЕХНИКА ================= -->
-<span class="nojs-title">Техника простым языком</span>
-<section class="panel" id="p-tech">
-  <p class="lead">__TECH_INTRO__</p>
 
-  <h2>Сколько режет волокно</h2>
-  <div class="card">
-    <h3>Рабочие толщины — то, что говорим клиенту</h3>
-    <div class="scroll">__TECH_CUT_WORK_TABLE__</div>
-    <h3>Предел по заводским таблицам режимов</h3>
-    <div class="scroll">__TECH_CUT_MAX_TABLE__</div>
-    <div class="note alert">__TECH_CUT_MAX_NOTE__</div>
-  </div>
-
-  <h2>Серии волокна: чем отличаются</h2>
-  <div class="card">
-    __TECH_SERIES__
-  </div>
-
-  <h2>Почему S дороже A</h2>
-  <div class="card">
-    <p class="muted">__TECH_A_VS_S_ANSWER__</p>
-    <div class="scroll">__TECH_A_VS_S_TABLE__</div>
-  </div>
-
-  <h2>Труборез RD: что влезает</h2>
-  <div class="card">
-    <div class="scroll">__TECH_RD_TABLE__</div>
-    <div class="note alert">__TECH_RD_NOTE__</div>
-  </div>
-
-  <h2>Фрезерные станки: характеристики по моделям</h2>
-  <div class="card">
-    <div class="scroll">__TECH_MILL_TABLE__</div>
-    <p class="muted">__TECH_MILL_COMMON__</p>
-    <h3>Что берёт по материалам</h3>
-    <div class="scroll">__TECH_MILL_MAT_TABLE__</div>
-  </div>
-</section>
-
-<!-- ================= ГАЗ ================= -->
-<span class="nojs-title">Газ и владение</span>
-<section class="panel" id="p-gas">
-  <p class="lead">Азот дороже кислорода не в цене за баллон, а в потоке. Это разговор
-    про полную стоимость владения — и он объясняет, почему сравнивать станки
-    только по цене бессмысленно.</p>
-
-  <div class="step">
-    <div class="step-h"><div class="step-n">1</div>
-      <div class="step-t">Режим резки<small>сопло и газ определяют расход</small></div></div>
-    <div class="step-b">
-      <div class="row">
-        <div><label class="f">Сопло</label><select id="gNozzle"></select></div>
-        <div><label class="f">Газ</label><select id="gGas">
-          <option value="o2">Кислород — углеродистая сталь</option>
-          <option value="n2">Азот — нержавейка, алюминий</option></select></div>
-        <div><label class="f">Часов резки в месяц</label>
-          <input type="number" id="gHours" min="1" max="700" value="80"></div>
-        <div><label class="f">Цена баллона 40 л, ₽</label>
-          <input type="number" id="gPrice" min="0" step="50" placeholder="ввести вручную"></div>
-      </div>
-      <div class="note alert">__GAS_PRICE_MISSING__</div>
-    </div>
-  </div>
-
-  <div class="step">
-    <div class="step-h"><div class="step-n">2</div>
-      <div class="step-t">Расход и деньги<small>расход из заводской таблицы, цена — ваша</small></div></div>
-    <div class="step-b"><div class="think-box" id="gasOut"></div></div>
-  </div>
-
-  <details>
-    <summary>Заводская таблица расхода и требования к газу</summary>
-    <div class="det-b">
-      <div class="scroll">__GAS_TABLE__</div>
-      <div class="note"><ul>__GAS_FACTS__</ul></div>
-      <h3>Как это использовать в разговоре</h3>
-      __GAS_ADVICE__
-    </div>
-  </details>
-</section>
 
 <!-- ================= ДАННЫЕ ================= -->
 <span class="nojs-title">Данные</span>

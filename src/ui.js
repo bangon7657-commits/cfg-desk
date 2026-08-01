@@ -57,6 +57,8 @@
     mode: 'order', cat: 'fiber', mtCat: 'fiber',
     // поставщик в ТКП и правки его реквизитов, тема оформления
     supId: '', sups: {}, theme: 'dark',
+    // какая часть справочника открыта: подбор по задаче, техника или газ
+    guidePart: 'match',
     // приводы серии S и выбранная обвязка волокна
     servo: '', kit: { compressor: '', extraction: '', cryo: '', stab: '' },
     // имя и контакты менеджера сделки: пустые поля = менеджер из данных
@@ -124,6 +126,14 @@
       if (!Array.isArray(state.build.saved)) state.build.saved = [];
       // черновики до версии 19 не знали про настраиваемые вкладки
       if (!Array.isArray(state.pins)) state.pins = ['home', 'build', 'smeta', 'letters'];
+      // в версии 28 три раздела сведены в «Справочник»: закреплённые вкладки
+      // со старыми именами переводим на него, повтор убираем
+      state.pins = state.pins.map(function (id) {
+        return (id === 'match' || id === 'tech' || id === 'gas') ? 'guide' : id;
+      }).filter(function (id, i, all) { return all.indexOf(id) === i; });
+      if (['match', 'tech', 'gas'].indexOf(state.guidePart) < 0) {
+        state.guidePart = 'match';
+      }
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
   if (!state.zp || typeof state.zp !== 'object') state.zp = zpDefaults();
@@ -156,12 +166,21 @@
     { id: 'zp', title: 'Зарплата', hint: 'оклад, переработки, налоги' },
     { id: 'cfg', title: 'Подбор и цены', hint: 'станок, обвязка, техничка' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
-    { id: 'match', title: 'Подбор по задаче', hint: 'толщина и материал' },
-    { id: 'gas', title: 'Газ и владение', hint: 'расход и стоимость' },
-    { id: 'tech', title: 'Техника', hint: 'что режет и что внутри' },
+    { id: 'guide', title: 'Справочник',
+      hint: 'подбор по задаче, техника, газ и владение' },
     { id: 'shop', title: 'Готовность цеха', hint: 'блокеры до монтажа' },
     { id: 'data', title: 'Данные', hint: 'прайсы, источники, расхождения' }
   ];
+  // Справочник собран из трёх бывших разделов. Их прежние имена остались
+  // адресами частей: ссылка #tech по-прежнему открывает нужную часть.
+  var GUIDE_PARTS = [
+    { id: 'match', title: 'Подбор по задаче' },
+    { id: 'tech', title: 'Техника' },
+    { id: 'gas', title: 'Газ и владение' }
+  ];
+  function guidePartIds() {
+    return GUIDE_PARTS.map(function (g) { return g.id; });
+  }
   var PINS_MAX = 4;
   var PINS_DEF = ['home', 'build', 'smeta', 'letters'];
   var curTab = 'cfg';
@@ -294,7 +313,7 @@
 
   window.addEventListener('hashchange', function () {
     var h = (location.hash || '').replace('#', '');
-    var ok = false;
+    var ok = guidePartIds().indexOf(h) >= 0;
     SECTIONS.forEach(function (s) { if (s.id === h) ok = true; });
     if (ok) showTab(h);
   });
@@ -333,18 +352,60 @@
     var inTabs = pins().indexOf(name) >= 0;
     $('menuBtn').textContent = inTabs ? 'Разделы' : secTitle(name);
   }
+  // Часть справочника: рисуем переключатель и показываем нужный блок
+  function showGuidePart(part) {
+    if (guidePartIds().indexOf(part) < 0) part = 'match';
+    state.guidePart = part;
+    save();
+    var box = d.getElementById('guideTabs');
+    if (!box) return;
+    var bs = box.querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) {
+      var on = bs[i].getAttribute('data-sub') === part;
+      bs[i].className = on ? 'pill on' : 'pill';
+      bs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+    GUIDE_PARTS.forEach(function (g) {
+      var n = d.getElementById('g-' + g.id);
+      if (n) n.classList.toggle('active', g.id === part);
+    });
+  }
+  (function () {
+    if (!d.getElementById('guideTabs')) return;
+    var box = fresh('guideTabs');   // очищаем: пререндер запускает файл дважды
+    GUIDE_PARTS.forEach(function (g) {
+      var b = el('button', 'pill', g.title);
+      b.type = 'button';
+      b.setAttribute('data-sub', g.id);
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', function () {
+        showGuidePart(g.id);
+        try {
+          if (location.hash !== '#' + g.id) history.replaceState(null, '', '#' + g.id);
+        } catch (e) { /* file:// — адрес не трогаем */ }
+      });
+      box.appendChild(b);
+    });
+  }());
   function showTab(name) {
+    // прежние адреса частей справочника ведут в справочник, на нужную часть
+    var part = '';
+    if (guidePartIds().indexOf(name) >= 0) { part = name; name = 'guide'; }
     curTab = name;
     markTab(name);
+    if (name === 'guide') showGuidePart(part || state.guidePart || 'match');
     var panels = d.querySelectorAll('.panel');
     for (var j = 0; j < panels.length; j++) {
       panels[j].classList.toggle('active', panels[j].id === 'p-' + name);
     }
     // При открытии файла с диска (file://) браузер запрещает replaceState и
     // бросает SecurityError. Раньше это валило остаток инициализации.
+    var hashName = (name === 'guide') ? (state.guidePart || 'match') : name;
     try {
-      if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
-    } catch (e) { location.hash = name; }
+      if (location.hash !== '#' + hashName) {
+        history.replaceState(null, '', '#' + hashName);
+      }
+    } catch (e) { location.hash = hashName; }
     // не window.scrollTo — в jsdom он не реализован и валит проверку сборки
     d.documentElement.scrollTop = 0;
     d.body.scrollTop = 0;
@@ -5127,7 +5188,7 @@
   thinkify();
   $('sumBarGo').addEventListener('click', function () { showTab('smeta'); });
   var hash = (location.hash || '').replace('#', '');
-  var valid = SECTIONS.map(function (s) { return s.id; });
+  var valid = SECTIONS.map(function (s) { return s.id; }).concat(guidePartIds());
   showTab(valid.indexOf(hash) >= 0 ? hash : 'cfg');
   fixNavOffset();
 
