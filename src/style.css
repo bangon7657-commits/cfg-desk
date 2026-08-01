@@ -230,8 +230,10 @@ a{color:var(--or2)}
 
 /* Миниатюра письма в правой колонке: лист А4 сжат по ширине колонки */
 /* Группы шаблонов писем: узкие пилюли над крупными плитками */
-.ltrgroups{display:flex;flex-direction:column;gap:14px;align-items:flex-end}
-@media(max-width:900px){.ltrgroups{align-items:flex-start}}
+.ltrgroups{display:flex;flex-direction:column;gap:12px;align-items:flex-start;
+  margin:0 0 18px}
+.ltrgroups .pills{margin-bottom:0}
+.ltrgroups #ltrGroups .pill{padding:10px 16px}
 /* После выбора группы над плитками шаблонов на пару секунд всплывают стрелки:
    подсказка, что выбирать дальше. Стрелки появляются по очереди. */
 .pill.point{position:relative}

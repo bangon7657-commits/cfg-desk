@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 26', /const CACHE = 'cfg-v26'/.test(swTxt),
+check('кеш: версия поднята до 27', /const CACHE = 'cfg-v27'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1146,7 +1146,7 @@ check('письма: правка текста видна на бланке',
 win.document.getElementById('ltrReset').click();
 check('письма: сброс возвращает шаблон',
   !/Свой текст письма для проверки/.test(textOf(doc, '#ltrPage')) &&
-  /Гражданским кодексом/.test(textOf(doc, '#ltrPage')), '');
+  /Гражданского кодекса РФ/.test(textOf(doc, '#ltrPage')), '');
 // смена шаблона
 doc.querySelector('#ltrPills button[data-tpl="offset"]').click();
 check('письма: перезачёт меняет заголовок и поля',
@@ -1156,6 +1156,24 @@ check('письма: официальное письмо пишем мы',
   /подтверждает/.test(textOf(doc, '#ltrPage')) &&
   !/Уважаемый Греков/.test(textOf(doc, '#ltrPage')), '');
 doc.querySelector('#ltrPills button[data-tpl="refund"]').click();
+// v26: письмо о возврате переписано — ссылка на статью 1102 ГК РФ вместо
+// договора на РКО, без требования вернуть банковские комиссии
+(function () {
+  const t = textOf(doc, '#ltrPage');
+  check('возврат: ссылка на неосновательное обогащение, статья 1102 ГК РФ',
+    /неосновательным обогащением/.test(t) && /статья 1102/.test(t), t.slice(0, 140));
+  check('возврат: нет ссылки на договор РКО — он с банком, а не с получателем',
+    !/расчётно-кассовое обслуживание/.test(t) && !/расчётно-кассов/.test(src), '');
+  check('возврат: с получателя не требуют банковские комиссии',
+    !/комиссии банка/.test(t), '');
+  check('возврат: указан срок возврата',
+    /в течение семи рабочих дней/.test(t), '');
+  check('возврат: сумма, поручение и реквизиты на месте',
+    /платёжным поручением/.test(t) && /Корреспондентский счёт/.test(t) &&
+    /Номер счёта/.test(t), '');
+  check('возврат: в тексте не осталось незаполненных подстановок',
+    !/\{[a-zA-Z_]+\}/.test(t), (t.match(/\{[a-zA-Z_]+\}/) || [''])[0]);
+}());
 // приватность
 // «переносы» в тексте про календарь содержат «носов» — сверяем по границам слова
 const CLIENT_RE = /(^|[^А-Яа-яЁё])(Антонова|Носов|Гафаров|Коптев|Карпет|Клячина)([^А-Яа-яЁё]|$)/i;
@@ -1375,6 +1393,14 @@ check('письма: в первой группе четыре письма по
 check('письма: кнопки групп такого же размера, как плитки шаблонов',
   doc.getElementById('ltrGroups').className.indexOf('big') >= 0 &&
   doc.getElementById('ltrPills').className.indexOf('big') >= 0, '');
+check('письма: группы стоят слева под заголовком, а не справа в шапке',
+  !doc.querySelector('#p-letters .bhead .ltrgroups') &&
+  !!doc.querySelector('#p-letters > .ltrgroups') &&
+  /\.ltrgroups\{[^}]*align-items:flex-start/.test(src.replace(/\s+/g, '')) &&
+  !/\.ltrgroups\{[^}]*align-items:flex-end/.test(src.replace(/\s+/g, '')), '');
+check('письма: группы идут выше плиток с шаблонами',
+  doc.querySelector('#p-letters > .ltrgroups').firstElementChild.id === 'ltrGroups',
+  doc.querySelector('#p-letters > .ltrgroups').firstElementChild.id);
 doc.querySelector('#ltrGroups button[data-grp="staff"]').click();
 check('письма: в кадровой группе семь документов',
   doc.querySelectorAll('#ltrPills button').length === 7,
