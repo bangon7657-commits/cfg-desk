@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 32', /const CACHE = 'cfg-v32'/.test(swTxt),
+check('кеш: версия поднята до 33', /const CACHE = 'cfg-v33'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1123,9 +1123,31 @@ check('песочница: фильтры сценариев на месте',
   q.value = '';
   q.dispatchEvent(new win.Event('input'));
 }());
+(function () {
+  // карточка справочника должна вести и в раздел, и в свою часть, и в адрес
+  doc.querySelector('#mapFlows .mapcard[data-go="guide:gas"]').click();
+  const part = [...doc.querySelectorAll('#p-guide .subpanel')]
+    .filter(n => n.classList.contains('active')).map(n => n.id).join(',');
+  check('песочница: карточка открывает нужную часть справочника и адрес',
+    doc.getElementById('p-guide').classList.contains('active') &&
+    part === 'g-gas' && win.location.hash === '#gas',
+    part + ' | ' + win.location.hash);
+  // возвращаем часть по умолчанию: ниже справочник проверяется с подбора
+  doc.querySelector('#guideTabs button[data-sub="match"]').click();
+}());
 doc.querySelector('#mapFlows .mapcard[data-go="letters"]').click();
 check('песочница: карточка открывает нужный раздел',
   doc.getElementById('p-letters').classList.contains('active'), '');
+check('песочница: карточка кадровых открывает свою группу писем',
+  (function () {
+    const cards = [...doc.querySelectorAll('#mapFlows .mapcard')];
+    const staff = cards.filter(c => /Кадровые/.test(c.textContent))[0];
+    staff.click();
+    const ok = !!doc.querySelector('#ltrGroups .ltracc-i[data-grp="staff"].open #ltrPills');
+    // возвращаем письма по оплатам: дальше проверки ждут клиентский бланк
+    doc.querySelector('#ltrGroups button.ltracc-h[data-grp="client"]').click();
+    return ok;
+  }()), '');
 
 // письма
 check('письма: четыре шаблона',
@@ -1549,7 +1571,7 @@ check('справочник: одна панель вместо пяти пре�
   doc.getElementById('p-guide').classList.contains('active'), '');
 check('справочник: шесть частей и переключатель над ними',
   [...doc.querySelectorAll('#guideTabs button')].map(b => b.textContent).join('|') ===
-  'Подбор по задаче|Техника|Газ и владение|Готовность цеха|Данные|Тренажёр',
+  'Подбор по задаче|Техника|Газ и владение|Готовность цеха|Тренажёр|Данные',
   [...doc.querySelectorAll('#guideTabs button')].map(b => b.textContent).join('|'));
 const gShown = () => [...doc.querySelectorAll('#p-guide .subpanel')]
   .filter(n => n.classList.contains('active')).map(n => n.id).join(',');
@@ -1820,6 +1842,17 @@ check('плашка видна на каждой вкладке — лежит �
   oath.parentNode === doc.querySelector('.wrap'), oath.parentNode.className);
 check('плашка на мобильном тоже приподнята',
   /\.oath\{width:104px;right:10px;bottom:48px/.test(src.replace(/\s+/g, '')), '');
+check('плашка видна: у ссылки и рисунка блочная раскладка',
+  /\.oath\{[^}]*display:block/.test(src.replace(/\s+/g, '')) &&
+  /\.oath-scan\{display:block;width:100%/.test(src.replace(/\s+/g, '')) &&
+  /\.oath-scan\{[^}]*aspect-ratio:400\/492/.test(src.replace(/\s+/g, '')), '');
+check('печать: зарплата и сборка печатают правую колонку, а не пустой лист',
+  /#p-zp\.printme>\.cfggrid,#p-build\.printme>\.cfggrid\{display:block!important\}/
+    .test(src.replace(/\s+/g, '')) &&
+  /#p-zp\.printme\.cfgmain,#p-build\.printme\.cfgmain\{display:none!important\}/
+    .test(src.replace(/\s+/g, '')) &&
+  !!doc.querySelector('#p-zp > .cfggrid.printkeep') &&
+  !!doc.querySelector('#p-build > .cfggrid.printkeep'), '');
 check('плашка ведёт на бесполезный интернет и открывается безопасно',
   oath.tagName === 'A' && oath.getAttribute('href') === 'https://theuselessweb.com/' &&
   oath.getAttribute('target') === '_blank' &&

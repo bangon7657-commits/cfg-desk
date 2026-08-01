@@ -226,11 +226,15 @@ a{color:var(--or2)}
    нижний угол окна, приподнята над краем; блок лежит вне панелей, поэтому
    видна на каждой вкладке. */
 .oath{position:fixed;right:18px;bottom:56px;width:132px;z-index:26;
-  color:var(--tx2);opacity:.6;cursor:default;
+  display:block;text-decoration:none;
+  color:var(--tx2);opacity:.6;cursor:pointer;
   transition:opacity .16s, transform .16s, color .16s}
 .oath:hover,.oath:focus-visible{opacity:1;color:var(--or);
   transform:translateY(-2px) rotate(-.5deg);outline:none}
-.oath-scan{width:100%;aspect-ratio:400 / 492;background-color:currentColor;
+/* display:block обязателен: плашка стала ссылкой, а строчный элемент
+   игнорирует ширину и пропорции — картинка просто исчезала */
+.oath-scan{display:block;width:100%;aspect-ratio:400 / 492;
+  background-color:currentColor;
   -webkit-mask:var(--oath-img) center/contain no-repeat;
   mask:var(--oath-img) center/contain no-repeat}
 .oath-tip{position:absolute;right:0;bottom:calc(100% + 8px);width:214px;
@@ -240,6 +244,12 @@ a{color:var(--or2)}
   transform:translateY(4px);transition:.16s}
 .oath:hover .oath-tip,.oath:focus-visible .oath-tip{opacity:1;visibility:visible;
   transform:translateY(0)}
+/* На ноутбуках 1180–1500 px правая колонка доходит почти до края окна:
+   плашку делаем маленькой и почти прозрачной, чтобы не накрывать кнопки. */
+@media(max-width:1500px){
+  .oath{width:74px;bottom:50px;right:10px;opacity:.32}
+  .oath:hover,.oath:focus-visible{opacity:1}
+}
 @media(max-width:900px){
   .oath{width:104px;right:10px;bottom:48px;opacity:.5}
   .oath-tip{width:190px}
@@ -840,6 +850,12 @@ body.demo .internal{display:none !important}
      поэтому скрывать надо соседей шага, а не всех прямых детей панели:
      иначе вместе с ними скрывается и предок предпросмотра, и лист уходит пустым. */
   .printme>*:not(.kpstep):not(.printkeep){display:none !important}
+  /* Зарплата и сборка печатают правую колонку: она лежит внутри сетки,
+     поэтому саму сетку оставляем, а левую половину гасим. */
+  #p-zp.printme>.cfggrid, #p-build.printme>.cfggrid{display:block !important}
+  #p-zp.printme .cfgmain, #p-build.printme .cfgmain{display:none !important}
+  #p-zp.printme .cfgside, #p-build.printme .cfgside{position:static;width:auto}
+  #p-zp.printme .btns, #p-build.printme .btns{display:none !important}
   .printme>.kpstep{display:block !important;border:0;background:none;margin:0;overflow:visible}
   .kpstep>.step-h{display:none !important}
   .kpstep>.step-b{padding:0 !important}

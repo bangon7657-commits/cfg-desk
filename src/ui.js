@@ -192,7 +192,7 @@
     { id: 'calc', title: 'Калькуляторы',
       hint: 'НДС, лизинг, час работы станка, окупаемость' },
     { id: 'guide', title: 'Справочник',
-      hint: 'подбор, техника, газ, готовность цеха, данные' }
+      hint: 'подбор, техника, газ, цех, тренажёр, данные' }
   ];
   // Справочник собран из бывших самостоятельных разделов. Прежние имена остались
   // адресами частей: ссылка #tech по-прежнему открывает нужную часть.
@@ -201,8 +201,8 @@
     { id: 'tech', title: 'Техника' },
     { id: 'gas', title: 'Газ и владение' },
     { id: 'shop', title: 'Готовность цеха' },
-    { id: 'data', title: 'Данные' },
-    { id: 'quiz', title: 'Тренажёр' }
+    { id: 'quiz', title: 'Тренажёр' },
+    { id: 'data', title: 'Данные' }
   ];
   function guidePartIds() {
     return GUIDE_PARTS.map(function (g) { return g.id; });
@@ -593,7 +593,7 @@
   });
 
   // ---------------------------------------------------------------- менеджер
-  // Менеджер сделки правится в шаге 1: у каждого свои имя и телефон, а ТКП
+  // Менеджер сделки правится в правой колонке подбора: у каждого свои имя и телефон, а ТКП
   // уходит клиенту от конкретного человека. Пустое поле = значение из данных.
   var MGRF = ['mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail'];
   var MGR_MAP = { mgrName: 'name', mgrRole: 'role', mgrPhone: 'phone', mgrEmail: 'email' };
@@ -1780,6 +1780,12 @@
 
   // Полоса итога внизу экрана: видно, что уже набрано, без ухода со страницы
   function renderSumBar(T) {
+    // на самой вкладке сметы полоса с кнопкой «перейти в смету» бессмысленна
+    if (curTab === 'smeta') {
+      var bar0 = $('sumBar');
+      if (bar0) bar0.classList.remove('show');
+      return;
+    }
     var bar = $('sumBar');
     if (!bar) return;
     var n = state.items.length;
@@ -2068,7 +2074,8 @@
 
     if (!state.items.length) {
       box.appendChild(el('div', 'kp-empty',
-        'Смета пуста: добавьте позиции на вкладке «Конфигуратор» — они встанут ' +
+        'Смета пуста: соберите комплект в конфигураторе или добавьте позиции '
+        + 'в подборе и ценах — они встанут ' +
         'в эту таблицу, а итоги и сумма прописью пересчитаются сами.'));
       return;
     }
@@ -2888,7 +2895,7 @@
           APP.fiberFormats[cheapest.format] + ' мм — <b>' +
           fmtRub(toCents(cheapest.base)) + ' ₽</b></div>' : '');
       if (cheapest) {
-        var b = el('button', 'btn mini noprint', 'Открыть в конфигураторе');
+        var b = el('button', 'btn mini noprint', 'Открыть в подборе и ценах');
         b.type = 'button';
         b.style.marginTop = '10px';
         b.addEventListener('click', function () {
@@ -3448,12 +3455,12 @@
       ] },
     { id: 'docs', title: 'Документы и деньги', hint: 'бумаги, которые нужны сегодня',
       cards: [
-        { go: 'letters', title: 'Письма по оплатам',
+        { go: 'letters', grp: 'client', title: 'Письма по оплатам',
           what: 'Возврат ошибочного платежа, уточнение назначения, перезачёт',
           need: 'реквизиты и номер поручения',
           next: 'печать или .docx на бланке',
           keys: 'письмо возврат платёж назначение перезачёт официальное бланк' },
-        { go: 'letters', title: 'Кадровые документы',
+        { go: 'letters', grp: 'staff', title: 'Кадровые документы',
           what: 'Заявления и служебные записки: отпуск, врач, отгул',
           need: 'даты и причину',
           next: 'подписать у руководителя',
@@ -3511,8 +3518,17 @@
     return out;
   }
   function mapGo(c) {
+    // у справочника имя части и есть адрес: showTab сам его развернёт,
+    // иначе в адресной строке остаётся прошлая часть
+    if (c.go === 'guide' && c.part) { showTab(c.part); return; }
+    if (c.go === 'letters' && c.grp) {
+      state.ltr.grp = c.grp;
+      var first = ltrTplsOfGroup(c.grp)[0];
+      if (first) { state.ltr.tpl = first.id; state.ltr.head = ''; }
+      save();
+      renderLtrPills(); renderLtrFields(); renderLtr();
+    }
     showTab(c.go);
-    if (c.part) showGuidePart && c.go === 'guide' && showGuidePart(c.part);
     if (c.part && c.go === 'calc') showCalcPart(c.part);
   }
   function renderMap() {
@@ -3718,7 +3734,9 @@
   // стрелка — видно, что выбирать дальше. Стрелки появляются по очереди.
   var ltrPointTimer = null;
   function pointToTpls() {
-    var bs = $('ltrPills').querySelectorAll('button');
+    var box0 = $('ltrPills');
+    if (!box0) return;
+    var bs = box0.querySelectorAll('button');
     if (!bs.length) return;
     for (var i = 0; i < bs.length; i++) {
       bs[i].classList.add('point');
@@ -3726,7 +3744,9 @@
     }
     if (ltrPointTimer) clearTimeout(ltrPointTimer);
     ltrPointTimer = setTimeout(function () {
-      var ps = $('ltrPills').querySelectorAll('button.point');
+      var box1 = $('ltrPills');
+      if (!box1) return;
+      var ps = box1.querySelectorAll('button.point');
       for (var j = 0; j < ps.length; j++) {
         ps[j].classList.remove('point');
         ps[j].style.removeProperty('--point-delay');
@@ -3945,7 +3965,8 @@
     // подсказка о приватности меняется по типу документа
     var pv = $('ltrPrivacy');
     if (pv) pv.textContent = tpl.kind === 'staff' ? APP.letterStaffNote : APP.letterPrivacy;
-    var bs = $('ltrPills').querySelectorAll('button');
+    var host0 = $('ltrPills');
+    var bs = host0 ? host0.querySelectorAll('button') : [];
     for (var i = 0; i < bs.length; i++) {
       var on = bs[i].getAttribute('data-tpl') === tpl.id;
       var pt = bs[i].classList.contains('point') ? ' point' : '';

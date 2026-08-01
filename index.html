@@ -237,11 +237,15 @@ a{color:var(--or2)}
    нижний угол окна, приподнята над краем; блок лежит вне панелей, поэтому
    видна на каждой вкладке. */
 .oath{position:fixed;right:18px;bottom:56px;width:132px;z-index:26;
-  color:var(--tx2);opacity:.6;cursor:default;
+  display:block;text-decoration:none;
+  color:var(--tx2);opacity:.6;cursor:pointer;
   transition:opacity .16s, transform .16s, color .16s}
 .oath:hover,.oath:focus-visible{opacity:1;color:var(--or);
   transform:translateY(-2px) rotate(-.5deg);outline:none}
-.oath-scan{width:100%;aspect-ratio:400 / 492;background-color:currentColor;
+/* display:block обязателен: плашка стала ссылкой, а строчный элемент
+   игнорирует ширину и пропорции — картинка просто исчезала */
+.oath-scan{display:block;width:100%;aspect-ratio:400 / 492;
+  background-color:currentColor;
   -webkit-mask:var(--oath-img) center/contain no-repeat;
   mask:var(--oath-img) center/contain no-repeat}
 .oath-tip{position:absolute;right:0;bottom:calc(100% + 8px);width:214px;
@@ -251,6 +255,12 @@ a{color:var(--or2)}
   transform:translateY(4px);transition:.16s}
 .oath:hover .oath-tip,.oath:focus-visible .oath-tip{opacity:1;visibility:visible;
   transform:translateY(0)}
+/* На ноутбуках 1180–1500 px правая колонка доходит почти до края окна:
+   плашку делаем маленькой и почти прозрачной, чтобы не накрывать кнопки. */
+@media(max-width:1500px){
+  .oath{width:74px;bottom:50px;right:10px;opacity:.32}
+  .oath:hover,.oath:focus-visible{opacity:1}
+}
 @media(max-width:900px){
   .oath{width:104px;right:10px;bottom:48px;opacity:.5}
   .oath-tip{width:190px}
@@ -851,6 +861,12 @@ body.demo .internal{display:none !important}
      поэтому скрывать надо соседей шага, а не всех прямых детей панели:
      иначе вместе с ними скрывается и предок предпросмотра, и лист уходит пустым. */
   .printme>*:not(.kpstep):not(.printkeep){display:none !important}
+  /* Зарплата и сборка печатают правую колонку: она лежит внутри сетки,
+     поэтому саму сетку оставляем, а левую половину гасим. */
+  #p-zp.printme>.cfggrid, #p-build.printme>.cfggrid{display:block !important}
+  #p-zp.printme .cfgmain, #p-build.printme .cfgmain{display:none !important}
+  #p-zp.printme .cfgside, #p-build.printme .cfgside{position:static;width:auto}
+  #p-zp.printme .btns, #p-build.printme .btns{display:none !important}
   .printme>.kpstep{display:block !important;border:0;background:none;margin:0;overflow:visible}
   .kpstep>.step-h{display:none !important}
   .kpstep>.step-b{padding:0 !important}
@@ -1011,7 +1027,7 @@ body.demo .internal{display:none !important}
          Строка вкладок — только частые: так на телефоне не нужно листать. -->
     <div class="navmenu">
       <button type="button" class="menubtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Разделы</button>
-      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Песочница</span><small>карта инструментов и куда идти</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="build"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="cfg"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="cfg" role="menuitem" aria-selected="false"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="true"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, готовность цеха, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
+      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Песочница</span><small>карта инструментов и куда идти</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="build"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="build" role="menuitem" aria-selected="false"><span>Конфигуратор</span><small>слоты комплекта и проверка</small></button><button type="button" class="pinbtn" data-pin="build" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="cfg"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="cfg" role="menuitem" aria-selected="false"><span>Подбор и цены</span><small>станок, обвязка, техничка</small></button><button type="button" class="pinbtn" data-pin="cfg" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="true"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, цех, тренажёр, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
     </div>
     <!-- Строка вкладок собирается скриптом из закреплённых разделов: до
          четырёх, выбор и снятие — через меню «Разделы» и крестик на вкладке. -->
@@ -1145,7 +1161,7 @@ body.demo .internal{display:none !important}
     <span class="pill on" id="zpPeriod"></span>
   </div>
 
-  <div class="cfggrid">
+  <div class="cfggrid printkeep">
   <div class="cfgmain">
     <div class="card">
       <div class="cardhead"><h2>Оклад и норма месяца</h2></div>
@@ -1270,7 +1286,7 @@ body.demo .internal{display:none !important}
 </section>
 
 <!-- ================= СБОРКА ================= -->
-<span class="nojs-title">Сборка</span>
+<span class="nojs-title">Конфигуратор</span>
 <section class="panel" id="p-build">
   <div class="bhead">
     <div>
@@ -1282,7 +1298,7 @@ body.demo .internal{display:none !important}
     <div class="pills" id="buildKinds" role="tablist" aria-label="Тип комплекта"><button class="pill on" type="button" data-kind="fiber" role="tab" aria-selected="true">Волоконный по металлу</button><button class="pill" type="button" data-kind="milling" role="tab" aria-selected="false">Фрезерный с ЧПУ</button><button class="pill" type="button" data-kind="co2" role="tab" aria-selected="false">Лазерный CO₂</button><button class="pill" type="button" data-kind="marker" role="tab" aria-selected="false">Маркиратор</button></div>
   </div>
 
-  <div class="cfggrid">
+  <div class="cfggrid printkeep">
   <div class="cfgmain">
     <div class="card">
       <div class="cardhead">
@@ -1349,7 +1365,7 @@ body.demo .internal{display:none !important}
 </section>
 
 <!-- ================= КОНФИГУРАТОР ================= -->
-<span class="nojs-title">Конфигуратор</span>
+<span class="nojs-title">Подбор и цены</span>
 <section class="panel" id="p-cfg">
   <div class="cfghead">
     <h1 class="btitle">Подбор и цены</h1>
@@ -2010,14 +2026,14 @@ body.demo .internal{display:none !important}
             файл.</div>
         </div>
       </details>
-      <textarea id="jsonOut" rows="6" style="margin-top:10px;display:none;
+      <textarea id="jsonOut" rows="6" aria-label="JSON сметы для скилла" style="margin-top:10px;display:none;
         font-family:ui-monospace,Consolas,monospace;font-size:12px"></textarea>
     </div>
   </aside>
   </div>
 
   <div class="step kpstep">
-    <div class="step-h"><div class="step-n">3</div>
+    <div class="step-h"><div class="step-n">✓</div>
       <div class="step-t">Шапка ТКП и предпросмотр<small>печать берёт только этот блок</small></div></div>
     <div class="step-b">
             <!-- Лист ТКП. Оформление повторяет мастер-шаблон скилла lasercut-kp:
@@ -2250,17 +2266,17 @@ body.demo .internal{display:none !important}
 
 <!-- ================= СПРАВОЧНИК =================
      Три бывшие вкладки — «Подбор по задаче», «Техника» и «Газ и владение» —
-     сведены в один раздел: наверху переключатель, ниже одна из трёх частей. -->
+     сведены в один раздел: наверху переключатель, ниже одна из частей. -->
 <span class="nojs-title">Справочник</span>
 <section class="panel" id="p-guide">
   <div class="bhead">
     <div>
       <h1 class="btitle">Справочник</h1>
-      <p class="lead">Подбор станка под задачу, техника простым языком и расчёт
-        газа со стоимостью владения — в одном разделе.</p>
+      <p class="lead">Подбор под задачу, техника, газ и стоимость владения,
+        готовность цеха, служебные данные и тренажёр — в одном разделе.</p>
     </div>
   </div>
-  <div class="pills big subtabs" id="guideTabs" role="tablist" aria-label="Часть справочника"><button class="pill" type="button" data-sub="match" role="tab" aria-selected="false">Подбор по задаче</button><button class="pill" type="button" data-sub="tech" role="tab" aria-selected="false">Техника</button><button class="pill on" type="button" data-sub="gas" role="tab" aria-selected="true">Газ и владение</button><button class="pill" type="button" data-sub="shop" role="tab" aria-selected="false">Готовность цеха</button><button class="pill" type="button" data-sub="data" role="tab" aria-selected="false">Данные</button><button class="pill" type="button" data-sub="quiz" role="tab" aria-selected="false">Тренажёр</button></div>
+  <div class="pills big subtabs" id="guideTabs" role="tablist" aria-label="Часть справочника"><button class="pill" type="button" data-sub="match" role="tab" aria-selected="false">Подбор по задаче</button><button class="pill" type="button" data-sub="tech" role="tab" aria-selected="false">Техника</button><button class="pill on" type="button" data-sub="gas" role="tab" aria-selected="true">Газ и владение</button><button class="pill" type="button" data-sub="shop" role="tab" aria-selected="false">Готовность цеха</button><button class="pill" type="button" data-sub="quiz" role="tab" aria-selected="false">Тренажёр</button><button class="pill" type="button" data-sub="data" role="tab" aria-selected="false">Данные</button></div>
 
   <div class="subpanel" id="g-match" role="tabpanel">
   <p class="lead">Правило скилла: предлагать не больше двух моделей.
@@ -2270,7 +2286,7 @@ body.demo .internal{display:none !important}
     <div class="step-h"><div class="step-n">1</div>
       <div class="step-t">Что подбираем<small>дальше шаги меняются под выбор</small></div></div>
     <div class="step-b"><div class="doing">
-      <select id="mtCat">
+      <select id="mtCat" aria-label="что подбираем">
         <option value="fiber">Резка металла — волоконный станок</option>
         <option value="mill">Фрезеровка — станок с ЧПУ</option>
       </select>
@@ -2293,7 +2309,7 @@ body.demo .internal{display:none !important}
     <div class="step">
       <div class="step-h"><div class="step-n">3</div>
         <div class="step-t">Что предложить<small>не больше двух вариантов</small></div></div>
-      <div class="step-b"><div class="doing"><div id="matchOut"><div class="calcsteps"><div>Толщина: <b>6 мм</b> по углеродистая сталь</div><div>С запасом 30 % нужен предел не ниже <b>8,6 мм</b></div><div>Комфортный поток — вдвое ниже предела, то есть предел от <b>12 мм</b></div></div><div class="rec"><div class="rec-l">Минимум с запасом 30 %</div><div class="rec-t">Серия S, 3 кВт</div><div class="rec-d">Предел по заводским таблицам: 22 мм · газ: Кислород 99,99 %</div><div class="rec-p">Самая доступная сборка этой мощности: S 1530 3000W, поле 1500×3000 мм — <b>3 010 400 ₽</b></div><button class="btn mini noprint" type="button" style="margin-top: 10px;">Открыть в конфигураторе</button></div><div class="note alert">Формат поля подбирается по размеру заготовки, а не по толщине. Толщину без газа и режима клиенту не называть.</div></div></div><div class="think"></div></div>
+      <div class="step-b"><div class="doing"><div id="matchOut"><div class="calcsteps"><div>Толщина: <b>6 мм</b> по углеродистая сталь</div><div>С запасом 30 % нужен предел не ниже <b>8,6 мм</b></div><div>Комфортный поток — вдвое ниже предела, то есть предел от <b>12 мм</b></div></div><div class="rec"><div class="rec-l">Минимум с запасом 30 %</div><div class="rec-t">Серия S, 3 кВт</div><div class="rec-d">Предел по заводским таблицам: 22 мм · газ: Кислород 99,99 %</div><div class="rec-p">Самая доступная сборка этой мощности: S 1530 3000W, поле 1500×3000 мм — <b>3 010 400 ₽</b></div><button class="btn mini noprint" type="button" style="margin-top: 10px;">Открыть в подборе и ценах</button></div><div class="note alert">Формат поля подбирается по размеру заготовки, а не по толщине. Толщину без газа и режима клиенту не называть.</div></div></div><div class="think"></div></div>
     </div>
   </div>
 
@@ -2435,7 +2451,7 @@ body.demo .internal{display:none !important}
     <div class="step-h"><div class="step-n">1</div>
       <div class="step-t">Какая конфигурация<small>требования у A и у S-HP разные</small></div></div>
     <div class="step-b"><div class="doing">
-      <select id="readyKind">
+      <select id="readyKind" aria-label="тип оборудования для проверки цеха">
         <option value="a">A 1313 / 1530, 1,5–3 кВт</option>
         <option value="s">S-HP (RD) 1530, 6–6,6 кВт</option>
       </select>
@@ -2551,7 +2567,7 @@ body.demo .internal{display:none !important}
   <h2>Срок поставки</h2>
   <div class="card">
     <p>В ТКП печатается: <b>до 80 рабочих дней с даты оплаты по договору поставки</b>. Для позиции со склада —
-      отгрузка 1–3 рабочих дня с даты 100 % оплаты (позиция со склада). Переключатель — в шаге «Шапка ТКП».</p>
+      отгрузка 1–3 рабочих дня с даты 100 % оплаты (позиция со склада). Переключатель — в карточке «Шапка предложения».</p>
     <div class="note alert">Подтверждено 28.07.2026 и совпадает с мастер-шаблоном ТКП.
       В references/negotiation.md скилла продаж осталась прежняя оценка «~60 дн.» —
       расхождение известное, приложение печатает 80 рабочих дней.</div>
@@ -2606,8 +2622,8 @@ body.demo .internal{display:none !important}
     </div>
     <!-- Поиск идёт сразу под заголовком: им пользуются чаще фильтров. -->
     <div class="modal-f">
-      <input type="search" id="pickSearch" placeholder="Поиск по названию">
-      <select id="pickSort">
+      <input type="search" id="pickSearch" aria-label="поиск по названию позиции" placeholder="Поиск по названию">
+      <select id="pickSort" aria-label="сортировка списка позиций">
         <option value="name">По названию</option>
         <option value="asc">Сначала дешёвые</option>
         <option value="desc">Сначала дорогие</option>
@@ -3192,7 +3208,7 @@ var DOCX = (function () {
     { id: 'calc', title: 'Калькуляторы',
       hint: 'НДС, лизинг, час работы станка, окупаемость' },
     { id: 'guide', title: 'Справочник',
-      hint: 'подбор, техника, газ, готовность цеха, данные' }
+      hint: 'подбор, техника, газ, цех, тренажёр, данные' }
   ];
   // Справочник собран из бывших самостоятельных разделов. Прежние имена остались
   // адресами частей: ссылка #tech по-прежнему открывает нужную часть.
@@ -3201,8 +3217,8 @@ var DOCX = (function () {
     { id: 'tech', title: 'Техника' },
     { id: 'gas', title: 'Газ и владение' },
     { id: 'shop', title: 'Готовность цеха' },
-    { id: 'data', title: 'Данные' },
-    { id: 'quiz', title: 'Тренажёр' }
+    { id: 'quiz', title: 'Тренажёр' },
+    { id: 'data', title: 'Данные' }
   ];
   function guidePartIds() {
     return GUIDE_PARTS.map(function (g) { return g.id; });
@@ -3593,7 +3609,7 @@ var DOCX = (function () {
   });
 
   // ---------------------------------------------------------------- менеджер
-  // Менеджер сделки правится в шаге 1: у каждого свои имя и телефон, а ТКП
+  // Менеджер сделки правится в правой колонке подбора: у каждого свои имя и телефон, а ТКП
   // уходит клиенту от конкретного человека. Пустое поле = значение из данных.
   var MGRF = ['mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail'];
   var MGR_MAP = { mgrName: 'name', mgrRole: 'role', mgrPhone: 'phone', mgrEmail: 'email' };
@@ -4780,6 +4796,12 @@ var DOCX = (function () {
 
   // Полоса итога внизу экрана: видно, что уже набрано, без ухода со страницы
   function renderSumBar(T) {
+    // на самой вкладке сметы полоса с кнопкой «перейти в смету» бессмысленна
+    if (curTab === 'smeta') {
+      var bar0 = $('sumBar');
+      if (bar0) bar0.classList.remove('show');
+      return;
+    }
     var bar = $('sumBar');
     if (!bar) return;
     var n = state.items.length;
@@ -5068,7 +5090,8 @@ var DOCX = (function () {
 
     if (!state.items.length) {
       box.appendChild(el('div', 'kp-empty',
-        'Смета пуста: добавьте позиции на вкладке «Конфигуратор» — они встанут ' +
+        'Смета пуста: соберите комплект в конфигураторе или добавьте позиции '
+        + 'в подборе и ценах — они встанут ' +
         'в эту таблицу, а итоги и сумма прописью пересчитаются сами.'));
       return;
     }
@@ -5888,7 +5911,7 @@ var DOCX = (function () {
           APP.fiberFormats[cheapest.format] + ' мм — <b>' +
           fmtRub(toCents(cheapest.base)) + ' ₽</b></div>' : '');
       if (cheapest) {
-        var b = el('button', 'btn mini noprint', 'Открыть в конфигураторе');
+        var b = el('button', 'btn mini noprint', 'Открыть в подборе и ценах');
         b.type = 'button';
         b.style.marginTop = '10px';
         b.addEventListener('click', function () {
@@ -6448,12 +6471,12 @@ var DOCX = (function () {
       ] },
     { id: 'docs', title: 'Документы и деньги', hint: 'бумаги, которые нужны сегодня',
       cards: [
-        { go: 'letters', title: 'Письма по оплатам',
+        { go: 'letters', grp: 'client', title: 'Письма по оплатам',
           what: 'Возврат ошибочного платежа, уточнение назначения, перезачёт',
           need: 'реквизиты и номер поручения',
           next: 'печать или .docx на бланке',
           keys: 'письмо возврат платёж назначение перезачёт официальное бланк' },
-        { go: 'letters', title: 'Кадровые документы',
+        { go: 'letters', grp: 'staff', title: 'Кадровые документы',
           what: 'Заявления и служебные записки: отпуск, врач, отгул',
           need: 'даты и причину',
           next: 'подписать у руководителя',
@@ -6511,8 +6534,17 @@ var DOCX = (function () {
     return out;
   }
   function mapGo(c) {
+    // у справочника имя части и есть адрес: showTab сам его развернёт,
+    // иначе в адресной строке остаётся прошлая часть
+    if (c.go === 'guide' && c.part) { showTab(c.part); return; }
+    if (c.go === 'letters' && c.grp) {
+      state.ltr.grp = c.grp;
+      var first = ltrTplsOfGroup(c.grp)[0];
+      if (first) { state.ltr.tpl = first.id; state.ltr.head = ''; }
+      save();
+      renderLtrPills(); renderLtrFields(); renderLtr();
+    }
     showTab(c.go);
-    if (c.part) showGuidePart && c.go === 'guide' && showGuidePart(c.part);
     if (c.part && c.go === 'calc') showCalcPart(c.part);
   }
   function renderMap() {
@@ -6718,7 +6750,9 @@ var DOCX = (function () {
   // стрелка — видно, что выбирать дальше. Стрелки появляются по очереди.
   var ltrPointTimer = null;
   function pointToTpls() {
-    var bs = $('ltrPills').querySelectorAll('button');
+    var box0 = $('ltrPills');
+    if (!box0) return;
+    var bs = box0.querySelectorAll('button');
     if (!bs.length) return;
     for (var i = 0; i < bs.length; i++) {
       bs[i].classList.add('point');
@@ -6726,7 +6760,9 @@ var DOCX = (function () {
     }
     if (ltrPointTimer) clearTimeout(ltrPointTimer);
     ltrPointTimer = setTimeout(function () {
-      var ps = $('ltrPills').querySelectorAll('button.point');
+      var box1 = $('ltrPills');
+      if (!box1) return;
+      var ps = box1.querySelectorAll('button.point');
       for (var j = 0; j < ps.length; j++) {
         ps[j].classList.remove('point');
         ps[j].style.removeProperty('--point-delay');
@@ -6945,7 +6981,8 @@ var DOCX = (function () {
     // подсказка о приватности меняется по типу документа
     var pv = $('ltrPrivacy');
     if (pv) pv.textContent = tpl.kind === 'staff' ? APP.letterStaffNote : APP.letterPrivacy;
-    var bs = $('ltrPills').querySelectorAll('button');
+    var host0 = $('ltrPills');
+    var bs = host0 ? host0.querySelectorAll('button') : [];
     for (var i = 0; i < bs.length; i++) {
       var on = bs[i].getAttribute('data-tpl') === tpl.id;
       var pt = bs[i].classList.contains('point') ? ' point' : '';

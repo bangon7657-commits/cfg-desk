@@ -193,7 +193,7 @@
     <span class="pill on" id="zpPeriod"></span>
   </div>
 
-  <div class="cfggrid">
+  <div class="cfggrid printkeep">
   <div class="cfgmain">
     <div class="card">
       <div class="cardhead"><h2>Оклад и норма месяца</h2></div>
@@ -319,7 +319,7 @@
 </section>
 
 <!-- ================= СБОРКА ================= -->
-<span class="nojs-title">Сборка</span>
+<span class="nojs-title">Конфигуратор</span>
 <section class="panel" id="p-build">
   <div class="bhead">
     <div>
@@ -331,7 +331,7 @@
     <div class="pills" id="buildKinds" role="tablist" aria-label="Тип комплекта"></div>
   </div>
 
-  <div class="cfggrid">
+  <div class="cfggrid printkeep">
   <div class="cfgmain">
     <div class="card">
       <div class="cardhead">
@@ -398,7 +398,7 @@
 </section>
 
 <!-- ================= КОНФИГУРАТОР ================= -->
-<span class="nojs-title">Конфигуратор</span>
+<span class="nojs-title">Подбор и цены</span>
 <section class="panel" id="p-cfg">
   <div class="cfghead">
     <h1 class="btitle">Подбор и цены</h1>
@@ -1045,14 +1045,14 @@
             файл.</div>
         </div>
       </details>
-      <textarea id="jsonOut" rows="6" style="margin-top:10px;display:none;
+      <textarea id="jsonOut" rows="6" aria-label="JSON сметы для скилла" style="margin-top:10px;display:none;
         font-family:ui-monospace,Consolas,monospace;font-size:12px"></textarea>
     </div>
   </aside>
   </div>
 
   <div class="step kpstep">
-    <div class="step-h"><div class="step-n">3</div>
+    <div class="step-h"><div class="step-n">✓</div>
       <div class="step-t">Шапка ТКП и предпросмотр<small>печать берёт только этот блок</small></div></div>
     <div class="step-b">
             <!-- Лист ТКП. Оформление повторяет мастер-шаблон скилла lasercut-kp:
@@ -1294,14 +1294,14 @@
 
 <!-- ================= СПРАВОЧНИК =================
      Три бывшие вкладки — «Подбор по задаче», «Техника» и «Газ и владение» —
-     сведены в один раздел: наверху переключатель, ниже одна из трёх частей. -->
+     сведены в один раздел: наверху переключатель, ниже одна из частей. -->
 <span class="nojs-title">Справочник</span>
 <section class="panel" id="p-guide">
   <div class="bhead">
     <div>
       <h1 class="btitle">Справочник</h1>
-      <p class="lead">Подбор станка под задачу, техника простым языком и расчёт
-        газа со стоимостью владения — в одном разделе.</p>
+      <p class="lead">Подбор под задачу, техника, газ и стоимость владения,
+        готовность цеха, служебные данные и тренажёр — в одном разделе.</p>
     </div>
   </div>
   <div class="pills big subtabs" id="guideTabs" role="tablist"
@@ -1315,7 +1315,7 @@
     <div class="step-h"><div class="step-n">1</div>
       <div class="step-t">Что подбираем<small>дальше шаги меняются под выбор</small></div></div>
     <div class="step-b">
-      <select id="mtCat">
+      <select id="mtCat" aria-label="что подбираем">
         <option value="fiber">Резка металла — волоконный станок</option>
         <option value="mill">Фрезеровка — станок с ЧПУ</option>
       </select>
@@ -1480,7 +1480,7 @@
     <div class="step-h"><div class="step-n">1</div>
       <div class="step-t">Какая конфигурация<small>требования у A и у S-HP разные</small></div></div>
     <div class="step-b">
-      <select id="readyKind">
+      <select id="readyKind" aria-label="тип оборудования для проверки цеха">
         <option value="a">A 1313 / 1530, 1,5–3 кВт</option>
         <option value="s">S-HP (RD) 1530, 6–6,6 кВт</option>
       </select>
@@ -1596,7 +1596,7 @@
   <h2>Срок поставки</h2>
   <div class="card">
     <p>В ТКП печатается: <b>__DELIVERY_ORDER_FULL__</b>. Для позиции со склада —
-      __DELIVERY_STOCK_FULL__. Переключатель — в шаге «Шапка ТКП».</p>
+      __DELIVERY_STOCK_FULL__. Переключатель — в карточке «Шапка предложения».</p>
     <div class="note alert">Подтверждено 28.07.2026 и совпадает с мастер-шаблоном ТКП.
       В references/negotiation.md скилла продаж осталась прежняя оценка «~60 дн.» —
       расхождение известное, приложение печатает 80 рабочих дней.</div>
@@ -1651,8 +1651,8 @@
     </div>
     <!-- Поиск идёт сразу под заголовком: им пользуются чаще фильтров. -->
     <div class="modal-f">
-      <input type="search" id="pickSearch" placeholder="Поиск по названию">
-      <select id="pickSort">
+      <input type="search" id="pickSearch" aria-label="поиск по названию позиции" placeholder="Поиск по названию">
+      <select id="pickSort" aria-label="сортировка списка позиций">
         <option value="name">По названию</option>
         <option value="asc">Сначала дешёвые</option>
         <option value="desc">Сначала дорогие</option>
