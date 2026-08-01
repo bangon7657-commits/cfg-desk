@@ -1063,6 +1063,219 @@
 </section>
 
 
+<!-- ================= КАЛЬКУЛЯТОРЫ =================
+     Четыре расчёта, которые менеджер иначе считает в блокноте: НДС, лизинг,
+     себестоимость часа работы станка и окупаемость. Все исходные цифры
+     вводятся руками — придуманных констант в расчётах нет. -->
+<span class="nojs-title">Калькуляторы</span>
+<section class="panel" id="p-calc">
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Калькуляторы</h1>
+      <p class="lead">НДС, лизинг с графиком платежей, стоимость часа работы
+        станка и срок окупаемости для клиента.</p>
+    </div>
+  </div>
+  <div class="pills big subtabs" id="calcTabs" role="tablist"
+    aria-label="Калькулятор"></div>
+
+  <!-- ---------- НДС ---------- -->
+  <div class="subpanel active" id="c-nds" role="tabpanel">
+    <div class="cfggrid">
+    <div class="cfgmain">
+      <div class="card">
+        <div class="cardhead"><h2>Проверка НДС</h2>
+          <span class="spec-cnt" id="ndsHint"></span></div>
+        <div class="row">
+          <div><label class="f">Сумма, ₽</label>
+            <input type="text" id="cnSum" inputmode="decimal"
+              placeholder="например 3 010 400"></div>
+          <div><label class="f">Ставка</label><select id="cnRate"></select></div>
+          <div><label class="f">Что известно</label><select id="cnMode">
+            <option value="in">Сумма с НДС — выделить налог</option>
+            <option value="out">Сумма без НДС — начислить сверху</option>
+          </select></div>
+        </div>
+        <div class="btns noprint">
+          <button class="btn mini sec" type="button" id="cnFromSmeta">Взять итог сметы</button>
+          <button class="btn mini sec" type="button" id="cnCopy">Скопировать текстом</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cardhead"><h2>Сумма прописью</h2></div>
+        <div id="cnWords" class="note"></div>
+      </div>
+    </div>
+    <aside class="cfgside">
+      <div class="card spec-card">
+        <div class="cardhead"><h2>Результат</h2></div>
+        <div class="zphero" id="cnHero"></div>
+        <table class="spec"><tbody id="cnBody"></tbody></table>
+        <div class="note small">Налог считается в копейках и округляется
+          по правилу «половину вверх» — как в счёте.</div>
+      </div>
+    </aside>
+    </div>
+  </div>
+
+  <!-- ---------- ЛИЗИНГ ---------- -->
+  <div class="subpanel" id="c-lease" role="tabpanel">
+    <div class="cfggrid">
+    <div class="cfgmain">
+      <div class="card">
+        <div class="cardhead"><h2>Условия договора</h2></div>
+        <div class="row">
+          <div><label class="f">Цена комплекта, ₽</label>
+            <input type="text" id="clPrice" inputmode="decimal"></div>
+          <div><label class="f">Аванс, %</label>
+            <input type="text" id="clAdv" inputmode="decimal"></div>
+          <div><label class="f">Срок, месяцев</label>
+            <input type="text" id="clMonths" inputmode="numeric"></div>
+          <div><label class="f">Удорожание, % в год</label>
+            <input type="text" id="clUp" inputmode="decimal"></div>
+        </div>
+        <div class="btns noprint">
+          <button class="btn mini sec" type="button" id="clFromSmeta">Взять итог сметы</button>
+          <button class="btn mini sec" type="button" id="clCopy">Скопировать текстом</button>
+        </div>
+        <div class="note small" id="clNote"></div>
+      </div>
+      <div class="card">
+        <div class="cardhead"><h2>График платежей</h2>
+          <span class="spec-cnt" id="clCnt"></span></div>
+        <div class="scroll"><table class="spec" id="clTable">
+          <thead><tr><th>Месяц</th><th class="num">Платёж</th>
+            <th class="num">Оплачено нарастающим</th></tr></thead>
+          <tbody id="clBody"></tbody></table></div>
+      </div>
+    </div>
+    <aside class="cfgside">
+      <div class="card spec-card">
+        <div class="cardhead"><h2>Итого</h2></div>
+        <div class="zphero" id="clHero"></div>
+        <div class="spec-tot" id="clTotals"></div>
+        <div class="note small" id="clSrc"></div>
+      </div>
+    </aside>
+    </div>
+  </div>
+
+  <!-- ---------- СЕБЕСТОИМОСТЬ ЧАСА ---------- -->
+  <div class="subpanel" id="c-cost" role="tabpanel">
+    <div class="cfggrid">
+    <div class="cfgmain">
+      <div class="card">
+        <div class="cardhead"><h2>Станок и энергия</h2></div>
+        <div class="row">
+          <div><label class="f">Потребление, кВт</label>
+            <input type="text" id="ccPower" inputmode="decimal"
+              placeholder="из паспорта"></div>
+          <div><label class="f">Тариф, ₽/кВт·ч</label>
+            <input type="text" id="ccKwh" inputmode="decimal"
+              placeholder="из счёта энергосбыта"></div>
+          <div><label class="f">Газ, ₽/час</label>
+            <input type="text" id="ccGas" inputmode="decimal"
+              placeholder="из части «Газ и владение»"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cardhead"><h2>Расходники</h2></div>
+        <div class="row">
+          <div><label class="f">Сопло, ₽</label>
+            <input type="text" id="ccNozzle" inputmode="decimal"></div>
+          <div><label class="f">Ресурс сопла, ч</label>
+            <input type="text" id="ccNozzleH" inputmode="decimal"></div>
+          <div><label class="f">Защитное стекло, ₽</label>
+            <input type="text" id="ccGlass" inputmode="decimal"></div>
+          <div><label class="f">Ресурс стекла, ч</label>
+            <input type="text" id="ccGlassH" inputmode="decimal"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cardhead"><h2>Оператор и амортизация</h2></div>
+        <div class="row">
+          <div><label class="f">Оператор, ₽/мес</label>
+            <input type="text" id="ccOper" inputmode="decimal"></div>
+          <div><label class="f">Часов работы в месяц</label>
+            <input type="text" id="ccHours" inputmode="decimal"></div>
+        </div>
+        <div class="row">
+          <div><label class="f">Цена комплекта, ₽</label>
+            <input type="text" id="ccPrice" inputmode="decimal"></div>
+          <div><label class="f">Срок службы, часов</label>
+            <input type="text" id="ccLife" inputmode="decimal"
+              placeholder="например 20 000"></div>
+          <div><label class="f">Прочее, ₽/час</label>
+            <input type="text" id="ccOther" inputmode="decimal"
+              placeholder="аренда, обслуживание"></div>
+        </div>
+        <div class="btns noprint">
+          <button class="btn mini sec" type="button" id="ccFromSmeta">Взять итог сметы</button>
+          <button class="btn mini sec" type="button" id="ccCopy">Скопировать текстом</button>
+        </div>
+      </div>
+      <details class="hint-det">
+        <summary>Откуда брать цифры</summary>
+        <div class="det-b" id="ccHelp"></div>
+      </details>
+    </div>
+    <aside class="cfgside">
+      <div class="card spec-card">
+        <div class="cardhead"><h2>Час работы</h2></div>
+        <div class="zphero" id="ccHero"></div>
+        <table class="spec"><tbody id="ccBody"></tbody></table>
+        <div class="note small" id="ccNote"></div>
+      </div>
+    </aside>
+    </div>
+  </div>
+
+  <!-- ---------- ОКУПАЕМОСТЬ ---------- -->
+  <div class="subpanel" id="c-roi" role="tabpanel">
+    <div class="cfggrid">
+    <div class="cfgmain">
+      <div class="card">
+        <div class="cardhead"><h2>Как сейчас и как будет</h2></div>
+        <div class="row">
+          <div><label class="f">Платите подрядчику, ₽/мес</label>
+            <input type="text" id="crOut" inputmode="decimal"></div>
+          <div><label class="f">Часов резки в месяц</label>
+            <input type="text" id="crHours" inputmode="decimal"></div>
+          <div><label class="f">Своя себестоимость, ₽/час</label>
+            <input type="text" id="crCost" inputmode="decimal"
+              placeholder="из расчёта часа"></div>
+        </div>
+        <div class="row">
+          <div><label class="f">Цена комплекта, ₽</label>
+            <input type="text" id="crPrice" inputmode="decimal"></div>
+          <div><label class="f">Продаёте резку на сторону, ₽/час</label>
+            <input type="text" id="crSell" inputmode="decimal"
+              placeholder="если планируете загружать станок заказами"></div>
+        </div>
+        <div class="btns noprint">
+          <button class="btn mini sec" type="button" id="crFromCost">Взять себестоимость часа</button>
+          <button class="btn mini sec" type="button" id="crFromSmeta">Взять итог сметы</button>
+          <button class="btn mini sec" type="button" id="crCopy">Скопировать текстом</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cardhead"><h2>Что показать клиенту</h2></div>
+        <div id="crStory" class="calcsteps"></div>
+        <div class="note small" id="crNote"></div>
+      </div>
+    </div>
+    <aside class="cfgside">
+      <div class="card spec-card">
+        <div class="cardhead"><h2>Окупаемость</h2></div>
+        <div class="zphero" id="crHero"></div>
+        <div class="spec-tot" id="crTotals"></div>
+        <div class="note small" id="crMarket"></div>
+      </div>
+    </aside>
+    </div>
+  </div>
+</section>
+
 <!-- ================= СПРАВОЧНИК =================
      Три бывшие вкладки — «Подбор по задаче», «Техника» и «Газ и владение» —
      сведены в один раздел: наверху переключатель, ниже одна из трёх частей. -->
@@ -1284,6 +1497,47 @@
       <div class="scroll">__MASS_TABLE__</div>
     </div>
   </details>
+  </div>
+
+  <div class="subpanel" id="g-quiz" role="tabpanel">
+    <p class="lead">Вопросы собираются из тех же данных, что и остальное
+      приложение: прайсы, таблицы толщин, комплектация, условия поставки.
+      Придуманных фактов в вопросах нет.</p>
+
+    <div class="card" id="quizStart">
+      <div class="cardhead"><h2>Проверить себя</h2>
+        <span class="spec-cnt" id="quizBest"></span></div>
+      <p class="muted">Быстрый прогон — десять вопросов, разминка перед
+        разговором с клиентом. Экзамен — двадцать пять, результат можно
+        показать руководителю.</p>
+      <div class="btns noprint">
+        <button class="btn" type="button" id="quizGo10">Быстрый прогон, 10 вопросов</button>
+        <button class="btn sec" type="button" id="quizGo25">Экзамен, 25 вопросов</button>
+      </div>
+    </div>
+
+    <div class="card" id="quizPlay" hidden>
+      <div class="cardhead"><h2 id="quizNum">Вопрос</h2>
+        <span class="spec-cnt" id="quizScore"></span></div>
+      <div class="quizbar"><div class="quizbar-i" id="quizBar"></div></div>
+      <p class="quizq" id="quizQ"></p>
+      <div class="quizopts" id="quizOpts"></div>
+      <div id="quizWhy"></div>
+      <div class="btns noprint">
+        <button class="btn" type="button" id="quizNext" hidden>Дальше</button>
+        <button class="btn mini sec" type="button" id="quizStop">Прервать</button>
+      </div>
+    </div>
+
+    <div class="card" id="quizDone" hidden>
+      <div class="cardhead"><h2>Результат</h2></div>
+      <div class="zphero" id="quizHero"></div>
+      <div id="quizErrors"></div>
+      <div class="btns noprint">
+        <button class="btn" type="button" id="quizAgain">Ещё раз</button>
+        <button class="btn mini sec" type="button" id="quizCopy">Скопировать результат</button>
+      </div>
+    </div>
   </div>
 
   <div class="subpanel" id="g-data" role="tabpanel">

@@ -178,6 +178,14 @@ APP = {
            'note': 'НДФЛ и внутренний налог компании считаются от полной '
                    'начисленной суммы. Первые три дня больничного платит '
                    'работодатель, остальные — СФР.'},
+    # калькуляторы: ставки НДС, лизинг, себестоимость часа, окупаемость
+    'ndsRates': [{'v': v, 'label': l} for v, l in ref.NDS_RATES],
+    'leasing': ref.LEASING_DEFAULTS,
+    'leasingNote': ref.LEASING_NOTE,
+    'costFields': [{'id': i, 'label': l, 'hint': h} for i, l, h in ref.COST_FIELDS],
+    'costNote': ref.COST_NOTE,
+    'roiNote': ref.ROI_NOTE,
+    'roiMarket': ref.ROI_MARKET,
     'vibroQty': data.VIBRO_QTY,
     'vibroQtyChoices': data.VIBRO_QTY_CHOICES,
     'vibroUnit': data.VIBRO_UNIT,

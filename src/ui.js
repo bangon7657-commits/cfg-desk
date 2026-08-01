@@ -59,6 +59,9 @@
     supId: '', sups: {}, theme: 'dark',
     // какая часть справочника открыта: подбор по задаче, техника или газ
     guidePart: 'match',
+    // калькуляторы: какая часть открыта и что введено в поля
+    calcPart: 'nds',
+    calc: { nds: {}, lease: {}, cost: {}, roi: {} },
     // приводы серии S и выбранная обвязка волокна
     servo: '', kit: { compressor: '', extraction: '', cryo: '', stab: '' },
     // имя и контакты менеджера сделки: пустые поля = менеджер из данных
@@ -138,13 +141,19 @@
       if (!Array.isArray(state.pins)) state.pins = ['home', 'build', 'smeta', 'letters'];
       // в версии 28 три раздела сведены в «Справочник»: закреплённые вкладки
       // со старыми именами переводим на него, повтор убираем
-      var MERGED = ['match', 'tech', 'gas', 'shop', 'data'];
+      var MERGED = ['match', 'tech', 'gas', 'shop', 'data', 'quiz'];
       state.pins = state.pins.map(function (id) {
         return MERGED.indexOf(id) >= 0 ? 'guide' : id;
       }).filter(function (id, i, all) { return all.indexOf(id) === i; });
       if (MERGED.indexOf(state.guidePart) < 0) state.guidePart = 'match';
     }
   } catch (e) { /* приватный режим — работаем без сохранения */ }
+  if (!state.calc || typeof state.calc !== 'object') {
+    state.calc = { nds: {}, lease: {}, cost: {}, roi: {} };
+  }
+  ['nds', 'lease', 'cost', 'roi'].forEach(function (k) {
+    if (!state.calc[k] || typeof state.calc[k] !== 'object') state.calc[k] = {};
+  });
   if (!state.zp || typeof state.zp !== 'object') state.zp = zpDefaults();
   // до версии 26 в зарплате было удержание «прочие», теперь вместо него
   // доплата «дежурство» — знак другой, поэтому сумму не переносим
@@ -175,6 +184,8 @@
     { id: 'zp', title: 'Зарплата', hint: 'оклад, переработки, налоги' },
     { id: 'cfg', title: 'Подбор и цены', hint: 'станок, обвязка, техничка' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
+    { id: 'calc', title: 'Калькуляторы',
+      hint: 'НДС, лизинг, час работы станка, окупаемость' },
     { id: 'guide', title: 'Справочник',
       hint: 'подбор, техника, газ, готовность цеха, данные' }
   ];
@@ -185,7 +196,8 @@
     { id: 'tech', title: 'Техника' },
     { id: 'gas', title: 'Газ и владение' },
     { id: 'shop', title: 'Готовность цеха' },
-    { id: 'data', title: 'Данные' }
+    { id: 'data', title: 'Данные' },
+    { id: 'quiz', title: 'Тренажёр' }
   ];
   function guidePartIds() {
     return GUIDE_PARTS.map(function (g) { return g.id; });
@@ -5187,6 +5199,666 @@
   fillStabFull();
   fillAsp();
   fillCo2();
+  // =====================================================================
+  //                            КАЛЬКУЛЯТОРЫ
+  // Четыре расчёта: НДС, лизинг с графиком, стоимость часа работы станка
+  // и окупаемость. Все исходные цифры вводит менеджер — придуманных
+  // констант здесь нет, пустое поле честно даёт пустой результат.
+  // Деньги, как и везде в приложении, считаем в копейках.
+  // =====================================================================
+  var CALC_PARTS = [
+    { id: 'nds', title: 'НДС' },
+    { id: 'lease', title: 'Лизинг и график' },
+    { id: 'cost', title: 'Час работы станка' },
+    { id: 'roi', title: 'Окупаемость' }
+  ];
+  function calcPartIds() {
+    return CALC_PARTS.map(function (c) { return c.id; });
+  }
+  function showCalcPart(part) {
+    if (calcPartIds().indexOf(part) < 0) part = 'nds';
+    state.calcPart = part;
+    save();
+    var box = d.getElementById('calcTabs');
+    if (!box) return;
+    var bs = box.querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) {
+      var on = bs[i].getAttribute('data-sub') === part;
+      bs[i].className = on ? 'pill on' : 'pill';
+      bs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+    CALC_PARTS.forEach(function (c) {
+      var n = d.getElementById('c-' + c.id);
+      if (n) n.classList.toggle('active', c.id === part);
+    });
+  }
+  (function () {
+    if (!d.getElementById('calcTabs')) return;
+    var box = fresh('calcTabs');
+    CALC_PARTS.forEach(function (c) {
+      var b = el('button', 'pill', c.title);
+      b.type = 'button';
+      b.setAttribute('data-sub', c.id);
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', function () { showCalcPart(c.id); });
+      box.appendChild(b);
+    });
+  }());
+
+  // Число из поля: пробелы и запятая, пусто = 0
+  function cnum(id) {
+    var n = $(id);
+    if (!n) return 0;
+    var x = parseFloat(String(n.value || '').replace(/\s| /g, '').replace(',', '.'));
+    return isFinite(x) ? x : 0;
+  }
+  function cfilled(id) {
+    var n = $(id);
+    return !!n && String(n.value || '').trim() !== '';
+  }
+  function calcBind(ids, fn) {
+    ids.forEach(function (id) {
+      var n = $(id);
+      if (!n) return;
+      n.addEventListener('input', fn);
+      n.addEventListener('change', fn);
+    });
+  }
+  function copyText(txt) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function () { toast('Скопировано'); },
+        function () { toast('Скопировать не удалось'); });
+      return;
+    }
+    toast('Буфер обмена недоступен');
+  }
+  function specRow(tb, label, value, cls) {
+    var tr = d.createElement('tr');
+    tr.innerHTML = '<td>' + esc(label) + '</td><td class="num' +
+      (cls ? ' ' + cls : '') + '">' + value + '</td>';
+    tb.appendChild(tr);
+  }
+  function totLine(box, k, v, cls) {
+    var n = el('div', cls || '');
+    n.innerHTML = '<span>' + esc(k) + '</span><span>' + v + '</span>';
+    box.appendChild(n);
+  }
+  // Итог сметы берём из общего расчёта: одна цифра, один источник
+  function smetaTotalCents() {
+    try { return totals().itogo; } catch (e) { return 0; }
+  }
+
+  // ------------------------------ НДС ---------------------------------
+  function ndsRate10() { return parseInt($('cnRate').value, 10) || 0; }
+  function renderNds() {
+    var cents = toCents(cnum('cnSum'));
+    var rate = ndsRate10();
+    var mode = $('cnMode').value;
+    var bez, nalog, itog;
+    if (mode === 'out') {                       // сумма без НДС — начисляем
+      bez = cents;
+      nalog = divHalfUp(cents * rate, 1000);
+      itog = bez + nalog;
+    } else {                                    // сумма с НДС — выделяем
+      var r = ndsIznutri(cents, rate);
+      bez = r.bez; nalog = r.nds; itog = cents;
+    }
+    var hero = fresh('cnHero');
+    hero.innerHTML = '<div class="l">' +
+      (mode === 'out' ? 'Сумма с НДС' : 'В том числе НДС') + '</div><div class="v">' +
+      fmtRub(mode === 'out' ? itog : nalog) + ' ₽</div>' +
+      '<div class="split"><div><div class="l">Без НДС</div><div class="s">' +
+      fmtRub(bez) + ' ₽</div></div><div><div class="l">Ставка</div><div class="s">' +
+      pctText(rate) + '</div></div></div>';
+    var tb = fresh('cnBody');
+    specRow(tb, 'Сумма без НДС', fmt(bez) + ' ₽');
+    specRow(tb, 'НДС ' + pctText(rate), fmt(nalog) + ' ₽');
+    specRow(tb, 'Сумма с НДС', fmt(itog) + ' ₽');
+    $('ndsHint').textContent = mode === 'out'
+      ? 'налог сверху' : 'налог внутри суммы';
+    var w = fresh('cnWords');
+    w.textContent = itog ? propisyu(itog) + ', в том числе НДС ' +
+      pctText(rate) + ' — ' + fmt(nalog) + ' ₽' : 'Введите сумму';
+    state.calc.nds = { sum: $('cnSum').value, rate: rate, mode: mode };
+    save();
+  }
+  function ndsText() {
+    var cents = toCents(cnum('cnSum')), rate = ndsRate10();
+    var out = $('cnMode').value === 'out';
+    var bez = out ? cents : ndsIznutri(cents, rate).bez;
+    var nal = out ? divHalfUp(cents * rate, 1000) : ndsIznutri(cents, rate).nds;
+    return ['Проверка НДС ' + pctText(rate),
+      'Без НДС: ' + fmt(bez) + ' ₽',
+      'НДС: ' + fmt(nal) + ' ₽',
+      'С НДС: ' + fmt(bez + nal) + ' ₽',
+      propisyu(bez + nal)].join('\n');
+  }
+
+  // ---------------------------- ЛИЗИНГ --------------------------------
+  // Удорожание — надбавка к цене за год договора, а не банковская ставка.
+  function leaseCalc() {
+    var price = toCents(cnum('clPrice'));
+    var advPct = cnum('clAdv');
+    var months = Math.max(Math.round(cnum('clMonths')), 0);
+    var up10 = Math.round(cnum('clUp') * 10);        // десятые доли процента
+    var advance = divHalfUp(price * Math.round(advPct * 10), 1000);
+    var fin = price - advance;                        // сумма финансирования
+    var years10 = months * 10 / 12;                   // срок в годах × 10
+    var over = months > 0
+      ? divHalfUp(fin * Math.round(up10 * years10 / 10), 1000) : 0;
+    var body = fin + over;
+    var pay = months > 0 ? divHalfUp(body, months) : 0;
+    var last = months > 0 ? body - pay * (months - 1) : 0;
+    return { price: price, advance: advance, fin: fin, over: over, body: body,
+      pay: pay, last: last, months: months, total: advance + body };
+  }
+  function renderLease() {
+    var T = leaseCalc();
+    var hero = fresh('clHero');
+    hero.innerHTML = '<div class="l">Платёж в месяц</div><div class="v">' +
+      fmtRub(T.pay) + ' ₽</div><div class="split">' +
+      '<div><div class="l">Аванс сразу</div><div class="s">' + fmtRub(T.advance) +
+      ' ₽</div></div><div><div class="l">Переплата</div><div class="s">' +
+      fmtRub(T.over) + ' ₽</div></div></div>';
+    var tot = fresh('clTotals');
+    totLine(tot, 'Цена комплекта', fmt(T.price) + ' ₽');
+    totLine(tot, 'Аванс', fmt(T.advance) + ' ₽');
+    totLine(tot, 'Финансируется', fmt(T.fin) + ' ₽');
+    totLine(tot, 'Удорожание за срок', fmt(T.over) + ' ₽', 'gain');
+    totLine(tot, 'Всего с авансом', fmt(T.total) + ' ₽', 'big');
+    var tb = fresh('clBody');
+    var acc = T.advance;
+    if (T.advance) {
+      var tr0 = d.createElement('tr');
+      tr0.innerHTML = '<td>Аванс</td><td class="num">' + fmt(T.advance) +
+        ' ₽</td><td class="num">' + fmt(acc) + ' ₽</td>';
+      tb.appendChild(tr0);
+    }
+    for (var i = 1; i <= T.months && i <= 120; i++) {
+      var v = (i === T.months) ? T.last : T.pay;
+      acc += v;
+      var tr = d.createElement('tr');
+      tr.innerHTML = '<td>' + i + '-й месяц</td><td class="num">' + fmt(v) +
+        ' ₽</td><td class="num">' + fmt(acc) + ' ₽</td>';
+      tb.appendChild(tr);
+    }
+    $('clCnt').textContent = T.months
+      ? cnt(T.months, ['платёж', 'платежа', 'платежей']) : 'срок не задан';
+    state.calc.lease = { price: $('clPrice').value, adv: $('clAdv').value,
+      months: $('clMonths').value, up: $('clUp').value };
+    save();
+  }
+  function leaseText() {
+    var T = leaseCalc();
+    return ['Лизинг: ' + fmt(T.price) + ' ₽, аванс ' + fmt(T.advance) +
+      ' ₽, срок ' + T.months + ' мес.',
+      'Платёж в месяц: ' + fmt(T.pay) + ' ₽',
+      'Удорожание за срок: ' + fmt(T.over) + ' ₽',
+      'Всего с авансом: ' + fmt(T.total) + ' ₽',
+      'Ориентир, точные условия — у лизингодателя.'].join('\n');
+  }
+
+  // --------------------- СТОИМОСТЬ ЧАСА РАБОТЫ -------------------------
+  function costCalc() {
+    var power = cnum('ccPower'), kwh = cnum('ccKwh');
+    var elec = toCents(power * kwh);
+    var gas = toCents(cnum('ccGas'));
+    var nozzle = cnum('ccNozzleH') > 0
+      ? divHalfUp(toCents(cnum('ccNozzle')), Math.round(cnum('ccNozzleH'))) : 0;
+    var glass = cnum('ccGlassH') > 0
+      ? divHalfUp(toCents(cnum('ccGlass')), Math.round(cnum('ccGlassH'))) : 0;
+    var oper = cnum('ccHours') > 0
+      ? divHalfUp(toCents(cnum('ccOper')), Math.round(cnum('ccHours'))) : 0;
+    var amort = cnum('ccLife') > 0
+      ? divHalfUp(toCents(cnum('ccPrice')), Math.round(cnum('ccLife'))) : 0;
+    var other = toCents(cnum('ccOther'));
+    var rows = [
+      ['Электричество', elec, power && kwh
+        ? power + ' кВт × ' + String(kwh).replace('.', ',') + ' ₽' : ''],
+      ['Газ', gas, ''],
+      ['Сопло', nozzle, cnum('ccNozzleH') ? 'на ' + cnum('ccNozzleH') + ' ч' : ''],
+      ['Защитное стекло', glass, cnum('ccGlassH') ? 'на ' + cnum('ccGlassH') + ' ч' : ''],
+      ['Оператор', oper, cnum('ccHours') ? cnum('ccHours') + ' ч в месяц' : ''],
+      ['Амортизация', amort, cnum('ccLife') ? 'ресурс ' + cnum('ccLife') + ' ч' : ''],
+      ['Прочее', other, '']
+    ];
+    var sum = 0;
+    rows.forEach(function (r) { sum += r[1]; });
+    // чего не хватает, чтобы расчёт был полным
+    var missing = [];
+    if (!power || !kwh) missing.push('потребление и тариф на электричество');
+    if (!cfilled('ccGas')) missing.push('газ за час');
+    if (!cnum('ccNozzleH') || !cnum('ccGlassH')) missing.push('ресурс расходников');
+    if (!cnum('ccHours')) missing.push('часы работы оператора');
+    if (!cnum('ccLife')) missing.push('срок службы станка в часах');
+    return { rows: rows, sum: sum, missing: missing };
+  }
+  function renderCost() {
+    var T = costCalc();
+    var hero = fresh('ccHero');
+    hero.innerHTML = '<div class="l">Себестоимость часа</div><div class="v">' +
+      fmt(T.sum) + ' ₽</div><div class="split"><div><div class="l">За смену 8 ч' +
+      '</div><div class="s">' + fmtRub(T.sum * 8) + ' ₽</div></div>' +
+      '<div><div class="l">За месяц 160 ч</div><div class="s">' +
+      fmtRub(T.sum * 160) + ' ₽</div></div></div>';
+    var tb = fresh('ccBody');
+    T.rows.forEach(function (r) {
+      if (!r[1]) return;
+      specRow(tb, r[0] + (r[2] ? ' — ' + r[2] : ''), fmt(r[1]) + ' ₽');
+    });
+    if (!T.sum) specRow(tb, 'Заполните поля слева', '—');
+    var note = fresh('ccNote');
+    note.textContent = T.missing.length
+      ? 'Не хватает: ' + T.missing.join(', ') + '. Пока эти поля пусты, ' +
+        'цифра занижена.'
+      : APP.costNote;
+    state.calc.cost = {};
+    ['ccPower', 'ccKwh', 'ccGas', 'ccNozzle', 'ccNozzleH', 'ccGlass', 'ccGlassH',
+      'ccOper', 'ccHours', 'ccPrice', 'ccLife', 'ccOther'].forEach(function (id) {
+      state.calc.cost[id] = $(id).value;
+    });
+    save();
+  }
+  function costText() {
+    var T = costCalc(), out = ['Себестоимость часа работы: ' + fmt(T.sum) + ' ₽'];
+    T.rows.forEach(function (r) {
+      if (r[1]) out.push(r[0] + ': ' + fmt(r[1]) + ' ₽/ч');
+    });
+    if (T.missing.length) out.push('Не учтено: ' + T.missing.join(', '));
+    return out.join('\n');
+  }
+
+  // --------------------------- ОКУПАЕМОСТЬ -----------------------------
+  function roiCalc() {
+    var outsource = toCents(cnum('crOut'));       // платят подрядчику в месяц
+    var hours = cnum('crHours');
+    var own = toCents(cnum('crCost'));            // своя себестоимость часа
+    var price = toCents(cnum('crPrice'));
+    var sell = toCents(cnum('crSell'));           // продажа резки на сторону
+    var ownMonth = own * Math.round(hours * 100) / 100;
+    ownMonth = Math.round(ownMonth);
+    var save = outsource - ownMonth;              // экономия в месяц
+    var earn = sell ? Math.round((sell - own) * Math.round(hours * 100) / 100) : 0;
+    var profit = save + earn;
+    var months = profit > 0 ? Math.ceil(price / profit) : 0;
+    // сколько часов в месяц нужно, чтобы выйти в ноль по цене подрядчика
+    var perHour = hours > 0 ? divHalfUp(outsource, Math.round(hours)) : 0;
+    var breakeven = (perHour > own && own >= 0 && price)
+      ? Math.ceil(price / (perHour - own)) : 0;
+    return { outsource: outsource, ownMonth: ownMonth, save: save, earn: earn,
+      profit: profit, months: months, price: price, perHour: perHour,
+      own: own, hours: hours, breakeven: breakeven };
+  }
+  function renderRoi() {
+    var T = roiCalc();
+    var hero = fresh('crHero');
+    hero.innerHTML = '<div class="l">Окупится за</div><div class="v">' +
+      (T.months ? T.months + ' ' + plural(T.months, ['месяц', 'месяца', 'месяцев'])
+        : '—') + '</div><div class="split"><div><div class="l">Выгода в месяц' +
+      '</div><div class="s">' + fmtRub(T.profit) + ' ₽</div></div>' +
+      '<div><div class="l">За год</div><div class="s">' +
+      fmtRub(T.profit * 12) + ' ₽</div></div></div>';
+    var tot = fresh('crTotals');
+    totLine(tot, 'Платите подрядчику', fmt(T.outsource) + ' ₽/мес');
+    totLine(tot, 'Своя резка', fmt(T.ownMonth) + ' ₽/мес');
+    totLine(tot, 'Экономия', fmt(T.save) + ' ₽/мес', 'gain');
+    if (T.earn) totLine(tot, 'Заработок на заказах', fmt(T.earn) + ' ₽/мес', 'gain');
+    totLine(tot, 'Цена комплекта', fmt(T.price) + ' ₽');
+    totLine(tot, 'Срок окупаемости',
+      (T.months ? T.months + ' ' + plural(T.months, ['месяц', 'месяца', 'месяцев'])
+        : 'нет выгоды'), 'big');
+    var st = fresh('crStory');
+    if (T.hours && T.outsource) {
+      st.appendChild(el('div', '', 'Час у подрядчика обходится в ' +
+        fmt(T.perHour) + ' ₽ — это ' + fmt(T.outsource) + ' ₽ за ' +
+        T.hours + ' ' + plural(Math.round(T.hours), ['час', 'часа', 'часов']) +
+        ' в месяц.'));
+      st.appendChild(el('div', '', 'Свой час стоит ' + fmt(T.own) +
+        ' ₽ — разница ' + fmt(T.perHour - T.own) + ' ₽ на каждом часе.'));
+      if (T.breakeven) {
+        st.appendChild(el('div', '', 'Точка безубыточности: ' + T.breakeven +
+          ' ' + plural(T.breakeven, ['час', 'часа', 'часов']) +
+          ' резки — столько нужно наработать, чтобы вернуть вложения.'));
+      }
+    } else {
+      st.appendChild(el('div', '', 'Заполните месячный счёт подрядчику, ' +
+        'часы резки и свою себестоимость часа.'));
+    }
+    $('crNote').textContent = APP.roiNote;
+    $('crMarket').textContent = APP.roiMarket;
+    state.calc.roi = {};
+    ['crOut', 'crHours', 'crCost', 'crPrice', 'crSell'].forEach(function (id) {
+      state.calc.roi[id] = $(id).value;
+    });
+    save();
+  }
+  function roiText() {
+    var T = roiCalc();
+    return ['Окупаемость станка',
+      'Сейчас на стороне: ' + fmt(T.outsource) + ' ₽/мес',
+      'Своя резка: ' + fmt(T.ownMonth) + ' ₽/мес',
+      'Выгода: ' + fmt(T.profit) + ' ₽/мес, за год ' + fmt(T.profit * 12) + ' ₽',
+      'Цена комплекта: ' + fmt(T.price) + ' ₽',
+      T.months ? 'Окупаемость: ' + T.months + ' ' +
+        plural(T.months, ['месяц', 'месяца', 'месяцев']) : 'Выгоды нет'].join('\n');
+  }
+
+  // ------------------------- сборка раздела ----------------------------
+  (function () {
+    if (!d.getElementById('calcTabs')) return;
+    // ставки НДС из данных: 22 % текущая, 20 % в старых счетах
+    var rs = fresh('cnRate');
+    APP.ndsRates.forEach(function (r) { opt(rs, String(r.v), r.label); });
+    rs.value = String(state.calc.nds.rate || APP.ndsDefault * 10);
+    $('cnSum').value = state.calc.nds.sum || '';
+    $('cnMode').value = state.calc.nds.mode || 'in';
+    calcBind(['cnSum', 'cnRate', 'cnMode'], renderNds);
+    $('cnFromSmeta').addEventListener('click', function () {
+      var c = smetaTotalCents();
+      if (!c) { toast('Смета пуста'); return; }
+      $('cnSum').value = fmt(c);
+      $('cnMode').value = 'in';
+      renderNds();
+    });
+    $('cnCopy').addEventListener('click', function () { copyText(ndsText()); });
+
+    var L = APP.leasing;
+    $('clPrice').value = state.calc.lease.price || '';
+    $('clAdv').value = state.calc.lease.adv || String(L.advance_pct);
+    $('clMonths').value = state.calc.lease.months || String(L.months);
+    $('clUp').value = state.calc.lease.up || String(L.markup_year / 10).replace('.', ',');
+    $('clNote').textContent = APP.leasingNote;
+    $('clSrc').textContent = L.source;
+    calcBind(['clPrice', 'clAdv', 'clMonths', 'clUp'], renderLease);
+    $('clFromSmeta').addEventListener('click', function () {
+      var c = smetaTotalCents();
+      if (!c) { toast('Смета пуста'); return; }
+      $('clPrice').value = fmt(c);
+      renderLease();
+    });
+    $('clCopy').addEventListener('click', function () { copyText(leaseText()); });
+
+    var costIds = ['ccPower', 'ccKwh', 'ccGas', 'ccNozzle', 'ccNozzleH', 'ccGlass',
+      'ccGlassH', 'ccOper', 'ccHours', 'ccPrice', 'ccLife', 'ccOther'];
+    costIds.forEach(function (id) {
+      $(id).value = (state.calc.cost && state.calc.cost[id]) || '';
+    });
+    calcBind(costIds, renderCost);
+    $('ccFromSmeta').addEventListener('click', function () {
+      var c = smetaTotalCents();
+      if (!c) { toast('Смета пуста'); return; }
+      $('ccPrice').value = fmt(c);
+      renderCost();
+    });
+    $('ccCopy').addEventListener('click', function () { copyText(costText()); });
+    var help = fresh('ccHelp');
+    APP.costFields.forEach(function (f) {
+      var row = el('div', 'maprow');
+      row.innerHTML = '<b>' + esc(f.label) + '</b><span class="muted">' +
+        esc(f.hint) + '</span>';
+      help.appendChild(row);
+    });
+
+    var roiIds = ['crOut', 'crHours', 'crCost', 'crPrice', 'crSell'];
+    roiIds.forEach(function (id) {
+      $(id).value = (state.calc.roi && state.calc.roi[id]) || '';
+    });
+    calcBind(roiIds, renderRoi);
+    $('crFromCost').addEventListener('click', function () {
+      var T = costCalc();
+      if (!T.sum) { toast('Сначала посчитайте час работы'); return; }
+      $('crCost').value = fmt(T.sum);
+      renderRoi();
+    });
+    $('crFromSmeta').addEventListener('click', function () {
+      var c = smetaTotalCents();
+      if (!c) { toast('Смета пуста'); return; }
+      $('crPrice').value = fmt(c);
+      renderRoi();
+    });
+    $('crCopy').addEventListener('click', function () { copyText(roiText()); });
+
+    renderNds();
+    renderLease();
+    renderCost();
+    renderRoi();
+    showCalcPart(state.calcPart || 'nds');
+  }());
+
+  // =====================================================================
+  //                       ТРЕНАЖЁР ПО ТЕХНИЧКЕ
+  // Вопросы не написаны руками, а собраны из тех же данных, что и весь
+  // остальной интерфейс: таблицы толщин, газ по материалам, комплектация
+  // под мощность, условия поставки и гарантии. Значит, при правке прайса
+  // тренажёр обновляется сам и не начинает врать.
+  // =====================================================================
+  var quizState = null;                 // партия живёт до конца прогона
+
+  function qShuffle(list) {             // перемешивание Фишера — Йетса
+    var a = list.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  // варианты ответа: правильный плюс отвлекающие, всё перемешано
+  function qMake(question, right, wrong, why, part) {
+    var opts = qShuffle([right].concat(wrong.slice(0, 3)));
+    return { q: question, right: right, opts: opts, why: why, part: part };
+  }
+  function quizPool() {
+    var out = [];
+    var cut = APP.cutLimits || {};
+    var powers = ['3000', '6000', '12000'];
+    // 1. предельная толщина по материалу и мощности
+    Object.keys(cut).forEach(function (mat) {
+      cut[mat].forEach(function (row) {
+        var kw = row[0] / 1000, mm = row[1];
+        var all = [];
+        Object.keys(cut).forEach(function (m2) {
+          cut[m2].forEach(function (r2) { if (r2[1] !== mm) all.push(r2[1] + ' мм'); });
+        });
+        out.push(qMake('Предел по заводским таблицам: ' + mat.toLowerCase() +
+          ' на источнике ' + kw + ' кВт — какая толщина?', mm + ' мм',
+          qShuffle(all), 'Из таблицы предельных толщин. Клиенту называем ' +
+          'рабочую толщину, а не предельную: у предела режет медленно и грязно.',
+          'tech'));
+      });
+    });
+    // 2. газ под материал
+    var gas = APP.gasByMaterial || {};
+    var gasVals = [];
+    Object.keys(gas).forEach(function (m) {
+      if (gasVals.indexOf(gas[m]) < 0) gasVals.push(gas[m]);
+    });
+    Object.keys(gas).forEach(function (mat) {
+      out.push(qMake('Каким газом режут ' + mat.toLowerCase() + '?', gas[mat],
+        gasVals.filter(function (v) { return v !== gas[mat]; })
+          .concat(['Аргон 99,99 %', 'Сжатый воздух']),
+        'Кислород даёт скорость по углеродистой стали, азот — чистый рез ' +
+        'без окисла на нержавейке и алюминии.', 'gas'));
+    });
+    // 3. комплектация под мощность источника
+    var kit = APP.fiberKit || {};
+    powers.forEach(function (p) {
+      if (!kit[p]) return;
+      var others = [];
+      powers.forEach(function (p2) {
+        if (p2 !== p && kit[p2]) others.push(kit[p2].ctrl);
+      });
+      out.push(qMake('Какой контроллер идёт с источником ' + (p / 1000) +
+        ' кВт?', kit[p].ctrl, others.concat(['BCS100', 'FSCUT2000']),
+        'Контроллер и голова подбираются под мощность источника — это ' +
+        'заводская комплектация, а не выбор менеджера.', 'tech'));
+      var heads = [];
+      powers.forEach(function (p2) {
+        if (p2 !== p && kit[p2]) heads.push(kit[p2].head);
+      });
+      out.push(qMake('Какая голова ставится на источник ' + (p / 1000) +
+        ' кВт?', kit[p].head, heads.concat(['BLT640', 'BLT210']),
+        'Голова Boci подбирается под мощность: слабая на большой мощности ' +
+        'сгорит, мощная на слабой — деньги на ветер.', 'tech'));
+    });
+    // 4. запас по мощности
+    out.push(qMake('Какой запас по мощности требует завод при подборе?',
+      APP.reservePct + ' %', ['10 %', '50 %', 'запас не нужен'],
+      'Требование завода: считать мощность с запасом, иначе станок работает ' +
+      'на пределе и ресурс источника падает.', 'match'));
+    // 5. сроки поставки
+    out.push(qMake('Срок поставки станка под заказ?', APP.deliveryOrder,
+      [APP.deliveryStock, 'до 30 раб. дней', 'до 120 раб. дней'],
+      'Под заказ — до 80 рабочих дней, из наличия — 1–3 дня. Это разные ' +
+      'сроки и разные цены.', 'shop'));
+    out.push(qMake('Срок поставки из наличия?', APP.deliveryStock,
+      [APP.deliveryOrder, '7–10 раб. дней', 'в день оплаты'],
+      'Из наличия отгружаем за 1–3 рабочих дня, но цена выше: наценка ' +
+      'за склад.', 'shop'));
+    // 6. гарантия
+    out.push(qMake('Гарантия на станок?', APP.guarantee.label,
+      ['6 месяцев', '24 месяца', '36 месяцев'],
+      'Гарантия 12 месяцев, расходники под неё не попадают.', 'tech'));
+    // 7. ставка НДС
+    out.push(qMake('Какая ставка НДС в текущих счетах?',
+      (APP.ndsDefault) + ' %', ['20 %', '18 %', '10 %'],
+      'В счетах и ТКП сейчас 22 %. Ставка 20 % встречается в документах ' +
+      'прошлых лет — при проверке старого счёта берите её.', 'data'));
+    return out;
+  }
+  function quizPartTitle(id) {
+    var t = id;
+    GUIDE_PARTS.forEach(function (g) { if (g.id === id) t = g.title; });
+    return t;
+  }
+  function quizRender() {
+    var S = quizState;
+    if (!S) return;
+    $('quizStart').hidden = true;
+    $('quizDone').hidden = true;
+    $('quizPlay').hidden = false;
+    var q = S.list[S.i];
+    $('quizNum').textContent = 'Вопрос ' + (S.i + 1) + ' из ' + S.list.length;
+    $('quizScore').textContent = 'верно ' + S.ok + ' из ' + S.i;
+    $('quizBar').style.width = Math.round(S.i / S.list.length * 100) + '%';
+    $('quizQ').textContent = q.q;
+    var box = fresh('quizOpts');
+    q.opts.forEach(function (o) {
+      var b = el('button', 'quizopt', esc(o));
+      b.type = 'button';
+      b.addEventListener('click', function () { quizAnswer(o, b); });
+      box.appendChild(b);
+    });
+    fresh('quizWhy');
+    $('quizNext').hidden = true;
+  }
+  function quizAnswer(picked, btn) {
+    var S = quizState, q = S.list[S.i];
+    if (S.answered) return;
+    S.answered = true;
+    var right = picked === q.right;
+    if (right) S.ok++;
+    else S.errors.push({ q: q.q, right: q.right, picked: picked, why: q.why,
+      part: q.part });
+    var bs = $('quizOpts').querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) {
+      var t = bs[i].textContent;
+      bs[i].disabled = true;
+      if (t === q.right) bs[i].className = 'quizopt ok';
+      else if (bs[i] === btn) bs[i].className = 'quizopt bad';
+    }
+    var why = fresh('quizWhy');
+    why.appendChild(el('div', right ? 'note ok-note' : 'note alert',
+      (right ? 'Верно. ' : 'Правильный ответ: ' + q.right + '. ') + q.why));
+    var jump = el('button', 'btn mini sec', 'Открыть «' +
+      quizPartTitle(q.part) + '»');
+    jump.type = 'button';
+    jump.addEventListener('click', function () { showGuidePart(q.part); });
+    why.appendChild(jump);
+    $('quizNext').hidden = false;
+    $('quizScore').textContent = 'верно ' + S.ok + ' из ' + (S.i + 1);
+  }
+  function quizFinish() {
+    var S = quizState;
+    $('quizPlay').hidden = true;
+    $('quizDone').hidden = false;
+    var pct = Math.round(S.ok / S.list.length * 100);
+    var mark = pct >= 90 ? 'отлично' : (pct >= 70 ? 'сойдёт' : 'надо подтянуть');
+    var hero = fresh('quizHero');
+    hero.innerHTML = '<div class="l">Результат</div><div class="v">' + pct +
+      ' %</div><div class="split"><div><div class="l">Верно</div><div class="s">' +
+      S.ok + ' из ' + S.list.length + '</div></div><div><div class="l">Оценка' +
+      '</div><div class="s">' + mark + '</div></div></div>';
+    var box = fresh('quizErrors');
+    if (!S.errors.length) {
+      box.appendChild(el('div', 'note ok-note', 'Ни одной ошибки.'));
+    } else {
+      box.appendChild(el('h3', '', 'Разбор ошибок'));
+      S.errors.forEach(function (e) {
+        var row = el('div', 'quizerr');
+        row.innerHTML = '<b>' + esc(e.q) + '</b><div class="muted">Вы выбрали: ' +
+          esc(e.picked) + ' · верно: ' + esc(e.right) + '</div><div>' +
+          esc(e.why) + '</div>';
+        box.appendChild(row);
+      });
+    }
+    // лучший результат храним в черновике: видно прогресс
+    var best = state.quiz && state.quiz.best;
+    if (!best || pct > best.pct) {
+      state.quiz = { best: { pct: pct, of: S.list.length,
+        date: new Date().toISOString().slice(0, 10) } };
+      save();
+    }
+    quizBest();
+  }
+  function quizBest() {
+    var n = $('quizBest');
+    if (!n) return;
+    var b = state.quiz && state.quiz.best;
+    n.textContent = b ? 'лучший результат ' + b.pct + ' % (' + b.of +
+      ' вопросов, ' + ruDate(b.date) + ')' : 'прогонов ещё не было';
+  }
+  function quizStart(n) {
+    var pool = quizPool();
+    quizState = { list: qShuffle(pool).slice(0, Math.min(n, pool.length)),
+      i: 0, ok: 0, errors: [], answered: false };
+    quizRender();
+  }
+  function quizText() {
+    var S = quizState;
+    if (!S) return '';
+    var pct = Math.round(S.ok / S.list.length * 100);
+    var out = ['Тренажёр по техничке: ' + S.ok + ' из ' + S.list.length +
+      ' (' + pct + ' %)'];
+    S.errors.forEach(function (e) {
+      out.push('Ошибка: ' + e.q + ' — верно: ' + e.right);
+    });
+    return out.join('\n');
+  }
+  (function () {
+    if (!d.getElementById('quizStart')) return;
+    $('quizGo10').addEventListener('click', function () { quizStart(10); });
+    $('quizGo25').addEventListener('click', function () { quizStart(25); });
+    $('quizNext').addEventListener('click', function () {
+      var S = quizState;
+      S.i++;
+      S.answered = false;
+      if (S.i >= S.list.length) quizFinish();
+      else quizRender();
+    });
+    $('quizStop').addEventListener('click', function () {
+      quizState = null;
+      $('quizPlay').hidden = true;
+      $('quizDone').hidden = true;
+      $('quizStart').hidden = false;
+    });
+    $('quizAgain').addEventListener('click', function () {
+      $('quizDone').hidden = true;
+      $('quizStart').hidden = false;
+    });
+    $('quizCopy').addEventListener('click', function () { copyText(quizText()); });
+    quizBest();
+  }());
+
   fillMarkers();
   renderChiller();
   renderStabOpt('cStab', 'cStabOut');

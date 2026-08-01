@@ -194,6 +194,25 @@ a{color:var(--or2)}
   background:var(--or);border-radius:3px;margin-right:10px;vertical-align:-3px}
 .hero h1{margin:0 0 6px;font-size:24px;color:var(--tx)}
 .hero p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+/* Тренажёр: полоса прогресса, крупные варианты ответа, разбор ошибок */
+.quizbar{height:6px;border-radius:4px;background:var(--bg4);overflow:hidden;
+  margin:4px 0 14px}
+.quizbar-i{height:100%;width:0;background:var(--or);transition:width .2s}
+.quizq{font-size:17.5px;font-weight:600;margin:0 0 14px;line-height:1.45}
+.quizopts{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.quizopt{font:inherit;font-size:15.5px;text-align:left;padding:12px 14px;
+  border-radius:9px;border:1px solid var(--line2);background:var(--bg4);
+  color:var(--tx);cursor:pointer;transition:.12s}
+.quizopt:hover:not(:disabled){border-color:var(--or);color:var(--or2)}
+.quizopt:disabled{cursor:default;opacity:.75}
+.quizopt.ok{border-color:var(--ok);background:var(--okbg);color:var(--tx);opacity:1}
+.quizopt.bad{border-color:var(--bad);background:var(--badbg);color:var(--tx);opacity:1}
+.note.ok-note{border-color:var(--ok);background:var(--okbg)}
+.quizerr{padding:10px 12px;margin:8px 0;border-radius:9px;border:1px solid var(--line);
+  background:var(--bg3);font-size:14.5px}
+.quizerr b{display:block;margin-bottom:4px}
+.quizerr .muted{font-size:13px}
+
 /* Справочник: три части в одном разделе — показываем ту, что выбрана */
 .subtabs{margin:0 0 18px}
 .subpanel{display:none}

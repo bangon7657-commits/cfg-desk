@@ -80,13 +80,13 @@ check('вкладки по умолчанию: главная, конфигур�
     .map(b => b.getAttribute('data-t')).join(','));
 check('у каждой вкладки есть крестик снятия',
   doc.querySelectorAll('#tabs button[data-t] .tabx').length === 4, '');
-check('панелей 7', doc.querySelectorAll('.panel').length === 7,
+check('панелей 8', doc.querySelectorAll('.panel').length === 8,
   'найдено ' + doc.querySelectorAll('.panel').length);
-check('в кнопке «Разделы» все 7 разделов',
-  doc.querySelectorAll('#menuList button[data-t]').length === 7,
+check('в кнопке «Разделы» все 8 разделов',
+  doc.querySelectorAll('#menuList button[data-t]').length === 8,
   'найдено ' + doc.querySelectorAll('#menuList button[data-t]').length);
 check('в меню у каждого раздела кнопка закрепления',
-  doc.querySelectorAll('#menuList button[data-pin]').length === 7 &&
+  doc.querySelectorAll('#menuList button[data-pin]').length === 8 &&
   [...doc.querySelectorAll('#menuList button[data-pin]')]
     .filter(b => b.getAttribute('aria-pressed') === 'true').length === 4, '');
 check('в меню есть счётчик и сброс вкладок',
@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 29', /const CACHE = 'cfg-v29'/.test(swTxt),
+check('кеш: версия поднята до 30', /const CACHE = 'cfg-v30'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1383,8 +1383,119 @@ check('подбор: длинный лид убран в свёрнутую сп
 check('главная: плашка без логотипа и рамки',
   !doc.querySelector('#p-home .hero img') && /\.hero\{background:none;border:0/.test(src), '');
 check('навигация: остальные разделы живут в кнопке «Разделы»',
-  doc.querySelectorAll('#menuList button[data-t]').length === 7 &&
+  doc.querySelectorAll('#menuList button[data-t]').length === 8 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
+
+// ---- v30: калькуляторы НДС, лизинга, часа работы и окупаемости ----
+menuGo('calc');
+check('калькуляторы: раздел открылся, четыре части',
+  doc.getElementById('p-calc').classList.contains('active') &&
+  [...doc.querySelectorAll('#calcTabs button')].map(b => b.textContent).join('|') ===
+  'НДС|Лизинг и график|Час работы станка|Окупаемость',
+  [...doc.querySelectorAll('#calcTabs button')].map(b => b.textContent).join('|'));
+const cShown = () => [...doc.querySelectorAll('#p-calc .subpanel')]
+  .filter(n => n.classList.contains('active')).map(n => n.id).join(',');
+check('калькуляторы: по умолчанию открыт НДС', cShown() === 'c-nds', cShown());
+// НДС: 122 000 с НДС 22 % → налог 22 000, без НДС 100 000
+const setVal = (id, v) => {
+  const n = win.document.getElementById(id);
+  n.value = v;
+  n.dispatchEvent(new win.Event('input'));
+};
+setVal('cnSum', '122 000');
+win.document.getElementById('cnRate').value = '220';
+win.document.getElementById('cnRate').dispatchEvent(new win.Event('change'));
+check('НДС: из 122 000 с налогом 22 % выделяется 22 000',
+  /22 000,00/.test(textOf(doc, '#cnBody')) && /100 000,00/.test(textOf(doc, '#cnBody')),
+  textOf(doc, '#cnBody'));
+win.document.getElementById('cnMode').value = 'out';
+win.document.getElementById('cnMode').dispatchEvent(new win.Event('change'));
+setVal('cnSum', '100 000');
+check('НДС: на 100 000 без налога сверху начисляется 22 000',
+  /22 000,00/.test(textOf(doc, '#cnBody')) && /122 000,00/.test(textOf(doc, '#cnBody')),
+  textOf(doc, '#cnBody'));
+check('НДС: сумма прописью посчитана',
+  /Сто двадцать две тысячи рублей/.test(textOf(doc, '#cnWords')),
+  textOf(doc, '#cnWords').slice(0, 90));
+check('НДС: в списке ставок есть 22 и 20 процентов',
+  [...doc.querySelectorAll('#cnRate option')].map(o => o.value).join(',')
+    === '220,200,100,0',
+  [...doc.querySelectorAll('#cnRate option')].map(o => o.value).join(','));
+// Лизинг: 3 000 000, аванс 20 %, 36 мес, удорожание 10 % в год
+doc.querySelector('#calcTabs button[data-sub="lease"]').click();
+check('лизинг: часть открылась', cShown() === 'c-lease', cShown());
+setVal('clPrice', '3 000 000');
+setVal('clAdv', '20');
+setVal('clMonths', '36');
+setVal('clUp', '10');
+// финансируется 2 400 000, удорожание 30 % за три года = 720 000,
+// тело 3 120 000, платёж 86 666,67
+check('лизинг: аванс, удорожание и тело договора посчитаны',
+  /2 400 000,00/.test(textOf(doc, '#clTotals')) &&
+  /720 000,00/.test(textOf(doc, '#clTotals')) &&
+  /600 000,00/.test(textOf(doc, '#clTotals')),
+  textOf(doc, '#clTotals'));
+check('лизинг: платёж 86 666,67 в месяц',
+  /86 666,67/.test(textOf(doc, '#clBody')), textOf(doc, '#clBody').slice(0, 120));
+check('лизинг: в графике аванс и 36 платежей',
+  doc.querySelectorAll('#clBody tr').length === 37,
+  'строк ' + doc.querySelectorAll('#clBody tr').length);
+check('лизинг: график сходится с итогом — аванс плюс тело договора',
+  (() => {
+    const rows = [...doc.querySelectorAll('#clBody tr')];
+    const last = rows[rows.length - 1].children[2].textContent;
+    return /3 720 000,00/.test(last);
+  })(), [...doc.querySelectorAll('#clBody tr')].slice(-1)[0].textContent);
+check('лизинг: сказано, что удорожание не банковская ставка',
+  /не банковская ставка/.test(textOf(doc, '#clNote')), '');
+// Час работы: 15 кВт × 8 ₽ = 120 ₽/ч электричества
+doc.querySelector('#calcTabs button[data-sub="cost"]').click();
+setVal('ccPower', '15');
+setVal('ccKwh', '8');
+setVal('ccGas', '600');
+setVal('ccNozzle', '3 000');
+setVal('ccNozzleH', '100');
+setVal('ccGlass', '1 500');
+setVal('ccGlassH', '50');
+setVal('ccOper', '80 000');
+setVal('ccHours', '160');
+setVal('ccPrice', '3 000 000');
+setVal('ccLife', '20 000');
+check('час работы: электричество 120 ₽ и газ 600 ₽ в час',
+  /120,00/.test(textOf(doc, '#ccBody')) && /600,00/.test(textOf(doc, '#ccBody')),
+  textOf(doc, '#ccBody').slice(0, 150));
+check('час работы: расходники разложены по ресурсу — 30 ₽ и 30 ₽',
+  (textOf(doc, '#ccBody').match(/30,00/g) || []).length >= 2,
+  textOf(doc, '#ccBody'));
+// 120 газ+электричество, 30 сопло, 30 стекло, 500 оператор, 150 амортизация
+check('час работы: итог 1 430 ₽ — сумма всех статей',
+  /1 430,00/.test(textOf(doc, '#ccHero')), textOf(doc, '#ccHero').slice(0, 90));
+check('час работы: приложение честно говорит, что не считает метры',
+  /скорости резки/.test(textOf(doc, '#ccNote')) ||
+  /не хватает/i.test(textOf(doc, '#ccNote')), textOf(doc, '#ccNote').slice(0, 90));
+// Окупаемость: подрядчику 300 000 в месяц, 160 часов, свой час 1 030 ₽
+doc.querySelector('#calcTabs button[data-sub="roi"]').click();
+doc.getElementById('crFromCost').click();
+setVal('crOut', '300 000');
+setVal('crHours', '160');
+setVal('crPrice', '3 000 000');
+check('окупаемость: себестоимость подтянулась из расчёта часа',
+  /1 430/.test(win.document.getElementById('crCost').value),
+  win.document.getElementById('crCost').value);
+// своя резка 164 800 ₽/мес, экономия 135 200 ₽, окупаемость 23 месяца
+check('окупаемость: экономия 71 200 ₽ в месяц',
+  /71 200,00/.test(textOf(doc, '#crTotals')) &&
+  /228 800,00/.test(textOf(doc, '#crTotals')), textOf(doc, '#crTotals'));
+check('окупаемость: срок 43 месяца — 3 млн делим на выгоду',
+  /43 месяца/.test(textOf(doc, '#crHero')) &&
+  /43 месяца/.test(textOf(doc, '#crTotals')), textOf(doc, '#crHero'));
+check('окупаемость: есть объяснение для клиента про цену часа',
+  /Час у подрядчика/.test(textOf(doc, '#crStory')) &&
+  /Точка безубыточности/.test(textOf(doc, '#crStory')),
+  textOf(doc, '#crStory').slice(0, 160));
+check('калькуляторы: ничего не выдумано — источники подписаны',
+  /лизингодател/i.test(textOf(doc, '#clSrc')) &&
+  /погонный метр/.test(textOf(doc, '#crMarket')), '');
 
 // ---- v28: три раздела сведены в «Справочник», меню поверх всего ----
 menuGo('guide');
@@ -1393,9 +1504,9 @@ check('справочник: одна панель вместо пяти пре�
   !doc.getElementById('p-tech') && !doc.getElementById('p-gas') &&
   !doc.getElementById('p-shop') && !doc.getElementById('p-data') &&
   doc.getElementById('p-guide').classList.contains('active'), '');
-check('справочник: пять частей и переключатель над ними',
+check('справочник: шесть частей и переключатель над ними',
   [...doc.querySelectorAll('#guideTabs button')].map(b => b.textContent).join('|') ===
-  'Подбор по задаче|Техника|Газ и владение|Готовность цеха|Данные',
+  'Подбор по задаче|Техника|Газ и владение|Готовность цеха|Данные|Тренажёр',
   [...doc.querySelectorAll('#guideTabs button')].map(b => b.textContent).join('|'));
 const gShown = () => [...doc.querySelectorAll('#p-guide .subpanel')]
   .filter(n => n.classList.contains('active')).map(n => n.id).join(',');
@@ -1419,6 +1530,46 @@ doc.querySelector('#guideTabs button[data-sub="data"]').click();
 check('справочник: служебные данные переехали внутрь',
   gShown() === 'g-data' &&
   /Статус полей/.test(doc.getElementById('g-data').textContent), gShown());
+doc.querySelector('#guideTabs button[data-sub="quiz"]').click();
+check('тренажёр: на входе экран старта, вопросы ещё не заданы',
+  gShown() === 'g-quiz' && !doc.getElementById('quizStart').hidden &&
+  doc.getElementById('quizPlay').hidden &&
+  doc.getElementById('quizOpts').children.length === 0, gShown());
+doc.getElementById('quizGo10').click();
+check('тренажёр: быстрый прогон даёт десять вопросов и варианты ответа',
+  /Вопрос 1 из 10/.test(textOf(doc, '#quizNum')) &&
+  doc.querySelectorAll('#quizOpts button').length === 4 &&
+  textOf(doc, '#quizQ').length > 10,
+  textOf(doc, '#quizNum') + ' | ' + textOf(doc, '#quizQ').slice(0, 60));
+(function () {
+  // отвечаем заведомо неверно, чтобы проверить разбор ошибки
+  const opts = [...doc.querySelectorAll('#quizOpts button')];
+  opts[0].click();
+  const marked = opts.filter(b => /ok|bad/.test(b.className)).length;
+  check('тренажёр: ответ подсвечивает верный и показывает объяснение',
+    marked >= 1 && textOf(doc, '#quizWhy').length > 20 &&
+    !doc.getElementById('quizNext').hidden,
+    textOf(doc, '#quizWhy').slice(0, 80));
+  check('тренажёр: из объяснения можно уйти в нужную часть справочника',
+    !!doc.querySelector('#quizWhy button'),
+    (doc.querySelector('#quizWhy button') || {}).textContent);
+  // добиваем прогон до конца
+  for (let k = 0; k < 12; k++) {
+    const next = doc.getElementById('quizNext');
+    if (next && !next.hidden) { next.click(); }
+    const o = [...doc.querySelectorAll('#quizOpts button')].filter(b => !b.disabled);
+    if (o.length) o[0].click();
+  }
+  check('тренажёр: в конце показывает результат и оценку',
+    !doc.getElementById('quizDone').hidden &&
+    /%/.test(textOf(doc, '#quizHero')), textOf(doc, '#quizHero').slice(0, 80));
+  check('тренажёр: лучший результат запомнился',
+    /лучший результат/.test(textOf(doc, '#quizBest')), textOf(doc, '#quizBest'));
+  doc.getElementById('quizAgain').click();
+}());
+check('тренажёр: вопросы собраны из данных, а не написаны руками',
+  /quizPool/.test(src) && /APP\.cutLimits/.test(src) &&
+  /APP\.gasByMaterial/.test(src) && /APP\.fiberKit/.test(src), '');
 check('справочник: части прячутся стилем, а не разметкой',
   /\.subpanel\{display:none\}/.test(src.replace(/\s+/g, '')) &&
   /\.subpanel\.active\{display:block\}/.test(src.replace(/\s+/g, '')), '');
@@ -1785,6 +1936,26 @@ doc.getElementById('saveDot').textContent = '';
   'zpNormWarn'].forEach(id => {
   const n = doc.getElementById(id); if (n) n.innerHTML = '';
 });
+// калькуляторы и тренажёр: цифры из проверок в выпуск не уезжают
+['cnSum', 'clPrice', 'ccPower', 'ccKwh', 'ccGas', 'ccNozzle', 'ccNozzleH',
+  'ccGlass', 'ccGlassH', 'ccOper', 'ccHours', 'ccPrice', 'ccLife', 'ccOther',
+  'crOut', 'crHours', 'crCost', 'crPrice', 'crSell']
+  .forEach(id => { const n = doc.getElementById(id); if (n) n.value = ''; });
+['cnHero', 'cnBody', 'cnWords', 'clHero', 'clTotals', 'clBody', 'ccHero',
+  'ccBody', 'crHero', 'crTotals', 'crStory', 'quizOpts', 'quizWhy',
+  'quizErrors', 'quizHero'].forEach(id => {
+  const n = doc.getElementById(id); if (n) n.innerHTML = '';
+});
+['ndsHint', 'clCnt', 'quizNum', 'quizScore', 'quizQ', 'quizBest']
+  .forEach(id => { const n = doc.getElementById(id); if (n) n.textContent = ''; });
+const quizBarNode = doc.getElementById('quizBar');
+if (quizBarNode) quizBarNode.removeAttribute('style');
+// тренажёр открывается экраном старта, а не серединой прогона
+const qStart = doc.getElementById('quizStart');
+if (qStart) qStart.removeAttribute('hidden');
+['quizPlay', 'quizDone', 'quizNext'].forEach(id => {
+  const n = doc.getElementById(id); if (n) n.setAttribute('hidden', '');
+});
 const specCntNode = doc.getElementById('specCnt');
 if (specCntNode) specCntNode.textContent = '';
 ['specCnt', 'buildCnt', 'buildFillCnt', 'pickCnt', 'ltrPageCnt', 'ltrTitle',
@@ -1861,7 +2032,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 7,
+  doc2.querySelectorAll('.nojs-title').length === 8,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('3 010 400') >= 0);
 check('пререндер: смета пуста при открытии',
@@ -1912,6 +2083,15 @@ check('чистота: пометка «сохранено» снята',
 check('чистота: чекбоксы сняты',
   !/type="checkbox"[^>]*checked/.test(markup) &&
   !/checked[^>]*type="checkbox"/.test(markup), '');
+check('чистота: калькуляторы открываются пустыми',
+  ['cnSum', 'clPrice', 'ccPower', 'crOut'].every(id =>
+    !(doc2.getElementById(id) || {}).getAttribute('value')) &&
+  !/135 200|1 430,00|86 666/.test(outSrc), '');
+check('чистота: тренажёр открывается экраном старта',
+  doc2.getElementById('quizPlay').hasAttribute('hidden') &&
+  doc2.getElementById('quizDone').hasAttribute('hidden') &&
+  !doc2.getElementById('quizStart').hasAttribute('hidden') &&
+  doc2.getElementById('quizOpts').children.length === 0, '');
 check('чистота: тема тёмная по умолчанию',
   !/data-theme=/.test(markup.slice(markup.indexOf('<html'), markup.indexOf('<head'))), '');
 check('чистота: реквизиты в форме не затёрты пустыми',
