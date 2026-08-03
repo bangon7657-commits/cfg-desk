@@ -874,7 +874,7 @@ with open(os.path.join(DIST, 'manifest.webmanifest'), 'w', encoding='utf-8') as 
 
 SW = """// Версия кеша берётся из cache_version.txt — поднимать при каждом выпуске.
 const CACHE = 'cfg-v%d';
-const ASSETS = ['./', './index.html', './manifest.webmanifest',
+const ASSETS = ['./', './index.html', './compare.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png',
   './apple-touch-icon-180.png'];
 
@@ -925,9 +925,21 @@ self.addEventListener('fetch', e => {
 with open(os.path.join(DIST, 'sw.js'), 'w', encoding='utf-8') as f:
     f.write(SW)
 
+# Сравнение документов — отдельная страница, а не часть index.html: она
+# нужна редко, весит 57 КБ и тянуть её в основной файл незачем. Копируем как
+# есть, содержимое не трогаем.
+with open(os.path.join(HERE, 'compare.html'), encoding='utf-8') as f:
+    COMPARE = f.read()
+assert 'DecompressionStream' in COMPARE, 'compare.html подменён или испорчен'
+assert 'index.html#home' in COMPARE, 'в compare.html потерялась ссылка назад'
+with open(os.path.join(DIST, 'compare.html'), 'w', encoding='utf-8') as f:
+    f.write(COMPARE)
+
 with open(os.path.join(DIST, 'robots.txt'), 'w', encoding='utf-8') as f:
     f.write('User-agent: *\nDisallow: /\n')
 
+cmp_size = os.path.getsize(os.path.join(DIST, 'compare.html'))
+print(f'compare.html: {cmp_size / 1024:.0f} КБ, отдельной страницей')
 size = os.path.getsize(os.path.join(DIST, 'index.html'))
 print(f'index.html до пререндера: {size / 1024:.0f} КБ '
       f'(после пререндера вырастет — итоговый размер печатает prerender.js)')

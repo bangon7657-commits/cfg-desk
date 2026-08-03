@@ -209,6 +209,20 @@
   function guidePartIds() {
     return GUIDE_PARTS.map(function (g) { return g.id; });
   }
+  // Соседние страницы инструмента: живут отдельными файлами, поэтому не
+  // переключаются, а открываются ссылкой. В SECTIONS им не место — там
+  // закрепление, крестики и порядок, которых у внешней страницы нет.
+  var PAGES = [
+    { file: 'compare.html', title: 'Сравнение',
+      hint: 'две версии документа рядом: что добавили, убрали, изменили' }
+  ];
+  function pageLink(cls) {
+    var a = d.createElement('a');
+    a.className = cls;
+    a.href = PAGES[0].file;
+    a.setAttribute('data-page', PAGES[0].file);
+    return a;
+  }
   var PINS_MAX = 6;
   var PINS_DEF = ['home', 'build', 'smeta', 'letters'];
   var curTab = 'cfg';
@@ -298,6 +312,17 @@
       hint.textContent = 'Вкладок нет — закрепите разделы в меню';
       box.appendChild(hint);
     }
+    // Соседняя страница — обычной ссылкой в хвосте ленты: без крестика
+    // и без звёздочки, потому что закреплять и снимать тут нечего.
+    PAGES.forEach(function (pg) {
+      var a = d.createElement('a');
+      a.className = 'tabpage';
+      a.href = pg.file;
+      a.setAttribute('data-page', pg.file);
+      a.title = pg.hint;
+      a.innerHTML = '<span>' + esc(pg.title) + '</span>';
+      box.appendChild(a);
+    });
   }
   function setPins(list) {
     state.pins = list.slice(0, PINS_MAX);
@@ -402,6 +427,20 @@
       row.appendChild(grip);
       row.appendChild(b);
       row.appendChild(pb);
+      menuList.appendChild(row);
+    });
+    // Внешние страницы — отдельной строкой внизу списка, со стрелкой:
+    // видно, что это переход на соседнюю страницу, а не вкладка.
+    PAGES.forEach(function (pg) {
+      var row = d.createElement('div');
+      row.className = 'mrow-page';
+      var a = d.createElement('a');
+      a.href = pg.file;
+      a.setAttribute('data-page', pg.file);
+      a.setAttribute('role', 'menuitem');
+      a.innerHTML = '<span>' + esc(pg.title) + ' <i>↗</i></span><small>' +
+        esc(pg.hint) + '</small>';
+      row.appendChild(a);
       menuList.appendChild(row);
     });
     menuList.appendChild(mfoot);
@@ -571,6 +610,10 @@
     }
     var meta = d.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', light ? '#f6f4f1' : '#100e0c');
+    // Соседняя страница сравнения читает свой ключ — пишем его здесь же,
+    // иначе она откроется в другой теме, чем инструмент.
+    try { localStorage.setItem('lk-compare-theme', light ? 'light' : 'dark'); }
+    catch (e) { /* приватный режим — тема просто не переедет */ }
     if (!silent) save();
   }
   $('themeBtn').addEventListener('click', function () {
@@ -3483,7 +3526,13 @@
           what: 'Выделить налог из суммы или начислить сверху, сумма прописью',
           need: 'сумму из счёта',
           next: 'сверить со счётом',
-          keys: 'ндс налог прописью счёт ставка 22 20 процент' }
+          keys: 'ндс налог прописью счёт ставка 22 20 процент' },
+        { page: 'compare.html', title: 'Сравнение документов',
+          what: 'Две версии договора или ТКП рядом: что добавили, убрали, изменили',
+          need: 'два файла .docx',
+          next: 'список правок — в отчёт или на печать',
+          keys: 'сравнение сравнить версии договор редакция правки docx word ' +
+            'протокол разногласий что изменилось' }
       ] },
     { id: 'know', title: 'Справка и обучение', hint: 'когда нужен факт, а не догадка',
       cards: [
@@ -3527,6 +3576,8 @@
     return out;
   }
   function mapGo(c) {
+    // соседняя страница — это отдельный файл, переключать нечего
+    if (c.page) { location.href = c.page; return; }
     // у справочника имя части и есть адрес: showTab сам его развернёт,
     // иначе в адресной строке остаётся прошлая часть
     if (c.go === 'guide' && c.part) { showTab(c.part); return; }
@@ -3565,7 +3616,7 @@
         shown++;
         var b = el('button', 'mapcard');
         b.type = 'button';
-        b.setAttribute('data-go', c.go + (c.part ? ':' + c.part : ''));
+        b.setAttribute('data-go', c.page || (c.go + (c.part ? ':' + c.part : '')));
         b.innerHTML = '<span class="mc-t">' + esc(c.title) + '</span>' +
           '<span class="mc-w">' + esc(c.what) + '</span>' +
           '<span class="mc-n"><i>нужно:</i> ' + esc(c.need) + '</span>' +

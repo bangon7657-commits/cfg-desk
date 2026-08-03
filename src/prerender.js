@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 35', /const CACHE = 'cfg-v35'/.test(swTxt),
+check('кеш: версия поднята до 36', /const CACHE = 'cfg-v36'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -2134,6 +2134,69 @@ check('вкладки: значок сметы жив после перерис�
     !mz('mzStabOn').checked && !mz('mzPnrOn').checked &&
     mz('mzPrice').dataset.touched !== '1',
     mz('mzPrice').value + ' / ' + mz('mzPrice').dataset.touched);
+}());
+
+// ---- v36: соседняя страница сравнения документов ----
+// Она живёт отдельным файлом: в index.html её содержимого быть не должно,
+// а связи с ней — ссылка в ленте, строка в меню, карточка в песочнице,
+// запись в кеше и общий ключ темы.
+(function () {
+  const fs36 = require('fs');
+  const cmpPath = path.join(DIST, 'compare.html');
+  check('сравнение: страница собрана отдельным файлом', fs36.existsSync(cmpPath), cmpPath);
+  const cmp = fs36.existsSync(cmpPath) ? fs36.readFileSync(cmpPath, 'utf8') : '';
+  check('сравнение: страница не влилась в index.html',
+    src.indexOf('DecompressionStream') < 0, 'найдено в index.html');
+  check('сравнение: страница цела', cmp.indexOf('DecompressionStream') > 0 &&
+    cmp.length > 50000, cmp.length + ' байт');
+  check('сравнение: у страницы нет внешних зависимостей',
+    !/<script[^>]+src=/i.test(cmp) && !/<link[^>]+stylesheet/i.test(cmp), '');
+  check('сравнение: ссылка назад ведёт на главную',
+    cmp.indexOf('href="index.html#home"') > 0, '');
+  check('сравнение: страница в списке предварительного кеша',
+    swTxt.indexOf("'./compare.html'") > 0, swTxt.slice(0, 120));
+
+  const tabLink = doc.querySelector('#tabs .tabpage');
+  check('сравнение: ссылка в ленте разделов', !!tabLink &&
+    tabLink.getAttribute('href') === 'compare.html' &&
+    /Сравнение/.test(tabLink.textContent), tabLink ? tabLink.outerHTML.slice(0, 80) : 'нет');
+  check('сравнение: ссылка в ленте не участвует в закреплении',
+    !tabLink.querySelector('.tabx') && !tabLink.hasAttribute('data-t'), '');
+  const menuLink = doc.querySelector('#menuList .mrow-page a');
+  check('сравнение: строка в меню «Разделы»', !!menuLink &&
+    menuLink.getAttribute('href') === 'compare.html', menuLink ? 'есть' : 'нет');
+  check('сравнение: разделов в меню по-прежнему девять',
+    doc.querySelectorAll('#menuList button[data-t]').length === 9,
+    doc.querySelectorAll('#menuList button[data-t]').length);
+
+  menuGo('home');
+  const cards = [...doc.querySelectorAll('.mapcard')];
+  const cmpCard = cards.filter(b => /Сравнение документов/.test(b.textContent))[0];
+  check('сравнение: карточка в песочнице', !!cmpCard &&
+    cmpCard.getAttribute('data-go') === 'compare.html', cmpCard ? 'есть' : 'нет');
+  check('сравнение: карточка лежит в «Документах и деньгах»',
+    !!cmpCard && /Документы и деньги/.test(cmpCard.closest('.mapflow').textContent), '');
+  check('сравнение: счётчик инструментов вырос до 16',
+    /16 инструментов/.test(doc.getElementById('mapCnt').textContent),
+    doc.getElementById('mapCnt').textContent);
+  ['сравн', 'docx', 'разноглас'].forEach(function (q) {
+    doc.getElementById('mapSearch').value = q;
+    doc.getElementById('mapSearch').dispatchEvent(new win.Event('input', { bubbles: true }));
+    check('сравнение: карточка находится по слову «' + q + '»',
+      [...doc.querySelectorAll('.mapcard .mc-t')]
+        .some(t => /Сравнение документов/.test(t.textContent)), '');
+  });
+  doc.getElementById('mapSearch').value = '';
+  doc.getElementById('mapSearch').dispatchEvent(new win.Event('input', { bubbles: true }));
+
+  // тема: страница читает свой ключ, инструмент обязан его писать
+  const themeBefore = win.localStorage.getItem('lk-compare-theme');
+  doc.getElementById('themeBtn').click();
+  const themeAfter = win.localStorage.getItem('lk-compare-theme');
+  check('сравнение: тема переезжает на соседнюю страницу',
+    themeBefore !== themeAfter && (themeAfter === 'light' || themeAfter === 'dark'),
+    themeBefore + ' → ' + themeAfter);
+  doc.getElementById('themeBtn').click();
 }());
 
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
