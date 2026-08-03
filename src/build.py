@@ -15,6 +15,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import data
 import reference as ref
 import wattsan as wt
+import frezer as fz
 import letters as lt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +32,7 @@ os.makedirs(DIST, exist_ok=True)
 # Фактические отклонения — считаем, а не заявляем
 # ---------------------------------------------------------------------------
 dev_exact, dev_r100, max_dev = 0, 0, 0
-for row in data.MILLING:
+for row in data.MILLING_BASE:
     order, stock = row[6], row[7]
     exact = int((Decimal(order) * Decimal('1.11')).quantize(Decimal('1'), ROUND_HALF_UP))
     r100 = int((Decimal(order) * Decimal('1.11') / 100).quantize(Decimal('1'), ROUND_HALF_UP)) * 100
@@ -204,6 +205,43 @@ APP = {
             for n, o2, o2b, n2, n2b in ref.GAS],
     'readiness': [{'name': n, 'a': a, 's': s, 'blocker': b, 'note': note}
                   for n, a, s, b, note in ref.READINESS],
+    # Вкладка «Фрезерный»: справочники серий, стоек, приводов и 4-й оси.
+    # Прайс станков сюда не дублируется — он один и лежит в APP['milling'].
+    'mill': {
+        'series': fz.SERIES,
+        'variants': fz.VARIANTS,
+        'formats': fz.FORMATS,
+        'spindles': fz.SPINDLES,
+        'catSpindles': fz.CAT_SPINDLES,
+        'spindleInfo': fz.SPINDLE_INFO,
+        'spindleNote': fz.SPINDLE_NOTE,
+        'seriesInfo': fz.SERIES_INFO,
+        'seriesNote': fz.SERIES_NOTE,
+        'mass': fz.MASS,
+        'dims': fz.DIMS,
+        'zTravel': fz.Z_TRAVEL,
+        'tableInfo': fz.TABLE_INFO,
+        'ctrlInfo': fz.CTRL_INFO,
+        'motorInfo': fz.MOTOR_INFO,
+        'motorNote': fz.MOTOR_NOTE,
+        'rot': fz.ROT,
+        'rotNote': fz.ROT_NOTE,
+        'rotFitNote': fz.ROT_FIT_NOTE,
+        'rotTail': fz.ROT_TAIL,
+        'rotTailIncl': fz.ROT_TAIL_INCL,
+        'toolClr': fz.TOOL_CLR,
+        'pnrNear': fz.PNR_NEAR,
+        'cats': fz.CATS,
+        'mcats': fz.MCATS,
+        'sensors': fz.SENSORS,
+        'vibro': fz.VIBRO,
+        'brush': fz.BRUSH,
+        'dsp': fz.DSP,
+        'sensorByFormat': fz.SENSOR_BY_FORMAT,
+        'vibroByFormat': fz.VIBRO_BY_FORMAT,
+        'chillerSteps': fz.CHILLER_STEPS,
+        'priceNote': fz.MILL_PRICE_NOTE,
+    },
     'matchRules': [{'kind': k, 'task': t, 'answer': a, 'scope': s}
                    for k, t, a, s in ref.MATCH_RULES],
 }
@@ -640,6 +678,12 @@ with open(os.path.join(HERE, 'docx.js'), encoding='utf-8') as f:
     DOCX_JS = f.read()
 with open(os.path.join(HERE, 'ui.js'), encoding='utf-8') as f:
     UI_JS = f.read()
+# Логика вкладки «Фрезерный» лежит отдельным файлом, но живёт в области
+# видимости ui.js: ей нужны его $, esc, toast, addItem, showTab и state.
+with open(os.path.join(HERE, 'mill.js'), encoding='utf-8') as f:
+    MILL_JS = f.read()
+assert '__MILL_JS__' in UI_JS, 'в ui.js нет места под вкладку «Фрезерный»'
+UI_JS = UI_JS.replace('__MILL_JS__', MILL_JS)
 with open(os.path.join(HERE, 'style.css'), encoding='utf-8') as f:
     CSS = f.read()
 with open(os.path.join(HERE, 'template.html'), encoding='utf-8') as f:
@@ -712,6 +756,8 @@ repl = {
     '__MARK__': MARK_B64,
     '__LETTER_NOTE_2__': esc(lt.LETTER_NOTE),
     '__UPLIFT_NOTE__': esc(data.PRICE_UPLIFT_NOTE),
+    '__MILL_PRICE_NOTE__': esc(fz.MILL_PRICE_NOTE),
+    '__PNR_TERMS_MILL__': esc(' '.join(data.PNR_TERMS)),
     '__LETTER_PRIVACY__': esc(lt.LETTER_PRIVACY),
     '__ZP_NOTE__': esc(APP['zp']['note']),
     '__APP_NAME__': APP_NAME,
@@ -783,8 +829,8 @@ repl = {
     '__KP_DAYS__': str(data.KP_VALID_DAYS),
     '__INVOICE_DAYS__': str(data.INVOICE_VALID_DAYS),
     '__DEV_EXACT__': str(dev_exact),
-    '__DEV_TOTAL__': str(len(data.MILLING)),
-    '__DEV_OK__': str(len(data.MILLING) - dev_exact),
+    '__DEV_TOTAL__': str(len(data.MILLING_BASE)),
+    '__DEV_OK__': str(len(data.MILLING_BASE) - dev_exact),
     '__DEV_MAX__': str(max_dev),
     '__DEV_R100__': str(dev_r100),
     '__RESERVE__': str(ref.RESERVE_PCT),
@@ -886,6 +932,6 @@ size = os.path.getsize(os.path.join(DIST, 'index.html'))
 print(f'index.html до пререндера: {size / 1024:.0f} КБ '
       f'(после пререндера вырастет — итоговый размер печатает prerender.js)')
 print(f'Конфигураций волокна: {n_fiber} · фрезерных: {len(data.MILLING)}')
-print(f'Наценка +11 %: отклонений от точного расчёта {dev_exact} из {len(data.MILLING)}, '
+print(f'Наценка +11 %: отклонений от точного расчёта {dev_exact} из {len(data.MILLING_BASE)}, '
       f'максимум {max_dev} ₽; при округлении до 100 ₽ отклонений {dev_r100}')
 print(f'Версия кеша: {CACHE_VERSION}')

@@ -974,3 +974,69 @@ body.demo .internal{display:none !important}
 #p-cfg .think,#p-cfg .note:not(.stop){display:none}
 #p-cfg.hints .think,#p-cfg.hints .note{display:block}
 #p-cfg.hints .think{display:flex}
+
+/* ---------------------------------------------------------------------------
+   Вкладка «Фрезерный». Собственных цветов не заводим: всё из переменных темы,
+   поэтому раздел живёт и в тёмной, и в светлой теме без правок.
+   --------------------------------------------------------------------------- */
+.mzpane{margin-top:12px}
+.mzpane[hidden]{display:none}
+hr.sep{border:0;border-top:1px solid var(--line);margin:16px 0}
+
+.mzhint{margin-top:8px;padding:8px 11px;border-radius:9px;font-size:13px;
+  line-height:1.45;color:var(--tx2);background:var(--bg2);
+  border-left:3px solid var(--line2)}
+.mzhint.ok{background:var(--okbg);border-left-color:var(--ok);color:var(--tx)}
+.mzhint.warn{background:var(--warnbg);border-left-color:var(--warn);color:var(--tx)}
+.mzhint.bad{background:var(--badbg);border-left-color:var(--bad);color:var(--tx)}
+
+.mzcard{margin-top:12px;border:1px solid var(--line);border-radius:11px;
+  background:var(--bg2);overflow:hidden}
+.mzcard-h{padding:9px 13px;border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.mzcard-h b{font-size:14px;color:var(--tx)}
+.mzcard-h span{font-size:12.5px;color:var(--muted)}
+.mzcard-n{padding:10px 13px;font-size:12.5px;line-height:1.5;color:var(--tx2);
+  border-top:1px solid var(--line)}
+table.mzspec{width:100%;border-collapse:collapse}
+table.mzspec th,table.mzspec td{padding:6px 13px;font-size:12.5px;text-align:left;
+  vertical-align:top;border-bottom:1px solid var(--line)}
+table.mzspec tr:last-child th,table.mzspec tr:last-child td{border-bottom:0}
+table.mzspec th{width:44%;font-weight:400;color:var(--muted)}
+table.mzspec td{color:var(--tx)}
+
+.mzready{display:grid;gap:9px;margin-top:12px;
+  grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.mzrcard{display:flex;flex-direction:column;gap:4px;text-align:left;cursor:pointer;
+  padding:10px 12px;border:1px solid var(--line);border-radius:11px;
+  background:var(--bg2);color:var(--tx);font:inherit}
+.mzrcard:hover{border-color:var(--line2)}
+.mzrcard.on{border-color:var(--or);box-shadow:inset 0 0 0 1px var(--or)}
+.mzrcard b{font-size:13px;line-height:1.35}
+.mzrs{font-size:11.5px;color:var(--muted)}
+.mzrp{font-size:14px;font-weight:600;margin-top:2px}
+.mzrp em{display:block;font-size:11px;font-weight:400;font-style:normal;
+  color:var(--muted)}
+
+.mzsim{margin-top:12px}
+.mzsim-h{font-size:12px;color:var(--muted);margin-bottom:6px}
+.mzsim-r{display:flex;width:100%;gap:10px;align-items:center;text-align:left;
+  justify-content:space-between;cursor:pointer;padding:8px 11px;font:inherit;
+  border:1px solid var(--line);border-radius:9px;background:var(--bg2);
+  color:var(--tx);margin-bottom:6px}
+.mzsim-r:hover{border-color:var(--line2)}
+.mzsim-r span{font-size:12.5px;line-height:1.35}
+.mzsim-r em{display:block;font-size:11px;font-style:normal;color:var(--muted)}
+.mzsim-r b{font-size:12.5px;white-space:nowrap}
+.mzsim-r b.up{color:var(--bad)}
+.mzsim-r b.dn{color:var(--ok)}
+.mzsim-r b.eq{color:var(--muted)}
+
+.pill.flag-warn::after{content:"";display:inline-block;width:6px;height:6px;
+  margin-left:5px;border-radius:50%;background:var(--warn);vertical-align:middle}
+.pill.flag-bad::after{content:"";display:inline-block;width:6px;height:6px;
+  margin-left:5px;border-radius:50%;background:var(--bad);vertical-align:middle}
+
+.spec-line{display:flex;justify-content:space-between;gap:10px;padding:5px 0}
+.spec-line b{font-size:16px}
+.spec-line.small{font-size:12px}

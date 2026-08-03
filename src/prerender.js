@@ -80,13 +80,13 @@ check('вкладки по умолчанию идут в порядке мен�
     .map(b => b.getAttribute('data-t')).join(','));
 check('у каждой вкладки есть крестик снятия',
   doc.querySelectorAll('#tabs button[data-t] .tabx').length === 4, '');
-check('панелей 8', doc.querySelectorAll('.panel').length === 8,
+check('панелей 9', doc.querySelectorAll('.panel').length === 9,
   'найдено ' + doc.querySelectorAll('.panel').length);
-check('в кнопке «Разделы» все 8 разделов',
-  doc.querySelectorAll('#menuList button[data-t]').length === 8,
+check('в кнопке «Разделы» все 9 разделов',
+  doc.querySelectorAll('#menuList button[data-t]').length === 9,
   'найдено ' + doc.querySelectorAll('#menuList button[data-t]').length);
 check('в меню у каждого раздела кнопка закрепления',
-  doc.querySelectorAll('#menuList button[data-pin]').length === 8 &&
+  doc.querySelectorAll('#menuList button[data-pin]').length === 9 &&
   [...doc.querySelectorAll('#menuList button[data-pin]')]
     .filter(b => b.getAttribute('aria-pressed') === 'true').length === 4, '');
 check('в меню есть счётчик и сброс вкладок',
@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 33', /const CACHE = 'cfg-v33'/.test(swTxt),
+check('кеш: версия поднята до 34', /const CACHE = 'cfg-v34'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -152,7 +152,7 @@ check('волокно: S 1530 3000W = 3 010 400 ₽',
 // порядок форматов не должен ломаться из-за числовых ключей объекта
 const mFmts = Array.from(doc.querySelectorAll('#mFormat option')).map(o => o.value);
 check('фрезерные: порядок форматов от 0404 до 2060',
-  mFmts.join(',') === '0404,0609,6090,1313,1325,1616,1625,1630,2030,2040,2060',
+  mFmts.join(',') === '0404,0609,6090,1610,1313,1616,1325,1625,1630,2030,2040,2060',
   mFmts.join(','));
 const fFmts = Array.from(doc.querySelectorAll('#fFormat option')).map(o => o.value);
 check('волокно: порядок форматов', fFmts.join(',') === '1530,1560,2030,2040,2060',
@@ -160,7 +160,7 @@ check('волокно: порядок форматов', fFmts.join(',') === '15
 
 // фрезерный посчитал две цены
 const mOut = textOf(doc, '#mOut');
-check('фрезерный: две цены с наценкой', mOut && /236 300/.test(mOut) && /262 300/.test(mOut),
+check('фрезерный: две цены с наценкой', mOut && /247 800/.test(mOut) && /275 100/.test(mOut),
   (mOut || '').slice(0, 120));
 
 // подбор мощности и подбор фрезерного
@@ -191,7 +191,7 @@ check('строк в статических таблицах больше 250', 
 
 // прайс попал в файл целиком
 check('волокно: 10 748 900 ₽ в прайсе', src.indexOf('10 748 900') >= 0);
-check('фрезерные: 2 318 300 ₽ в прайсе', src.indexOf('2 318 300') >= 0);
+check('фрезерные: 2 527 875 ₽ в прайсе', src.indexOf('2 527 875') >= 0);
 check('нет незаменённых плейсхолдеров', !/__[A-Z][A-Z_]*__/.test(src),
   (src.match(/__[A-Z][A-Z_]*__/g) || []).join(','));
 check('нет внешних скриптов', !/<script[^>]+src=/i.test(src));
@@ -1437,7 +1437,7 @@ check('id в документе не повторяются', (function () {
   return all.filter((x, i) => all.indexOf(x) !== i).slice(0, 5).join(', ');
 }()));
 check('навигация: остальные разделы живут в кнопке «Разделы»',
-  doc.querySelectorAll('#menuList button[data-t]').length === 8 &&
+  doc.querySelectorAll('#menuList button[data-t]').length === 9 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
 
 // ---- v30: калькуляторы НДС, лизинга, часа работы и окупаемости ----
@@ -1998,8 +1998,8 @@ check('вкладки: у незакреплённого раздела звёз
   const rowIds = () => [...doc.querySelectorAll('#menuList .mrow')]
     .map(r => r.getAttribute('data-row')).join(',');
   check('меню: строки можно тащить — есть ручка и draggable',
-    doc.querySelectorAll('#menuList .mrow[draggable="true"]').length === 8 &&
-    doc.querySelectorAll('#menuList .mrow .mgrip').length === 8,
+    doc.querySelectorAll('#menuList .mrow[draggable="true"]').length === 9 &&
+    doc.querySelectorAll('#menuList .mrow .mgrip').length === 9,
     rowIds());
   const before = rowIds();
   const src = doc.querySelector('#menuList .mrow[data-row="zp"]');
@@ -2011,7 +2011,7 @@ check('вкладки: у незакреплённого раздела звёз
   dst.dispatchEvent(ev('dragover'));
   dst.dispatchEvent(ev('drop'));
   check('меню: перетащенный раздел встаёт на новое место',
-    rowIds() === 'zp,home,build,letters,cfg,smeta,calc,guide',
+    rowIds() === 'zp,home,build,letters,mill,cfg,smeta,calc,guide',
     before + ' → ' + rowIds());
   check('меню: новый порядок подхватила и строка вкладок',
     tabIds() === 'home,build,letters,smeta,calc,guide', tabIds());
@@ -2020,10 +2020,98 @@ doc.getElementById('menuList').querySelector('.mfoot button').click();
 check('вкладки: «Вернуть по умолчанию» возвращает исходные вкладки и порядок',
   tabIds() === 'home,build,letters,smeta' &&
   [...doc.querySelectorAll('#menuList .mrow')].map(r => r.getAttribute('data-row'))
-    .join(',') === 'home,build,letters,zp,cfg,smeta,calc,guide' &&
+    .join(',') === 'home,build,letters,zp,mill,cfg,smeta,calc,guide' &&
   /Закреплено 4 из 6/.test(doc.getElementById('pinsInfo').textContent), tabIds());
 check('вкладки: значок сметы жив после перерисовки строки',
   !!doc.getElementById('smetaBadge'), '');
+
+// ---- v34: вкладка «Фрезерный» ----
+// Раздел собирает станок по узлам и отдаёт позиции в смету. Документ отсюда
+// не печатается — лист предложения и файл для Word делает раздел «Смета и ТКП».
+(function () {
+  function mz(id) { return doc.getElementById(id); }
+  function mzFire(id) {
+    mz(id).dispatchEvent(new win.Event('change', { bubbles: true }));
+  }
+  menuGo('mill');
+  check('фрезерный: раздел открылся', mz('p-mill').classList.contains('active'), '');
+  check('фрезерный: серий в списке столько же, сколько в данных',
+    mz('mzSeries').options.length === 10, mz('mzSeries').options.length);
+  check('фрезерный: 110 конфигураций прайса',
+    /110 конфигураций/.test(mz('mzCfgCnt').textContent), mz('mzCfgCnt').textContent);
+
+  mz('mzSeries').value = 'MINI Cabine'; mzFire('mzSeries');
+  mz('mzFmt').value = '0404'; mzFire('mzFmt');
+  const rcards = doc.querySelectorAll('#mzReady .mzrcard');
+  check('фрезерный: готовые конфигурации из прайса показаны', rcards.length > 0, rcards.length);
+  rcards[0].click();
+  check('фрезерный: цена подставилась ровно как в прайсе',
+    mz('mzPrice').value === '371805', mz('mzPrice').value);
+  check('фрезерный: спецификация посчитала станок',
+    /371 805/.test(mz('mzTotals').textContent), mz('mzTotals').textContent.slice(0, 60));
+  check('фрезерный: водяное охлаждение без чиллера — это ошибка сборки',
+    /чиллера в спецификации нет/.test(mz('mzIssues').textContent), '');
+  mz('mzChOn').checked = true; mzFire('mzChOn');
+  check('фрезерный: чиллер подобран под шпиндель 1,5 кВт',
+    mz('mzCh').value === '3000', mz('mzCh').value);
+  check('фрезерный: чиллер вошёл в сумму',
+    /391 905/.test(mz('mzTotals').textContent), mz('mzTotals').textContent.slice(0, 60));
+
+  // серия без готовой конфигурации под эту связку — цена не выдумывается
+  mz('mzSeries').value = 'M1'; mzFire('mzSeries');
+  mz('mzFmt').value = '1325'; mzFire('mzFmt');
+  check('фрезерный: без выбранной конфигурации цена пуста', !mz('mzPrice').value,
+    mz('mzPrice').value);
+  check('фрезерный: пустая цена видна в проверках',
+    /Цена станка не заполнена/.test(mz('mzIssues').textContent), '');
+
+  // четвёртая ось: считаем, влезет ли заготовка, и хватает ли осей у стойки
+  doc.querySelector('#mzTabs [data-cat="rot"]').click();
+  mz('mzRot').value = 'd300'; mzFire('mzRot');
+  check('фрезерный: 4-я ось — стойка A11 не четырёхосевая',
+    /не четырёхосевая/.test(mz('mzRotHint').textContent),
+    mz('mzRotHint').textContent.slice(0, 80));
+  mz('mzRot').value = 'd100'; mzFire('mzRot');
+  check('фрезерный: 4-я ось — расчёт влезания заготовки посчитан',
+    /⌀/.test(mz('mzRotCard').textContent), mz('mzRotCard').textContent.slice(0, 80));
+  mz('mzRot').value = 'wattsan'; mzFire('mzRot');
+  check('фрезерный: встроенная ось RD в смету отдельной строкой не идёт',
+    mz('mzRotOn').disabled === true, '');
+
+  // ПНР подбирается по прайсу под выбранный станок
+  check('фрезерный: группа ПНР подобрана под станок', mz('mzPnrGroup').value === '1325',
+    mz('mzPnrGroup').value);
+  const pnrBefore = mz('mzPnrP').value;
+  mz('mzPnrK').value = '12'; mzFire('mzPnrK');
+  check('фрезерный: выезд к чужому станку считается через наценку 20 %',
+    +mz('mzPnrP').value === Math.round(+pnrBefore * 1.2),
+    pnrBefore + ' → ' + mz('mzPnrP').value);
+  mz('mzPnrK').value = '10'; mzFire('mzPnrK');
+
+  // перенос в смету: документ собирает раздел «Смета и ТКП», не эта вкладка
+  doc.querySelector('#mzReady .mzrcard').click();
+  mz('mzStabOn').checked = true; mzFire('mzStabOn');
+  mz('mzPnrOn').checked = true; mzFire('mzPnrOn');
+  const wasRows = doc.querySelectorAll('#smetaBody tr').length;
+  mz('mzToSmeta').click();
+  const nowRows = [...doc.querySelectorAll('#smetaBody tr')]
+    .map(r => r.children[0].textContent);
+  check('фрезерный: позиции ушли в смету', nowRows.length > wasRows,
+    wasRows + ' → ' + nowRows.length);
+  check('фрезерный: станок в смете отдельной строкой',
+    nowRows.some(t => /Фрезерный станок с ЧПУ Wattsan/.test(t)), nowRows.join(' | ').slice(0, 90));
+  check('фрезерный: ПНР в смете отдельной строкой',
+    nowRows.some(t => /Пусконаладка и обучение/.test(t)), '');
+  check('фрезерный: после переноса открывается смета',
+    doc.getElementById('p-smeta').classList.contains('active'), '');
+  check('фрезерный: своей кнопки Word и печати ТКП у раздела нет',
+    !mz('p-mill').querySelector('[id*="Word"], [id*="Kp"], [id*="kp"]'), '');
+  menuGo('mill');
+  mz('mzReset') && (win.confirm = function () { return true; });
+  mz('mzReset').click();
+  check('фрезерный: сброс очищает конфигурацию', !mz('mzPrice').value &&
+    !mz('mzStabOn').checked && !mz('mzPnrOn').checked, mz('mzPrice').value);
+}());
 
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
 // Всё, что натворили проверки, должно быть убрано: файл обязан открываться
@@ -2160,7 +2248,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 8,
+  doc2.querySelectorAll('.nojs-title').length === 9,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('3 010 400') >= 0);
 check('пререндер: смета пуста при открытии',

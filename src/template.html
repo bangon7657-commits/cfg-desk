@@ -910,6 +910,276 @@
   </details>
 </section>
 
+<!-- ================= ФРЕЗЕРНЫЙ ================= -->
+<span class="nojs-title">Фрезерный</span>
+<section class="panel" id="p-mill">
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Фрезерный станок</h1>
+      <p class="lead">Готовая конфигурация из прайса или своя сборка по узлам.
+        Допоборудование, поворотная ось и ПНР подбираются под выбранный станок,
+        нестыковки показываются сразу. Готовая спецификация уходит в смету.</p>
+    </div>
+    <span class="pill on" id="mzCfgCnt"></span>
+  </div>
+
+  <div class="cfggrid printkeep">
+  <div class="cfgmain">
+
+    <div class="card">
+      <div class="cardhead">
+        <h2>1 · Станок</h2>
+        <div class="pills" id="mzModes" role="tablist" aria-label="Как выбираем станок"></div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1 1 160px"><label class="f" for="mzSeries">Серия</label>
+          <select id="mzSeries"></select></div>
+        <div style="flex:1 1 200px"><label class="f" for="mzFmt">Рабочее поле</label>
+          <select id="mzFmt"></select></div>
+        <div style="flex:1 1 160px"><label class="f" for="mzPrice">Цена станка, ₽</label>
+          <input type="number" id="mzPrice" min="0" step="100" placeholder="нет в прайсе"></div>
+        <div style="flex:1 1 150px"><label class="f" for="mzStock">Поставка</label>
+          <select id="mzStock">
+            <option value="order">Под заказ</option>
+            <option value="stock">Из наличия</option>
+          </select></div>
+      </div>
+
+      <div id="mzReady"></div>
+
+      <div class="pills noprint" id="mzMTabs" role="tablist" aria-label="Узлы станка"></div>
+
+      <div class="mzpane" id="mzp_spin" hidden>
+        <div class="row">
+          <div style="flex:1 1 150px"><label class="f" for="mzSpindle">Шпиндель, кВт</label>
+            <select id="mzSpindle"></select></div>
+          <div style="flex:1 1 150px"><label class="f" for="mzSV">Питание шпинделя</label>
+            <div class="pills" id="mzSV" role="group">
+              <button type="button" class="pill" data-sv="220">220 В</button>
+              <button type="button" class="pill" data-sv="380">380 В</button>
+            </div></div>
+          <div style="flex:1 1 190px"><label class="f" for="mzCool">Охлаждение</label>
+            <select id="mzCool">
+              <option value="wc">wc — водяное</option>
+              <option value="ac">ac — воздушное</option>
+            </select></div>
+        </div>
+        <div id="mzSpindleCard"></div>
+      </div>
+
+      <div class="mzpane" id="mzp_tab" hidden>
+        <div class="row">
+          <div style="flex:1 1 220px"><label class="f" for="mzTable">Тип стола</label>
+            <select id="mzTable">
+              <option value="PROF">PROF — профильный, Т-пазы</option>
+              <option value="VAC">VAC — вакуумный</option>
+              <option value="СОЖ">С СОЖ — мягкие металлы</option>
+            </select></div>
+          <div style="flex:1 1 170px"><label class="f" for="mzTV">Питание насоса</label>
+            <div class="pills" id="mzTV" role="group">
+              <button type="button" class="pill" data-tv="220">220 В</button>
+              <button type="button" class="pill on" data-tv="380">380 В</button>
+            </div></div>
+        </div>
+        <div id="mzTableCard"></div>
+      </div>
+
+      <div class="mzpane" id="mzp_ctrl" hidden>
+        <div class="row">
+          <div style="flex:1 1 260px"><label class="f" for="mzCtrl">Система управления</label>
+            <select id="mzCtrl"></select></div>
+        </div>
+        <div id="mzCtrlCard"></div>
+      </div>
+
+      <div class="mzpane" id="mzp_mot" hidden>
+        <div class="row">
+          <div style="flex:1 1 300px"><label class="f" for="mzMotor">Двигатели</label>
+            <select id="mzMotor"></select></div>
+        </div>
+        <div id="mzMotorCard"></div>
+        <div id="mzMotorHint"></div>
+      </div>
+
+      <details class="noprint" id="mzMatchWrap" hidden>
+        <summary>Все конфигурации серии в прайсе</summary>
+        <div id="mzMatchList"></div>
+      </details>
+
+      <div id="mzMachineHints"></div>
+      <div id="mzSeriesCard"></div>
+      <div id="mzFmtCard"></div>
+      <div id="mzSimilar"></div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead">
+        <h2>2 · Доп. оборудование</h2>
+        <div class="pills noprint" id="mzTabs" role="tablist" aria-label="Допоборудование"></div>
+      </div>
+
+      <div class="mzpane" id="mzp_stab" hidden>
+        <div class="row">
+          <div style="flex:1 1 130px"><label class="f" for="mzStabB">Бренд</label>
+            <select id="mzStabB"></select></div>
+          <div style="flex:2 1 260px"><label class="f" for="mzStab">Модель</label>
+            <select id="mzStab"></select></div>
+          <div style="flex:1 1 130px"><label class="f" for="mzStabP">Цена, ₽</label>
+            <input type="number" id="mzStabP" min="0" step="10"></div>
+          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzStabOn"> В смету</label></div>
+        </div>
+        <div id="mzStabCard"></div><div id="mzStabHint"></div>
+      </div>
+
+      <div class="mzpane" id="mzp_ch" hidden>
+        <div class="row">
+          <div style="flex:2 1 260px"><label class="f" for="mzCh">Чиллер S&amp;A</label>
+            <select id="mzCh"></select></div>
+          <div style="flex:1 1 130px"><label class="f" for="mzChP">Цена, ₽</label>
+            <input type="number" id="mzChP" min="0" step="10"></div>
+          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzChOn"> В смету</label></div>
+        </div>
+        <div id="mzChCard"></div><div id="mzChHint"></div>
+      </div>
+
+      <div class="mzpane" id="mzp_vib" hidden>
+        <div class="row">
+          <div style="flex:2 1 240px"><label class="f" for="mzSens">Датчик высоты инструмента</label>
+            <select id="mzSens"></select></div>
+          <div style="flex:1 1 130px"><label class="f" for="mzSensP">Цена, ₽</label>
+            <input type="number" id="mzSensP" min="0" step="1"></div>
+          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzSensOn"> В смету</label></div>
+        </div>
+        <div id="mzSensCard"></div><div id="mzSensHint"></div>
+        <hr class="sep">
+        <div class="row">
+          <div style="flex:2 1 220px"><label class="f" for="mzVib">Виброопоры</label>
+            <select id="mzVib"></select></div>
+          <div style="flex:1 1 130px"><label class="f" for="mzVibP">Цена за штуку, ₽</label>
+            <input type="number" id="mzVibP" min="0" step="10"></div>
+          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzVibOn"> В смету</label></div>
+        </div>
+        <div id="mzVibCard"></div><div id="mzVibHint"></div>
+      </div>
+
+      <div class="mzpane" id="mzp_asp" hidden>
+        <div class="row">
+          <div style="flex:2 1 260px"><label class="f" for="mzAsp">Аспирация BELMASH</label>
+            <select id="mzAsp"></select></div>
+          <div style="flex:1 1 150px"><label class="f">Питание</label>
+            <div class="pills" id="mzAV" role="group">
+              <button type="button" class="pill" data-av="220">220 В</button>
+              <button type="button" class="pill" data-av="380">380 В</button>
+            </div></div>
+          <div style="flex:1 1 130px"><label class="f" for="mzAspP">Цена, ₽</label>
+            <input type="number" id="mzAspP" min="0" step="10"></div>
+          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzAspOn"> В смету</label></div>
+        </div>
+        <div id="mzAspCard"></div><div id="mzAspHint"></div>
+        <hr class="sep">
+        <div class="row">
+          <div style="flex:2 1 240px"><label class="f" for="mzBr">Щётка аспирации, ⌀ патрона</label>
+            <select id="mzBr"></select></div>
+          <div style="flex:1 1 130px"><label class="f" for="mzBrP">Цена, ₽</label>
+            <input type="number" id="mzBrP" min="0" step="10"></div>
+          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzBrOn"> В смету</label></div>
+        </div>
+        <div id="mzBrCard"></div><div id="mzBrHint"></div>
+      </div>
+
+      <div class="mzpane" id="mzp_dsp" hidden>
+        <div class="row">
+          <div style="flex:2 1 300px"><label class="f" for="mzDsp">Стойка ЧПУ</label>
+            <select id="mzDsp">
+              <option value="up">Замена A11 → A18, доплата</option>
+              <option value="a11">DSP RichAuto A11 — отдельной позицией</option>
+              <option value="a18">DSP RichAuto A18 — отдельной позицией</option>
+            </select></div>
+          <div style="flex:1 1 130px"><label class="f" for="mzDspP">Цена, ₽</label>
+            <input type="number" id="mzDspP" min="0" step="1"></div>
+          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzDspOn"> В смету</label></div>
+        </div>
+        <div id="mzDspCard"></div><div id="mzDspHint"></div>
+      </div>
+
+      <div class="mzpane" id="mzp_rot" hidden>
+        <div class="row">
+          <div style="flex:2 1 280px"><label class="f" for="mzRot">Поворотное устройство</label>
+            <select id="mzRot"></select></div>
+          <div style="flex:1 1 200px"><label class="f" for="mzRotT">Задняя бабка</label>
+            <select id="mzRotT">
+              <option value="0">не нужна или в комплекте</option>
+              <option value="1">отдельной позицией</option>
+            </select></div>
+          <div style="flex:1 1 140px"><label class="f" for="mzRotP">Цена, ₽</label>
+            <input type="number" id="mzRotP" min="0" step="100"></div>
+          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzRotOn"> В смету</label></div>
+        </div>
+        <div id="mzRotCard"></div><div id="mzRotHint"></div>
+      </div>
+
+      <div class="mzpane" id="mzp_extra" hidden>
+        <div class="row">
+          <div style="flex:2 1 300px"><label class="f" for="mzExtraN">Название позиции</label>
+            <input type="text" id="mzExtraN" placeholder="доставка, оснастка, ЗИП, монтаж вытяжки…"></div>
+          <div style="flex:1 1 140px"><label class="f" for="mzExtraP">Цена, ₽</label>
+            <input type="number" id="mzExtraP" min="0" step="100"></div>
+          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzExtraOn"> В смету</label></div>
+        </div>
+        <div class="note small">Свободная строка для всего, чего нет в прайсе.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><h2>3 · ПНР и обучение</h2></div>
+      <div class="row">
+        <div style="flex:1 1 200px"><label class="f" for="mzPnrGroup">Группа по прайсу</label>
+          <select id="mzPnrGroup"></select></div>
+        <div style="flex:2 1 260px"><label class="f" for="mzPnrVar">Состав услуги</label>
+          <select id="mzPnrVar"></select></div>
+        <div style="flex:1 1 190px"><label class="f" for="mzPnrK">Выезд</label>
+          <select id="mzPnrK">
+            <option value="10">Обычный</option>
+            <option value="12">Сторонний станок, ×1,2</option>
+          </select></div>
+        <div style="flex:1 1 130px"><label class="f" for="mzPnrP">Цена, ₽</label>
+          <input type="number" id="mzPnrP" min="0" step="100"></div>
+        <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzPnrOn"> В смету</label></div>
+      </div>
+      <div id="mzPnrHint"></div>
+      <div class="note small">__PNR_TERMS_MILL__</div>
+    </div>
+
+  </div>
+
+  <aside class="cfgside">
+    <div class="card spec-card">
+      <div class="cardhead">
+        <h2>Спецификация</h2>
+        <span class="spec-cnt" id="mzCnt"></span>
+      </div>
+      <div id="mzHead" class="note small"></div>
+      <div id="mzEmpty" class="empty small">Выберите станок — остальное подставится
+        под него.</div>
+      <table class="spec" id="mzTable2"><tbody id="mzBody"></tbody></table>
+      <div class="spec-tot" id="mzTotals"></div>
+      <div id="mzIssues"></div>
+      <div class="btns noprint">
+        <button class="btn mini" type="button" id="mzToSmeta">Перенести в смету</button>
+        <button class="btn mini sec" type="button" id="mzCopy">Скопировать текстом</button>
+        <button class="btn mini sec" type="button" id="mzPrint">Печать</button>
+        <button class="btn mini sec" type="button" id="mzReset">Сбросить</button>
+      </div>
+      <textarea id="mzOut" class="specout" readonly aria-label="конфигурация текстом"></textarea>
+      <div class="note small">__MILL_PRICE_NOTE__ Гарантия __GUARANTEE__.
+        Срок поставки под заказ — __DELIVERY_ORDER__, из наличия — __DELIVERY_STOCK__.
+        Доставка в цену не входит.</div>
+    </div>
+  </aside>
+  </div>
+</section>
+
 <!-- ================= СМЕТА И ТКП ================= -->
 <span class="nojs-title">Смета и ТКП</span>
 <section class="panel" id="p-smeta">
