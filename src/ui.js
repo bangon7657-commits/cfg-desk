@@ -189,6 +189,8 @@
     { id: 'mill', title: 'Фрезерный',
       hint: 'сборка по узлам, обвязка, 4-я ось, ПНР' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
+    { id: 'cmp', title: 'Сравнение',
+      hint: 'две версии документа рядом: что добавили, убрали, изменили' },
     { id: 'calc', title: 'Калькуляторы',
       hint: 'НДС, лизинг, час работы станка, окупаемость' },
     { id: 'guide', title: 'Справочник',
@@ -223,20 +225,6 @@
   ];
   function guidePartIds() {
     return GUIDE_PARTS.map(function (g) { return g.id; });
-  }
-  // Соседние страницы инструмента: живут отдельными файлами, поэтому не
-  // переключаются, а открываются ссылкой. В SECTIONS им не место — там
-  // закрепление, крестики и порядок, которых у внешней страницы нет.
-  var PAGES = [
-    { file: 'compare.html', title: 'Сравнение',
-      hint: 'две версии документа рядом: что добавили, убрали, изменили' }
-  ];
-  function pageLink(cls) {
-    var a = d.createElement('a');
-    a.className = cls;
-    a.href = PAGES[0].file;
-    a.setAttribute('data-page', PAGES[0].file);
-    return a;
   }
   var PINS_MAX = 6;
   var PINS_DEF = ['home', 'mill', 'smeta', 'letters'];
@@ -329,15 +317,6 @@
     }
     // Соседняя страница — обычной ссылкой в хвосте ленты: без крестика
     // и без звёздочки, потому что закреплять и снимать тут нечего.
-    PAGES.forEach(function (pg) {
-      var a = d.createElement('a');
-      a.className = 'tabpage';
-      a.href = pg.file;
-      a.setAttribute('data-page', pg.file);
-      a.title = pg.hint;
-      a.innerHTML = '<span>' + esc(pg.title) + '</span>';
-      box.appendChild(a);
-    });
   }
   function setPins(list) {
     state.pins = list.slice(0, PINS_MAX);
@@ -444,20 +423,6 @@
       row.appendChild(pb);
       menuList.appendChild(row);
     });
-    // Внешние страницы — отдельной строкой внизу списка, со стрелкой:
-    // видно, что это переход на соседнюю страницу, а не вкладка.
-    PAGES.forEach(function (pg) {
-      var row = d.createElement('div');
-      row.className = 'mrow-page';
-      var a = d.createElement('a');
-      a.href = pg.file;
-      a.setAttribute('data-page', pg.file);
-      a.setAttribute('role', 'menuitem');
-      a.innerHTML = '<span>' + esc(pg.title) + ' <i>↗</i></span><small>' +
-        esc(pg.hint) + '</small>';
-      row.appendChild(a);
-      menuList.appendChild(row);
-    });
     menuList.appendChild(mfoot);
     markTab(curTab);
     renderMenuPins();
@@ -521,6 +486,41 @@
     $('menuBtn').textContent = inTabs ? 'Разделы' : secTitle(name);
   }
   // Часть справочника: рисуем переключатель и показываем нужный блок
+  // Сравнение документов — отдельный файл, показанный внутри раздела.
+  // Грузим его при первом открытии: пока человек туда не зашёл, лишних
+  // 57 КБ он не качает, а после — страница остаётся жить и не перезагружается.
+  var cmpReady = false;
+  function cmpSkin() {
+    var f = $('cmpFrame');
+    var w = f && f.contentWindow;
+    var cd = f && f.contentDocument;
+    if (!cd) return;
+    // своя шапка страницы не нужна: название раздела и тема уже есть снаружи
+    var h = cd.querySelector('header');
+    if (h) h.style.display = 'none';
+    if (w && typeof w.applyTheme === 'function') {
+      w.applyTheme(state.theme === 'light' ? 'light' : 'dark');
+    }
+  }
+  function cmpLoad() {
+    var f = $('cmpFrame');
+    if (!f || cmpReady) { cmpSkin(); return; }
+    cmpReady = true;
+    f.addEventListener('load', function () {
+      var box = $('cmpLoad');
+      if (box) box.hidden = true;
+      cmpSkin();
+    });
+    f.src = 'compare.html';
+  }
+  (function () {
+    var b = $('cmpWindow');
+    if (b) {
+      b.addEventListener('click', function () {
+        window.open('compare.html', '_blank', 'noopener');
+      });
+    }
+  }());
   function showTrashPart(part) {
     if (trashPartIds().indexOf(part) < 0) part = 'build';
     state.trashPart = part;
@@ -605,6 +605,7 @@
     }
     // Архив показывает свою шапку, а под ней — сам старый раздел целиком.
     if (name === 'trash') showTrashPart(tpart || state.trashPart || 'build');
+    if (name === 'cmp') cmpLoad();
     // При открытии файла с диска (file://) браузер запрещает replaceState и
     // бросает SecurityError. Раньше это валило остаток инициализации.
     var hashName = (name === 'guide') ? (state.guidePart || 'match')
@@ -665,10 +666,15 @@
     }
     var meta = d.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', light ? '#f6f4f1' : '#100e0c');
-    // Соседняя страница сравнения читает свой ключ — пишем его здесь же,
-    // иначе она откроется в другой теме, чем инструмент.
+    // Страница сравнения читает свой ключ — пишем его здесь же, иначе она
+    // откроется в другой теме, чем инструмент. Если она уже открыта в разделе,
+    // перекрашиваем её сразу.
     try { localStorage.setItem('lk-compare-theme', light ? 'light' : 'dark'); }
     catch (e) { /* приватный режим — тема просто не переедет */ }
+    var cf = $('cmpFrame');
+    if (cf && cf.contentWindow && typeof cf.contentWindow.applyTheme === 'function') {
+      try { cf.contentWindow.applyTheme(light ? 'light' : 'dark'); } catch (e) { /* нет доступа */ }
+    }
     if (!silent) save();
   }
   $('themeBtn').addEventListener('click', function () {
@@ -3582,7 +3588,7 @@
           need: 'сумму из счёта',
           next: 'сверить со счётом',
           keys: 'ндс налог прописью счёт ставка 22 20 процент' },
-        { page: 'compare.html', title: 'Сравнение документов',
+        { go: 'cmp', title: 'Сравнение документов',
           what: 'Две версии договора или ТКП рядом: что добавили, убрали, изменили',
           need: 'два файла .docx',
           next: 'список правок — в отчёт или на печать',
@@ -3631,8 +3637,6 @@
     return out;
   }
   function mapGo(c) {
-    // соседняя страница — это отдельный файл, переключать нечего
-    if (c.page) { location.href = c.page; return; }
     // у справочника имя части и есть адрес: showTab сам его развернёт,
     // иначе в адресной строке остаётся прошлая часть
     if (c.go === 'guide' && c.part) { showTab(c.part); return; }
@@ -3671,7 +3675,7 @@
         shown++;
         var b = el('button', 'mapcard');
         b.type = 'button';
-        b.setAttribute('data-go', c.page || (c.go + (c.part ? ':' + c.part : '')));
+        b.setAttribute('data-go', c.go + (c.part ? ':' + c.part : ''));
         b.innerHTML = '<span class="mc-t">' + esc(c.title) + '</span>' +
           '<span class="mc-w">' + esc(c.what) + '</span>' +
           '<span class="mc-n"><i>нужно:</i> ' + esc(c.need) + '</span>' +

@@ -319,6 +319,26 @@
 </section>
 
 <!-- ================= СБОРКА ================= -->
+<!-- ================= СРАВНЕНИЕ ================= -->
+<span class="nojs-title">Сравнение</span>
+<section class="panel" id="p-cmp">
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Сравнение документов</h1>
+      <p class="lead">Две версии договора или ТКП рядом: что добавили, убрали,
+        изменили. Файлы читаются здесь же и никуда не отправляются.</p>
+    </div>
+    <button class="btn sec small noprint" type="button" id="cmpWindow"
+      title="Открыть в отдельном окне — удобно сверять с другой вкладкой">В отдельном окне ↗</button>
+  </div>
+  <!-- Страница живёт отдельным файлом и подгружается при первом открытии
+       раздела: в index.html её содержимого нет, вес основного файла не растёт. -->
+  <div class="cmpbox">
+    <div class="cmp-load" id="cmpLoad">Загружаю сравнение…</div>
+    <iframe id="cmpFrame" title="Сравнение документов" loading="lazy"></iframe>
+  </div>
+</section>
+
 <!-- ================= НА УДАЛЕНИЕ ================= -->
 <span class="nojs-title">На удаление</span>
 <section class="panel" id="p-trash">

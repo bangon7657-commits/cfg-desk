@@ -80,13 +80,13 @@ check('вкладки по умолчанию идут в порядке мен�
     .map(b => b.getAttribute('data-t')).join(','));
 check('у каждой вкладки есть крестик снятия',
   doc.querySelectorAll('#tabs button[data-t] .tabx').length === 4, '');
-check('панелей 10', doc.querySelectorAll('.panel').length === 10,
+check('панелей 11', doc.querySelectorAll('.panel').length === 11,
   'найдено ' + doc.querySelectorAll('.panel').length);
-check('в кнопке «Разделы» все 8 разделов',
-  doc.querySelectorAll('#menuList button[data-t]').length === 8,
+check('в кнопке «Разделы» все 9 разделов',
+  doc.querySelectorAll('#menuList button[data-t]').length === 9,
   'найдено ' + doc.querySelectorAll('#menuList button[data-t]').length);
 check('в меню у каждого раздела кнопка закрепления',
-  doc.querySelectorAll('#menuList button[data-pin]').length === 8 &&
+  doc.querySelectorAll('#menuList button[data-pin]').length === 9 &&
   [...doc.querySelectorAll('#menuList button[data-pin]')]
     .filter(b => b.getAttribute('aria-pressed') === 'true').length === 4, '');
 check('в меню есть счётчик и сброс вкладок',
@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 37', /const CACHE = 'cfg-v37'/.test(swTxt),
+check('кеш: версия поднята до 38', /const CACHE = 'cfg-v38'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1440,7 +1440,7 @@ check('id в документе не повторяются', (function () {
   return all.filter((x, i) => all.indexOf(x) !== i).slice(0, 5).join(', ');
 }()));
 check('навигация: остальные разделы живут в кнопке «Разделы»',
-  doc.querySelectorAll('#menuList button[data-t]').length === 8 &&
+  doc.querySelectorAll('#menuList button[data-t]').length === 9 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
 
 // ---- v30: калькуляторы НДС, лизинга, часа работы и окупаемости ----
@@ -2003,8 +2003,8 @@ check('вкладки: у незакреплённого раздела звёз
   const rowIds = () => [...doc.querySelectorAll('#menuList .mrow')]
     .map(r => r.getAttribute('data-row')).join(',');
   check('меню: строки можно тащить — есть ручка и draggable',
-    doc.querySelectorAll('#menuList .mrow[draggable="true"]').length === 8 &&
-    doc.querySelectorAll('#menuList .mrow .mgrip').length === 8,
+    doc.querySelectorAll('#menuList .mrow[draggable="true"]').length === 9 &&
+    doc.querySelectorAll('#menuList .mrow .mgrip').length === 9,
     rowIds());
   const before = rowIds();
   const src = doc.querySelector('#menuList .mrow[data-row="zp"]');
@@ -2016,7 +2016,7 @@ check('вкладки: у незакреплённого раздела звёз
   dst.dispatchEvent(ev('dragover'));
   dst.dispatchEvent(ev('drop'));
   check('меню: перетащенный раздел встаёт на новое место',
-    rowIds() === 'zp,home,letters,mill,smeta,calc,guide,trash',
+    rowIds() === 'zp,home,letters,mill,smeta,cmp,calc,guide,trash',
     before + ' → ' + rowIds());
   check('меню: новый порядок подхватила и строка вкладок',
     tabIds() === 'home,letters,mill,smeta,calc,guide', tabIds());
@@ -2025,7 +2025,7 @@ doc.getElementById('menuList').querySelector('.mfoot button').click();
 check('вкладки: «Вернуть по умолчанию» возвращает исходные вкладки и порядок',
   tabIds() === 'home,letters,mill,smeta' &&
   [...doc.querySelectorAll('#menuList .mrow')].map(r => r.getAttribute('data-row'))
-    .join(',') === 'home,letters,zp,mill,smeta,calc,guide,trash' &&
+    .join(',') === 'home,letters,zp,mill,smeta,cmp,calc,guide,trash' &&
   /Закреплено 4 из 6/.test(doc.getElementById('pinsInfo').textContent), tabIds());
 check('вкладки: значок сметы жив после перерисовки строки',
   !!doc.getElementById('smetaBadge'), '');
@@ -2141,10 +2141,9 @@ check('вкладки: значок сметы жив после перерис�
     mz('mzPrice').value + ' / ' + mz('mzPrice').dataset.touched);
 }());
 
-// ---- v36: соседняя страница сравнения документов ----
-// Она живёт отдельным файлом: в index.html её содержимого быть не должно,
-// а связи с ней — ссылка в ленте, строка в меню, карточка в песочнице,
-// запись в кеше и общий ключ темы.
+// ---- v36: сравнение документов ----
+// Страница живёт отдельным файлом, но показывается внутри раздела: переход
+// стоит столько же, сколько переключение вкладки, а вес index.html не растёт.
 (function () {
   const fs36 = require('fs');
   const cmpPath = path.join(DIST, 'compare.html');
@@ -2156,29 +2155,30 @@ check('вкладки: значок сметы жив после перерис�
     cmp.length > 50000, cmp.length + ' байт');
   check('сравнение: у страницы нет внешних зависимостей',
     !/<script[^>]+src=/i.test(cmp) && !/<link[^>]+stylesheet/i.test(cmp), '');
-  check('сравнение: ссылка назад ведёт на главную',
-    cmp.indexOf('href="index.html#home"') > 0, '');
   check('сравнение: страница в списке предварительного кеша',
     swTxt.indexOf("'./compare.html'") > 0, swTxt.slice(0, 120));
 
-  const tabLink = doc.querySelector('#tabs .tabpage');
-  check('сравнение: ссылка в ленте разделов', !!tabLink &&
-    tabLink.getAttribute('href') === 'compare.html' &&
-    /Сравнение/.test(tabLink.textContent), tabLink ? tabLink.outerHTML.slice(0, 80) : 'нет');
-  check('сравнение: ссылка в ленте не участвует в закреплении',
-    !tabLink.querySelector('.tabx') && !tabLink.hasAttribute('data-t'), '');
-  const menuLink = doc.querySelector('#menuList .mrow-page a');
-  check('сравнение: строка в меню «Разделы»', !!menuLink &&
-    menuLink.getAttribute('href') === 'compare.html', menuLink ? 'есть' : 'нет');
-  check('сравнение: разделов в меню по-прежнему восемь',
-    doc.querySelectorAll('#menuList button[data-t]').length === 8,
-    doc.querySelectorAll('#menuList button[data-t]').length);
+  // Ленивость проверяется на выпускаемом файле — там src обязан быть пуст.
+  // Здесь же раздел уже открывали прошлые проверки, поэтому смотрим другое:
+  // что рамка есть и после открытия в ней стоит именно эта страница.
+  const frame = doc.getElementById('cmpFrame');
+  check('сравнение: рамка для страницы на месте', !!frame, 'нет рамки');
+  menuGo('cmp');
+  check('сравнение: раздел открылся',
+    doc.getElementById('p-cmp').classList.contains('active'), '');
+  check('сравнение: страница подгружается при первом открытии',
+    frame.getAttribute('src') === 'compare.html', frame.getAttribute('src'));
+  check('сравнение: есть кнопка «в отдельном окне»',
+    !!doc.getElementById('cmpWindow'), '');
+  check('сравнение: раздел стоит в общем списке, а не ссылкой наружу',
+    !!doc.querySelector('#menuList button[data-t="cmp"]') &&
+    !doc.querySelector('#tabs .tabpage') && !doc.querySelector('.mrow-page'), '');
 
   menuGo('home');
   const cards = [...doc.querySelectorAll('.mapcard')];
   const cmpCard = cards.filter(b => /Сравнение документов/.test(b.textContent))[0];
-  check('сравнение: карточка в песочнице', !!cmpCard &&
-    cmpCard.getAttribute('data-go') === 'compare.html', cmpCard ? 'есть' : 'нет');
+  check('сравнение: карточка в песочнице ведёт в раздел', !!cmpCard &&
+    cmpCard.getAttribute('data-go') === 'cmp', cmpCard ? 'есть' : 'нет');
   check('сравнение: карточка лежит в «Документах и деньгах»',
     !!cmpCard && /Документы и деньги/.test(cmpCard.closest('.mapflow').textContent), '');
   check('сравнение: счётчик инструментов вырос до 16',
@@ -2198,7 +2198,7 @@ check('вкладки: значок сметы жив после перерис�
   const themeBefore = win.localStorage.getItem('lk-compare-theme');
   doc.getElementById('themeBtn').click();
   const themeAfter = win.localStorage.getItem('lk-compare-theme');
-  check('сравнение: тема переезжает на соседнюю страницу',
+  check('сравнение: тема переезжает на страницу',
     themeBefore !== themeAfter && (themeAfter === 'light' || themeAfter === 'dark'),
     themeBefore + ' → ' + themeAfter);
   doc.getElementById('themeBtn').click();
@@ -2260,6 +2260,14 @@ doc.getElementById('checkBlock').className = '';
 var sb0 = doc.getElementById('smetaBadge');
 if (sb0) sb0.textContent = '';
 doc.getElementById('jsonOut').value = '';
+// рамка сравнения: в выпуске она обязана быть пустой, иначе страница
+// грузилась бы при каждом открытии инструмента, а не при заходе в раздел
+(function () {
+  var cf = doc.getElementById('cmpFrame');
+  if (cf) cf.removeAttribute('src');
+  var cl = doc.getElementById('cmpLoad');
+  if (cl) cl.hidden = false;
+}());
 doc.getElementById('discount').value = '0';
 // предпросмотр ТКП: без этого в файл уезжает КП с позициями из теста
 doc.getElementById('kpPreview').innerHTML = '';
@@ -2380,9 +2388,12 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 10,
+  doc2.querySelectorAll('.nojs-title').length === 11,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('3 010 400') >= 0);
+check('чистота: сравнение грузится только при заходе в раздел',
+  !/id="cmpFrame"[^>]*src=/.test(outSrc),
+  (outSrc.match(/id="cmpFrame"[^>]*/) || [''])[0]);
 check('пререндер: смета пуста при открытии',
   doc2.querySelectorAll('#smetaBody tr').length === 0,
   'строк ' + doc2.querySelectorAll('#smetaBody tr').length);

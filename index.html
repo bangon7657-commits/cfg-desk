@@ -1230,29 +1230,17 @@ body.demo .internal{display:none !important}
   #mzBar span{display:flex;gap:7px;align-items:center}
 }
 
-/* Соседние страницы инструмента: в ленте — такая же таблетка, как у вкладок,
-   но пунктиром и со стрелкой, чтобы было видно — это переход на другой файл,
-   а не переключение раздела. */
-.navtabs .tabpage{border:1px dashed var(--line2);border-radius:16px;
-  font-size:13.5px;font-weight:600;padding:6px 13px;color:var(--tx2);
-  white-space:nowrap;display:flex;align-items:center;gap:6px;line-height:1.25;
-  text-decoration:none;
-  background:color-mix(in srgb, var(--bg3) 62%, transparent);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  transition:border-color .12s, color .12s, background .12s}
-.navtabs .tabpage::after{content:"↗";font-size:12px;opacity:.6}
-.navtabs .tabpage:hover{color:var(--tx);border-color:var(--or2);
-  background:color-mix(in srgb, var(--bg4) 78%, transparent)}
-.navtabs .tabpage:hover::after{opacity:1}
 
-/* та же страница строкой в меню «Разделы» */
-.mrow-page{border-top:1px dashed var(--line);margin-top:4px;padding-top:4px}
-.mrow-page a{display:block;text-decoration:none;color:inherit;padding:9px 12px;
-  border-radius:9px}
-.mrow-page a:hover{background:var(--bg3)}
-.mrow-page a span{display:block;font-size:14px;font-weight:600;color:var(--tx)}
-.mrow-page a span i{font-style:normal;color:var(--or);font-size:12px}
-.mrow-page a small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+/* Сравнение документов: страница живёт отдельным файлом и показывается внутри
+   раздела. Так переход стоит столько же, сколько переключение вкладки,
+   а вес основного файла не растёт. */
+.cmpbox{position:relative;border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;background:var(--bg2);height:calc(100vh - 210px);min-height:520px}
+.cmpbox iframe{display:block;width:100%;height:100%;border:0;background:var(--bg)}
+.cmp-load{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;color:var(--muted);font-size:14px;background:var(--bg2)}
+.cmp-load[hidden]{display:none}
+@media(max-width:700px){.cmpbox{height:calc(100vh - 170px);min-height:420px}}
 </style>
 <script>
 /* Тема применяется до отрисовки: иначе у выбравших светлую тему на секунду
@@ -1295,11 +1283,11 @@ body.demo .internal{display:none !important}
          Строка вкладок — только частые: так на телефоне не нужно листать. -->
     <div class="navmenu">
       <button type="button" class="menubtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">На удаление</button>
-      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Песочница</span><small>карта инструментов и куда идти</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="mill"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="mill" role="menuitem" aria-selected="false"><span>Фрезерный</span><small>сборка по узлам, обвязка, 4-я ось, ПНР</small></button><button type="button" class="pinbtn" data-pin="mill" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="false"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, цех, тренажёр, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="trash"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="trash" role="menuitem" aria-selected="true"><span>На удаление</span><small>старые Конфигуратор и Подбор — забрать нужное и удалить</small></button><button type="button" class="pinbtn" data-pin="trash" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow-page"><a href="compare.html" data-page="compare.html" role="menuitem"><span>Сравнение <i>↗</i></span><small>две версии документа рядом: что добавили, убрали, изменили</small></a></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
+      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Песочница</span><small>карта инструментов и куда идти</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="mill"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="mill" role="menuitem" aria-selected="false"><span>Фрезерный</span><small>сборка по узлам, обвязка, 4-я ось, ПНР</small></button><button type="button" class="pinbtn" data-pin="mill" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="false"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="cmp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="cmp" role="menuitem" aria-selected="false"><span>Сравнение</span><small>две версии документа рядом: что добавили, убрали, изменили</small></button><button type="button" class="pinbtn" data-pin="cmp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, цех, тренажёр, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="trash"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="trash" role="menuitem" aria-selected="true"><span>На удаление</span><small>старые Конфигуратор и Подбор — забрать нужное и удалить</small></button><button type="button" class="pinbtn" data-pin="trash" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
     </div>
     <!-- Строка вкладок собирается скриптом из закреплённых разделов: до
          четырёх, выбор и снятие — через меню «Разделы» и крестик на вкладке. -->
-    <div class="navtabs" id="tabs"><button type="button" data-t="home" aria-selected="false"><span>Песочница</span><span class="tabx" data-x="home" title="Убрать вкладку «Песочница»">×</span></button><button type="button" data-t="letters" aria-selected="false"><span>Письма</span><span class="tabx" data-x="letters" title="Убрать вкладку «Письма»">×</span></button><button type="button" data-t="mill" aria-selected="false"><span>Фрезерный</span><span class="tabx" data-x="mill" title="Убрать вкладку «Фрезерный»">×</span></button><button type="button" data-t="smeta" aria-selected="false"><span>Смета и ТКП</span><span class="badge" id="smetaBadge"></span><span class="tabx" data-x="smeta" title="Убрать вкладку «Смета и ТКП»">×</span></button><a class="tabpage" href="compare.html" data-page="compare.html" title="две версии документа рядом: что добавили, убрали, изменили"><span>Сравнение</span></a></div>
+    <div class="navtabs" id="tabs"><button type="button" data-t="home" aria-selected="false"><span>Песочница</span><span class="tabx" data-x="home" title="Убрать вкладку «Песочница»">×</span></button><button type="button" data-t="letters" aria-selected="false"><span>Письма</span><span class="tabx" data-x="letters" title="Убрать вкладку «Письма»">×</span></button><button type="button" data-t="mill" aria-selected="false"><span>Фрезерный</span><span class="tabx" data-x="mill" title="Убрать вкладку «Фрезерный»">×</span></button><button type="button" data-t="smeta" aria-selected="false"><span>Смета и ТКП</span><span class="badge" id="smetaBadge"></span><span class="tabx" data-x="smeta" title="Убрать вкладку «Смета и ТКП»">×</span></button></div>
   </div>
 </nav>
 
@@ -1325,7 +1313,7 @@ body.demo .internal{display:none !important}
 
   <!-- Три сценария работы: продажа, документы, справка. Внутри — карточки
        инструментов с назначением и переходом. -->
-  <div id="mapFlows"><div class="mapflow"><div class="mapflow-h"><b>Продажа</b><span class="muted">от задачи клиента до подписи</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="guide:match"><span class="mc-t">Подбор по задаче</span><span class="mc-w">Материал и толщина → мощность с запасом и две модели</span><span class="mc-n"><i>нужно:</i> знать, что режет клиент</span><span class="mc-x">дальше — конфигуратор</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="build"><span class="mc-t">Конфигуратор — на удаление</span><span class="mc-w">Комплект по слотам: станок, обвязка, ПНР. Проверка совместимости</span><span class="mc-n"><i>нужно:</i> выбранная модель</span><span class="mc-x">кнопка «Перенести в смету»</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="mill"><span class="mc-t">Фрезерный</span><span class="mc-w">Станок по узлам: шпиндель, стол, стойка, приводы. Обвязка, 4-я ось и ПНР — под выбранную модель</span><span class="mc-n"><i>нужно:</i> серию и рабочее поле</span><span class="mc-x">кнопка «Перенести в смету»</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="smeta"><span class="mc-t">Смета и ТКП</span><span class="mc-w">Позиции, скидки, НДС, лист предложения и файл для Word</span><span class="mc-n"><i>нужно:</i> позиции из конфигуратора</span><span class="mc-x">скачать .docx или напечатать в PDF</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:roi"><span class="mc-t">Окупаемость и лизинг</span><span class="mc-w">Срок возврата вложений, платёж по лизингу, график</span><span class="mc-n"><i>нужно:</i> цену комплекта и загрузку</span><span class="mc-x">цифры — в разговор и в ТКП</span><span class="mc-a">Открыть →</span></button></div></div><div class="mapflow"><div class="mapflow-h"><b>Документы и деньги</b><span class="muted">бумаги, которые нужны сегодня</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="letters"><span class="mc-t">Письма по оплатам</span><span class="mc-w">Возврат ошибочного платежа, уточнение назначения, перезачёт</span><span class="mc-n"><i>нужно:</i> реквизиты и номер поручения</span><span class="mc-x">печать или .docx на бланке</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="letters"><span class="mc-t">Кадровые документы</span><span class="mc-w">Заявления и служебные записки: отпуск, врач, отгул</span><span class="mc-n"><i>нужно:</i> даты и причину</span><span class="mc-x">подписать у руководителя</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="zp"><span class="mc-t">Зарплата</span><span class="mc-w">Оклад по дням, переработки, дежурство, отпуск, больничный, аванс</span><span class="mc-n"><i>нужно:</i> оклад и отработанные дни</span><span class="mc-x">печать расчёта</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:nds"><span class="mc-t">Проверка НДС</span><span class="mc-w">Выделить налог из суммы или начислить сверху, сумма прописью</span><span class="mc-n"><i>нужно:</i> сумму из счёта</span><span class="mc-x">сверить со счётом</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="compare.html"><span class="mc-t">Сравнение документов</span><span class="mc-w">Две версии договора или ТКП рядом: что добавили, убрали, изменили</span><span class="mc-n"><i>нужно:</i> два файла .docx</span><span class="mc-x">список правок — в отчёт или на печать</span><span class="mc-a">Открыть →</span></button></div></div><div class="mapflow"><div class="mapflow-h"><b>Справка и обучение</b><span class="muted">когда нужен факт, а не догадка</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="guide:tech"><span class="mc-t">Техника простым языком</span><span class="mc-w">Толщины по мощностям, серии A/E/S, что внутри станка</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">говорить клиенту рабочие толщины, а не предельные</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:gas"><span class="mc-t">Газ и стоимость владения</span><span class="mc-w">Расход по соплам, баллоны в час, деньги за месяц</span><span class="mc-n"><i>нужно:</i> сопло, газ, часы резки</span><span class="mc-x">аргумент против «дешёвого» станка</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:cost"><span class="mc-t">Час работы станка</span><span class="mc-w">Электричество, газ, расходники, оператор, амортизация</span><span class="mc-n"><i>нужно:</i> тариф и цены расходников</span><span class="mc-x">себестоимость → в окупаемость</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:shop"><span class="mc-t">Готовность цеха</span><span class="mc-w">Что должно быть на площадке до приезда монтажников</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">отправить клиенту список</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:quiz"><span class="mc-t">Тренажёр</span><span class="mc-w">Десять вопросов на разминку или экзамен на двадцать пять</span><span class="mc-n"><i>нужно:</i> пять минут</span><span class="mc-x">разбор ошибок со ссылкой на справку</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:data"><span class="mc-t">Данные и пробелы</span><span class="mc-w">Откуда цифры, где их нет и что нельзя говорить клиенту</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">сомнительное — уточнять, а не придумывать</span><span class="mc-a">Открыть →</span></button></div></div></div>
+  <div id="mapFlows"><div class="mapflow"><div class="mapflow-h"><b>Продажа</b><span class="muted">от задачи клиента до подписи</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="guide:match"><span class="mc-t">Подбор по задаче</span><span class="mc-w">Материал и толщина → мощность с запасом и две модели</span><span class="mc-n"><i>нужно:</i> знать, что режет клиент</span><span class="mc-x">дальше — конфигуратор</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="build"><span class="mc-t">Конфигуратор — на удаление</span><span class="mc-w">Комплект по слотам: станок, обвязка, ПНР. Проверка совместимости</span><span class="mc-n"><i>нужно:</i> выбранная модель</span><span class="mc-x">кнопка «Перенести в смету»</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="mill"><span class="mc-t">Фрезерный</span><span class="mc-w">Станок по узлам: шпиндель, стол, стойка, приводы. Обвязка, 4-я ось и ПНР — под выбранную модель</span><span class="mc-n"><i>нужно:</i> серию и рабочее поле</span><span class="mc-x">кнопка «Перенести в смету»</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="smeta"><span class="mc-t">Смета и ТКП</span><span class="mc-w">Позиции, скидки, НДС, лист предложения и файл для Word</span><span class="mc-n"><i>нужно:</i> позиции из конфигуратора</span><span class="mc-x">скачать .docx или напечатать в PDF</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:roi"><span class="mc-t">Окупаемость и лизинг</span><span class="mc-w">Срок возврата вложений, платёж по лизингу, график</span><span class="mc-n"><i>нужно:</i> цену комплекта и загрузку</span><span class="mc-x">цифры — в разговор и в ТКП</span><span class="mc-a">Открыть →</span></button></div></div><div class="mapflow"><div class="mapflow-h"><b>Документы и деньги</b><span class="muted">бумаги, которые нужны сегодня</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="letters"><span class="mc-t">Письма по оплатам</span><span class="mc-w">Возврат ошибочного платежа, уточнение назначения, перезачёт</span><span class="mc-n"><i>нужно:</i> реквизиты и номер поручения</span><span class="mc-x">печать или .docx на бланке</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="letters"><span class="mc-t">Кадровые документы</span><span class="mc-w">Заявления и служебные записки: отпуск, врач, отгул</span><span class="mc-n"><i>нужно:</i> даты и причину</span><span class="mc-x">подписать у руководителя</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="zp"><span class="mc-t">Зарплата</span><span class="mc-w">Оклад по дням, переработки, дежурство, отпуск, больничный, аванс</span><span class="mc-n"><i>нужно:</i> оклад и отработанные дни</span><span class="mc-x">печать расчёта</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:nds"><span class="mc-t">Проверка НДС</span><span class="mc-w">Выделить налог из суммы или начислить сверху, сумма прописью</span><span class="mc-n"><i>нужно:</i> сумму из счёта</span><span class="mc-x">сверить со счётом</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="cmp"><span class="mc-t">Сравнение документов</span><span class="mc-w">Две версии договора или ТКП рядом: что добавили, убрали, изменили</span><span class="mc-n"><i>нужно:</i> два файла .docx</span><span class="mc-x">список правок — в отчёт или на печать</span><span class="mc-a">Открыть →</span></button></div></div><div class="mapflow"><div class="mapflow-h"><b>Справка и обучение</b><span class="muted">когда нужен факт, а не догадка</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="guide:tech"><span class="mc-t">Техника простым языком</span><span class="mc-w">Толщины по мощностям, серии A/E/S, что внутри станка</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">говорить клиенту рабочие толщины, а не предельные</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:gas"><span class="mc-t">Газ и стоимость владения</span><span class="mc-w">Расход по соплам, баллоны в час, деньги за месяц</span><span class="mc-n"><i>нужно:</i> сопло, газ, часы резки</span><span class="mc-x">аргумент против «дешёвого» станка</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:cost"><span class="mc-t">Час работы станка</span><span class="mc-w">Электричество, газ, расходники, оператор, амортизация</span><span class="mc-n"><i>нужно:</i> тариф и цены расходников</span><span class="mc-x">себестоимость → в окупаемость</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:shop"><span class="mc-t">Готовность цеха</span><span class="mc-w">Что должно быть на площадке до приезда монтажников</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">отправить клиенту список</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:quiz"><span class="mc-t">Тренажёр</span><span class="mc-w">Десять вопросов на разминку или экзамен на двадцать пять</span><span class="mc-n"><i>нужно:</i> пять минут</span><span class="mc-x">разбор ошибок со ссылкой на справку</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:data"><span class="mc-t">Данные и пробелы</span><span class="mc-w">Откуда цифры, где их нет и что нельзя говорить клиенту</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">сомнительное — уточнять, а не придумывать</span><span class="mc-a">Открыть →</span></button></div></div></div>
 
   <div class="card" id="mapEmpty" hidden="">
     <div class="cardhead"><h2>Ничего не нашлось</h2></div>
@@ -1554,6 +1542,25 @@ body.demo .internal{display:none !important}
 </section>
 
 <!-- ================= СБОРКА ================= -->
+<!-- ================= СРАВНЕНИЕ ================= -->
+<span class="nojs-title">Сравнение</span>
+<section class="panel" id="p-cmp">
+  <div class="bhead">
+    <div>
+      <h1 class="btitle">Сравнение документов</h1>
+      <p class="lead">Две версии договора или ТКП рядом: что добавили, убрали,
+        изменили. Файлы читаются здесь же и никуда не отправляются.</p>
+    </div>
+    <button class="btn sec small noprint" type="button" id="cmpWindow" title="Открыть в отдельном окне — удобно сверять с другой вкладкой">В отдельном окне ↗</button>
+  </div>
+  <!-- Страница живёт отдельным файлом и подгружается при первом открытии
+       раздела: в index.html её содержимого нет, вес основного файла не растёт. -->
+  <div class="cmpbox">
+    <div class="cmp-load" id="cmpLoad">Загружаю сравнение…</div>
+    <iframe id="cmpFrame" title="Сравнение документов" loading="lazy"></iframe>
+  </div>
+</section>
+
 <!-- ================= НА УДАЛЕНИЕ ================= -->
 <span class="nojs-title">На удаление</span>
 <section class="panel" id="p-trash">
@@ -2351,7 +2358,7 @@ body.demo .internal{display:none !important}
         <div class="panehead rot">
           <div class="f"><label for="mzRot">Поворотное устройство</label><select id="mzRot" data-touched="0"><option value="wattsan">Встроенная в станок (исполнение RD)</option><option value="d65">Ø63 мм, патрон K01-63</option><option value="d80">Ø80 мм, патрон K11-80</option><option value="d100">Ø100 мм, патрон K11-100</option><option value="d160">Ø160 мм, червячный редуктор</option><option value="d300">Ø200–300 мм, под колонны</option></select></div>
           <div class="f"><label for="mzRotT">Задняя бабка</label>
-            <select id="mzRotT" disabled="" data-touched="0">
+            <select id="mzRotT" data-touched="0" disabled="">
               <option value="0">не нужна или в комплекте</option>
               <option value="1">отдельной позицией, +5 560 ₽</option>
             </select></div>
@@ -3756,6 +3763,8 @@ var DOCX = (function () {
     { id: 'mill', title: 'Фрезерный',
       hint: 'сборка по узлам, обвязка, 4-я ось, ПНР' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
+    { id: 'cmp', title: 'Сравнение',
+      hint: 'две версии документа рядом: что добавили, убрали, изменили' },
     { id: 'calc', title: 'Калькуляторы',
       hint: 'НДС, лизинг, час работы станка, окупаемость' },
     { id: 'guide', title: 'Справочник',
@@ -3790,20 +3799,6 @@ var DOCX = (function () {
   ];
   function guidePartIds() {
     return GUIDE_PARTS.map(function (g) { return g.id; });
-  }
-  // Соседние страницы инструмента: живут отдельными файлами, поэтому не
-  // переключаются, а открываются ссылкой. В SECTIONS им не место — там
-  // закрепление, крестики и порядок, которых у внешней страницы нет.
-  var PAGES = [
-    { file: 'compare.html', title: 'Сравнение',
-      hint: 'две версии документа рядом: что добавили, убрали, изменили' }
-  ];
-  function pageLink(cls) {
-    var a = d.createElement('a');
-    a.className = cls;
-    a.href = PAGES[0].file;
-    a.setAttribute('data-page', PAGES[0].file);
-    return a;
   }
   var PINS_MAX = 6;
   var PINS_DEF = ['home', 'mill', 'smeta', 'letters'];
@@ -3896,15 +3891,6 @@ var DOCX = (function () {
     }
     // Соседняя страница — обычной ссылкой в хвосте ленты: без крестика
     // и без звёздочки, потому что закреплять и снимать тут нечего.
-    PAGES.forEach(function (pg) {
-      var a = d.createElement('a');
-      a.className = 'tabpage';
-      a.href = pg.file;
-      a.setAttribute('data-page', pg.file);
-      a.title = pg.hint;
-      a.innerHTML = '<span>' + esc(pg.title) + '</span>';
-      box.appendChild(a);
-    });
   }
   function setPins(list) {
     state.pins = list.slice(0, PINS_MAX);
@@ -4011,20 +3997,6 @@ var DOCX = (function () {
       row.appendChild(pb);
       menuList.appendChild(row);
     });
-    // Внешние страницы — отдельной строкой внизу списка, со стрелкой:
-    // видно, что это переход на соседнюю страницу, а не вкладка.
-    PAGES.forEach(function (pg) {
-      var row = d.createElement('div');
-      row.className = 'mrow-page';
-      var a = d.createElement('a');
-      a.href = pg.file;
-      a.setAttribute('data-page', pg.file);
-      a.setAttribute('role', 'menuitem');
-      a.innerHTML = '<span>' + esc(pg.title) + ' <i>↗</i></span><small>' +
-        esc(pg.hint) + '</small>';
-      row.appendChild(a);
-      menuList.appendChild(row);
-    });
     menuList.appendChild(mfoot);
     markTab(curTab);
     renderMenuPins();
@@ -4088,6 +4060,41 @@ var DOCX = (function () {
     $('menuBtn').textContent = inTabs ? 'Разделы' : secTitle(name);
   }
   // Часть справочника: рисуем переключатель и показываем нужный блок
+  // Сравнение документов — отдельный файл, показанный внутри раздела.
+  // Грузим его при первом открытии: пока человек туда не зашёл, лишних
+  // 57 КБ он не качает, а после — страница остаётся жить и не перезагружается.
+  var cmpReady = false;
+  function cmpSkin() {
+    var f = $('cmpFrame');
+    var w = f && f.contentWindow;
+    var cd = f && f.contentDocument;
+    if (!cd) return;
+    // своя шапка страницы не нужна: название раздела и тема уже есть снаружи
+    var h = cd.querySelector('header');
+    if (h) h.style.display = 'none';
+    if (w && typeof w.applyTheme === 'function') {
+      w.applyTheme(state.theme === 'light' ? 'light' : 'dark');
+    }
+  }
+  function cmpLoad() {
+    var f = $('cmpFrame');
+    if (!f || cmpReady) { cmpSkin(); return; }
+    cmpReady = true;
+    f.addEventListener('load', function () {
+      var box = $('cmpLoad');
+      if (box) box.hidden = true;
+      cmpSkin();
+    });
+    f.src = 'compare.html';
+  }
+  (function () {
+    var b = $('cmpWindow');
+    if (b) {
+      b.addEventListener('click', function () {
+        window.open('compare.html', '_blank', 'noopener');
+      });
+    }
+  }());
   function showTrashPart(part) {
     if (trashPartIds().indexOf(part) < 0) part = 'build';
     state.trashPart = part;
@@ -4172,6 +4179,7 @@ var DOCX = (function () {
     }
     // Архив показывает свою шапку, а под ней — сам старый раздел целиком.
     if (name === 'trash') showTrashPart(tpart || state.trashPart || 'build');
+    if (name === 'cmp') cmpLoad();
     // При открытии файла с диска (file://) браузер запрещает replaceState и
     // бросает SecurityError. Раньше это валило остаток инициализации.
     var hashName = (name === 'guide') ? (state.guidePart || 'match')
@@ -4232,10 +4240,15 @@ var DOCX = (function () {
     }
     var meta = d.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', light ? '#f6f4f1' : '#100e0c');
-    // Соседняя страница сравнения читает свой ключ — пишем его здесь же,
-    // иначе она откроется в другой теме, чем инструмент.
+    // Страница сравнения читает свой ключ — пишем его здесь же, иначе она
+    // откроется в другой теме, чем инструмент. Если она уже открыта в разделе,
+    // перекрашиваем её сразу.
     try { localStorage.setItem('lk-compare-theme', light ? 'light' : 'dark'); }
     catch (e) { /* приватный режим — тема просто не переедет */ }
+    var cf = $('cmpFrame');
+    if (cf && cf.contentWindow && typeof cf.contentWindow.applyTheme === 'function') {
+      try { cf.contentWindow.applyTheme(light ? 'light' : 'dark'); } catch (e) { /* нет доступа */ }
+    }
     if (!silent) save();
   }
   $('themeBtn').addEventListener('click', function () {
@@ -7149,7 +7162,7 @@ var DOCX = (function () {
           need: 'сумму из счёта',
           next: 'сверить со счётом',
           keys: 'ндс налог прописью счёт ставка 22 20 процент' },
-        { page: 'compare.html', title: 'Сравнение документов',
+        { go: 'cmp', title: 'Сравнение документов',
           what: 'Две версии договора или ТКП рядом: что добавили, убрали, изменили',
           need: 'два файла .docx',
           next: 'список правок — в отчёт или на печать',
@@ -7198,8 +7211,6 @@ var DOCX = (function () {
     return out;
   }
   function mapGo(c) {
-    // соседняя страница — это отдельный файл, переключать нечего
-    if (c.page) { location.href = c.page; return; }
     // у справочника имя части и есть адрес: showTab сам его развернёт,
     // иначе в адресной строке остаётся прошлая часть
     if (c.go === 'guide' && c.part) { showTab(c.part); return; }
@@ -7238,7 +7249,7 @@ var DOCX = (function () {
         shown++;
         var b = el('button', 'mapcard');
         b.type = 'button';
-        b.setAttribute('data-go', c.page || (c.go + (c.part ? ':' + c.part : '')));
+        b.setAttribute('data-go', c.go + (c.part ? ':' + c.part : ''));
         b.innerHTML = '<span class="mc-t">' + esc(c.title) + '</span>' +
           '<span class="mc-w">' + esc(c.what) + '</span>' +
           '<span class="mc-n"><i>нужно:</i> ' + esc(c.need) + '</span>' +

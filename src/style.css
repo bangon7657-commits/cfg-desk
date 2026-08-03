@@ -1219,26 +1219,14 @@ body.demo .internal{display:none !important}
   #mzBar span{display:flex;gap:7px;align-items:center}
 }
 
-/* Соседние страницы инструмента: в ленте — такая же таблетка, как у вкладок,
-   но пунктиром и со стрелкой, чтобы было видно — это переход на другой файл,
-   а не переключение раздела. */
-.navtabs .tabpage{border:1px dashed var(--line2);border-radius:16px;
-  font-size:13.5px;font-weight:600;padding:6px 13px;color:var(--tx2);
-  white-space:nowrap;display:flex;align-items:center;gap:6px;line-height:1.25;
-  text-decoration:none;
-  background:color-mix(in srgb, var(--bg3) 62%, transparent);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  transition:border-color .12s, color .12s, background .12s}
-.navtabs .tabpage::after{content:"↗";font-size:12px;opacity:.6}
-.navtabs .tabpage:hover{color:var(--tx);border-color:var(--or2);
-  background:color-mix(in srgb, var(--bg4) 78%, transparent)}
-.navtabs .tabpage:hover::after{opacity:1}
 
-/* та же страница строкой в меню «Разделы» */
-.mrow-page{border-top:1px dashed var(--line);margin-top:4px;padding-top:4px}
-.mrow-page a{display:block;text-decoration:none;color:inherit;padding:9px 12px;
-  border-radius:9px}
-.mrow-page a:hover{background:var(--bg3)}
-.mrow-page a span{display:block;font-size:14px;font-weight:600;color:var(--tx)}
-.mrow-page a span i{font-style:normal;color:var(--or);font-size:12px}
-.mrow-page a small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+/* Сравнение документов: страница живёт отдельным файлом и показывается внутри
+   раздела. Так переход стоит столько же, сколько переключение вкладки,
+   а вес основного файла не растёт. */
+.cmpbox{position:relative;border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;background:var(--bg2);height:calc(100vh - 210px);min-height:520px}
+.cmpbox iframe{display:block;width:100%;height:100%;border:0;background:var(--bg)}
+.cmp-load{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;color:var(--muted);font-size:14px;background:var(--bg2)}
+.cmp-load[hidden]{display:none}
+@media(max-width:700px){.cmpbox{height:calc(100vh - 170px);min-height:420px}}
