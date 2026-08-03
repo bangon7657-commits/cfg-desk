@@ -103,11 +103,11 @@ check('навигация: кнопка «Разделы» в фирменном
   /\.menubtn\{[^}]*color:var\(--or\)/.test(src) &&
   /\.menubtn:hover\{background:var\(--or\)/.test(src), '');
 check('навигация: текст в меню компактный',
-  /\.menulist \.mrow>button\[data-t\]\{[^}]*font-size:15px/.test(src) &&
-  /\.menulist \.mrow>button\[data-t\] small\{[^}]*font-size:12px/.test(src), '');
+  /\.menulist \.mrow>button\[data-t\]\{[^}]*font-size:16\.5px/.test(src) &&
+  /\.menulist \.mrow>button\[data-t\] small\{[^}]*font-size:13px/.test(src), '');
 check('навигация: кнопка «Разделы» заметно крупнее вкладок',
-  /\.menubtn\{[^}]*font-size:20px/.test(src) &&
-  /\.navtabs button\{[^}]*font-size:14\.5px/.test(src), '');
+  /\.menubtn\{[^}]*font-size:22px/.test(src) &&
+  /\.navtabs button\{[^}]*font-size:16\.5px/.test(src), '');
 
 
 // ---- шапка: знак, имя, внешняя ссылка ----
@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 41', /const CACHE = 'cfg-v41'/.test(swTxt),
+check('кеш: версия поднята до 42', /const CACHE = 'cfg-v42'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1405,7 +1405,7 @@ check('даты: всплывающий календарь браузера по
 check('письма: пояснение убрано из шапки, кнопки шаблонов крупные',
   !doc.querySelector('#p-letters > .bhead p.lead') &&
   doc.getElementById('ltrPills').className.indexOf('big') >= 0 &&
-  /\.pills\.big \.pill\{font-size:16\.5px/.test(src), '');
+  /\.pills\.big \.pill\{font-size:18px/.test(src), '');
 // .docx: подменяем создание ссылки и ловим Blob
 let docxBlob = null, docxName = '';
 const realCreate = win.URL.createObjectURL;
@@ -1660,11 +1660,11 @@ check('справочник: старый адрес #gas ведёт в спра
 // Масштаб интерфейса: в версии 41 всё подросло на 10 %, потому что читать
 // с рабочего ноутбука было мелко. Лист ТКП при этом обязан остаться прежним:
 // там A4 и миллиметры, любое увеличение поедет по вёрстке страницы.
-check('масштаб: базовый шрифт интерфейса 17,5 px',
-  /body\{[^}]*font:17\.5px/.test(src.replace(/\s+/g, '')),
+check('масштаб: базовый шрифт интерфейса 19 px',
+  /body\{[^}]*font:19px/.test(src.replace(/\s+/g, '')),
   (src.replace(/\s+/g, '').match(/body\{[^}]*font:[\d.]+px/) || [''])[0]);
 check('масштаб: колонка расширена под крупный текст',
-  /\.wrap\{max-width:1320px/.test(src.replace(/\s+/g, '')), '');
+  /\.wrap\{max-width:1450px/.test(src.replace(/\s+/g, '')), '');
 check('масштаб: лист ТКП не тронут',
   /\.kp-cap\{[^}]*font-size:11px/.test(src.replace(/\s+/g, '')),
   (src.replace(/\s+/g, '').match(/\.kp-cap\{[^}]*font-size:[\d.]+px/) || ['нет'])[0]);
@@ -1784,7 +1784,7 @@ doc.querySelector('#buildKinds button[data-kind="milling"]').click();
 doc.querySelector('#buildSlots button[data-slot="machine"]').click();
 check('диалог: фильтры компактные — узкие колонки и мелкие подписи',
   /\.modal-cfg \.mc-row\{[^}]*minmax\(118px/.test(src) &&
-  /\.modal-cfg select\{[^}]*font-size:14px/.test(src), '');
+  /\.modal-cfg select\{[^}]*font-size:15\.5px/.test(src), '');
 const cfgSels2 = () => [...doc.querySelectorAll('#pickCfg select')];
 const motorSel2 = () => cfgSels2().filter(s2 => /Серводвигатели/.test(s2.textContent))[0];
 const tableSel2 = () => cfgSels2().filter(s2 => /СОЖ/.test(s2.textContent))[0];
@@ -1849,8 +1849,8 @@ check('шапка: под названием только «внутренний
 check('навигация: строка не ограничена шириной текста, кнопка у левого края',
   /\.navinner\{max-width:none[^}]*padding:7px 12px 7px 4px/.test(src), '');
 check('навигация: кнопка «Разделы» крупнее вкладок ровно настолько же, что и раньше',
-  /\.menubtn\{[^}]*font-size:20px/.test(src) &&
-  /\.navtabs button\{[^}]*font-size:14\.5px/.test(src), '');
+  /\.menubtn\{[^}]*font-size:22px/.test(src) &&
+  /\.navtabs button\{[^}]*font-size:16\.5px/.test(src), '');
 const oath = doc.getElementById('oath');
 check('главная: плашка-клятва одна — обработанный рисунок',
   !!oath && !!doc.getElementById('oathScan') && !doc.getElementById('oathVec') &&
