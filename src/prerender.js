@@ -73,20 +73,20 @@ check('в строке вкладок четыре закреплённых ра
   doc.querySelectorAll('#tabs button[data-t]').length === 4,
   'найдено ' + doc.querySelectorAll('#tabs button[data-t]').length);
 check('вкладки по умолчанию идут в порядке меню',
-  ['home', 'build', 'letters', 'smeta'].join(',') ===
+  ['home', 'letters', 'mill', 'smeta'].join(',') ===
   [...doc.querySelectorAll('#tabs button[data-t]')]
     .map(b => b.getAttribute('data-t')).join(','),
   [...doc.querySelectorAll('#tabs button[data-t]')]
     .map(b => b.getAttribute('data-t')).join(','));
 check('у каждой вкладки есть крестик снятия',
   doc.querySelectorAll('#tabs button[data-t] .tabx').length === 4, '');
-check('панелей 9', doc.querySelectorAll('.panel').length === 9,
+check('панелей 10', doc.querySelectorAll('.panel').length === 10,
   'найдено ' + doc.querySelectorAll('.panel').length);
-check('в кнопке «Разделы» все 9 разделов',
-  doc.querySelectorAll('#menuList button[data-t]').length === 9,
+check('в кнопке «Разделы» все 8 разделов',
+  doc.querySelectorAll('#menuList button[data-t]').length === 8,
   'найдено ' + doc.querySelectorAll('#menuList button[data-t]').length);
 check('в меню у каждого раздела кнопка закрепления',
-  doc.querySelectorAll('#menuList button[data-pin]').length === 9 &&
+  doc.querySelectorAll('#menuList button[data-pin]').length === 8 &&
   [...doc.querySelectorAll('#menuList button[data-pin]')]
     .filter(b => b.getAttribute('aria-pressed') === 'true').length === 4, '');
 check('в меню есть счётчик и сброс вкладок',
@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 36', /const CACHE = 'cfg-v36'/.test(swTxt),
+check('кеш: версия поднята до 37', /const CACHE = 'cfg-v37'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -950,7 +950,8 @@ check('спецификация: кнопка очистки опустошае�
   doc.getElementById('specEmpty').style.display === '', '');
 
 // ---- сборка комплекта по слотам (модель конфигуратора Regard) ----
-win.document.querySelector('#menuList button[data-t="build"]').click();
+win.document.querySelector('#menuList button[data-t="trash"]').click();
+win.document.querySelector('#trashTabs [data-trash="build"]').click();
 check('сборка: панель открывается вкладкой',
   doc.getElementById('p-build').classList.contains('active'), '');
 const kinds = doc.querySelectorAll('#buildKinds button');
@@ -1336,7 +1337,8 @@ check('наценка: цены станков на 5 % выше прайса',
 check('наценка: обвязка и опции остались по прайсу',
   /"price": 8490/.test(src) && /"price": 630000/.test(src), '');
 
-doc.querySelector('#menuList button[data-t="build"]').click();
+doc.querySelector('#menuList button[data-t="trash"]').click();
+doc.querySelector('#trashTabs [data-trash="build"]').click();
 doc.querySelector('#buildKinds button[data-kind="milling"]').click();
 doc.querySelector('#buildSlots .slot .btn[data-slot="machine"]').click();
 const cfgSels = doc.querySelectorAll('#pickCfg select');
@@ -1415,7 +1417,8 @@ check('письма: в тосте нет сообщения об ошибке',
   !/Не удалось/.test(textOf(doc, '#toastText') || ''), textOf(doc, '#toastText'));
 
 // подбор и цены: подсказки скрыты, менеджер справа
-doc.querySelector('#menuList button[data-t="cfg"]').click();
+doc.querySelector('#menuList button[data-t="trash"]').click();
+doc.querySelector('#trashTabs [data-trash="cfg"]').click();
 check('подбор: пояснения скрыты по умолчанию',
   !doc.getElementById('p-cfg').classList.contains('hints') &&
   /#p-cfg \.think,#p-cfg \.note:not\(\.stop\)\{display:none\}/.test(src), '');
@@ -1437,7 +1440,7 @@ check('id в документе не повторяются', (function () {
   return all.filter((x, i) => all.indexOf(x) !== i).slice(0, 5).join(', ');
 }()));
 check('навигация: остальные разделы живут в кнопке «Разделы»',
-  doc.querySelectorAll('#menuList button[data-t]').length === 9 &&
+  doc.querySelectorAll('#menuList button[data-t]').length === 8 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
 
 // ---- v30: калькуляторы НДС, лизинга, часа работы и окупаемости ----
@@ -1754,7 +1757,8 @@ check('диалог: поиск идёт выше фильтров конфиг�
   const kids = [...box.children].map(x => x.id || x.className);
   return kids.indexOf('modal-f') < kids.indexOf('pickCfg');
 }()), '');
-menuGo('build');
+menuGo('trash');
+doc.querySelector('#trashTabs [data-trash="build"]').click();
 doc.querySelector('#buildKinds button[data-kind="milling"]').click();
 doc.querySelector('#buildSlots button[data-slot="machine"]').click();
 check('диалог: фильтры компактные — узкие колонки и мелкие подписи',
@@ -1884,7 +1888,8 @@ check('главная: рисунок плашки не раздувает фа�
 // ---- v20: опоры штуками, ПНР от станка, ТКП по типу станка, мысли в смете ----
 menuGo('smeta');
 [...doc.querySelectorAll('#smetaBody .btn.danger')].forEach(b => b.click());
-menuGo('build');
+menuGo('trash');
+doc.querySelector('#trashTabs [data-trash="build"]').click();
 ['machine', 'stab', 'chiller', 'sensor', 'vibro', 'asp', 'ctrl', 'pnr', 'delivery']
   .forEach(id => {
     const s2 = [...doc.querySelectorAll('#buildSlots .slot')]
@@ -1977,19 +1982,19 @@ const tabIds = () => [...doc.querySelectorAll('#tabs button[data-t]')]
 pinBtn('guide').click();
 pinBtn('calc').click();
 check('вкладки: закрепляются шесть штук',
-  tabIds() === 'home,build,letters,smeta,calc,guide' &&
+  tabIds() === 'home,letters,mill,smeta,calc,guide' &&
   /Закреплено 6 из 6/.test(doc.getElementById('pinsInfo').textContent), tabIds());
 pinBtn('zp').click();
 check('вкладки: седьмую закрепить нельзя, приложение предупреждает',
-  tabIds() === 'home,build,letters,smeta,calc,guide' &&
+  tabIds() === 'home,letters,mill,smeta,calc,guide' &&
   /Уже 6 вкладок/.test(textOf(doc, '#toastText') || ''),
   tabIds() + ' | ' + textOf(doc, '#toastText'));
 doc.querySelector('#tabs button[data-t="letters"] .tabx').click();
 check('вкладки: крестик снимает вкладку',
-  tabIds() === 'home,build,smeta,calc,guide', tabIds());
+  tabIds() === 'home,mill,smeta,calc,guide', tabIds());
 pinBtn('letters').click();
 check('вкладки: звёздочка в меню закрепляет раздел, порядок из меню',
-  tabIds() === 'home,build,letters,smeta,calc,guide' &&
+  tabIds() === 'home,letters,mill,smeta,calc,guide' &&
   pinBtn('letters').getAttribute('aria-pressed') === 'true', tabIds());
 check('вкладки: у незакреплённого раздела звёздочка пустая',
   pinBtn('zp').getAttribute('aria-pressed') === 'false', '');
@@ -1998,8 +2003,8 @@ check('вкладки: у незакреплённого раздела звёз
   const rowIds = () => [...doc.querySelectorAll('#menuList .mrow')]
     .map(r => r.getAttribute('data-row')).join(',');
   check('меню: строки можно тащить — есть ручка и draggable',
-    doc.querySelectorAll('#menuList .mrow[draggable="true"]').length === 9 &&
-    doc.querySelectorAll('#menuList .mrow .mgrip').length === 9,
+    doc.querySelectorAll('#menuList .mrow[draggable="true"]').length === 8 &&
+    doc.querySelectorAll('#menuList .mrow .mgrip').length === 8,
     rowIds());
   const before = rowIds();
   const src = doc.querySelector('#menuList .mrow[data-row="zp"]');
@@ -2011,16 +2016,16 @@ check('вкладки: у незакреплённого раздела звёз
   dst.dispatchEvent(ev('dragover'));
   dst.dispatchEvent(ev('drop'));
   check('меню: перетащенный раздел встаёт на новое место',
-    rowIds() === 'zp,home,build,letters,mill,cfg,smeta,calc,guide',
+    rowIds() === 'zp,home,letters,mill,smeta,calc,guide,trash',
     before + ' → ' + rowIds());
   check('меню: новый порядок подхватила и строка вкладок',
-    tabIds() === 'home,build,letters,smeta,calc,guide', tabIds());
+    tabIds() === 'home,letters,mill,smeta,calc,guide', tabIds());
 }());
 doc.getElementById('menuList').querySelector('.mfoot button').click();
 check('вкладки: «Вернуть по умолчанию» возвращает исходные вкладки и порядок',
-  tabIds() === 'home,build,letters,smeta' &&
+  tabIds() === 'home,letters,mill,smeta' &&
   [...doc.querySelectorAll('#menuList .mrow')].map(r => r.getAttribute('data-row'))
-    .join(',') === 'home,build,letters,zp,mill,cfg,smeta,calc,guide' &&
+    .join(',') === 'home,letters,zp,mill,smeta,calc,guide,trash' &&
   /Закреплено 4 из 6/.test(doc.getElementById('pinsInfo').textContent), tabIds());
 check('вкладки: значок сметы жив после перерисовки строки',
   !!doc.getElementById('smetaBadge'), '');
@@ -2165,8 +2170,8 @@ check('вкладки: значок сметы жив после перерис�
   const menuLink = doc.querySelector('#menuList .mrow-page a');
   check('сравнение: строка в меню «Разделы»', !!menuLink &&
     menuLink.getAttribute('href') === 'compare.html', menuLink ? 'есть' : 'нет');
-  check('сравнение: разделов в меню по-прежнему девять',
-    doc.querySelectorAll('#menuList button[data-t]').length === 9,
+  check('сравнение: разделов в меню по-прежнему восемь',
+    doc.querySelectorAll('#menuList button[data-t]').length === 8,
     doc.querySelectorAll('#menuList button[data-t]').length);
 
   menuGo('home');
@@ -2197,6 +2202,47 @@ check('вкладки: значок сметы жив после перерис�
     themeBefore !== themeAfter && (themeAfter === 'light' || themeAfter === 'dark'),
     themeBefore + ' → ' + themeAfter);
   doc.getElementById('themeBtn').click();
+}());
+
+// ---- v37: раздел «На удаление» ----
+// Конфигуратор и «Подбор и цены» убраны из ленты, но пока живут внутри архива:
+// из них ещё предстоит забрать данные. Прежние адреса обязаны работать.
+(function () {
+  menuGo('trash');
+  check('на удаление: раздел открылся', doc.getElementById('p-trash')
+    .classList.contains('active'), '');
+  check('на удаление: внутри два старых раздела',
+    doc.querySelectorAll('#trashTabs .pill').length === 2,
+    doc.querySelectorAll('#trashTabs .pill').length);
+  check('на удаление: по умолчанию открыт конфигуратор',
+    doc.getElementById('p-build').classList.contains('active') &&
+    !doc.getElementById('p-cfg').classList.contains('active'), '');
+  check('на удаление: пояснение к части на месте',
+    /слотам/.test(doc.getElementById('trashNote').textContent),
+    doc.getElementById('trashNote').textContent.slice(0, 50));
+  doc.querySelector('#trashTabs [data-trash="cfg"]').click();
+  check('на удаление: переключение на «Подбор и цены»',
+    doc.getElementById('p-cfg').classList.contains('active') &&
+    !doc.getElementById('p-build').classList.contains('active'), '');
+  check('на удаление: адрес идёт за частью', win.location.hash === '#cfg',
+    win.location.hash);
+  check('на удаление: шапка архива видна вместе с разделом',
+    doc.getElementById('p-trash').classList.contains('active'), '');
+
+  // прежние ссылки не должны сломаться: #build и #cfg ведут в архив
+  win.location.hash = '#build';
+  win.dispatchEvent(new win.HashChangeEvent('hashchange'));
+  check('на удаление: старый адрес #build открывает архив на конфигураторе',
+    doc.getElementById('p-trash').classList.contains('active') &&
+    doc.getElementById('p-build').classList.contains('active'), win.location.hash);
+
+  check('на удаление: разделов в ленте и меню их больше нет',
+    !doc.querySelector('#menuList button[data-t="build"]') &&
+    !doc.querySelector('#menuList button[data-t="cfg"]') &&
+    !doc.querySelector('#tabs button[data-t="build"]'), '');
+  check('на удаление: вкладкой по умолчанию стал «Фрезерный»',
+    [...doc.querySelectorAll('#tabs button[data-t]')]
+      .map(b => b.getAttribute('data-t')).indexOf('mill') >= 0, '');
 }());
 
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
@@ -2334,7 +2380,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 9,
+  doc2.querySelectorAll('.nojs-title').length === 10,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('3 010 400') >= 0);
 check('пререндер: смета пуста при открытии',

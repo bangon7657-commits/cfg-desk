@@ -77,7 +77,7 @@
     // расчёт зарплаты
     zp: null,
     // закреплённые вкладки в строке навигации (до четырёх)
-    pins: ['home', 'build', 'smeta', 'letters']
+    pins: ['home', 'mill', 'smeta', 'letters']
   };
   // Значения по умолчанию для зарплаты вынесены в функцию: их же берёт «Сбросить»
   function zpDefaults() {
@@ -142,7 +142,7 @@
       if (!state.build.slots || typeof state.build.slots !== 'object') state.build.slots = {};
       if (!Array.isArray(state.build.saved)) state.build.saved = [];
       // черновики до версии 19 не знали про настраиваемые вкладки
-      if (!Array.isArray(state.pins)) state.pins = ['home', 'build', 'smeta', 'letters'];
+      if (!Array.isArray(state.pins)) state.pins = ['home', 'mill', 'smeta', 'letters'];
       // с версии 28 эти разделы сведены в «Справочник»: закреплённые вкладки
       // со старыми именами переводим на него, повтор убираем
       var MERGED = ['match', 'tech', 'gas', 'shop', 'data', 'quiz'];
@@ -184,18 +184,33 @@
   // проверяется хеш в адресе.
   var SECTIONS = [
     { id: 'home', title: 'Песочница', hint: 'карта инструментов и куда идти' },
-    { id: 'build', title: 'Конфигуратор', hint: 'слоты комплекта и проверка' },
     { id: 'letters', title: 'Письма', hint: 'возврат, платежи, официальные' },
     { id: 'zp', title: 'Зарплата', hint: 'оклад, переработки, налоги' },
     { id: 'mill', title: 'Фрезерный',
       hint: 'сборка по узлам, обвязка, 4-я ось, ПНР' },
-    { id: 'cfg', title: 'Подбор и цены', hint: 'станок, обвязка, техничка' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
     { id: 'calc', title: 'Калькуляторы',
       hint: 'НДС, лизинг, час работы станка, окупаемость' },
     { id: 'guide', title: 'Справочник',
-      hint: 'подбор, техника, газ, цех, тренажёр, данные' }
+      hint: 'подбор, техника, газ, цех, тренажёр, данные' },
+    { id: 'trash', title: 'На удаление',
+      hint: 'старые Конфигуратор и Подбор — забрать нужное и удалить' }
   ];
+  // Конфигуратор и «Подбор и цены» уступили место «Фрезерному» и «Смете и ТКП».
+  // Из ленты они убраны, но пока живут внутри раздела «На удаление»: прежние
+  // адреса #build и #cfg по-прежнему открывают их, только уже там.
+  var TRASH_PARTS = [
+    { id: 'build', title: 'Конфигуратор',
+      note: 'Сборка комплекта по слотам: станок, обвязка, ПНР, типовые комплекты ' +
+        'и сохранённые сборки. По фрезерным всё это умеет раздел «Фрезерный», ' +
+        'по остальным категориям замены пока нет.' },
+    { id: 'cfg', title: 'Подбор и цены',
+      note: 'Прайсы четырёх категорий с техничкой и пояснениями. Цены здесь те же ' +
+        'самые, что и в остальных разделах: источник один.' }
+  ];
+  function trashPartIds() {
+    return TRASH_PARTS.map(function (t) { return t.id; });
+  }
   // Справочник собран из бывших самостоятельных разделов. Прежние имена остались
   // адресами частей: ссылка #tech по-прежнему открывает нужную часть.
   var GUIDE_PARTS = [
@@ -224,7 +239,7 @@
     return a;
   }
   var PINS_MAX = 6;
-  var PINS_DEF = ['home', 'build', 'smeta', 'letters'];
+  var PINS_DEF = ['home', 'mill', 'smeta', 'letters'];
   var curTab = 'cfg';
   // Порядок разделов в меню менеджер задаёт сам: строку можно взять и
   // перетащить выше или ниже. Список храним в черновике, чужие и повторные
@@ -466,7 +481,7 @@
 
   window.addEventListener('hashchange', function () {
     var h = (location.hash || '').replace('#', '');
-    var ok = guidePartIds().indexOf(h) >= 0;
+    var ok = guidePartIds().indexOf(h) >= 0 || trashPartIds().indexOf(h) >= 0;
     SECTIONS.forEach(function (s) { if (s.id === h) ok = true; });
     if (ok) showTab(h);
   });
@@ -506,6 +521,31 @@
     $('menuBtn').textContent = inTabs ? 'Разделы' : secTitle(name);
   }
   // Часть справочника: рисуем переключатель и показываем нужный блок
+  function showTrashPart(part) {
+    if (trashPartIds().indexOf(part) < 0) part = 'build';
+    state.trashPart = part;
+    save();
+    var box = $('trashTabs');
+    if (!box) return;
+    box.innerHTML = TRASH_PARTS.map(function (t) {
+      return '<button type="button" class="pill' + (t.id === part ? ' on' : '') +
+        '" data-trash="' + t.id + '" role="tab" aria-selected="' +
+        (t.id === part ? 'true' : 'false') + '">' + esc(t.title) + '</button>';
+    }).join('');
+    TRASH_PARTS.forEach(function (t) {
+      var n = $('p-' + t.id);
+      if (n) n.classList.toggle('active', t.id === part);
+      if (t.id === part && $('trashNote')) $('trashNote').textContent = t.note;
+    });
+    var cn = $('trashCnt');
+    if (cn) cn.textContent = cnt(TRASH_PARTS.length, ['раздел', 'раздела', 'разделов']);
+    // адрес держим на самой части: ссылка #cfg должна открывать «Подбор и цены»
+    if (curTab === 'trash') {
+      try {
+        if (location.hash !== '#' + part) history.replaceState(null, '', '#' + part);
+      } catch (e) { location.hash = part; }
+    }
+  }
   function showGuidePart(part) {
     if (guidePartIds().indexOf(part) < 0) part = 'match';
     state.guidePart = part;
@@ -523,6 +563,15 @@
       if (n) n.classList.toggle('active', g.id === part);
     });
   }
+  (function () {
+    var tt = d.getElementById('trashTabs');
+    if (tt) {
+      tt.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-trash]');
+        if (b) showTrashPart(b.getAttribute('data-trash'));
+      });
+    }
+  }());
   (function () {
     if (!d.getElementById('guideTabs')) return;
     var box = fresh('guideTabs');   // очищаем: пререндер запускает файл дважды
@@ -544,6 +593,9 @@
     // прежние адреса частей справочника ведут в справочник, на нужную часть
     var part = '';
     if (guidePartIds().indexOf(name) >= 0) { part = name; name = 'guide'; }
+    // то же с двумя разделами, убранными в «На удаление»
+    var tpart = '';
+    if (trashPartIds().indexOf(name) >= 0) { tpart = name; name = 'trash'; }
     curTab = name;
     markTab(name);
     if (name === 'guide') showGuidePart(part || state.guidePart || 'match');
@@ -551,9 +603,12 @@
     for (var j = 0; j < panels.length; j++) {
       panels[j].classList.toggle('active', panels[j].id === 'p-' + name);
     }
+    // Архив показывает свою шапку, а под ней — сам старый раздел целиком.
+    if (name === 'trash') showTrashPart(tpart || state.trashPart || 'build');
     // При открытии файла с диска (file://) браузер запрещает replaceState и
     // бросает SecurityError. Раньше это валило остаток инициализации.
-    var hashName = (name === 'guide') ? (state.guidePart || 'match') : name;
+    var hashName = (name === 'guide') ? (state.guidePart || 'match')
+      : (name === 'trash' ? (state.trashPart || 'build') : name);
     try {
       if (location.hash !== '#' + hashName) {
         history.replaceState(null, '', '#' + hashName);
@@ -3482,7 +3537,7 @@
           need: 'знать, что режет клиент',
           next: 'дальше — конфигуратор',
           keys: 'толщина материал мощность подбор модель сталь нержавейка' },
-        { go: 'build', title: 'Конфигуратор',
+        { go: 'build', title: 'Конфигуратор — на удаление',
           what: 'Комплект по слотам: станок, обвязка, ПНР. Проверка совместимости',
           need: 'выбранная модель',
           next: 'кнопка «Перенести в смету»',
@@ -6298,7 +6353,8 @@
   __MILL_JS__
 
   var hash = (location.hash || '').replace('#', '');
-  var valid = SECTIONS.map(function (s) { return s.id; }).concat(guidePartIds());
+  var valid = SECTIONS.map(function (s) { return s.id; })
+    .concat(guidePartIds()).concat(trashPartIds());
   showTab(valid.indexOf(hash) >= 0 ? hash : 'home');
   fixNavOffset();
 
