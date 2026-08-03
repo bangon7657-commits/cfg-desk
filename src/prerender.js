@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 48', /const CACHE = 'cfg-v48'/.test(swTxt),
+check('кеш: версия поднята до 49', /const CACHE = 'cfg-v49'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -2170,10 +2170,31 @@ check('вкладки: значок сметы жив после перерис�
   check('фрезерный: ни одного цвета мимо переменных темы',
     !/#[0-9a-f]{3,8}\b/i.test(mzCss) && !/\brgba?\(/i.test(mzCss),
     (mzCss.match(/#[0-9a-f]{3,8}\b/i) || [''])[0]);
-  check('фрезерный: заголовок и подпись как в исходном конфигураторе',
-    /Конфигуратор фрезерного станка Wattsan/.test(textOf(doc, '#p-mill .mzhead h1')) &&
+  check('конфигуратор v2: заголовок и подпись на месте',
+    /Конфигуратор v2 · фрезерный станок Wattsan/.test(textOf(doc, '#p-mill .mzhead h1')) &&
     /подбор конфигурации, допоборудования и ПНР/.test(textOf(doc, '#p-mill .mzhead p')),
     textOf(doc, '#p-mill .mzhead h1'));
+  // Категория станка прямо в шапке: фрезерный собирается здесь, остальные три
+  // пока открываются в старом конфигураторе и не теряют набранную смету.
+  check('конфигуратор v2: в шапке четыре категории оборудования',
+    doc.querySelectorAll('#mzKinds button').length === 4 &&
+    doc.querySelector('#mzKinds button.on').getAttribute('data-kind') === 'milling',
+    doc.querySelectorAll('#mzKinds button').length);
+  check('конфигуратор v2: у чужих категорий видно, что они в старом конфигураторе',
+    [...doc.querySelectorAll('#mzKinds button:not(.on)')]
+      .every(b => /в старом конфигураторе/.test(b.textContent)), '');
+  (function () {
+    doc.querySelector('#mzKinds [data-kind="co2"]').click();
+    check('конфигуратор v2: чужая категория открывает старый конфигуратор на ней же',
+      doc.getElementById('p-build').classList.contains('active') &&
+      /CO₂/.test((doc.querySelector('#buildKinds .pill.on') || {}).textContent || ''),
+      (doc.querySelector('#buildKinds .pill.on') || {}).textContent || 'нет');
+    menuGo('mill');
+  }());
+  check('письма: шапка в стиле конфигуратора',
+    !!doc.querySelector('#p-letters .mzhead h1') &&
+    /Письма и уведомления/.test(textOf(doc, '#p-letters .mzhead h1')) &&
+    /шаблон/.test(textOf(doc, '#ltrCnt')), textOf(doc, '#ltrCnt'));
   // Клиент, номер и дата живут в одном месте — в шапке раздела «Смета и ТКП».
   // В конфигураторе их нет: вторая точка ввода тех же полей только путала.
   check('фрезерный: полей ТКП в разделе нет, шапка литая',

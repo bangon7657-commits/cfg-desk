@@ -875,6 +875,27 @@ function mzPriceDefaults() {
   if (!mzTouched('mzPnrP')) $('mzPnrP').value = Math.round(mzPnrPrice() / 100);
 }
 
+// ------------------------------------------------------- категория станка
+// По узлам пока собирается только фрезерный. Остальные три категории живут
+// в старом конфигураторе — он ещё работает в разделе «На удаление», поэтому
+// отсюда на него можно перейти, не теряя набранную смету.
+var MZ_KINDS = [
+  { id: 'milling', t: 'Фрезерный', here: true },
+  { id: 'fiber', t: 'Волокно по металлу' },
+  { id: 'co2', t: 'Лазерный CO₂' },
+  { id: 'marker', t: 'Маркиратор' }
+];
+function mzRenderKinds() {
+  var box = $('mzKinds');
+  if (!box) return;
+  box.innerHTML = MZ_KINDS.map(function (k) {
+    return '<button type="button" class="' + (k.here ? 'on' : '') + '" data-kind="' +
+      k.id + '" role="tab" aria-selected="' + (k.here ? 'true' : 'false') + '"' +
+      (k.here ? '' : ' title="Пока собирается в старом конфигураторе"') + '>' +
+      esc(k.t) + (k.here ? '' : '<small>в старом конфигураторе</small>') + '</button>';
+  }).join('');
+}
+
 // -------------------------------------------------------------------- шаги
 // Три блока показываются по одному: слева видно, где ты находишься и что уже
 // заполнено, внизу — листалка. Так на экране помещается сам блок, а не его шапка.
@@ -971,6 +992,7 @@ function mzUpdate() {
   mzRenderStab(); mzRenderCh(); mzRenderSens(); mzRenderVib();
   mzRenderAsp(); mzRenderBr(); mzRenderDsp(); mzRenderRot();
   mzFillPnrVar(); mzRenderPnr();
+  mzRenderKinds();
   mzRenderModes(); mzRenderMTabs(); mzRenderTabs();
   mzRenderReady(); mzRenderMatches(); mzRenderSimilar();
   mzRenderSpec();
@@ -1124,6 +1146,19 @@ function mzBind() {
     mzCat = b.dataset.cat;
     mzRenderTabs();
     mzSave();
+  });
+  $('mzKinds').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-kind]');
+    if (!b) return;
+    var id = b.dataset.kind;
+    if (id === 'milling') return;
+    state.build.kind = id;
+    save();
+    // без перерисовки старый конфигуратор откроется на прошлой категории
+    renderBuild();
+    renderTemplates();
+    toast('Эта категория пока собирается в старом конфигураторе');
+    showTab('build');
   });
   $('mzStepNav').addEventListener('click', function (e) {
     var b = e.target.closest('[data-step]');

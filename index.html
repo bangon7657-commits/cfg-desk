@@ -1019,9 +1019,28 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
    одной высоты — раньше правая была выше и линия шапки ломалась. */
 .mzhead{margin:14px 0}
 .mzhead>div{background:var(--or);color:var(--onor);padding:14px 18px;
-  border-radius:12px;min-width:0}
+  border-radius:12px;min-width:0;display:flex;gap:16px;align-items:center;
+  flex-wrap:wrap;justify-content:space-between}
+.mzhead-t{min-width:0}
 .mzhead h1{margin:0;font-size:21px;line-height:1.25}
 .mzhead p{margin:3px 0 0;opacity:.78;font-size:13.5px}
+
+/* Категория станка прямо в шапке: видно, что открыто сейчас и куда можно
+   перейти. Остальные три категории пока живут в старом конфигураторе. */
+.mzkinds{display:flex;gap:6px;flex-wrap:wrap}
+.mzkinds button{border:1px solid color-mix(in srgb, var(--onor) 45%, transparent);
+  background:color-mix(in srgb, var(--onor) 12%, transparent);color:var(--onor);
+  border-radius:20px;padding:7px 14px;font:inherit;font-size:14px;font-weight:600;
+  cursor:pointer;white-space:nowrap;transition:background .12s, border-color .12s}
+.mzkinds button:hover{background:color-mix(in srgb, var(--onor) 24%, transparent);
+  border-color:var(--onor)}
+.mzkinds button.on{background:var(--bg2);border-color:var(--bg2);color:var(--or)}
+.mzkinds button.on::before{content:"● ";font-size:11px;vertical-align:middle}
+.mzkinds button small{display:block;font-size:11px;font-weight:400;opacity:.75}
+@media(max-width:700px){.mzkinds{width:100%}.mzkinds button{flex:1 1 auto}}
+
+/* Письма получают ту же шапку, что и конфигуратор */
+#p-letters .mzhead>div{align-items:flex-start}
 
 
 /* Шаги: слева колонка с линией, справа один блок за раз */
@@ -1387,11 +1406,11 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
          Строка вкладок — только частые: так на телефоне не нужно листать. -->
     <div class="navmenu">
       <button type="button" class="menubtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">На удаление</button>
-      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Песочница</span><small>карта инструментов и куда идти</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="mill"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="mill" role="menuitem" aria-selected="false"><span>Фрезерный</span><small>сборка по узлам, обвязка, 4-я ось, ПНР</small></button><button type="button" class="pinbtn" data-pin="mill" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="false"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="cmp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="cmp" role="menuitem" aria-selected="false"><span>Сравнение</span><small>две версии документа рядом: что добавили, убрали, изменили</small></button><button type="button" class="pinbtn" data-pin="cmp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, цех, тренажёр, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="trash"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="trash" role="menuitem" aria-selected="true"><span>На удаление</span><small>старые Конфигуратор и Подбор — забрать нужное и удалить</small></button><button type="button" class="pinbtn" data-pin="trash" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
+      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Песочница</span><small>карта инструментов и куда идти</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="mill"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="mill" role="menuitem" aria-selected="false"><span>Конфигуратор v2</span><small>сборка станка по узлам, обвязка, 4-я ось, ПНР</small></button><button type="button" class="pinbtn" data-pin="mill" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="false"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="cmp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="cmp" role="menuitem" aria-selected="false"><span>Сравнение Word</span><small>две версии документа рядом: что добавили, убрали, изменили</small></button><button type="button" class="pinbtn" data-pin="cmp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, цех, тренажёр, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="trash"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="trash" role="menuitem" aria-selected="true"><span>На удаление</span><small>старые Конфигуратор и Подбор — забрать нужное и удалить</small></button><button type="button" class="pinbtn" data-pin="trash" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
     </div>
     <!-- Строка вкладок собирается скриптом из закреплённых разделов: до
          четырёх, выбор и снятие — через меню «Разделы» и крестик на вкладке. -->
-    <div class="navtabs" id="tabs"><button type="button" data-t="home" aria-selected="false"><span>Песочница</span><span class="tabx" data-x="home" title="Убрать вкладку «Песочница»">×</span></button><button type="button" data-t="letters" aria-selected="false"><span>Письма</span><span class="tabx" data-x="letters" title="Убрать вкладку «Письма»">×</span></button><button type="button" data-t="mill" aria-selected="false"><span>Фрезерный</span><span class="tabx" data-x="mill" title="Убрать вкладку «Фрезерный»">×</span></button><button type="button" data-t="smeta" aria-selected="false"><span>Смета и ТКП</span><span class="badge" id="smetaBadge"></span><span class="tabx" data-x="smeta" title="Убрать вкладку «Смета и ТКП»">×</span></button></div>
+    <div class="navtabs" id="tabs"><button type="button" data-t="home" aria-selected="false"><span>Песочница</span><span class="tabx" data-x="home" title="Убрать вкладку «Песочница»">×</span></button><button type="button" data-t="letters" aria-selected="false"><span>Письма</span><span class="tabx" data-x="letters" title="Убрать вкладку «Письма»">×</span></button><button type="button" data-t="mill" aria-selected="false"><span>Конфигуратор v2</span><span class="tabx" data-x="mill" title="Убрать вкладку «Конфигуратор v2»">×</span></button><button type="button" data-t="smeta" aria-selected="false"><span>Смета и ТКП</span><span class="badge" id="smetaBadge"></span><span class="tabx" data-x="smeta" title="Убрать вкладку «Смета и ТКП»">×</span></button></div>
   </div>
 </nav>
 
@@ -1417,7 +1436,7 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
 
   <!-- Три сценария работы: продажа, документы, справка. Внутри — карточки
        инструментов с назначением и переходом. -->
-  <div id="mapFlows"><div class="mapflow"><div class="mapflow-h"><b>Продажа</b><span class="muted">от задачи клиента до подписи</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="guide:match"><span class="mc-t">Подбор по задаче</span><span class="mc-w">Материал и толщина → мощность с запасом и две модели</span><span class="mc-n"><i>нужно:</i> знать, что режет клиент</span><span class="mc-x">дальше — конфигуратор</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="build"><span class="mc-t">Конфигуратор — на удаление</span><span class="mc-w">Комплект по слотам: станок, обвязка, ПНР. Проверка совместимости</span><span class="mc-n"><i>нужно:</i> выбранная модель</span><span class="mc-x">кнопка «Перенести в смету»</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="mill"><span class="mc-t">Фрезерный</span><span class="mc-w">Станок по узлам: шпиндель, стол, стойка, приводы. Обвязка, 4-я ось и ПНР — под выбранную модель</span><span class="mc-n"><i>нужно:</i> серию и рабочее поле</span><span class="mc-x">кнопка «Перенести в смету»</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="smeta"><span class="mc-t">Смета и ТКП</span><span class="mc-w">Позиции, скидки, НДС, лист предложения и файл для Word</span><span class="mc-n"><i>нужно:</i> позиции из конфигуратора</span><span class="mc-x">скачать .docx или напечатать в PDF</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:roi"><span class="mc-t">Окупаемость и лизинг</span><span class="mc-w">Срок возврата вложений, платёж по лизингу, график</span><span class="mc-n"><i>нужно:</i> цену комплекта и загрузку</span><span class="mc-x">цифры — в разговор и в ТКП</span><span class="mc-a">Открыть →</span></button></div></div><div class="mapflow"><div class="mapflow-h"><b>Документы и деньги</b><span class="muted">бумаги, которые нужны сегодня</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="letters"><span class="mc-t">Письма по оплатам</span><span class="mc-w">Возврат ошибочного платежа, уточнение назначения, перезачёт</span><span class="mc-n"><i>нужно:</i> реквизиты и номер поручения</span><span class="mc-x">печать или .docx на бланке</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="letters"><span class="mc-t">Кадровые документы</span><span class="mc-w">Заявления и служебные записки: отпуск, врач, отгул</span><span class="mc-n"><i>нужно:</i> даты и причину</span><span class="mc-x">подписать у руководителя</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="zp"><span class="mc-t">Зарплата</span><span class="mc-w">Оклад по дням, переработки, дежурство, отпуск, больничный, аванс</span><span class="mc-n"><i>нужно:</i> оклад и отработанные дни</span><span class="mc-x">печать расчёта</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:nds"><span class="mc-t">Проверка НДС</span><span class="mc-w">Выделить налог из суммы или начислить сверху, сумма прописью</span><span class="mc-n"><i>нужно:</i> сумму из счёта</span><span class="mc-x">сверить со счётом</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="cmp"><span class="mc-t">Сравнение документов</span><span class="mc-w">Две версии договора или ТКП рядом: что добавили, убрали, изменили</span><span class="mc-n"><i>нужно:</i> два файла .docx</span><span class="mc-x">список правок — в отчёт или на печать</span><span class="mc-a">Открыть →</span></button></div></div><div class="mapflow"><div class="mapflow-h"><b>Справка и обучение</b><span class="muted">когда нужен факт, а не догадка</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="guide:tech"><span class="mc-t">Техника простым языком</span><span class="mc-w">Толщины по мощностям, серии A/E/S, что внутри станка</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">говорить клиенту рабочие толщины, а не предельные</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:gas"><span class="mc-t">Газ и стоимость владения</span><span class="mc-w">Расход по соплам, баллоны в час, деньги за месяц</span><span class="mc-n"><i>нужно:</i> сопло, газ, часы резки</span><span class="mc-x">аргумент против «дешёвого» станка</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:cost"><span class="mc-t">Час работы станка</span><span class="mc-w">Электричество, газ, расходники, оператор, амортизация</span><span class="mc-n"><i>нужно:</i> тариф и цены расходников</span><span class="mc-x">себестоимость → в окупаемость</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:shop"><span class="mc-t">Готовность цеха</span><span class="mc-w">Что должно быть на площадке до приезда монтажников</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">отправить клиенту список</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:quiz"><span class="mc-t">Тренажёр</span><span class="mc-w">Десять вопросов на разминку или экзамен на двадцать пять</span><span class="mc-n"><i>нужно:</i> пять минут</span><span class="mc-x">разбор ошибок со ссылкой на справку</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:data"><span class="mc-t">Данные и пробелы</span><span class="mc-w">Откуда цифры, где их нет и что нельзя говорить клиенту</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">сомнительное — уточнять, а не придумывать</span><span class="mc-a">Открыть →</span></button></div></div></div>
+  <div id="mapFlows"><div class="mapflow"><div class="mapflow-h"><b>Продажа</b><span class="muted">от задачи клиента до подписи</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="guide:match"><span class="mc-t">Подбор по задаче</span><span class="mc-w">Материал и толщина → мощность с запасом и две модели</span><span class="mc-n"><i>нужно:</i> знать, что режет клиент</span><span class="mc-x">дальше — конфигуратор</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="build"><span class="mc-t">Конфигуратор — на удаление</span><span class="mc-w">Комплект по слотам: станок, обвязка, ПНР. Проверка совместимости</span><span class="mc-n"><i>нужно:</i> выбранная модель</span><span class="mc-x">кнопка «Перенести в смету»</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="mill"><span class="mc-t">Конфигуратор v2 — фрезерный</span><span class="mc-w">Станок по узлам: шпиндель, стол, стойка, приводы. Обвязка, 4-я ось и ПНР — под выбранную модель</span><span class="mc-n"><i>нужно:</i> серию и рабочее поле</span><span class="mc-x">кнопка «Перенести в смету»</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="smeta"><span class="mc-t">Смета и ТКП</span><span class="mc-w">Позиции, скидки, НДС, лист предложения и файл для Word</span><span class="mc-n"><i>нужно:</i> позиции из конфигуратора</span><span class="mc-x">скачать .docx или напечатать в PDF</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:roi"><span class="mc-t">Окупаемость и лизинг</span><span class="mc-w">Срок возврата вложений, платёж по лизингу, график</span><span class="mc-n"><i>нужно:</i> цену комплекта и загрузку</span><span class="mc-x">цифры — в разговор и в ТКП</span><span class="mc-a">Открыть →</span></button></div></div><div class="mapflow"><div class="mapflow-h"><b>Документы и деньги</b><span class="muted">бумаги, которые нужны сегодня</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="letters"><span class="mc-t">Письма по оплатам</span><span class="mc-w">Возврат ошибочного платежа, уточнение назначения, перезачёт</span><span class="mc-n"><i>нужно:</i> реквизиты и номер поручения</span><span class="mc-x">печать или .docx на бланке</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="letters"><span class="mc-t">Кадровые документы</span><span class="mc-w">Заявления и служебные записки: отпуск, врач, отгул</span><span class="mc-n"><i>нужно:</i> даты и причину</span><span class="mc-x">подписать у руководителя</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="zp"><span class="mc-t">Зарплата</span><span class="mc-w">Оклад по дням, переработки, дежурство, отпуск, больничный, аванс</span><span class="mc-n"><i>нужно:</i> оклад и отработанные дни</span><span class="mc-x">печать расчёта</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:nds"><span class="mc-t">Проверка НДС</span><span class="mc-w">Выделить налог из суммы или начислить сверху, сумма прописью</span><span class="mc-n"><i>нужно:</i> сумму из счёта</span><span class="mc-x">сверить со счётом</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="cmp"><span class="mc-t">Сравнение документов</span><span class="mc-w">Две версии договора или ТКП рядом: что добавили, убрали, изменили</span><span class="mc-n"><i>нужно:</i> два файла .docx</span><span class="mc-x">список правок — в отчёт или на печать</span><span class="mc-a">Открыть →</span></button></div></div><div class="mapflow"><div class="mapflow-h"><b>Справка и обучение</b><span class="muted">когда нужен факт, а не догадка</span></div><div class="mapgrid"><button class="mapcard" type="button" data-go="guide:tech"><span class="mc-t">Техника простым языком</span><span class="mc-w">Толщины по мощностям, серии A/E/S, что внутри станка</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">говорить клиенту рабочие толщины, а не предельные</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:gas"><span class="mc-t">Газ и стоимость владения</span><span class="mc-w">Расход по соплам, баллоны в час, деньги за месяц</span><span class="mc-n"><i>нужно:</i> сопло, газ, часы резки</span><span class="mc-x">аргумент против «дешёвого» станка</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="calc:cost"><span class="mc-t">Час работы станка</span><span class="mc-w">Электричество, газ, расходники, оператор, амортизация</span><span class="mc-n"><i>нужно:</i> тариф и цены расходников</span><span class="mc-x">себестоимость → в окупаемость</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:shop"><span class="mc-t">Готовность цеха</span><span class="mc-w">Что должно быть на площадке до приезда монтажников</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">отправить клиенту список</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:quiz"><span class="mc-t">Тренажёр</span><span class="mc-w">Десять вопросов на разминку или экзамен на двадцать пять</span><span class="mc-n"><i>нужно:</i> пять минут</span><span class="mc-x">разбор ошибок со ссылкой на справку</span><span class="mc-a">Открыть →</span></button><button class="mapcard" type="button" data-go="guide:data"><span class="mc-t">Данные и пробелы</span><span class="mc-w">Откуда цифры, где их нет и что нельзя говорить клиенту</span><span class="mc-n"><i>нужно:</i> ничего</span><span class="mc-x">сомнительное — уточнять, а не придумывать</span><span class="mc-a">Открыть →</span></button></div></div></div>
 
   <div class="card" id="mapEmpty" hidden="">
     <div class="cardhead"><h2>Ничего не нашлось</h2></div>
@@ -1436,9 +1455,13 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
 <!-- ================= ПИСЬМА ================= -->
 <span class="nojs-title">Письма</span>
 <section class="panel" id="p-letters">
-  <div class="bhead">
+  <div class="mzhead">
     <div>
-      <h1 class="btitle">Письма и уведомления</h1>
+      <div class="mzhead-t">
+        <h1>Письма и уведомления</h1>
+        <p>LASERCUT · возврат и уточнение платежей, кадровые документы,
+          официальные письма на бланке <span id="ltrCnt">· 11 шаблонов</span></p>
+      </div>
     </div>
   </div>
   <!-- Группы — раскрывающиеся плашки: нажал «Кадровые документы» — под самой
@@ -1647,7 +1670,7 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
 
 <!-- ================= СБОРКА ================= -->
 <!-- ================= СРАВНЕНИЕ ================= -->
-<span class="nojs-title">Сравнение</span>
+<span class="nojs-title">Сравнение Word</span>
 <section class="panel" id="p-cmp">
   <div class="bhead">
     <div>
@@ -1697,25 +1720,25 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
         помечены звёздочкой. Внизу видно, что уже заполнено, справа — стоимость и
         проверка сборки на нестыковки.</p>
     </div>
-    <div class="pills" id="buildKinds" role="tablist" aria-label="Тип комплекта"><button class="pill on" type="button" data-kind="fiber" role="tab" aria-selected="true">Волоконный по металлу</button><button class="pill" type="button" data-kind="milling" role="tab" aria-selected="false">Фрезерный с ЧПУ</button><button class="pill" type="button" data-kind="co2" role="tab" aria-selected="false">Лазерный CO₂</button><button class="pill" type="button" data-kind="marker" role="tab" aria-selected="false">Маркиратор</button></div>
+    <div class="pills" id="buildKinds" role="tablist" aria-label="Тип комплекта"><button class="pill" type="button" data-kind="fiber" role="tab" aria-selected="false">Волоконный по металлу</button><button class="pill" type="button" data-kind="milling" role="tab" aria-selected="false">Фрезерный с ЧПУ</button><button class="pill on" type="button" data-kind="co2" role="tab" aria-selected="true">Лазерный CO₂</button><button class="pill" type="button" data-kind="marker" role="tab" aria-selected="false">Маркиратор</button></div>
   </div>
 
   <div class="cfggrid printkeep">
   <div class="cfgmain">
     <div class="card">
       <div class="cardhead">
-        <h2 id="buildKindTitle">Волоконный по металлу</h2>
+        <h2 id="buildKindTitle">Лазерный CO₂</h2>
         <label class="chk small"><input type="checkbox" id="buildReqOnly">
           Только обязательные слоты</label>
       </div>
-      <div id="buildSlots"><div class="slot req"><div class="slot-h"><b>Станок <span class="star">*</span></b><span class="muted">17 позиций</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="machine">Добавить</button></div></div><div class="slot req"><div class="slot-h"><b>Стабилизатор напряжения <span class="star">*</span></b><span class="muted">41 позиция</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="stab">Добавить</button></div></div><div class="slot"><div class="slot-h"><b>Компрессор</b><span class="muted">5 позиций</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="compressor">Добавить</button></div></div><div class="slot"><div class="slot-h"><b>Дымоуловитель (ФВУ)</b><span class="muted">1 позиция</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="extraction">Добавить</button></div></div><div class="slot"><div class="slot-h"><b>Источник газа (криоцилиндр)</b><span class="muted">2 позиции</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="cryo">Добавить</button></div></div><div class="slot"><div class="slot-h"><b>ПНР и обучение</b><span class="muted">2 позиции</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="pnr">Добавить</button><button class="btn mini sec" type="button">Своя позиция</button></div></div><div class="slot"><div class="slot-h"><b>Доставка и прочее</b><span class="muted">0 позиций</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="delivery">Добавить</button><button class="btn mini sec" type="button">Своя позиция</button></div></div></div>
-      <div class="note" id="buildKindNote">В цену станка входят контроллер FSCUT, голова BLT и чиллер CWFL. Компрессор, вытяжка, газ, стабилизатор и ПНР — отдельные слоты.</div>
+      <div id="buildSlots"><div class="slot req"><div class="slot-h"><b>Станок <span class="star">*</span></b><span class="muted">43 позиции</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="machine">Добавить</button></div></div><div class="slot req"><div class="slot-h"><b>Чиллер <span class="star">*</span></b><span class="muted">4 позиции</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="chiller">Добавить</button></div></div><div class="slot req"><div class="slot-h"><b>Стабилизатор напряжения <span class="star">*</span></b><span class="muted">41 позиция</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="stab">Добавить</button></div></div><div class="slot"><div class="slot-h"><b>Вытяжка (ФВУ)</b><span class="muted">1 позиция</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="extraction">Добавить</button></div></div><div class="slot"><div class="slot-h"><b>Компрессор воздуха</b><span class="muted">5 позиций</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="compressor">Добавить</button></div></div><div class="slot"><div class="slot-h"><b>ПНР и обучение</b><span class="muted">2 позиции</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="pnr">Добавить</button><button class="btn mini sec" type="button">Своя позиция</button></div></div><div class="slot"><div class="slot-h"><b>Доставка и прочее</b><span class="muted">0 позиций</span></div><div class="slot-b"><div class="slot-n muted">Слот пуст</div><div class="slot-p"></div></div><div class="slot-a noprint"><button class="btn mini" type="button" data-slot="delivery">Добавить</button><button class="btn mini sec" type="button">Своя позиция</button></div></div></div>
+      <div class="note" id="buildKindNote">Чиллер в цену не входит и обязателен. Цены CO₂ — розница с витрины сайта.</div>
     </div>
 
     <div class="card">
       <div class="cardhead"><h2>Заполнение</h2>
         <span class="spec-cnt" id="buildFillCnt"></span></div>
-      <div class="fillbar" id="buildFill"><span class="chip req" title="Станок: пусто">СТАНОК</span><span class="chip req" title="Стабилизатор напряжения: пусто">СТАБ</span><span class="chip" title="Компрессор: пусто">КОМПР</span><span class="chip" title="Дымоуловитель (ФВУ): пусто">ФВУ</span><span class="chip" title="Источник газа (криоцилиндр): пусто">ГАЗ</span><span class="chip" title="ПНР и обучение: пусто">ПНР</span><span class="chip" title="Доставка и прочее: пусто">ДОСТАВКА</span></div>
+      <div class="fillbar" id="buildFill"><span class="chip req" title="Станок: пусто">СТАНОК</span><span class="chip req" title="Чиллер: пусто">ЧИЛЛЕР</span><span class="chip req" title="Стабилизатор напряжения: пусто">СТАБ</span><span class="chip" title="Вытяжка (ФВУ): пусто">ФВУ</span><span class="chip" title="Компрессор воздуха: пусто">КОМПР</span><span class="chip" title="ПНР и обучение: пусто">ПНР</span><span class="chip" title="Доставка и прочее: пусто">ДОСТАВКА</span></div>
       <div class="note small">Серое — слот пустой, залитое — позиция выбрана.
         Обязательные слоты обведены.</div>
     </div>
@@ -1724,7 +1747,7 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
       <div class="cardhead"><h2>Типовые комплекты</h2></div>
       <p class="muted small">Собраны из наших же прайсов. Нажатие подставляет позиции
         в слоты — дальше правится как обычно.</p>
-      <div id="buildTemplates"><div class="tplrow"><div class="pn"><b>Волокно 1530, 3 кВт — под ключ</b><span class="muted">станок, стабилизатор 30 кВт, компрессор 16 бар, ФВУ, криоцилиндр</span></div><div class="pp">5 417 690 ₽</div><button class="btn mini sec" type="button">В слоты</button></div><div class="tplrow"><div class="pn"><b>Волокно 1530, 6 кВт с труборезом</b><span class="muted">станок с rotary, стабилизатор 60 кВт под планку 50 кВт, компрессор 22 кВт</span></div><div class="pp">6 382 690 ₽</div><button class="btn mini sec" type="button">В слоты</button></div></div>
+      <div id="buildTemplates"><div class="tplrow"><div class="pn"><b>CO₂ 1290 ST — витрина и реклама</b><span class="muted">станок, чиллер CW-5200, стабилизатор, вытяжка</span></div><div class="pp">2 020 970 ₽</div><button class="btn mini sec" type="button">В слоты</button></div></div>
     </div>
 
     <div class="card">
@@ -2280,16 +2303,22 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
 </section>
 
 <!-- ================= ФРЕЗЕРНЫЙ ================= -->
-<span class="nojs-title">Фрезерный</span>
+<span class="nojs-title">Конфигуратор v2</span>
 <section class="panel" id="p-mill">
   <!-- Шапка как в исходном конфигураторе: слева название, справа поля будущего
        ТКП. Поля не свои — они пишут прямо в шапку раздела «Смета и ТКП»,
        чтобы клиент и номер не заводились в приложении дважды. -->
   <div class="mzhead">
     <div>
-      <h1>Конфигуратор фрезерного станка Wattsan</h1>
-      <p>LASERCUT · подбор конфигурации, допоборудования и ПНР
-        <span id="mzCfgCnt"> · 110 конфигураций в прайсе</span></p>
+      <div class="mzhead-t">
+        <h1>Конфигуратор v2 · фрезерный станок Wattsan</h1>
+        <p>LASERCUT · подбор конфигурации, допоборудования и ПНР
+          <span id="mzCfgCnt"> · 110 конфигураций в прайсе</span></p>
+      </div>
+      <!-- Категория станка. Пока по узлам собирается только фрезерный,
+           остальные три открываются в старом конфигураторе — он ещё жив
+           в разделе «На удаление». -->
+      <div class="mzkinds" id="mzKinds" role="tablist" aria-label="Категория оборудования"><button type="button" class="on" data-kind="milling" role="tab" aria-selected="true">Фрезерный</button><button type="button" class="" data-kind="fiber" role="tab" aria-selected="false" title="Пока собирается в старом конфигураторе">Волокно по металлу<small>в старом конфигураторе</small></button><button type="button" class="" data-kind="co2" role="tab" aria-selected="false" title="Пока собирается в старом конфигураторе">Лазерный CO₂<small>в старом конфигураторе</small></button><button type="button" class="" data-kind="marker" role="tab" aria-selected="false" title="Пока собирается в старом конфигураторе">Маркиратор<small>в старом конфигураторе</small></button></div>
     </div>
   </div>
 
@@ -3881,10 +3910,10 @@ var DOCX = (function () {
     { id: 'home', title: 'Песочница', hint: 'карта инструментов и куда идти' },
     { id: 'letters', title: 'Письма', hint: 'возврат, платежи, официальные' },
     { id: 'zp', title: 'Зарплата', hint: 'оклад, переработки, налоги' },
-    { id: 'mill', title: 'Фрезерный',
-      hint: 'сборка по узлам, обвязка, 4-я ось, ПНР' },
+    { id: 'mill', title: 'Конфигуратор v2',
+      hint: 'сборка станка по узлам, обвязка, 4-я ось, ПНР' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
-    { id: 'cmp', title: 'Сравнение',
+    { id: 'cmp', title: 'Сравнение Word',
       hint: 'две версии документа рядом: что добавили, убрали, изменили' },
     { id: 'calc', title: 'Калькуляторы',
       hint: 'НДС, лизинг, час работы станка, окупаемость' },
@@ -7298,7 +7327,7 @@ var DOCX = (function () {
           need: 'выбранная модель',
           next: 'кнопка «Перенести в смету»',
           keys: 'сборка слоты комплект компрессор чиллер стабилизатор пнр опоры' },
-        { go: 'mill', title: 'Фрезерный',
+        { go: 'mill', title: 'Конфигуратор v2 — фрезерный',
           what: 'Станок по узлам: шпиндель, стол, стойка, приводы. Обвязка, ' +
             '4-я ось и ПНР — под выбранную модель',
           need: 'серию и рабочее поле',
@@ -7395,7 +7424,8 @@ var DOCX = (function () {
       var first = ltrTplsOfGroup(c.grp)[0];
       if (first) { state.ltr.tpl = first.id; state.ltr.head = ''; }
       save();
-      renderLtrPills(); renderLtrFields(); renderLtr();
+      renderLtrCnt();
+  renderLtrPills(); renderLtrFields(); renderLtr();
     }
     showTab(c.go);
     if (c.part && c.go === 'calc') showCalcPart(c.part);
@@ -7624,6 +7654,13 @@ var DOCX = (function () {
   }
   // Плашки-группы: у каждой свой список документов, раскрыта одна.
   // Нажал «Кадровые документы» — под кнопкой появились её заявления.
+  // В шапке писем — сколько шаблонов доступно: так видно объём раздела
+  function renderLtrCnt() {
+    var box = $('ltrCnt');
+    if (!box) return;
+    box.textContent = '· ' + cnt(APP.letterTemplates.length,
+      ['шаблон', 'шаблона', 'шаблонов']);
+  }
   function renderLtrPills() {
     var gid = ltrGrp();
     // контейнер плиток один: переносим его в открытую группу
@@ -10981,6 +11018,27 @@ function mzPriceDefaults() {
   if (!mzTouched('mzPnrP')) $('mzPnrP').value = Math.round(mzPnrPrice() / 100);
 }
 
+// ------------------------------------------------------- категория станка
+// По узлам пока собирается только фрезерный. Остальные три категории живут
+// в старом конфигураторе — он ещё работает в разделе «На удаление», поэтому
+// отсюда на него можно перейти, не теряя набранную смету.
+var MZ_KINDS = [
+  { id: 'milling', t: 'Фрезерный', here: true },
+  { id: 'fiber', t: 'Волокно по металлу' },
+  { id: 'co2', t: 'Лазерный CO₂' },
+  { id: 'marker', t: 'Маркиратор' }
+];
+function mzRenderKinds() {
+  var box = $('mzKinds');
+  if (!box) return;
+  box.innerHTML = MZ_KINDS.map(function (k) {
+    return '<button type="button" class="' + (k.here ? 'on' : '') + '" data-kind="' +
+      k.id + '" role="tab" aria-selected="' + (k.here ? 'true' : 'false') + '"' +
+      (k.here ? '' : ' title="Пока собирается в старом конфигураторе"') + '>' +
+      esc(k.t) + (k.here ? '' : '<small>в старом конфигураторе</small>') + '</button>';
+  }).join('');
+}
+
 // -------------------------------------------------------------------- шаги
 // Три блока показываются по одному: слева видно, где ты находишься и что уже
 // заполнено, внизу — листалка. Так на экране помещается сам блок, а не его шапка.
@@ -11077,6 +11135,7 @@ function mzUpdate() {
   mzRenderStab(); mzRenderCh(); mzRenderSens(); mzRenderVib();
   mzRenderAsp(); mzRenderBr(); mzRenderDsp(); mzRenderRot();
   mzFillPnrVar(); mzRenderPnr();
+  mzRenderKinds();
   mzRenderModes(); mzRenderMTabs(); mzRenderTabs();
   mzRenderReady(); mzRenderMatches(); mzRenderSimilar();
   mzRenderSpec();
@@ -11230,6 +11289,19 @@ function mzBind() {
     mzCat = b.dataset.cat;
     mzRenderTabs();
     mzSave();
+  });
+  $('mzKinds').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-kind]');
+    if (!b) return;
+    var id = b.dataset.kind;
+    if (id === 'milling') return;
+    state.build.kind = id;
+    save();
+    // без перерисовки старый конфигуратор откроется на прошлой категории
+    renderBuild();
+    renderTemplates();
+    toast('Эта категория пока собирается в старом конфигураторе');
+    showTab('build');
   });
   $('mzStepNav').addEventListener('click', function (e) {
     var b = e.target.closest('[data-step]');
