@@ -16,6 +16,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from dengi import propisyu, nds_iznutri, so_skidkoy  # noqa: E402
 import data  # noqa: E402
+import wattsan as wt  # noqa: E402
 
 
 def all_prices():
@@ -225,7 +226,7 @@ kit_count = (len(data.COMPRESSORS) + len(data.EXTRACTION) + len(data.CRYO) +
              len(data.STABILIZERS))
 print()
 print(f'Позиций обвязки: {kit_count}, сумма: {kit_sum}')
-KIT_SUM_EXPECTED = 10291300
+KIT_SUM_EXPECTED = 10294890   # 03.08.2026: АСН-12000/1-ЭМ поднят до 37 590 ₽ по 1С
 KIT_COUNT_EXPECTED = 18
 if kit_sum != KIT_SUM_EXPECTED or kit_count != KIT_COUNT_EXPECTED:
     print(f'ВНИМАНИЕ: эталон {KIT_SUM_EXPECTED} / {KIT_COUNT_EXPECTED}')
@@ -278,6 +279,33 @@ if cnt != PRICE_COUNT_EXPECTED or tot != PRICE_SUM_EXPECTED:
           f'на сумму {PRICE_SUM_EXPECTED}. Прайс изменён или испорчен.')
     sys.exit(1)
 print('Совпадает с эталоном — цены не изменились')
+
+# ---- Одна модель — одна цена ----
+# Справочник допоборудования и прайс обвязки ведут часть моделей параллельно.
+# Молча расходиться они не должны: менеджер увидит одну цену, клиент — другую.
+def _norm_stab(n):
+    n = n.replace('Стабилизатор напряжения ', '').replace('Ресанта ', '')
+    return n.replace('Ресанта', '').replace('АСН-', '').replace('/', chr(92)).strip().lower()
+
+
+_full = {_norm_stab(x['n']): x for x in wt.STABS_FULL}
+_diff = []
+for _st in data.STABILIZERS:
+    _k = _norm_stab(_st['name'])
+    if _k in _full and _full[_k]['p'] != _st['price']:
+        _diff.append((_st['name'], _full[_k]['p'], _st['price']))
+print()
+print('--- Цены стабилизаторов: справочник против прайса обвязки ---')
+if _diff:
+    print(f'Расходятся {len(_diff)} из {len(data.STABILIZERS)} позиций прайса:')
+    for _n, _a, _b in _diff:
+        _d = _b - _a
+        print(f'  {_n[:52]:52} справочник {_a:>9} · прайс {_b:>9} · '
+              f'{"прайс выше" if _d > 0 else "прайс ниже"} на {abs(_d)}')
+    print('Ожидаемо там, где справочник — розница сайта производителя, а прайс —')
+    print('наша цена. Перед КП на стабилизатор от 20 кВт сверяйтесь с 1С.')
+else:
+    print('Расхождений нет — обе таблицы дают одинаковые цены')
 
 print()
 print('Проверка завершена.')

@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 49', /const CACHE = 'cfg-v49'/.test(swTxt),
+check('кеш: версия поднята до 50', /const CACHE = 'cfg-v50'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1676,6 +1676,17 @@ check('шапка: знак у левого края, кнопки у право
   doc.querySelector('.head > .brand') === doc.querySelector('.head').firstElementChild &&
   doc.querySelector('.head > .head-right') === doc.querySelector('.head').lastElementChild,
   '');
+// Цены стабилизаторов из 1С, снимок 03.08.2026: их видно и в справочнике
+// допоборудования, и в конфигураторе, поэтому проверяем по собранному файлу.
+check('стабилизаторы: цены Ресанты обновлены по 1С',
+  src.indexOf('9790') > 0 && src.indexOf('11890') > 0 && src.indexOf('16090') > 0 &&
+  src.indexOf('32290') > 0 && src.indexOf('37590') > 0 && src.indexOf('69790') > 0, '');
+check('стабилизаторы: у обновлённых позиций источник — 1С',
+  (src.match(/прайс 1С LASERCUT, 03\.08\.2026/g) || []).length >= 7,
+  (src.match(/прайс 1С LASERCUT, 03\.08\.2026/g) || []).length);
+check('стабилизаторы: одна модель — одна цена в обеих таблицах',
+  /"name": "Стабилизатор напряжения Ресанта АСН-12000\/1-ЭМ", "price": 37590/
+    .test(src), '');
 check('масштаб: базовый шрифт интерфейса 21 px',
   /body\{[^}]*font:21px/.test(src.replace(/\s+/g, '')),
   (src.replace(/\s+/g, '').match(/body\{[^}]*font:[\d.]+px/) || [''])[0]);
