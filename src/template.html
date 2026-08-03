@@ -980,7 +980,7 @@
     <ol class="mzsteps" id="mzStepNav"></ol>
     <div class="mzstage">
 
-    <div class="card mzstep" data-step="1">
+    <div class="card mzstep" data-step="1" data-kind="milling">
       <div class="cardhead">
         <h2>1 · Станок</h2>
         <div class="seg noprint" id="mzModes">
@@ -1065,7 +1065,7 @@
       <div id="mzSimilar"></div>
     </div>
 
-    <div class="card mzstep" data-step="2">
+    <div class="card mzstep" data-step="2" data-kind="milling">
       <div class="cardhead">
         <h2>2 · Доп. оборудование</h2>
         <div class="tabs noprint" id="mzTabs"></div>
@@ -1177,7 +1177,7 @@
       </div>
     </div>
 
-    <div class="card mzstep" data-step="3">
+    <div class="card mzstep" data-step="3" data-kind="any">
       <h2>3 · ПНР и обучение</h2>
       <div class="panehead b5">
         <div class="f"><label for="mzPnrGroup">Группа по прайсу</label><select id="mzPnrGroup"></select></div>
@@ -1193,6 +1193,112 @@
       </div>
       <div class="hints" id="mzPnrHint"></div>
       <div class="hints"><div class="hint">__PNR_TERMS_MILL__</div></div>
+      <!-- По волокну строк ПНР в прайсе сервиса нет — цену спрашивают отдельно -->
+      <div id="fbPnrBox" hidden>
+        <div class="panehead">
+          <div class="f"><label for="fbPnrN">Услуга</label>
+            <input id="fbPnrN" type="text" value="Пусконаладка и обучение оператора"></div>
+          <div class="f"><label for="fbPnrP">Цена, ₽</label>
+            <input class="num" id="fbPnrP" type="number" min="0" step="1000"></div>
+          <label class="tgl"><input type="checkbox" id="fbPnrOn"><span>В смету</span></label>
+        </div>
+        <div class="hints"><div class="hint warn">В прайсе сервиса ПНР и обучение
+          расписаны только по фрезерным станкам. По волокну цену запрашивайте
+          у сервиса и ставьте вручную — приложение её не выдумывает.</div></div>
+      </div>
+    </div>
+
+
+    <!-- ============ ВОЛОКНО: станок ============ -->
+    <div class="card mzstep" data-step="1" data-kind="fiber">
+      <div class="cardhead">
+        <h2>1 · Станок</h2>
+        <div class="seg noprint" id="fbSeries">
+          <button type="button" data-fs="A">Серия A</button>
+          <button type="button" data-fs="S">Серия S</button>
+        </div>
+      </div>
+
+      <div class="mhead main">
+        <div class="f"><label for="fbFmt">Рабочее поле</label><select id="fbFmt"></select></div>
+        <div class="f"><label for="fbPow">Мощность источника</label><select id="fbPow"></select></div>
+        <div class="f"><label for="fbPrice">Цена станка, ₽</label>
+          <input class="num" id="fbPrice" type="number" min="0" step="100"></div>
+        <div class="f"><label for="fbServo">Приводы</label><select id="fbServo"></select></div>
+      </div>
+
+      <div class="mhead tbl" id="fbOptsRow">
+        <div class="f"><label for="fbTable">Сменный стол</label>
+          <select id="fbTable">
+            <option value="0">не нужен</option>
+            <option value="1">да, второй стол</option>
+          </select></div>
+        <div class="f"><label for="fbRot">Труборез</label><select id="fbRot"></select></div>
+      </div>
+
+      <div id="fbKitCard"></div>
+      <div id="fbSeriesCard"></div>
+      <div class="hints" id="fbHints"></div>
+      <div id="fbSimilar"></div>
+    </div>
+
+    <!-- ============ ВОЛОКНО: обвязка ============ -->
+    <div class="card mzstep" data-step="2" data-kind="fiber">
+      <div class="cardhead">
+        <h2>2 · Доп. оборудование</h2>
+        <div class="tabs noprint" id="fbTabs"></div>
+      </div>
+
+      <div class="pane" id="fbp_stab">
+        <div class="panehead">
+          <div class="f"><label for="fbStab">Стабилизатор напряжения</label><select id="fbStab"></select></div>
+          <div class="f"><label for="fbStabP">Цена, ₽</label>
+            <input class="num" id="fbStabP" type="number" min="0" step="100"></div>
+          <label class="tgl"><input type="checkbox" id="fbStabOn"><span>В смету</span></label>
+        </div>
+        <div id="fbStabCard"></div><div class="hints" id="fbStabHint"></div>
+      </div>
+
+      <div class="pane" id="fbp_compr">
+        <div class="panehead">
+          <div class="f"><label for="fbCompr">Компрессор</label><select id="fbCompr"></select></div>
+          <div class="f"><label for="fbComprP">Цена, ₽</label>
+            <input class="num" id="fbComprP" type="number" min="0" step="100"></div>
+          <label class="tgl"><input type="checkbox" id="fbComprOn"><span>В смету</span></label>
+        </div>
+        <div id="fbComprCard"></div><div class="hints" id="fbComprHint"></div>
+      </div>
+
+      <div class="pane" id="fbp_ext">
+        <div class="panehead">
+          <div class="f"><label for="fbExt">Дымоуловитель</label><select id="fbExt"></select></div>
+          <div class="f"><label for="fbExtP">Цена, ₽</label>
+            <input class="num" id="fbExtP" type="number" min="0" step="100"></div>
+          <label class="tgl"><input type="checkbox" id="fbExtOn"><span>В смету</span></label>
+        </div>
+        <div id="fbExtCard"></div><div class="hints" id="fbExtHint"></div>
+      </div>
+
+      <div class="pane" id="fbp_gas">
+        <div class="panehead">
+          <div class="f"><label for="fbCryo">Источник газа</label><select id="fbCryo"></select></div>
+          <div class="f"><label for="fbCryoP">Цена, ₽</label>
+            <input class="num" id="fbCryoP" type="number" min="0" step="100"></div>
+          <label class="tgl"><input type="checkbox" id="fbCryoOn"><span>В смету</span></label>
+        </div>
+        <div id="fbCryoCard"></div><div class="hints" id="fbCryoHint"></div>
+      </div>
+
+      <div class="pane" id="fbp_extra">
+        <div class="panehead">
+          <div class="f"><label for="fbExtraN">Название позиции</label>
+            <input id="fbExtraN" type="text" placeholder="доставка, ЗИП, монтаж вытяжки…"></div>
+          <div class="f"><label for="fbExtraP">Цена, ₽</label>
+            <input class="num" id="fbExtraP" type="number" min="0" step="100"></div>
+          <label class="tgl"><input type="checkbox" id="fbExtraOn"><span>В смету</span></label>
+        </div>
+        <div class="hints"><div class="hint">Свободная строка для всего, чего нет в прайсе.</div></div>
+      </div>
     </div>
 
       <div class="mznav noprint">

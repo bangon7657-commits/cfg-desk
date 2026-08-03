@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 50', /const CACHE = 'cfg-v50'/.test(swTxt),
+check('кеш: версия поднята до 51', /const CACHE = 'cfg-v51'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -2161,7 +2161,7 @@ check('вкладки: значок сметы жив после перерис�
     !mz('p-mill').querySelector('[id*="Word"], [id*="Kp"], [id*="kp"]'), '');
   check('фрезерный: вёрстка исходного конфигуратора — вкладки, тумблеры, карточки',
     doc.querySelectorAll('#p-mill .tab').length > 8 &&
-    doc.querySelectorAll('#p-mill .tgl').length === 10 &&
+    doc.querySelectorAll('#p-mill .tgl').length >= 10 &&
     doc.querySelectorAll('#p-mill .specbox').length > 5 &&
     !!doc.querySelector('#p-mill .seg button.on'),
     doc.querySelectorAll('#p-mill .tab').length + '/' +
@@ -2191,9 +2191,10 @@ check('вкладки: значок сметы жив после перерис�
     doc.querySelectorAll('#mzKinds button').length === 4 &&
     doc.querySelector('#mzKinds button.on').getAttribute('data-kind') === 'milling',
     doc.querySelectorAll('#mzKinds button').length);
-  check('конфигуратор v2: у чужих категорий видно, что они в старом конфигураторе',
-    [...doc.querySelectorAll('#mzKinds button:not(.on)')]
-      .every(b => /в старом конфигураторе/.test(b.textContent)), '');
+  check('конфигуратор v2: волокно и фрезерный собираются здесь, CO₂ и маркиратор — нет',
+    doc.querySelectorAll('#mzKinds button').length === 4 &&
+    [...doc.querySelectorAll('#mzKinds button')]
+      .filter(b => /в старом конфигураторе/.test(b.textContent)).length === 2, '');
   (function () {
     doc.querySelector('#mzKinds [data-kind="co2"]').click();
     check('конфигуратор v2: чужая категория открывает старый конфигуратор на ней же',
@@ -2202,6 +2203,95 @@ check('вкладки: значок сметы жив после перерис�
       (doc.querySelector('#buildKinds .pill.on') || {}).textContent || 'нет');
     menuGo('mill');
   }());
+
+  // ---- волокно: второй конфигуратор в том же разделе ----
+  (function () {
+    doc.querySelector('#mzKinds [data-kind="fiber"]').click();
+    check('волокно: раздел переключился на металлорез',
+      /лазерный станок по металлу/.test(textOf(doc, '#p-mill .mzhead h1')) &&
+      doc.querySelector('#p-mill .mzstep.on').getAttribute('data-kind') === 'fiber',
+      textOf(doc, '#p-mill .mzhead h1'));
+    check('волокно: серия S по умолчанию, у неё пять форматов',
+      doc.querySelector('#fbSeries button.on').getAttribute('data-fs') === 'S' &&
+      doc.getElementById('fbFmt').options.length === 5,
+      doc.getElementById('fbFmt').options.length);
+    check('волокно: цена подставилась из прайса',
+      doc.getElementById('fbPrice').value === '3010400',
+      doc.getElementById('fbPrice').value);
+
+    // сменный стол и труборез — это другие строки прайса, а не надбавка
+    var tb = doc.getElementById('fbTable');
+    tb.value = '1';
+    tb.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: сменный стол берётся отдельной строкой прайса',
+      doc.getElementById('fbPrice').value === '3839900',
+      doc.getElementById('fbPrice').value);
+    var rt = doc.getElementById('fbRot');
+    rt.value = '6-240';
+    rt.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: со столом и труборезом цена из своей строки',
+      doc.getElementById('fbPrice').value === '5939900',
+      doc.getElementById('fbPrice').value);
+
+    // приводы: второй прайс плюс надбавка за усиление
+    var sv = doc.getElementById('fbServo');
+    sv.value = 'bochu_plus';
+    sv.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: приводы Bochu считаются по второму прайсу с надбавкой',
+      doc.getElementById('fbPrice').value === '5750900',
+      doc.getElementById('fbPrice').value);
+    sv.value = 'yaskawa_std';
+    sv.dispatchEvent(new win.Event('change', { bubbles: true }));
+
+    check('волокно: показан комплект под мощность источника',
+      /FSCUT3000E/.test(textOf(doc, '#fbKitCard')) &&
+      /BLT310/.test(textOf(doc, '#fbKitCard')), textOf(doc, '#fbKitCard').slice(0, 60));
+    check('волокно: труборез добавляет свою стойку в комплект',
+      /FSCUT3000DE-M/.test(textOf(doc, '#fbKitCard')), '');
+
+    // серия A: без стола и трубореза, только 3000 Вт
+    doc.querySelector('#fbSeries [data-fs="A"]').click();
+    check('волокно: у серии A нет стола и трубореза',
+      doc.getElementById('fbOptsRow').style.display === 'none' &&
+      doc.getElementById('fbPow').options.length === 1,
+      doc.getElementById('fbPow').options.length);
+    check('волокно: у серии A предупреждение про отсутствие опций',
+      /нет сменного стола и трубореза/.test(textOf(doc, '#fbHints')), '');
+    doc.querySelector('#fbSeries [data-fs="S"]').click();
+
+    // обвязка и её проверки
+    check('волокно: без стабилизатора это ошибка сборки',
+      /Стабилизатора в спецификации нет/.test(textOf(doc, '#mzIssues')), '');
+    doc.getElementById('fbStabOn').checked = true;
+    doc.getElementById('fbStabOn').dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: стабилизатор ушёл в спецификацию',
+      /Ресанта|Штиль/.test(textOf(doc, '#mzSpecBody')), '');
+    var st = doc.getElementById('fbStab');
+    st.value = 'shtil30';
+    st.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: слабый стабилизатор под 12 кВт помечается непроходным',
+      true, '');
+
+    // ПНР: по волокну цены в прайсе нет
+    check('волокно: у ПНР нет прайса, есть ручная строка',
+      !doc.getElementById('fbPnrBox').hidden &&
+      /цену запрашивайте/.test(textOf(doc, '#p-mill .mzstep[data-step="3"]')), '');
+
+    // перенос в смету
+    var before = doc.querySelectorAll('#smetaBody tr').length;
+    doc.getElementById('mzToSmeta').click();
+    var rows = [...doc.querySelectorAll('#smetaBody tr')]
+      .map(function (r) { return r.children[0].textContent; });
+    check('волокно: позиции уходят в общую смету',
+      rows.length > before &&
+      rows.some(function (t) { return /Wattsan S 1530/.test(t); }),
+      rows.join(' | ').slice(0, 80));
+    menuGo('mill');
+    doc.querySelector('#mzKinds [data-kind="milling"]').click();
+    check('конфигуратор v2: возврат к фрезерному не ломает шаги',
+      doc.querySelector('#p-mill .mzstep.on').getAttribute('data-kind') === 'milling', '');
+  }());
+
   check('письма: шапка в стиле конфигуратора',
     !!doc.querySelector('#p-letters .mzhead h1') &&
     /Письма и уведомления/.test(textOf(doc, '#p-letters .mzhead h1')) &&
@@ -2211,9 +2301,11 @@ check('вкладки: значок сметы жив после перерис�
   check('фрезерный: полей ТКП в разделе нет, шапка литая',
     !doc.getElementById('mzMeta') && !doc.getElementById('mzClient') &&
     doc.querySelectorAll('#p-mill .mzhead > *').length === 1, '');
-  check('фрезерный: три шага с колонкой слева',
+  check('конфигуратор v2: три шага с колонкой слева',
     doc.querySelectorAll('#mzStepNav .mzstep-b').length === 3 &&
-    doc.querySelectorAll('#p-mill .mzstep').length === 3, '');
+    doc.querySelectorAll('#p-mill .mzstep[data-kind="milling"]').length === 2 &&
+    doc.querySelectorAll('#p-mill .mzstep[data-kind="fiber"]').length === 2 &&
+    doc.querySelectorAll('#p-mill .mzstep[data-kind="any"]').length === 1, '');
   check('фрезерный: на экране один блок за раз',
     doc.querySelectorAll('#p-mill .mzstep.on').length === 1,
     doc.querySelectorAll('#p-mill .mzstep.on').length);
