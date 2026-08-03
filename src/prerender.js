@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 39', /const CACHE = 'cfg-v39'/.test(swTxt),
+check('кеш: версия поднята до 40', /const CACHE = 'cfg-v40'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -2189,6 +2189,17 @@ check('вкладки: значок сметы жив после перерис�
     doc.body.className);
   check('сравнение: высота рамки считается от шапки, а не прибита числом',
     /\.cmpbox\{[^}]*height:calc\(100vh-var\(--cmp-top/.test(src.replace(/\s+/g, '')), '');
+  check('сравнение: плашка-клятва и кнопка сметы убраны с этого раздела',
+    /body\.cmpmax\.oath,body\.cmpmax\.sumdot\{display:none!important\}/
+      .test(src.replace(/\s+/g, '')) &&
+    doc.getElementById('sumBar').className.indexOf('show') < 0,
+    doc.getElementById('sumBar').className);
+  check('сравнение: сверху остаётся только лента разделов',
+    /body\.cmpmaxheader\{display:none\}/.test(src.replace(/\s+/g, '')) &&
+    /body\.cmpmax#p-cmp\.bhead\{display:none\}/.test(src.replace(/\s+/g, '')) &&
+    /body\.cmpmax\.wrap\{max-width:none;padding:0\}/.test(src.replace(/\s+/g, '')), '');
+  check('сравнение: кнопки раздела переехали в свободное место ленты',
+    /body\.cmpmax\.cmp-acts\{position:fixed/.test(src.replace(/\s+/g, '')), '');
   check('сравнение: есть регулятор размера текста',
     !!doc.getElementById('cmpZoomIn') && !!doc.getElementById('cmpZoomOut') &&
     /100 %/.test(textOf(doc, '#cmpZoomVal')), textOf(doc, '#cmpZoomVal'));

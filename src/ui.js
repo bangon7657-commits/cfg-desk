@@ -495,10 +495,10 @@
   function cmpFit() {
     var box = $('p-cmp');
     if (!box || !box.classList.contains('active')) return;
-    var h = d.querySelector('header'), n = d.querySelector('nav');
-    var head = box.querySelector('.bhead');
-    var top = (h ? h.offsetHeight : 0) + (n ? n.offsetHeight : 0) +
-      (head ? head.offsetHeight : 0) + 26;
+    // Шапка и заголовок раздела в этом режиме скрыты, поэтому сверху занята
+    // только лента разделов — от неё и считаем высоту рамки.
+    var n = d.querySelector('nav');
+    var top = (n ? n.offsetHeight : 0) + 4;
     d.documentElement.style.setProperty('--cmp-top', top + 'px');
   }
   window.addEventListener('resize', cmpFit);
@@ -640,10 +640,16 @@
     // Архив показывает свою шапку, а под ней — сам старый раздел целиком.
     if (name === 'trash') showTrashPart(tpart || state.trashPart || 'build');
     d.body.classList.toggle('cmpmax', name === 'cmp');
-    // на самой смете кнопка «перейти в смету» бессмысленна
+    // на самой смете кнопка «перейти в смету» бессмысленна,
+    // а в сравнении она закрывает угол документа
     var sb = $('sumBar');
-    if (sb) sb.classList.toggle('show', name !== 'smeta' && state.items.length > 0);
-    if (name === 'cmp') { cmpLoad(); cmpFit(); }
+    if (sb) {
+      sb.classList.toggle('show',
+        name !== 'smeta' && name !== 'cmp' && state.items.length > 0);
+    }
+    if (name === 'cmp') { cmpLoad(); }
+    fixNavOffset();
+    cmpFit();
     // При открытии файла с диска (file://) браузер запрещает replaceState и
     // бросает SecurityError. Раньше это валило остаток инициализации.
     var hashName = (name === 'guide') ? (state.guidePart || 'match')
@@ -664,7 +670,10 @@
      не к жёстким 63px из CSS, а к фактической высоте шапки. */
   function fixNavOffset() {
     var h = d.querySelector('header'), n = d.querySelector('nav');
-    if (h && n && h.offsetHeight) n.style.top = h.offsetHeight + 'px';
+    if (!n) return;
+    // в сравнении шапка скрыта, лента встаёт к самому верху
+    if (d.body.classList.contains('cmpmax')) { n.style.top = '0px'; return; }
+    if (h && h.offsetHeight) n.style.top = h.offsetHeight + 'px';
   }
   window.addEventListener('resize', fixNavOffset);
 
@@ -1925,7 +1934,7 @@
   // Полоса итога внизу экрана: видно, что уже набрано, без ухода со страницы
   function renderSumBar(T) {
     // на самой вкладке сметы полоса с кнопкой «перейти в смету» бессмысленна
-    if (curTab === 'smeta') {
+    if (curTab === 'smeta' || curTab === 'cmp') {
       var bar0 = $('sumBar');
       if (bar0) bar0.classList.remove('show');
       return;

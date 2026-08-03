@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" style="--cmp-top: 26px;"><head>
+<html lang="ru" style="--cmp-top: 4px;"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
@@ -1258,10 +1258,18 @@ body.demo .internal{display:none !important}
 
 /* В разделе сравнения документам нужен весь экран: снимаем ограничение ширины
    и сжимаем шапку — иначе два листа A4 рядом ужимаются до нечитаемого. */
-body.cmpmax .wrap{max-width:none;padding:0 10px 10px}
-body.cmpmax #p-cmp .bhead{margin:8px 0 6px;align-items:center}
-body.cmpmax #p-cmp .lead{display:none}
-body.cmpmax #p-cmp .btitle{font-size:17px;margin:0}
+body.cmpmax .wrap{max-width:none;padding:0}
+/* В сравнении документам отдан весь экран, поэтому всё лишнее поверх него
+   убирается: и плашка-клятва в углу, и кнопка сметы. */
+body.cmpmax .oath,
+body.cmpmax .sumdot{display:none!important}
+/* Сверху остаётся только лента разделов: шапка с логотипом и заголовок
+   раздела съедали около 120 пикселей высоты, а читать надо документы.
+   Кнопки раздела переезжают в свободное место справа в самой ленте. */
+body.cmpmax header{display:none}
+body.cmpmax #p-cmp .bhead{display:none}
+body.cmpmax .cmp-acts{position:fixed;top:9px;right:12px;z-index:60}
+body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0}
 @media(max-width:700px){
   body.cmpmax #p-cmp .btitle{font-size:15px}
   .cmp-zoom{padding:2px 6px 2px 2px}
@@ -1302,7 +1310,7 @@ body.cmpmax #p-cmp .btitle{font-size:17px;margin:0}
   <button type="button" id="demoOff">Вернуть внутренний режим</button>
 </div>
 
-<nav aria-label="Разделы">
+<nav aria-label="Разделы" style="top: 0px;">
   <div class="navinner">
     <!-- Кнопка-меню держит все разделы, включая те, что не влезают в строку.
          Строка вкладок — только частые: так на телефоне не нужно листать. -->
@@ -4100,10 +4108,10 @@ var DOCX = (function () {
   function cmpFit() {
     var box = $('p-cmp');
     if (!box || !box.classList.contains('active')) return;
-    var h = d.querySelector('header'), n = d.querySelector('nav');
-    var head = box.querySelector('.bhead');
-    var top = (h ? h.offsetHeight : 0) + (n ? n.offsetHeight : 0) +
-      (head ? head.offsetHeight : 0) + 26;
+    // Шапка и заголовок раздела в этом режиме скрыты, поэтому сверху занята
+    // только лента разделов — от неё и считаем высоту рамки.
+    var n = d.querySelector('nav');
+    var top = (n ? n.offsetHeight : 0) + 4;
     d.documentElement.style.setProperty('--cmp-top', top + 'px');
   }
   window.addEventListener('resize', cmpFit);
@@ -4245,10 +4253,16 @@ var DOCX = (function () {
     // Архив показывает свою шапку, а под ней — сам старый раздел целиком.
     if (name === 'trash') showTrashPart(tpart || state.trashPart || 'build');
     d.body.classList.toggle('cmpmax', name === 'cmp');
-    // на самой смете кнопка «перейти в смету» бессмысленна
+    // на самой смете кнопка «перейти в смету» бессмысленна,
+    // а в сравнении она закрывает угол документа
     var sb = $('sumBar');
-    if (sb) sb.classList.toggle('show', name !== 'smeta' && state.items.length > 0);
-    if (name === 'cmp') { cmpLoad(); cmpFit(); }
+    if (sb) {
+      sb.classList.toggle('show',
+        name !== 'smeta' && name !== 'cmp' && state.items.length > 0);
+    }
+    if (name === 'cmp') { cmpLoad(); }
+    fixNavOffset();
+    cmpFit();
     // При открытии файла с диска (file://) браузер запрещает replaceState и
     // бросает SecurityError. Раньше это валило остаток инициализации.
     var hashName = (name === 'guide') ? (state.guidePart || 'match')
@@ -4269,7 +4283,10 @@ var DOCX = (function () {
      не к жёстким 63px из CSS, а к фактической высоте шапки. */
   function fixNavOffset() {
     var h = d.querySelector('header'), n = d.querySelector('nav');
-    if (h && n && h.offsetHeight) n.style.top = h.offsetHeight + 'px';
+    if (!n) return;
+    // в сравнении шапка скрыта, лента встаёт к самому верху
+    if (d.body.classList.contains('cmpmax')) { n.style.top = '0px'; return; }
+    if (h && h.offsetHeight) n.style.top = h.offsetHeight + 'px';
   }
   window.addEventListener('resize', fixNavOffset);
 
@@ -5530,7 +5547,7 @@ var DOCX = (function () {
   // Полоса итога внизу экрана: видно, что уже набрано, без ухода со страницы
   function renderSumBar(T) {
     // на самой вкладке сметы полоса с кнопкой «перейти в смету» бессмысленна
-    if (curTab === 'smeta') {
+    if (curTab === 'smeta' || curTab === 'cmp') {
       var bar0 = $('sumBar');
       if (bar0) bar0.classList.remove('show');
       return;
