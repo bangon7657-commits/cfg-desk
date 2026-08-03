@@ -490,6 +490,36 @@
   // Грузим его при первом открытии: пока человек туда не зашёл, лишних
   // 57 КБ он не качает, а после — страница остаётся жить и не перезагружается.
   var cmpReady = false;
+  // Высота рамки считается от фактической высоты шапки, ленты и заголовка:
+  // прибивать её к числу нельзя — шапка переносится на узких экранах.
+  function cmpFit() {
+    var box = $('p-cmp');
+    if (!box || !box.classList.contains('active')) return;
+    var h = d.querySelector('header'), n = d.querySelector('nav');
+    var head = box.querySelector('.bhead');
+    var top = (h ? h.offsetHeight : 0) + (n ? n.offsetHeight : 0) +
+      (head ? head.offsetHeight : 0) + 26;
+    d.documentElement.style.setProperty('--cmp-top', top + 'px');
+  }
+  window.addEventListener('resize', cmpFit);
+  // Масштаб документов внутри страницы: в режиме «как в Word» два листа рядом
+  // ужимаются, и текст становится мелким. Ставим увеличение поверх страницы,
+  // не трогая её саму.
+  function cmpZoom(step) {
+    var z = state.cmpZoom || 100;
+    if (step) z = Math.min(200, Math.max(70, z + step));
+    state.cmpZoom = z;
+    save();
+    var val = $('cmpZoomVal');
+    if (val) val.textContent = z + ' %';
+    var f = $('cmpFrame');
+    var cd = f && f.contentDocument;
+    if (cd && cd.body) {
+      cd.body.style.zoom = z / 100;
+      // Safari не знает zoom — там уменьшаем через масштаб шрифта
+      if (!('zoom' in cd.body.style)) cd.body.style.fontSize = z + '%';
+    }
+  }
   function cmpSkin() {
     var f = $('cmpFrame');
     var w = f && f.contentWindow;
@@ -501,6 +531,7 @@
     if (w && typeof w.applyTheme === 'function') {
       w.applyTheme(state.theme === 'light' ? 'light' : 'dark');
     }
+    cmpZoom(0);
   }
   function cmpLoad() {
     var f = $('cmpFrame');
@@ -510,6 +541,7 @@
       var box = $('cmpLoad');
       if (box) box.hidden = true;
       cmpSkin();
+      cmpFit();
     });
     f.src = 'compare.html';
   }
@@ -520,6 +552,8 @@
         window.open('compare.html', '_blank', 'noopener');
       });
     }
+    if ($('cmpZoomIn')) $('cmpZoomIn').addEventListener('click', function () { cmpZoom(10); });
+    if ($('cmpZoomOut')) $('cmpZoomOut').addEventListener('click', function () { cmpZoom(-10); });
   }());
   function showTrashPart(part) {
     if (trashPartIds().indexOf(part) < 0) part = 'build';
@@ -605,7 +639,11 @@
     }
     // Архив показывает свою шапку, а под ней — сам старый раздел целиком.
     if (name === 'trash') showTrashPart(tpart || state.trashPart || 'build');
-    if (name === 'cmp') cmpLoad();
+    d.body.classList.toggle('cmpmax', name === 'cmp');
+    // на самой смете кнопка «перейти в смету» бессмысленна
+    var sb = $('sumBar');
+    if (sb) sb.classList.toggle('show', name !== 'smeta' && state.items.length > 0);
+    if (name === 'cmp') { cmpLoad(); cmpFit(); }
     // При открытии файла с диска (file://) браузер запрещает replaceState и
     // бросает SecurityError. Раньше это валило остаток инициализации.
     var hashName = (name === 'guide') ? (state.guidePart || 'match')
@@ -1898,9 +1936,11 @@
     if (!n) { bar.classList.remove('show'); return; }
     var zero = 0;
     state.items.forEach(function (it) { if (!it.price) zero++; });
-    $('sumBarTx').textContent = cnt(n, ['позиция', 'позиции', 'позиций']) +
-      ' на ' + fmtRub(T.total) + ' ₽' +
+    $('sumBarN').textContent = String(n);
+    $('sumBarTx').textContent = fmtRub(T.total) + ' ₽' +
       (zero ? ' · ' + cnt(zero, ['строка', 'строки', 'строк']) + ' без цены' : '');
+    bar.title = 'В смете ' + cnt(n, ['позиция', 'позиции', 'позиций']) +
+      ' на ' + fmtRub(T.total) + ' ₽ — перейти';
     bar.classList.add('show');
   }
 
@@ -6352,7 +6392,7 @@
   switchCat();
   renderAllMatches();
   thinkify();
-  $('sumBarGo').addEventListener('click', function () { showTab('smeta'); });
+  $('sumBar').addEventListener('click', function () { showTab('smeta'); });
   // ------------------------------------------- вкладка «Фрезерный»
   __MILL_JS__
 

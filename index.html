@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru"><head>
+<html lang="ru" style="--cmp-top: 26px;"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
@@ -575,15 +575,24 @@ table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabul
 /* Подсветка шага, к которому приложение только что подвело пользователя */
 .step.step-hi{box-shadow:0 0 0 2px var(--or)}
 /* Закреплённая полоса итога */
-.sumbar{position:fixed;left:0;right:0;bottom:0;z-index:40;
-  transform:translateY(110%);transition:transform .18s ease;
-  background:color-mix(in srgb,var(--bg2) 92%,transparent);
-  backdrop-filter:blur(8px);border-top:1px solid var(--line)}
-.sumbar.show{transform:none}
-.sumbar-in{max-width:1180px;margin:0 auto;padding:9px 16px;display:flex;
-  align-items:center;justify-content:space-between;gap:12px}
-.sumbar-tx{font-size:14px;font-weight:600;color:var(--tx)}
-@media print{.sumbar{display:none}}
+/* Итог сметы: компактная кнопка в левом нижнем углу вместо полосы во всю
+   ширину — та закрывала низ страницы и мешала на длинных таблицах. */
+.sumdot{position:fixed;left:14px;bottom:14px;z-index:40;display:none;
+  align-items:center;gap:9px;padding:8px 14px 8px 9px;border-radius:24px;
+  border:1px solid var(--line2);cursor:pointer;font:inherit;
+  color:var(--tx);box-shadow:0 6px 20px var(--shadow);
+  background:color-mix(in srgb,var(--bg2) 94%,transparent);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  transition:border-color .12s, transform .12s}
+.sumdot.show{display:flex}
+.sumdot:hover{border-color:var(--or);transform:translateY(-1px)}
+.sumdot-n{min-width:24px;height:24px;border-radius:12px;background:var(--or);
+  color:var(--onor);font-size:12.5px;font-weight:700;display:flex;
+  align-items:center;justify-content:center;padding:0 6px}
+.sumdot-tx{font-size:13.5px;font-weight:600;white-space:nowrap}
+@media(max-width:560px){.sumdot-tx{display:none}
+  .sumdot{padding:8px;left:10px;bottom:10px}}
+@media print{.sumdot{display:none!important}}
 .step.done .step-n{background:var(--ok);color:var(--onok)}
 .step.off{opacity:.5}
 .step.off .step-n{background:var(--line2);color:var(--muted)}
@@ -1235,12 +1244,28 @@ body.demo .internal{display:none !important}
    раздела. Так переход стоит столько же, сколько переключение вкладки,
    а вес основного файла не растёт. */
 .cmpbox{position:relative;border:1px solid var(--line);border-radius:12px;
-  overflow:hidden;background:var(--bg2);height:calc(100vh - 210px);min-height:520px}
+  overflow:hidden;background:var(--bg2);
+  height:calc(100vh - var(--cmp-top, 210px));min-height:420px}
 .cmpbox iframe{display:block;width:100%;height:100%;border:0;background:var(--bg)}
 .cmp-load{position:absolute;inset:0;display:flex;align-items:center;
   justify-content:center;color:var(--muted);font-size:14px;background:var(--bg2)}
 .cmp-load[hidden]{display:none}
-@media(max-width:700px){.cmpbox{height:calc(100vh - 170px);min-height:420px}}
+.cmp-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cmp-zoom{display:flex;align-items:center;gap:6px;border:1px solid var(--line2);
+  border-radius:8px;padding:3px 8px 3px 3px}
+.cmp-zoom .btn{padding:4px 9px;font-size:13px}
+#cmpZoomVal{font-size:12.5px;color:var(--muted);min-width:44px;text-align:center}
+
+/* В разделе сравнения документам нужен весь экран: снимаем ограничение ширины
+   и сжимаем шапку — иначе два листа A4 рядом ужимаются до нечитаемого. */
+body.cmpmax .wrap{max-width:none;padding:0 10px 10px}
+body.cmpmax #p-cmp .bhead{margin:8px 0 6px;align-items:center}
+body.cmpmax #p-cmp .lead{display:none}
+body.cmpmax #p-cmp .btitle{font-size:17px;margin:0}
+@media(max-width:700px){
+  body.cmpmax #p-cmp .btitle{font-size:15px}
+  .cmp-zoom{padding:2px 6px 2px 2px}
+}
 </style>
 <script>
 /* Тема применяется до отрисовки: иначе у выбравших светлую тему на секунду
@@ -1551,7 +1576,14 @@ body.demo .internal{display:none !important}
       <p class="lead">Две версии договора или ТКП рядом: что добавили, убрали,
         изменили. Файлы читаются здесь же и никуда не отправляются.</p>
     </div>
-    <button class="btn sec small noprint" type="button" id="cmpWindow" title="Открыть в отдельном окне — удобно сверять с другой вкладкой">В отдельном окне ↗</button>
+    <div class="cmp-acts noprint">
+      <div class="cmp-zoom" role="group" aria-label="Размер текста документов">
+        <button class="btn sec small" type="button" id="cmpZoomOut" title="Мельче">А−</button>
+        <span id="cmpZoomVal">100 %</span>
+        <button class="btn sec small" type="button" id="cmpZoomIn" title="Крупнее">А+</button>
+      </div>
+      <button class="btn sec small" type="button" id="cmpWindow" title="Открыть в отдельном окне — удобно сверять с другой вкладкой">В отдельном окне ↗</button>
+    </div>
   </div>
   <!-- Страница живёт отдельным файлом и подгружается при первом открытии
        раздела: в index.html её содержимого нет, вес основного файла не растёт. -->
@@ -2358,7 +2390,7 @@ body.demo .internal{display:none !important}
         <div class="panehead rot">
           <div class="f"><label for="mzRot">Поворотное устройство</label><select id="mzRot" data-touched="0"><option value="wattsan">Встроенная в станок (исполнение RD)</option><option value="d65">Ø63 мм, патрон K01-63</option><option value="d80">Ø80 мм, патрон K11-80</option><option value="d100">Ø100 мм, патрон K11-100</option><option value="d160">Ø160 мм, червячный редуктор</option><option value="d300">Ø200–300 мм, под колонны</option></select></div>
           <div class="f"><label for="mzRotT">Задняя бабка</label>
-            <select id="mzRotT" data-touched="0" disabled="">
+            <select id="mzRotT" disabled="" data-touched="0">
               <option value="0">не нужна или в комплекте</option>
               <option value="1">отдельной позицией, +5 560 ₽</option>
             </select></div>
@@ -3162,14 +3194,13 @@ body.demo .internal{display:none !important}
 
 </div>
 
-<!-- Закреплённая полоса итога: сколько позиций и на какую сумму уже набрано.
-     Так менеджер видит результат, не уходя со страницы конфигуратора. -->
-<div class="sumbar" id="sumBar">
-  <div class="sumbar-in">
-    <span class="sumbar-tx" id="sumBarTx"></span>
-    <button class="btn mini" type="button" id="sumBarGo">Перейти в смету</button>
-  </div>
-</div>
+<!-- Итог сметы: раньше это была полоса во всю ширину экрана, но она закрывала
+     нижнюю часть страницы. Теперь — компактная кнопка в левом нижнем углу:
+     видно, что набрано, и одним нажатием переходишь в смету. -->
+<button class="sumdot" id="sumBar" type="button">
+  <span class="sumdot-n" id="sumBarN"></span>
+  <span class="sumdot-tx" id="sumBarTx"></span>
+</button>
 
 <!-- Выбор позиции в слот: поиск, сортировка, характеристики -->
 <div class="modal" id="pickModal" role="dialog" aria-modal="true" aria-labelledby="pickTitle">
@@ -4064,6 +4095,36 @@ var DOCX = (function () {
   // Грузим его при первом открытии: пока человек туда не зашёл, лишних
   // 57 КБ он не качает, а после — страница остаётся жить и не перезагружается.
   var cmpReady = false;
+  // Высота рамки считается от фактической высоты шапки, ленты и заголовка:
+  // прибивать её к числу нельзя — шапка переносится на узких экранах.
+  function cmpFit() {
+    var box = $('p-cmp');
+    if (!box || !box.classList.contains('active')) return;
+    var h = d.querySelector('header'), n = d.querySelector('nav');
+    var head = box.querySelector('.bhead');
+    var top = (h ? h.offsetHeight : 0) + (n ? n.offsetHeight : 0) +
+      (head ? head.offsetHeight : 0) + 26;
+    d.documentElement.style.setProperty('--cmp-top', top + 'px');
+  }
+  window.addEventListener('resize', cmpFit);
+  // Масштаб документов внутри страницы: в режиме «как в Word» два листа рядом
+  // ужимаются, и текст становится мелким. Ставим увеличение поверх страницы,
+  // не трогая её саму.
+  function cmpZoom(step) {
+    var z = state.cmpZoom || 100;
+    if (step) z = Math.min(200, Math.max(70, z + step));
+    state.cmpZoom = z;
+    save();
+    var val = $('cmpZoomVal');
+    if (val) val.textContent = z + ' %';
+    var f = $('cmpFrame');
+    var cd = f && f.contentDocument;
+    if (cd && cd.body) {
+      cd.body.style.zoom = z / 100;
+      // Safari не знает zoom — там уменьшаем через масштаб шрифта
+      if (!('zoom' in cd.body.style)) cd.body.style.fontSize = z + '%';
+    }
+  }
   function cmpSkin() {
     var f = $('cmpFrame');
     var w = f && f.contentWindow;
@@ -4075,6 +4136,7 @@ var DOCX = (function () {
     if (w && typeof w.applyTheme === 'function') {
       w.applyTheme(state.theme === 'light' ? 'light' : 'dark');
     }
+    cmpZoom(0);
   }
   function cmpLoad() {
     var f = $('cmpFrame');
@@ -4084,6 +4146,7 @@ var DOCX = (function () {
       var box = $('cmpLoad');
       if (box) box.hidden = true;
       cmpSkin();
+      cmpFit();
     });
     f.src = 'compare.html';
   }
@@ -4094,6 +4157,8 @@ var DOCX = (function () {
         window.open('compare.html', '_blank', 'noopener');
       });
     }
+    if ($('cmpZoomIn')) $('cmpZoomIn').addEventListener('click', function () { cmpZoom(10); });
+    if ($('cmpZoomOut')) $('cmpZoomOut').addEventListener('click', function () { cmpZoom(-10); });
   }());
   function showTrashPart(part) {
     if (trashPartIds().indexOf(part) < 0) part = 'build';
@@ -4179,7 +4244,11 @@ var DOCX = (function () {
     }
     // Архив показывает свою шапку, а под ней — сам старый раздел целиком.
     if (name === 'trash') showTrashPart(tpart || state.trashPart || 'build');
-    if (name === 'cmp') cmpLoad();
+    d.body.classList.toggle('cmpmax', name === 'cmp');
+    // на самой смете кнопка «перейти в смету» бессмысленна
+    var sb = $('sumBar');
+    if (sb) sb.classList.toggle('show', name !== 'smeta' && state.items.length > 0);
+    if (name === 'cmp') { cmpLoad(); cmpFit(); }
     // При открытии файла с диска (file://) браузер запрещает replaceState и
     // бросает SecurityError. Раньше это валило остаток инициализации.
     var hashName = (name === 'guide') ? (state.guidePart || 'match')
@@ -5472,9 +5541,11 @@ var DOCX = (function () {
     if (!n) { bar.classList.remove('show'); return; }
     var zero = 0;
     state.items.forEach(function (it) { if (!it.price) zero++; });
-    $('sumBarTx').textContent = cnt(n, ['позиция', 'позиции', 'позиций']) +
-      ' на ' + fmtRub(T.total) + ' ₽' +
+    $('sumBarN').textContent = String(n);
+    $('sumBarTx').textContent = fmtRub(T.total) + ' ₽' +
       (zero ? ' · ' + cnt(zero, ['строка', 'строки', 'строк']) + ' без цены' : '');
+    bar.title = 'В смете ' + cnt(n, ['позиция', 'позиции', 'позиций']) +
+      ' на ' + fmtRub(T.total) + ' ₽ — перейти';
     bar.classList.add('show');
   }
 
@@ -9926,7 +9997,7 @@ var DOCX = (function () {
   switchCat();
   renderAllMatches();
   thinkify();
-  $('sumBarGo').addEventListener('click', function () { showTab('smeta'); });
+  $('sumBar').addEventListener('click', function () { showTab('smeta'); });
   // ------------------------------------------- вкладка «Фрезерный»
   /* Вкладка «Фрезерный»: сборка станка по узлам, допоборудование, ПНР.
    Вёрстка и порядок блоков — как в присланном конфигураторе, цвета берутся

@@ -564,15 +564,24 @@ table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabul
 /* Подсветка шага, к которому приложение только что подвело пользователя */
 .step.step-hi{box-shadow:0 0 0 2px var(--or)}
 /* Закреплённая полоса итога */
-.sumbar{position:fixed;left:0;right:0;bottom:0;z-index:40;
-  transform:translateY(110%);transition:transform .18s ease;
-  background:color-mix(in srgb,var(--bg2) 92%,transparent);
-  backdrop-filter:blur(8px);border-top:1px solid var(--line)}
-.sumbar.show{transform:none}
-.sumbar-in{max-width:1180px;margin:0 auto;padding:9px 16px;display:flex;
-  align-items:center;justify-content:space-between;gap:12px}
-.sumbar-tx{font-size:14px;font-weight:600;color:var(--tx)}
-@media print{.sumbar{display:none}}
+/* Итог сметы: компактная кнопка в левом нижнем углу вместо полосы во всю
+   ширину — та закрывала низ страницы и мешала на длинных таблицах. */
+.sumdot{position:fixed;left:14px;bottom:14px;z-index:40;display:none;
+  align-items:center;gap:9px;padding:8px 14px 8px 9px;border-radius:24px;
+  border:1px solid var(--line2);cursor:pointer;font:inherit;
+  color:var(--tx);box-shadow:0 6px 20px var(--shadow);
+  background:color-mix(in srgb,var(--bg2) 94%,transparent);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  transition:border-color .12s, transform .12s}
+.sumdot.show{display:flex}
+.sumdot:hover{border-color:var(--or);transform:translateY(-1px)}
+.sumdot-n{min-width:24px;height:24px;border-radius:12px;background:var(--or);
+  color:var(--onor);font-size:12.5px;font-weight:700;display:flex;
+  align-items:center;justify-content:center;padding:0 6px}
+.sumdot-tx{font-size:13.5px;font-weight:600;white-space:nowrap}
+@media(max-width:560px){.sumdot-tx{display:none}
+  .sumdot{padding:8px;left:10px;bottom:10px}}
+@media print{.sumdot{display:none!important}}
 .step.done .step-n{background:var(--ok);color:var(--onok)}
 .step.off{opacity:.5}
 .step.off .step-n{background:var(--line2);color:var(--muted)}
@@ -1224,9 +1233,25 @@ body.demo .internal{display:none !important}
    раздела. Так переход стоит столько же, сколько переключение вкладки,
    а вес основного файла не растёт. */
 .cmpbox{position:relative;border:1px solid var(--line);border-radius:12px;
-  overflow:hidden;background:var(--bg2);height:calc(100vh - 210px);min-height:520px}
+  overflow:hidden;background:var(--bg2);
+  height:calc(100vh - var(--cmp-top, 210px));min-height:420px}
 .cmpbox iframe{display:block;width:100%;height:100%;border:0;background:var(--bg)}
 .cmp-load{position:absolute;inset:0;display:flex;align-items:center;
   justify-content:center;color:var(--muted);font-size:14px;background:var(--bg2)}
 .cmp-load[hidden]{display:none}
-@media(max-width:700px){.cmpbox{height:calc(100vh - 170px);min-height:420px}}
+.cmp-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cmp-zoom{display:flex;align-items:center;gap:6px;border:1px solid var(--line2);
+  border-radius:8px;padding:3px 8px 3px 3px}
+.cmp-zoom .btn{padding:4px 9px;font-size:13px}
+#cmpZoomVal{font-size:12.5px;color:var(--muted);min-width:44px;text-align:center}
+
+/* В разделе сравнения документам нужен весь экран: снимаем ограничение ширины
+   и сжимаем шапку — иначе два листа A4 рядом ужимаются до нечитаемого. */
+body.cmpmax .wrap{max-width:none;padding:0 10px 10px}
+body.cmpmax #p-cmp .bhead{margin:8px 0 6px;align-items:center}
+body.cmpmax #p-cmp .lead{display:none}
+body.cmpmax #p-cmp .btitle{font-size:17px;margin:0}
+@media(max-width:700px){
+  body.cmpmax #p-cmp .btitle{font-size:15px}
+  .cmp-zoom{padding:2px 6px 2px 2px}
+}

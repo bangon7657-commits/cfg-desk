@@ -328,8 +328,15 @@
       <p class="lead">Две версии договора или ТКП рядом: что добавили, убрали,
         изменили. Файлы читаются здесь же и никуда не отправляются.</p>
     </div>
-    <button class="btn sec small noprint" type="button" id="cmpWindow"
-      title="Открыть в отдельном окне — удобно сверять с другой вкладкой">В отдельном окне ↗</button>
+    <div class="cmp-acts noprint">
+      <div class="cmp-zoom" role="group" aria-label="Размер текста документов">
+        <button class="btn sec small" type="button" id="cmpZoomOut" title="Мельче">А−</button>
+        <span id="cmpZoomVal">100 %</span>
+        <button class="btn sec small" type="button" id="cmpZoomIn" title="Крупнее">А+</button>
+      </div>
+      <button class="btn sec small" type="button" id="cmpWindow"
+        title="Открыть в отдельном окне — удобно сверять с другой вкладкой">В отдельном окне ↗</button>
+    </div>
   </div>
   <!-- Страница живёт отдельным файлом и подгружается при первом открытии
        раздела: в index.html её содержимого нет, вес основного файла не растёт. -->
@@ -1937,14 +1944,13 @@
 
 </div>
 
-<!-- Закреплённая полоса итога: сколько позиций и на какую сумму уже набрано.
-     Так менеджер видит результат, не уходя со страницы конфигуратора. -->
-<div class="sumbar" id="sumBar">
-  <div class="sumbar-in">
-    <span class="sumbar-tx" id="sumBarTx"></span>
-    <button class="btn mini" type="button" id="sumBarGo">Перейти в смету</button>
-  </div>
-</div>
+<!-- Итог сметы: раньше это была полоса во всю ширину экрана, но она закрывала
+     нижнюю часть страницы. Теперь — компактная кнопка в левом нижнем углу:
+     видно, что набрано, и одним нажатием переходишь в смету. -->
+<button class="sumdot" id="sumBar" type="button" title="Перейти в смету">
+  <span class="sumdot-n" id="sumBarN"></span>
+  <span class="sumdot-tx" id="sumBarTx"></span>
+</button>
 
 <!-- Выбор позиции в слот: поиск, сортировка, характеристики -->
 <div class="modal" id="pickModal" role="dialog" aria-modal="true" aria-labelledby="pickTitle">

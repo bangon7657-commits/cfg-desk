@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 38', /const CACHE = 'cfg-v38'/.test(swTxt),
+check('кеш: версия поднята до 39', /const CACHE = 'cfg-v39'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -841,11 +841,21 @@ check('мысли: CSS даёт две колонки на широком экр
   /\.step-b\.has-think\{display:grid/.test(src), '');
 
 // Полоса итога
-check('итог: полоса показана и считает позиции',
+check('итог: кнопка сметы показана и считает позиции',
   doc.getElementById('sumBar').className.indexOf('show') >= 0 &&
-  /^\d+ позици/.test(textOf(doc, '#sumBarTx')), textOf(doc, '#sumBarTx'));
-check('итог: в полосе видно строки без цены',
+  /^\d+$/.test(textOf(doc, '#sumBarN')) &&
+  /₽/.test(textOf(doc, '#sumBarTx')),
+  textOf(doc, '#sumBarN') + ' / ' + textOf(doc, '#sumBarTx'));
+check('итог: в подсказке кнопки видно строки без цены',
   /без цены/.test(textOf(doc, '#sumBarTx')), textOf(doc, '#sumBarTx'));
+check('итог: это кнопка в углу, а не полоса во всю ширину',
+  doc.getElementById('sumBar').tagName === 'BUTTON' &&
+  /\.sumdot\{position:fixed;left:14px;bottom:14px/.test(src.replace(/\s+/g, '')) &&
+  !doc.querySelector('.sumbar'), doc.getElementById('sumBar').tagName);
+check('итог: в кнопке отдельно число позиций и сумма',
+  /^\d+$/.test(textOf(doc, '#sumBarN')) && /₽/.test(textOf(doc, '#sumBarTx')),
+  textOf(doc, '#sumBarN') + ' / ' + textOf(doc, '#sumBarTx'));
+
 
 // ---- модель присланного конфигуратора: таблетки, совпадения, спецификация ----
 check('конфигуратор: две колонки, справа спецификация',
@@ -1651,7 +1661,7 @@ check('меню «Разделы» ложится поверх шапки и н�
   /nav\{[^}]*z-index:50/.test(src.replace(/\s+/g, '')) &&
   /\.menulist\{[^}]*z-index:70/.test(src.replace(/\s+/g, '')) &&
   /header\{[^}]*z-index:30/.test(src.replace(/\s+/g, '')) &&
-  /\.sumbar\{[^}]*z-index:40/.test(src.replace(/\s+/g, '')), '');
+  /\.sumdot\{[^}]*z-index:40/.test(src.replace(/\s+/g, '')), '');
 
 // ---- v24: кадровые документы в письмах, кнопки под миниатюрой ----
 menuGo('letters');
@@ -2173,6 +2183,22 @@ check('вкладки: значок сметы жив после перерис�
   check('сравнение: раздел стоит в общем списке, а не ссылкой наружу',
     !!doc.querySelector('#menuList button[data-t="cmp"]') &&
     !doc.querySelector('#tabs .tabpage') && !doc.querySelector('.mrow-page'), '');
+  check('сравнение: раздел разворачивается на всё окно',
+    doc.body.classList.contains('cmpmax') &&
+    /body\.cmpmax\.wrap\{max-width:none/.test(src.replace(/\s+/g, '')),
+    doc.body.className);
+  check('сравнение: высота рамки считается от шапки, а не прибита числом',
+    /\.cmpbox\{[^}]*height:calc\(100vh-var\(--cmp-top/.test(src.replace(/\s+/g, '')), '');
+  check('сравнение: есть регулятор размера текста',
+    !!doc.getElementById('cmpZoomIn') && !!doc.getElementById('cmpZoomOut') &&
+    /100 %/.test(textOf(doc, '#cmpZoomVal')), textOf(doc, '#cmpZoomVal'));
+  doc.getElementById('cmpZoomIn').click();
+  check('сравнение: размер текста растёт шагами по 10 %',
+    textOf(doc, '#cmpZoomVal') === '110 %', textOf(doc, '#cmpZoomVal'));
+  doc.getElementById('cmpZoomOut').click();
+  check('сравнение: и возвращается обратно',
+    textOf(doc, '#cmpZoomVal') === '100 %', textOf(doc, '#cmpZoomVal'));
+
 
   menuGo('home');
   const cards = [...doc.querySelectorAll('.mapcard')];
@@ -2339,7 +2365,9 @@ doc.getElementById('mtCat').value = 'fiber';
 doc.getElementById('cBrand').value = 'Wattsan';
 // полоса итога: в выпуске смета пуста, полосе показываться нечего
 const sumBarNode = doc.getElementById('sumBar');
-if (sumBarNode) { sumBarNode.className = 'sumbar'; }
+if (sumBarNode) { sumBarNode.className = 'sumdot'; sumBarNode.removeAttribute('title'); }
+const sumBarN = doc.getElementById('sumBarN');
+if (sumBarN) sumBarN.textContent = '';
 const sumBarTx = doc.getElementById('sumBarTx');
 if (sumBarTx) sumBarTx.textContent = '';
 const catFlowNode = doc.getElementById('catFlow');
