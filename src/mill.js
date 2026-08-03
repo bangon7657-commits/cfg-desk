@@ -1,11 +1,13 @@
 /* Вкладка «Фрезерный»: сборка станка по узлам, допоборудование, ПНР.
-   Вставляется в ui.js по маркеру, поэтому пользуется его $, esc, toast,
-   addItem, showTab, state и save. Деньги — только через money.js, в копейках.
-   Документ отсюда не печатается: готовая спецификация уходит в смету. */
+   Вёрстка и порядок блоков — как в присланном конфигураторе, цвета берутся
+   из темы приложения. Файл вставляется в ui.js по маркеру, поэтому пользуется
+   его $, esc, cnt, toast, addItem, showTab, state и save. Деньги считаются
+   только через money.js, в копейках. Документ отсюда не печатается:
+   спецификация уходит в раздел «Смета и ТКП». */
 var M = APP.mill;
 
-// Точная мощность шпинделя есть только в названии конфигурации: в прайсе
-// колонка округлена до целых, а 3,0 и 3,2 кВт — разные шпиндели.
+// Точная мощность шпинделя есть только в названии конфигурации: в колонке
+// прайса она округлена до целых, а 3,0 и 3,2 кВт — разные шпиндели.
 function mzKw(row) {
   var m = String(row.name).match(/(\d+[.,]?\d*)\s*(wc|ac)/i);
   return m ? parseFloat(m[1].replace(',', '.')) : row.kw;
@@ -24,15 +26,14 @@ function mzNum(id) { return +$(id).value || 0; }
 function mzTouched(id) { return $(id).dataset.touched === '1'; }
 function mzTouch(id, on) { $(id).dataset.touched = on === false ? '0' : '1'; }
 
-// Черновик вкладки живёт в общем состоянии приложения — как и остальные разделы.
 if (!state.mill) state.mill = {};
 var mzS = state.mill;
 if (!mzS.rotPrices) mzS.rotPrices = {};
 if (!mzS.mode) mzS.mode = 'ready';
-var mzSel = null;              // индекс выбранной готовой конфигурации
-var mzCat = 'stab';            // активная вкладка допоборудования
-var mzMCat = 'spin';           // активная вкладка узлов станка
-var mzFlags = {};              // худший статус подсказок по блокам
+var mzSel = null;
+var mzCat = 'stab';
+var mzMCat = 'spin';
+var mzFlags = {};
 
 // --------------------------------------------------------------- подсказки
 function mzHints(id, list) {
@@ -46,20 +47,24 @@ function mzHints(id, list) {
   });
   mzFlags[id] = worst;
   box.innerHTML = rows.map(function (r) {
-    return '<div class="mzhint ' + (r[1] || '') + '">' + r[0] + '</div>';
+    return '<div class="hint ' + (r[1] || '') + '">' + r[0] + '</div>';
   }).join('');
 }
-// Карточка-справка узла: заголовок, подзаголовок, таблица, пояснение.
-function mzCard(id, title, sub, rows, note) {
+// Карточка узла: раскрывающийся блок с парами «параметр — значение» и пояснением.
+function mzCard(id, title, sub, pairs, foot, open) {
   var box = $(id);
   if (!box) return;
-  var t = (rows || []).map(function (r) {
-    return '<tr><th>' + esc(r[0]) + '</th><td>' + esc(String(r[1])) + '</td></tr>';
-  }).join('');
-  box.innerHTML = '<div class="mzcard"><div class="mzcard-h"><b>' + esc(title) +
-    '</b>' + (sub ? '<span>' + esc(sub) + '</span>' : '') + '</div>' +
-    (t ? '<table class="mzspec"><tbody>' + t + '</tbody></table>' : '') +
-    (note ? '<div class="mzcard-n">' + note + '</div>' : '') + '</div>';
+  var wasOpen = open;
+  var det = box.querySelector('details');
+  if (det && wasOpen === undefined) wasOpen = det.open;
+  var dl = (pairs && pairs.length)
+    ? '<dl>' + pairs.map(function (p) {
+      return '<dt>' + esc(p[0]) + '</dt><dd>' + esc(String(p[1])) + '</dd>';
+    }).join('') + '</dl>' : '';
+  box.innerHTML = '<details class="specbox"' + (wasOpen ? ' open' : '') +
+    '><summary>' + esc(title) + (sub ? ' <span>· ' + esc(sub) + '</span>' : '') +
+    '</summary><div class="body">' + dl +
+    (foot ? '<div class="idx">' + foot + '</div>' : '') + '</div></details>';
 }
 
 // ------------------------------------------------------------ серия и формат
@@ -96,7 +101,6 @@ function mzBySeries(s) {
 }
 function mzKey() { return $('mzStock').value === 'stock' ? 'stock' : 'order'; }
 function mzPriceOf(c) { return c[mzKey()]; }
-
 function mzFillFmt() {
   var s = $('mzSeries').value, cur = $('mzFmt').value;
   var avail = {};
@@ -109,7 +113,6 @@ function mzFillFmt() {
   }).join('');
   var has = use.some(function (f) { return f[0] === cur; });
   $('mzFmt').value = has ? cur : use[0][0];
-  return { n: list.length, all: !list.length };
 }
 
 // ------------------------------------------------- готовые конфигурации прайса
@@ -150,22 +153,23 @@ function mzApplyCfg(idx) {
   mzUpdate();
 }
 function mzRenderReady() {
-  var box = $('mzReady');
+  var box = $('mzReadyList');
+  $('mzReady').style.display = mzS.mode === 'ready' ? '' : 'none';
   if (mzS.mode !== 'ready') { box.innerHTML = ''; return; }
   var list = mzBySeries($('mzSeries').value).filter(function (c) {
     return c.f === $('mzFmt').value;
   });
   if (!list.length) {
-    box.innerHTML = '<div class="mzhint warn">Готовых конфигураций для этой пары ' +
+    box.innerHTML = '<div class="hint warn">Готовых конфигураций для этой пары ' +
       'в прайсе нет. Соберите свою и введите цену вручную.</div>';
     return;
   }
-  box.innerHTML = '<div class="mzready">' + list.map(function (c) {
-    return '<button type="button" class="mzrcard' + (mzSel === c.i ? ' on' : '') +
-      '" data-cfg="' + c.i + '"><b>' + esc(c.n) + '</b><span class="mzrs">' +
-      esc(mzCfgSpec(c)) + '</span><span class="mzrp">' + mzRub(mzPriceOf(c)) +
-      '<em>' + (mzKey() === 'order' ? 'под заказ' : 'из наличия') + '</em></span></button>';
-  }).join('') + '</div>';
+  box.innerHTML = list.map(function (c) {
+    return '<button type="button" class="rcard' + (mzSel === c.i ? ' on' : '') +
+      '" data-cfg="' + c.i + '"><b>' + esc(c.n) + '</b><div class="rs">' +
+      esc(mzCfgSpec(c)) + '</div><div class="rp">' + mzRub(mzPriceOf(c)) +
+      '<em>' + (mzKey() === 'order' ? 'под заказ' : 'из наличия') + '</em></div></button>';
+  }).join('');
 }
 // Похожие конфигурации: чем отличаются и на сколько дороже или дешевле.
 function mzRenderSimilar() {
@@ -188,17 +192,19 @@ function mzRenderSimilar() {
     if (c.vac !== vac) { diff.push(c.vac ? 'вакуумный стол' : 'профильный стол'); w += 1; }
     if (w && w <= 3) scored.push({ c: c, d: diff, w: w });
   });
-  scored.sort(function (a, b) { return a.w - b.w || Math.abs(mzPriceOf(a.c) - base) - Math.abs(mzPriceOf(b.c) - base); });
+  scored.sort(function (a, b) {
+    return a.w - b.w || Math.abs(mzPriceOf(a.c) - base) - Math.abs(mzPriceOf(b.c) - base);
+  });
   scored = scored.slice(0, 6);
   if (!scored.length) { box.innerHTML = ''; return; }
-  box.innerHTML = '<div class="mzsim"><div class="mzsim-h">Рядом в прайсе</div>' +
+  box.innerHTML = '<div class="simh">Рядом в прайсе</div><div class="sim">' +
     scored.map(function (x) {
       var dp = mzPriceOf(x.c) - base;
       var cls = dp > 0 ? 'up' : (dp < 0 ? 'dn' : 'eq');
       var txt = dp > 0 ? '+' + mzRub(dp) : (dp < 0 ? '−' + mzRub(-dp) : 'та же цена');
-      return '<button type="button" class="mzsim-r" data-cfg="' + x.c.i + '"><span>' +
-        esc(x.c.n) + '<em>' + esc(x.d.join(', ')) + '</em></span>' +
-        '<b class="' + cls + '">' + txt + '</b></button>';
+      return '<button type="button" class="simc" data-cfg="' + x.c.i + '"><b>' +
+        esc(x.c.n) + '</b><div class="df">' + esc(x.d.join(', ')) +
+        '</div><div class="dp ' + cls + '">' + txt + '</div></button>';
     }).join('') + '</div>';
 }
 function mzRenderMatches() {
@@ -206,15 +212,17 @@ function mzRenderMatches() {
     return c.f === $('mzFmt').value;
   });
   var box = $('mzMatchList');
+  var e = mzExact();
   if (!list.length) {
-    box.innerHTML = '<div class="mzhint warn">В прайсе нет такой связки ' +
-      '«серия и рабочее поле».</div>';
+    box.innerHTML = '<div class="hint warn">В прайсе нет такой связки ' +
+      '«серия и рабочее поле». Проверьте выбор или введите цену вручную.</div>';
     return;
   }
   box.innerHTML = list.map(function (c) {
-    return '<button type="button" class="mzsim-r" data-price="' + mzPriceOf(c) +
-      '"><span>' + esc(c.n) + '<em>' + esc(mzCfgSpec(c)) + '</em></span><b>' +
-      mzRub(mzPriceOf(c)) + '</b></button>';
+    return '<button type="button" class="mrow' + (e && e.i === c.i ? ' best' : '') +
+      '" data-price="' + mzPriceOf(c) + '"><span>' + (e && e.i === c.i ? '▸ ' : '') +
+      esc(c.n) + '<br><span style="color:var(--muted);font-size:11.5px">' +
+      esc(mzCfgSpec(c)) + '</span></span><b>' + mzRub(mzPriceOf(c)) + '</b></button>';
   }).join('');
 }
 
@@ -229,14 +237,14 @@ function mzSpindleVolt() {
 function mzApplyVolt() {
   var v = mzSpindleVolt();
   mzS.sv = v.v;
-  Array.prototype.forEach.call($('mzSV').children, function (b) {
-    b.classList.toggle('on', b.dataset.sv === v.v);
-    b.disabled = v.only;
-  });
+  $('mzSV220').checked = v.v === '220';
+  $('mzSV380').checked = v.v === '380';
+  $('mzSV220').disabled = v.only;
+  $('mzSV380').disabled = v.only;
 }
 function mzSV() { return mzSpindleVolt().v; }
-function mzTV() { return mzS.tv || '380'; }
-function mzAV() { return mzS.av || '220'; }
+function mzTV() { return $('mzTV220').checked ? '220' : '380'; }
+function mzAV() { return $('mzAV220').checked ? '220' : '380'; }
 function mzZ() { return M.zTravel[$('mzSeries').value] || null; }
 
 function mzRenderSeries() {
@@ -259,11 +267,10 @@ function mzRenderFmt() {
   if (dim) rows.push(['Габариты', dim]);
   var z = mzZ();
   if (z) rows.push(['Ход по Z', z + ' мм']);
-  rows.push(['Конфигураций в прайсе', list.length]);
+  rows.push(['Конфигураций', list.length]);
   if (prices.length) {
     rows.push(['Цена в прайсе', prices.length > 1
-      ? mzRub(prices[0]) + ' – ' + mzRub(prices[prices.length - 1])
-      : mzRub(prices[0])]);
+      ? mzRub(prices[0]) + ' – ' + mzRub(prices[prices.length - 1]) : mzRub(prices[0])]);
   }
   mzCard('mzFmtCard', 'Формат ' + f, F && F[2] ? F[2] : '', rows, '');
 }
@@ -306,15 +313,12 @@ function mzRenderMotor() {
   }
   mzHints('mzMotorHint', h);
 }
-// Проверка станка целиком: питание, охлаждение, стол, стойка, наличие в прайсе.
 function mzSyncMachine() {
   var tbl = $('mzTable').value, cool = $('mzCool').value;
   var s = $('mzSeries').value, kw = parseFloat($('mzSpindle').value);
   var isVac = tbl === 'VAC';
-  Array.prototype.forEach.call($('mzTV').children, function (b) {
-    b.disabled = !isVac;
-    b.classList.toggle('on', b.dataset.tv === mzTV());
-  });
+  $('mzTV220').disabled = !isVac;
+  $('mzTV380').disabled = !isVac;
   var v = mzSpindleVolt(), h = [];
   h.push([esc(v.txt), v.only ? 'ok' : 'warn']);
   if (M.catSpindles.indexOf(kw) < 0) {
@@ -367,7 +371,6 @@ function mzChillerFor(kw) {
   return out;
 }
 function mzStabNeed() {
-  // Потребление станка: шпиндель плюс приводы, насос и стойка. Берём с запасом.
   var kw = parseFloat($('mzSpindle').value) || 0;
   var need = kw + 1.5;
   if ($('mzTable').value === 'VAC') need += 2.2;
@@ -388,9 +391,7 @@ function mzAutoApply(force) {
     var st = mzStabAuto();
     if (st) $('mzStab').value = st.k;
   }
-  if (force || !mzTouched('mzSens')) {
-    $('mzSens').value = M.sensorByFormat[f] || 'Нажимной';
-  }
+  if (force || !mzTouched('mzSens')) $('mzSens').value = M.sensorByFormat[f] || 'Нажимной';
   var v = M.vibroByFormat[f];
   if (v && (force || !mzTouched('mzVib'))) $('mzVib').value = v;
   if (force || !mzTouched('mzCh')) $('mzCh').value = mzChillerFor(kw);
@@ -422,19 +423,17 @@ function mzFillStab() {
   var b = $('mzStabB').value, cur = $('mzStab').value;
   var list = APP.stabsFull.filter(function (s) { return s.b === b; });
   $('mzStab').innerHTML = list.map(function (s) {
-    return '<option value="' + s.k + '">' + esc(s.n) + ' — ' + mzDec(s.kw) + ' кВт' +
-      (s.p == null ? ', цены нет' : '') + '</option>';
+    return '<option value="' + s.k + '">' + esc(s.n) + '</option>';
   }).join('');
-  var has = list.some(function (s) { return s.k === cur; });
-  if (has) $('mzStab').value = cur;
+  if (list.some(function (s) { return s.k === cur; })) $('mzStab').value = cur;
 }
 function mzRenderStab() {
   var s = mzStabM();
   if (!s) return;
   var req = mzStabNeed();
   mzCard('mzStabCard', s.n, mzDec(s.kw) + ' кВт · ' + (s.ph === 3 ? '3 фазы' : '1 фаза'),
-    s.d, esc(s.idx || '') + (s.idx ? '<br><br>' : '') +
-    '<b>Источник:</b> ' + esc(s.src) + '<br><br>' + esc(APP.stabNote[s.b] || ''));
+    s.d, esc(s.idx || '') + (s.idx ? '<br><br>' : '') + '<b>Источник:</b> ' +
+    esc(s.src) + '<br><br>' + esc(APP.stabNote[s.b] || ''));
   var h = [];
   h.push(['Расчётное потребление станка — около ' + req + ' кВт: шпиндель ' +
     mzDec($('mzSpindle').value) + ' кВт плюс приводы и стойка' +
@@ -444,12 +443,8 @@ function mzRenderStab() {
       req + ' кВт. Возьмите мощнее — иначе он уйдёт в защиту под нагрузкой.', 'bad']);
   }
   var need380 = mzSV() === '380' || ($('mzTable').value === 'VAC' && mzTV() === '380');
-  if (need380 && s.ph === 1) {
-    h.push(['Станку нужны три фазы, а выбран однофазный стабилизатор.', 'bad']);
-  }
-  if (!need380 && s.ph === 3) {
-    h.push(['Станок однофазный, а стабилизатор трёхфазный — переплата без пользы.', 'warn']);
-  }
+  if (need380 && s.ph === 1) h.push(['Станку нужны три фазы, а выбран однофазный стабилизатор.', 'bad']);
+  if (!need380 && s.ph === 3) h.push(['Станок однофазный, а стабилизатор трёхфазный — переплата без пользы.', 'warn']);
   if (s.p == null) h.push(['Цены этой модели в прайсе нет — поставьте её вручную.', 'warn']);
   mzHints('mzStabHint', h);
 }
@@ -466,8 +461,7 @@ function mzRenderCh() {
       'Если оставите позицию, она попадёт в смету лишней.', 'bad']);
   } else if (kw < c.kwMin || kw > c.kwMax) {
     h.push(['Шпиндель ' + mzDec(kw) + ' кВт вне диапазона ' + c.kwMin + '–' + c.kwMax +
-      ' кВт этой модели. Рекомендуемая по мощности — ' +
-      esc(mzChillerFor(kw)) + '.', 'warn']);
+      ' кВт этой модели. По мощности подходит CW-' + esc(mzChillerFor(kw)) + '.', 'warn']);
   } else {
     h.push(['Чиллер подходит по мощности шпинделя.', 'ok']);
   }
@@ -479,21 +473,18 @@ function mzRenderSens() {
   var s = M.sensors.filter(function (x) { return x.k === k; })[0];
   if (!s) return;
   mzCard('mzSensCard', s.n, '', [['Тип', s.k], ['Цена по прайсу', mzRub(s.p)]],
-    'Датчик ставит ноль по Z автоматически: оператор не выставляет вылет фрезы на глаз. ' +
-    'Магнитный держится на столе магнитом и удобен на настольных станках, ' +
+    'Датчик ставит ноль по Z автоматически: оператор не выставляет вылет фрезы ' +
+    'на глаз. Магнитный держится на столе магнитом и удобен на настольных станках, ' +
     'нажимной устойчивее на больших полях.');
   var f = $('mzFmt').value, rec = M.sensorByFormat[f] || 'Нажимной', h = [];
-  if (rec !== k) {
-    h.push(['Для формата ' + f + ' обычно берут ' + rec.toLowerCase() + ' датчик.', 'warn']);
-  }
+  if (rec !== k) h.push(['Для формата ' + f + ' обычно берут ' + rec.toLowerCase() + ' датчик.', 'warn']);
   mzHints('mzSensHint', h);
 }
 function mzRenderVib() {
   var q = parseInt($('mzVib').value, 10) || 0;
+  var p = mzNum('mzVibP') || M.vibro.p;
   mzCard('mzVibCard', M.vibro.n, q + ' шт',
-    [['Цена за штуку', mzRub(mzNum('mzVibP') || M.vibro.p)],
-     ['Количество', q + ' шт'],
-     ['Сумма', mzRub((mzNum('mzVibP') || M.vibro.p) * q)]],
+    [['Цена за штуку', mzRub(p)], ['Количество', q + ' шт'], ['Сумма', mzRub(p * q)]],
     'Виброопоры гасят вибрацию станины и позволяют выставить станок по уровню ' +
     'на неровном полу. Количество зависит от длины станины.');
   var f = $('mzFmt').value, rec = M.vibroByFormat[f], h = [];
@@ -513,34 +504,31 @@ function mzAspIdx(name) {
 function mzRenderAsp() {
   var a = mzAspM();
   if (!a) return;
-  Array.prototype.forEach.call($('mzAV').children, function (b) {
-    var can = (a.v || []).indexOf(+b.dataset.av) >= 0;
-    b.disabled = !can;
-    b.classList.toggle('on', can && b.dataset.av === mzAV());
-  });
+  var can220 = (a.v || []).indexOf(220) >= 0, can380 = (a.v || []).indexOf(380) >= 0;
+  $('mzAV220').disabled = !can220;
+  $('mzAV380').disabled = !can380;
+  if (!can220 && can380) $('mzAV380').checked = true;
+  if (!can380 && can220) $('mzAV220').checked = true;
+  if (!$('mzAV220').checked && !$('mzAV380').checked) $('mzAV220').checked = true;
   if (a.nodata) {
     mzCard('mzAspCard', a.n, '', [['Данные', 'в источнике нет']],
       'По этой модели в рознице BELMASH характеристик и цены нет — уточняйте у поставщика.');
-    mzHints('mzAspHint', [['Ни характеристик, ни цены по модели нет. ' +
-      'Цену поставьте вручную.', 'bad']]);
+    mzHints('mzAspHint', [['Ни характеристик, ни цены по модели нет. Цену поставьте вручную.', 'bad']]);
     return;
   }
   var rows = [['Производительность', a.q + ' м³/ч'], ['Мощность', a.w + ' Вт'],
     ['Патрубков', a.np], ['Диаметр патрубка', a.dp + ' мм'],
-    ['Фильтрация', a.f + ' мкм · ' + a.fe], ['Мешок', a.bag + ' л'],
-    ['Масса', a.kg + ' кг'], ['Артикул', (a.art || {})[mzAV()] || '—'],
-    ['Розница BELMASH', mzRub(a.p)],
-    ['С наценкой 20 %', mzRub(mzAspPrice(a.p))]];
-  if (a.db) rows.splice(7, 0, ['Шум', a.db + ' дБ']);
+    ['Фильтрация', a.f + ' мкм · ' + a.fe], ['Мешок', a.bag + ' л']];
+  if (a.db) rows.push(['Шум', a.db + ' дБ']);
+  rows.push(['Масса', a.kg + ' кг']);
+  rows.push(['Артикул', (a.art || {})[mzAV()] || '—']);
+  rows.push(['Розница BELMASH', mzRub(a.p)]);
+  rows.push(['С наценкой 20 %', mzRub(mzAspPrice(a.p))]);
   mzCard('mzAspCard', a.n, mzAV() + ' В', rows,
     mzAspIdx(a.k).map(esc).join('<br><br>') ||
     'Аспирация уносит стружку и пыль от фрезы. Производительность подбирают ' +
     'по числу патрубков и длине магистрали.');
-  var h = [];
-  if ((a.v || []).indexOf(+mzAV()) < 0) {
-    h.push(['В этом исполнении модели нет питания ' + mzAV() + ' В.', 'bad']);
-  }
-  var kw = parseFloat($('mzSpindle').value);
+  var h = [], kw = parseFloat($('mzSpindle').value);
   if (kw >= 4.5 && a.q < 2000) {
     h.push(['Шпиндель ' + mzDec(kw) + ' кВт снимает много стружки, а у модели ' +
       a.q + ' м³/ч. Возьмите производительнее.', 'warn']);
@@ -549,13 +537,13 @@ function mzRenderAsp() {
   mzHints('mzAspHint', h);
 }
 function mzRenderBr() {
-  var d = $('mzBr').value;
-  mzCard('mzBrCard', M.brush.n + ' ⌀' + d + ' мм', '',
-    [['Диаметр патрона', d + ' мм'], ['Цена по прайсу', mzRub(M.brush.p)]],
-    'Щётка надевается на шпиндель и не даёт стружке разлетаться, ' +
-    'работая вместе с аспирацией. Диаметр подбирается под патрон.');
-  mzHints('mzBrHint', [['Диаметр щётки должен совпадать с диаметром патрона ' +
-    'вашего шпинделя — проверьте по паспорту станка.', 'warn']]);
+  var dd = $('mzBr').value;
+  mzCard('mzBrCard', M.brush.n + ' ⌀' + dd + ' мм', '',
+    [['Диаметр патрона', dd + ' мм'], ['Цена по прайсу', mzRub(M.brush.p)]],
+    'Щётка надевается на шпиндель и не даёт стружке разлетаться, работая вместе ' +
+    'с аспирацией. Диаметр подбирается под патрон.');
+  mzHints('mzBrHint', [['Диаметр щётки должен совпадать с диаметром патрона вашего ' +
+    'шпинделя — проверьте по паспорту станка.', 'warn']]);
 }
 function mzDspPrice() { return (M.dsp[$('mzDsp').value] || {}).p || 0; }
 function mzRenderDsp() {
@@ -563,13 +551,13 @@ function mzRenderDsp() {
   mzCard('mzDspCard', i.n, v === 'up' ? 'доплата' : 'полная стоимость',
     [['RichAuto A11', mzRub(M.dsp.a11.p)], ['RichAuto A18', mzRub(M.dsp.a18.p)],
      ['Доплата за замену', mzRub(M.dsp.up.p)], ['Штатно A18', 'только M1 1325 RD']],
-    'Цены из прайса LASERCUT от ' + '25.03.2026. ' +
-    'Стойка уже входит в стоимость конфигурации станка — эта вкладка нужна либо ' +
-    'для доплаты за замену, либо когда стойка идёт отдельной строкой. ' +
-    'В остальных случаях позиция задвоится.<br><br>A11 — трёхосевой пульт, ' +
-    'A18 — четырёхосевой с полноценной осью A/C. По руководству RichAuto A11 тоже ' +
-    'способен крутить поворотную ось, но методом подмены: ось C подключается вместо ' +
-    'X или Y через внешний переключатель, одновременной четырёхосевой интерполяции нет.');
+    'Цены из прайса LASERCUT от 25.03.2026. Стойка уже входит в стоимость ' +
+    'конфигурации станка — эта вкладка нужна либо для доплаты за замену, либо ' +
+    'когда стойка идёт отдельной строкой. В остальных случаях позиция задвоится.' +
+    '<br><br>A11 — трёхосевой пульт, A18 — четырёхосевой с полноценной осью A/C. ' +
+    'По руководству RichAuto A11 тоже способен крутить поворотную ось, но методом ' +
+    'подмены: ось C подключается вместо X или Y через внешний переключатель, ' +
+    'одновременной четырёхосевой интерполяции при этом нет.');
   var h = [];
   if (v === 'up') {
     if (/A11/.test(ctrl)) {
@@ -582,12 +570,8 @@ function mzRenderDsp() {
         'к ней не применима.', 'warn']);
     }
   }
-  if (v === 'a11' && /A11/.test(ctrl)) {
-    h.push(['A11 уже указана как стойка станка — позиция задвоится.', 'bad']);
-  }
-  if (v === 'a18' && /A18/.test(ctrl)) {
-    h.push(['A18 уже указана как стойка станка — позиция задвоится.', 'bad']);
-  }
+  if (v === 'a11' && /A11/.test(ctrl)) h.push(['A11 уже указана как стойка станка — позиция задвоится.', 'bad']);
+  if (v === 'a18' && /A18/.test(ctrl)) h.push(['A18 уже указана как стойка станка — позиция задвоится.', 'bad']);
   mzHints('mzDspHint', h);
 }
 // Влезает ли заготовка: высота центра оси, ход Z и вылет фрезы.
@@ -619,8 +603,7 @@ function mzRenderRot() {
   if (fit) {
     rows.push(['Ход по Z у серии', fit.z + ' мм']);
     rows.push(['Просвет над патроном', fit.free + ' мм']);
-    rows.push(['Заготовка по расчёту', fit.bad ? 'не проходит'
-      : 'до ⌀' + fit.eff + ' мм']);
+    rows.push(['Заготовка по расчёту', fit.bad ? 'не проходит' : 'до ⌀' + fit.eff + ' мм']);
   }
   mzCard('mzRotCard', r.n, r.sub, rows,
     esc(r.idx) + '<br><br>' + esc(M.rotNote) + '<br><br>' + esc(M.rotFitNote));
@@ -640,9 +623,7 @@ function mzRenderRot() {
   } else if (fit) {
     h.push(['Заготовка до ⌀' + r.dmax + ' мм проходит по ходу Z.', 'ok']);
   }
-  if (best && best.k !== r.k) {
-    h.push(['Максимум для этой серии по расчёту — ' + esc(best.n) + '.', 'ok']);
-  }
+  if (best && best.k !== r.k) h.push(['Максимум для этой серии по расчёту — ' + esc(best.n) + '.', 'ok']);
   var ctrl = $('mzCtrl').value;
   if (r.k !== 'wattsan' && !/A18|Syntec|NC8|F7324/.test(ctrl)) {
     h.push(['Стойка ' + esc(ctrl) + ' не четырёхосевая. Нужна A18 или промышленная ' +
@@ -696,11 +677,10 @@ function mzPnrBase() {
   var row = mzPnrVars(g).filter(function (x) { return x[0] === v; })[0];
   return row ? row[2] : 0;
 }
-// Коэффициент выезда — наценка, поэтому считаем её в копейках через money.js.
+// Коэффициент выезда — это наценка, поэтому считаем её в копейках через money.js.
 function mzPnrPrice() {
   var base = toCents(mzPnrBase());
-  var k = $('mzPnrK').value === '12' ? 200 : 0;
-  return k ? sNacenkoy(base, k) : base;
+  return $('mzPnrK').value === '12' ? sNacenkoy(base, 200) : base;
 }
 function mzRenderPnr() {
   var g = mzPnrM(), auto = mzPnrGroupOf(), h = [];
@@ -719,47 +699,42 @@ function mzRenderPnr() {
   } else if (auto.k) {
     h.push(['Группа подобрана по прайсу под выбранный станок.', 'ok']);
   }
-  if (g.eduIncl) h.push(['У этой группы обучение входит в ПНР — отдельной строкой ' +
-    'его ставить не нужно.', 'ok']);
+  if (g.eduIncl) h.push(['У этой группы обучение входит в ПНР — отдельной строкой его ставить не нужно.', 'ok']);
   if ($('mzPnrK').value === '12') {
-    h.push(['Коэффициент 1,2 применяется, когда инженер выезжает к станку, ' +
-      'купленному не у нас.', 'ok']);
+    h.push(['Коэффициент 1,2 применяется, когда инженер выезжает к станку, купленному не у нас.', 'ok']);
   }
   mzHints('mzPnrHint', h);
 }
 
 // ------------------------------------------------------- спецификация и смета
-// Каждая строка: наименование, цена в копейках, количество, тип для сметы.
+var MZ_SECS = [{ k: 'eq', n: 'Станок', c: 'var(--or)' },
+  { k: 'opt', n: 'Допоборудование', c: 'var(--ok)' },
+  { k: 'srv', n: 'Услуги', c: 'var(--warn)' }];
+
 function mzSpec() {
   var out = [];
   var f = $('mzFmt').value;
   var F = M.formats.filter(function (x) { return x[0] === f; })[0];
-  var name = 'Фрезерный станок с ЧПУ Wattsan ' + $('mzSeries').value + ' ' + f +
-    ', ' + mzDec($('mzSpindle').value) + ' кВт ' +
-    ($('mzCool').value === 'wc' ? 'wc' : 'ac') + ', ' + $('mzCtrl').value +
-    ($('mzTable').value === 'VAC' ? ', вакуумный стол' : '');
   var c = MZCAT[mzSel];
-  if (c && c.i === mzSel) name = 'Фрезерный станок с ЧПУ Wattsan ' + c.n;
+  var name = c ? 'Фрезерный станок с ЧПУ Wattsan ' + c.n
+    : 'Фрезерный станок с ЧПУ Wattsan ' + $('mzSeries').value + ' ' + f + ', ' +
+      mzDec($('mzSpindle').value) + ' кВт ' + ($('mzCool').value === 'wc' ? 'wc' : 'ac') +
+      ', ' + $('mzCtrl').value + ($('mzTable').value === 'VAC' ? ', вакуумный стол' : '');
   if (mzNum('mzPrice')) {
     out.push({ n: name, c: toCents(mzNum('mzPrice')), q: 1, t: 'eq',
       d: [['Рабочее поле', (F ? F[1] : f) + ' мм'],
         ['Шпиндель', mzDec($('mzSpindle').value) + ' кВт · ' +
           ($('mzCool').value === 'wc' ? 'водяное' : 'воздушное') + ' · ' + mzSV() + ' В'],
-        ['Стол', $('mzTable').value + ($('mzTable').value === 'VAC'
-          ? ', насос ' + mzTV() + ' В' : '')],
-        ['Стойка ЧПУ', $('mzCtrl').value], ['Двигатели', $('mzMotor').value],
+        ['Стол', $('mzTable').value + ($('mzTable').value === 'VAC' ? ', насос ' + mzTV() + ' В' : '')],
+        ['Стойка ЧПУ', $('mzCtrl').value],
+        ['Двигатели', $('mzMotor').value],
         ['Поставка', mzKey() === 'order' ? APP.deliveryOrder : APP.deliveryStock]] });
   }
-  if ($('mzStabOn').checked && mzStabM()) {
-    out.push({ n: mzStabM().n, c: toCents(mzNum('mzStabP')), q: 1, t: 'opt' });
-  }
-  if ($('mzChOn').checked && mzChM()) {
-    out.push({ n: 'Чиллер ' + mzChM().n, c: toCents(mzNum('mzChP')), q: 1, t: 'opt' });
-  }
+  if ($('mzStabOn').checked && mzStabM()) out.push({ n: mzStabM().n, c: toCents(mzNum('mzStabP')), q: 1, t: 'opt' });
+  if ($('mzChOn').checked && mzChM()) out.push({ n: 'Чиллер ' + mzChM().n, c: toCents(mzNum('mzChP')), q: 1, t: 'opt' });
   if ($('mzSensOn').checked) {
     var sn = M.sensors.filter(function (x) { return x.k === $('mzSens').value; })[0];
-    out.push({ n: (sn ? sn.n : 'Датчик высоты инструмента'),
-      c: toCents(mzNum('mzSensP')), q: 1, t: 'opt' });
+    out.push({ n: sn ? sn.n : 'Датчик высоты инструмента', c: toCents(mzNum('mzSensP')), q: 1, t: 'opt' });
   }
   if ($('mzVibOn').checked) {
     out.push({ n: M.vibro.n, c: toCents(mzNum('mzVibP')),
@@ -770,8 +745,7 @@ function mzSpec() {
       c: toCents(mzNum('mzAspP')), q: 1, t: 'opt' });
   }
   if ($('mzBrOn').checked) {
-    out.push({ n: M.brush.n + ' ⌀' + $('mzBr').value + ' мм',
-      c: toCents(mzNum('mzBrP')), q: 1, t: 'opt' });
+    out.push({ n: M.brush.n + ' ⌀' + $('mzBr').value + ' мм', c: toCents(mzNum('mzBrP')), q: 1, t: 'opt' });
   }
   if ($('mzDspOn').checked) {
     out.push({ n: M.dsp[$('mzDsp').value].n, c: toCents(mzNum('mzDspP')), q: 1, t: 'opt' });
@@ -793,67 +767,86 @@ function mzSpec() {
   }
   return out;
 }
-// Нестыковки всей сборки: то, что менеджер не должен отправить клиенту.
 function mzIssues() {
   var out = [];
   if (!mzNum('mzPrice')) {
-    out.push(['Цена станка не заполнена — выберите конфигурацию из прайса ' +
-      'или введите цену вручную.', 'bad']);
+    out.push(['Цена станка не заполнена — выберите конфигурацию из прайса или введите цену вручную.', 'bad']);
   }
   if ($('mzCool').value === 'wc' && !$('mzChOn').checked) {
-    out.push(['Шпиндель с водяным охлаждением, а чиллера в спецификации нет. ' +
-      'Без него станок работать не должен.', 'bad']);
+    out.push(['Шпиндель с водяным охлаждением, а чиллера в спецификации нет. Без него станок работать не должен.', 'bad']);
   }
   if ($('mzCool').value === 'ac' && $('mzChOn').checked) {
     out.push(['Охлаждение воздушное, а чиллер в спецификации есть — лишняя позиция.', 'bad']);
   }
   if (!$('mzStabOn').checked) {
-    out.push(['Стабилизатора в спецификации нет. Паспорт требует стабильного питания, ' +
-      'без него гарантия под вопросом.', 'warn']);
+    out.push(['Стабилизатора в спецификации нет. Паспорт требует стабильного питания, без него гарантия под вопросом.', 'warn']);
   }
   if (!$('mzPnrOn').checked) {
-    out.push(['ПНР и обучение не включены. Они платные и в цену станка не входят — ' +
-      'клиент должен видеть их отдельной строкой или знать, что их нет.', 'warn']);
+    out.push(['ПНР и обучение не включены. Они платные и в цену станка не входят — клиент должен видеть их отдельной строкой.', 'warn']);
   }
   if ($('mzRotOn').checked && !/A18|Syntec|NC8|F7324/.test($('mzCtrl').value)) {
     out.push(['В смете есть поворотная ось, а стойка станка не четырёхосевая.', 'bad']);
   }
-  ['mzStabHint', 'mzChHint', 'mzSensHint', 'mzVibHint', 'mzAspHint', 'mzBrHint',
-    'mzDspHint', 'mzRotHint'].forEach(function (id) {
-    if (mzFlags[id] === 'bad') {
-      var box = id.replace('Hint', 'On');
-      if ($(box) && $(box).checked) {
-        out.push(['В позиции «' + esc(($(box).closest('.mzpane')
-          .querySelector('label.f') || {}).textContent || 'допоборудование') +
-          '» есть нестыковка — проверьте вкладку.', 'bad']);
-      }
-    }
-  });
   return out;
 }
 function mzRenderSpec() {
-  var rows = mzSpec(), sum = 0;
-  rows.forEach(function (r) { sum += r.c * r.q; });
-  $('mzEmpty').hidden = !!rows.length;
-  $('mzBody').innerHTML = rows.map(function (r) {
-    return '<tr><td>' + esc(r.n) + (r.q > 1 ? ' <span class="muted">× ' + r.q + '</span>' : '') +
-      '</td><td class="num">' + fmtRub(r.c * r.q) + ' ₽</td></tr>';
-  }).join('');
-  var nds = ndsIznutri(sum, APP.ndsDefault * 10);
-  $('mzTotals').innerHTML = '<div class="spec-line"><span>Итого</span><b>' +
-    fmtRub(sum) + ' ₽</b></div><div class="spec-line small muted"><span>в том числе НДС ' +
-    APP.ndsDefault + ' %</span><span>' + fmtRub(nds) + ' ₽</span></div>';
-  $('mzCnt').textContent = rows.length ? cnt(rows.length, ['позиция', 'позиции', 'позиций']) : '';
-  var iss = mzIssues();
-  $('mzIssues').innerHTML = iss.map(function (r) {
-    return '<div class="mzhint ' + r[1] + '">' + r[0] + '</div>';
+  var rows = mzSpec(), sum = 0, byType = { eq: 0, opt: 0, srv: 0 };
+  rows.forEach(function (r) { sum += r.c * r.q; byType[r.t] += r.c * r.q; });
+
+  var c = MZCAT[mzSel];
+  $('mzCfgHead').innerHTML = '<b>' + esc(c ? 'Wattsan ' + c.n
+    : 'Wattsan ' + $('mzSeries').value + ' ' + $('mzFmt').value) + '</b><span>' +
+    esc(mzDec($('mzSpindle').value) + ' кВт · ' +
+      ($('mzCool').value === 'wc' ? 'водяное' : 'воздушное') + ' · стол ' +
+      $('mzTable').value + ' · ' + $('mzCtrl').value) + '</span>';
+  $('mzSpecMeta').textContent = c ? 'Конфигурация из прайса, ' +
+    (mzKey() === 'order' ? 'цена под заказ' : 'цена из наличия')
+    : 'Своя конфигурация — цену вводите вручную';
+
+  var html = '';
+  MZ_SECS.forEach(function (sec) {
+    var list = rows.filter(function (r) { return r.t === sec.k; });
+    if (!list.length) return;
+    html += '<div class="sec"><div class="sech"><span>' + sec.n + '</span><b>' +
+      fmtRub(byType[sec.k]) + ' ₽</b></div>';
+    list.forEach(function (r) {
+      html += '<div class="srow"><span>' + esc(r.n) +
+        (r.q > 1 ? ' × ' + r.q : '') + '</span><span class="v">' +
+        fmtRub(r.c * r.q) + ' ₽</span></div>';
+      (r.d || []).forEach(function (dd) {
+        html += '<div class="sdet"><span>' + esc(dd[0]) + '</span><span>' +
+          esc(String(dd[1])) + '</span></div>';
+      });
+    });
+    html += '</div>';
+  });
+  $('mzSpecBody').innerHTML = html;
+
+  // полоса долей: сразу видно, сколько в смете станка, обвязки и услуг
+  $('mzSplit').innerHTML = sum ? MZ_SECS.map(function (sec) {
+    var w = byType[sec.k] / sum * 100;
+    return w ? '<i style="width:' + w.toFixed(2) + '%;background:' + sec.c + '"></i>' : '';
+  }).join('') : '';
+  $('mzLegend').innerHTML = sum ? MZ_SECS.filter(function (sec) { return byType[sec.k]; })
+    .map(function (sec) {
+      return '<span><em style="background:' + sec.c + '"></em>' + sec.n + ' — ' +
+        fmtRub(byType[sec.k]) + ' ₽</span>';
+    }).join('') : '';
+
+  $('mzSum').textContent = fmtRub(sum) + ' ₽';
+  $('mzSumBar').textContent = fmtRub(sum) + ' ₽';
+  $('mzPosCount').textContent = rows.length
+    ? ' · ' + cnt(rows.length, ['позиция', 'позиции', 'позиций']) : '';
+  // ndsIznutri отдаёт пару «без НДС и сам НДС» — в плашке нужен второй
+  $('mzVat').textContent = sum
+    ? 'в том числе НДС ' + APP.ndsDefault + ' % — ' +
+      fmtRub(ndsIznutri(sum, APP.ndsDefault * 10).nds) + ' ₽' : '';
+  $('mzIssues').innerHTML = mzIssues().map(function (r) {
+    return '<div class="issue' + (r[1] === 'warn' ? ' warn' : '') + '">' + r[0] + '</div>';
   }).join('');
   $('mzOut').value = rows.map(function (r) {
     return r.n + (r.q > 1 ? ' × ' + r.q : '') + ' — ' + fmtRub(r.c * r.q) + ' руб.';
   }).join('\n') + (rows.length ? '\nИтого: ' + fmtRub(sum) + ' руб.' : '');
-  var c = MZCAT[mzSel];
-  $('mzHead').textContent = c ? 'Из прайса: ' + c.n
-    : 'Своя конфигурация — цену вводите вручную.';
 }
 
 // ------------------------------------------------------------- цены по умолчанию
@@ -884,13 +877,15 @@ function mzPriceDefaults() {
 
 // ------------------------------------------------------------------ вкладки
 function mzRenderMTabs() {
+  $('mzMTabs').style.display = mzS.mode === 'custom' ? '' : 'none';
+  $('mzMatchWrap').style.display = mzS.mode === 'custom' ? '' : 'none';
   $('mzMTabs').innerHTML = M.mcats.map(function (c) {
-    return '<button type="button" class="pill' + (c.k === mzMCat ? ' on' : '') +
-      '" data-mcat="' + c.k + '" role="tab">' + esc(c.n) + '</button>';
+    return '<button type="button" class="tab' + (c.k === mzMCat ? ' on' : '') +
+      '" data-mcat="' + c.k + '">' + esc(c.n) + '</button>';
   }).join('');
   M.mcats.forEach(function (c) {
     var p = $('mzp_' + c.k);
-    if (p) p.hidden = !(mzS.mode === 'custom' && c.k === mzMCat);
+    if (p) p.classList.toggle('on', mzS.mode === 'custom' && c.k === mzMCat);
   });
 }
 function mzRenderTabs() {
@@ -899,30 +894,26 @@ function mzRenderTabs() {
     var flag = '';
     ids.forEach(function (x) {
       var key = 'mz' + x.charAt(0).toUpperCase() + x.slice(1);
-      if (mzFlags[key] === 'bad') flag = 'bad';
-      else if (mzFlags[key] === 'warn' && flag !== 'bad') flag = 'warn';
+      if (mzFlags[key] === 'bad') flag = 'f-bad';
+      else if (mzFlags[key] === 'warn' && flag !== 'f-bad') flag = 'f-warn';
     });
     var on = (c.on || []).some(function (id) {
       var box = $('mz' + id.charAt(0).toUpperCase() + id.slice(1));
       return box && box.checked;
     });
-    return '<button type="button" class="pill' + (c.k === mzCat ? ' on' : '') +
-      (flag ? ' flag-' + flag : '') + '" data-cat="' + c.k + '" role="tab">' +
-      esc(c.n) + (on ? ' ·' : '') + '</button>';
+    return '<button type="button" class="tab' + (c.k === mzCat ? ' on' : '') +
+      (on ? ' sel' : '') + (flag ? ' ' + flag : '') + '" data-cat="' + c.k + '">' +
+      esc(c.n) + '</button>';
   }).join('');
   M.cats.forEach(function (c) {
     var p = $('mzp_' + c.k);
-    if (p) p.hidden = c.k !== mzCat;
+    if (p) p.classList.toggle('on', c.k === mzCat);
   });
 }
 function mzRenderModes() {
-  $('mzModes').innerHTML = [['ready', 'Готовая из прайса'], ['custom', 'Своя конфигурация']]
-    .map(function (m) {
-      return '<button type="button" class="pill' + (mzS.mode === m[0] ? ' on' : '') +
-        '" data-mode="' + m[0] + '" role="tab">' + m[1] + '</button>';
-    }).join('');
-  $('mzMTabs').hidden = mzS.mode !== 'custom';
-  $('mzMatchWrap').hidden = mzS.mode !== 'custom';
+  Array.prototype.forEach.call($('mzModes').children, function (b) {
+    b.classList.toggle('on', b.dataset.mode === mzS.mode);
+  });
 }
 
 // ------------------------------------------------------------- пересчёт всего
@@ -943,26 +934,26 @@ function mzUpdate() {
   mzRenderModes(); mzRenderMTabs(); mzRenderTabs();
   mzRenderReady(); mzRenderMatches(); mzRenderSimilar();
   mzRenderSpec();
-  $('mzCfgCnt').textContent = cnt(MZCAT.length, ['конфигурация', 'конфигурации',
-    'конфигураций']) + ' в прайсе';
+  $('mzCfgCnt').textContent = cnt(MZCAT.length,
+    ['конфигурация', 'конфигурации', 'конфигураций']) + ' в прайсе';
   mzSave();
   mzBusy = false;
 }
-// Черновик вкладки: поля и галочки переживают перезагрузку, как в других разделах.
 var MZ_FIELDS = ['mzSeries', 'mzFmt', 'mzPrice', 'mzStock', 'mzSpindle', 'mzCool',
   'mzTable', 'mzCtrl', 'mzMotor', 'mzStabB', 'mzStab', 'mzStabP', 'mzCh', 'mzChP',
-  'mzSens', 'mzSensP', 'mzVib', 'mzVibP', 'mzAsp', 'mzAspP', 'mzBr', 'mzBrP',
+  'mzSens', 'mzSensP', 'mzVibM', 'mzVib', 'mzVibP', 'mzAsp', 'mzAspP', 'mzBr', 'mzBrP',
   'mzDsp', 'mzDspP', 'mzRot', 'mzRotT', 'mzRotP', 'mzExtraN', 'mzExtraP',
   'mzPnrGroup', 'mzPnrVar', 'mzPnrK', 'mzPnrP'];
 var MZ_CHECKS = ['mzStabOn', 'mzChOn', 'mzSensOn', 'mzVibOn', 'mzAspOn', 'mzBrOn',
   'mzDspOn', 'mzRotOn', 'mzExtraOn', 'mzPnrOn'];
+var MZ_RADIO = ['mzSV220', 'mzSV380', 'mzTV220', 'mzTV380', 'mzAV220', 'mzAV380'];
 function mzSave() {
   var f = {};
   MZ_FIELDS.forEach(function (id) {
     if ($(id)) f[id] = { v: $(id).value, t: $(id).dataset.touched || '0' };
   });
   var ch = {};
-  MZ_CHECKS.forEach(function (id) { if ($(id)) ch[id] = $(id).checked; });
+  MZ_CHECKS.concat(MZ_RADIO).forEach(function (id) { if ($(id)) ch[id] = $(id).checked; });
   mzS.fields = f; mzS.checks = ch; mzS.cat = mzCat; mzS.mcat = mzMCat;
   save();
 }
@@ -990,7 +981,7 @@ function mzFill() {
     return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
   }).join('');
   $('mzSpindle').innerHTML = M.spindles.map(function (s) {
-    return '<option value="' + s + '">' + mzDec(s) + ' кВт</option>';
+    return '<option value="' + s + '">' + mzDec(s) + '</option>';
   }).join('');
   $('mzCtrl').innerHTML = Object.keys(M.ctrlInfo).map(function (k) {
     return '<option value="' + esc(k) + '">' + esc(k) + '</option>';
@@ -1002,8 +993,7 @@ function mzFill() {
     return '<option value="' + b[0] + '">' + esc(b[1]) + '</option>';
   }).join('');
   $('mzCh').innerHTML = APP.chillersFull.map(function (c) {
-    return '<option value="' + c.k + '">' + esc(c.n) + ' — ' + c.kwMin + '–' +
-      c.kwMax + ' кВт</option>';
+    return '<option value="' + c.k + '">' + esc(c.n) + '</option>';
   }).join('');
   $('mzSens').innerHTML = M.sensors.map(function (s) {
     return '<option value="' + esc(s.k) + '">' + esc(s.k) + '</option>';
@@ -1015,7 +1005,7 @@ function mzFill() {
     return '<option value="' + a.k + '">' + esc(a.n) + '</option>';
   }).join('');
   $('mzBr').innerHTML = APP.brushes.map(function (b) {
-    return '<option value="' + b + '">⌀' + b + ' мм</option>';
+    return '<option value="' + b + '">⌀ ' + b + ' мм</option>';
   }).join('');
   $('mzRot').innerHTML = M.rot.map(function (r) {
     return '<option value="' + r.k + '">' + esc(r.n) + '</option>';
@@ -1023,9 +1013,12 @@ function mzFill() {
   $('mzPnrGroup').innerHTML = APP.pnrGroups.map(function (g) {
     return '<option value="' + g.k + '">' + esc(g.n) + '</option>';
   }).join('');
+  $('mzSeries').value = 'M1';
   $('mzCtrl').value = 'DSP RichAuto A11';
   $('mzMotor').value = 'Шаговые с обратной связью (Leadshine)';
-  $('mzSpindle').value = '3.2';
+  $('mzSpindle').value = '4.5';
+  $('mzAsp').value = 'DC2500';
+  $('mzBr').value = '100';
   mzFillFmt();
   var g = mzPnrGroupOf();
   if (g.k) $('mzPnrGroup').value = g.k;
@@ -1039,14 +1032,10 @@ function mzBind() {
     if (!box) return;
     box.addEventListener('change', function () {
       mzTouch(id);
-      if (id === 'mzSeries') {
-        mzFillFmt();
+      if (id === 'mzSeries') mzFillFmt();
+      if (id === 'mzSeries' || id === 'mzFmt') {
         var g = mzPnrGroupOf();
         if (g.k && !mzTouched('mzPnrGroup')) $('mzPnrGroup').value = g.k;
-      }
-      if (id === 'mzFmt') {
-        var g2 = mzPnrGroupOf();
-        if (g2.k && !mzTouched('mzPnrGroup')) $('mzPnrGroup').value = g2.k;
       }
       if (id === 'mzStabB') mzTouch('mzStab', false);
       if (id === 'mzRot' || id === 'mzRotT') mzTouch('mzRotP', false);
@@ -1066,6 +1055,14 @@ function mzBind() {
   });
   MZ_CHECKS.forEach(function (id) {
     if ($(id)) $(id).addEventListener('change', mzUpdate);
+  });
+  MZ_RADIO.forEach(function (id) {
+    if ($(id)) {
+      $(id).addEventListener('change', function () {
+        if (id.indexOf('mzSV') === 0) mzS.sv = $(id).value;
+        mzUpdate();
+      });
+    }
   });
   $('mzModes').addEventListener('click', function (e) {
     var b = e.target.closest('[data-mode]');
@@ -1087,50 +1084,38 @@ function mzBind() {
     mzRenderTabs();
     mzSave();
   });
-  $('mzSV').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-sv]');
-    if (!b || b.disabled) return;
-    mzS.sv = b.dataset.sv;
-    mzUpdate();
-  });
-  $('mzTV').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-tv]');
-    if (!b || b.disabled) return;
-    mzS.tv = b.dataset.tv;
-    mzUpdate();
-  });
-  $('mzAV').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-av]');
-    if (!b || b.disabled) return;
-    mzS.av = b.dataset.av;
-    mzUpdate();
-  });
-  ['mzReady', 'mzSimilar', 'mzMatchList'].forEach(function (id) {
+  ['mzReadyList', 'mzSimilar', 'mzMatchList'].forEach(function (id) {
     $(id).addEventListener('click', function (e) {
       var b = e.target.closest('[data-cfg]');
       if (b) { mzApplyCfg(+b.dataset.cfg); return; }
       var p = e.target.closest('[data-price]');
       if (p) {
+        if (mzTouched('mzPrice') && mzNum('mzPrice') && mzNum('mzPrice') !== +p.dataset.price &&
+            !window.confirm('Цена станка была введена вручную. Заменить на ' +
+              mzRub(+p.dataset.price) + '?')) return;
         $('mzPrice').value = +p.dataset.price;
         mzTouch('mzPrice');
         mzUpdate();
       }
     });
   });
-  // Документ отсюда не собирается: позиции уходят в раздел «Смета и ТКП»,
-  // где лист предложения и файл для Word делаются фирменным шаблоном.
-  $('mzToSmeta').addEventListener('click', function () {
+  // Документ собирает раздел «Смета и ТКП»: сюда позиции только уходят.
+  function toSmeta() {
     var rows = mzSpec();
     if (!rows.length) { toast('Спецификация пуста — начните со станка'); return; }
-    rows.forEach(function (r) {
-      addItem(r.n, Math.round(r.c / 100), r.q, r.t);
-    });
+    rows.forEach(function (r) { addItem(r.n, Math.round(r.c / 100), r.q, r.t); });
     toast('Перенесено в смету: ' + cnt(rows.length, ['позиция', 'позиции', 'позиций']));
     showTab('smeta');
+  }
+  $('mzToSmeta').addEventListener('click', toSmeta);
+  $('mzBarSmeta').addEventListener('click', toSmeta);
+  $('mzBarSpec').addEventListener('click', function () {
+    $('p-mill').querySelector('.side').scrollIntoView({ behavior: 'smooth' });
   });
   $('mzCopy').addEventListener('click', function () {
     var ta = $('mzOut');
     if (!ta.value) { toast('Спецификация пуста'); return; }
+    ta.classList.add('on');
     ta.select();
     var ok = false;
     try { ok = d.execCommand('copy'); } catch (e) { ok = false; }
@@ -1155,6 +1140,7 @@ function mzBind() {
     MZ_CHECKS.forEach(function (id) { if ($(id)) $(id).checked = false; });
     state.mill = { rotPrices: {}, mode: 'ready' };
     mzS = state.mill;
+    $('mzOut').classList.remove('on');
     mzFill();
     mzUpdate();
     toast('Конфигурация сброшена');
@@ -1165,3 +1151,9 @@ mzFill();
 mzLoad();
 mzBind();
 mzUpdate();
+if (!mzS.fields || !mzS.fields.mzPrice || !mzS.fields.mzPrice.v) {
+  var mzFirst = mzBySeries($('mzSeries').value).filter(function (c) {
+    return c.f === $('mzFmt').value;
+  })[0];
+  if (mzFirst) mzApplyCfg(mzFirst.i);
+}

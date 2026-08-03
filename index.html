@@ -987,70 +987,248 @@ body.demo .internal{display:none !important}
 #p-cfg.hints .think{display:flex}
 
 /* ---------------------------------------------------------------------------
-   Вкладка «Фрезерный». Собственных цветов не заводим: всё из переменных темы,
-   поэтому раздел живёт и в тёмной, и в светлой теме без правок.
+   Вкладка «Фрезерный». Вёрстка перенесена из присланного конфигуратора один
+   в один, поэтому классы здесь свои и все правила заперты внутри #p-mill —
+   глобальные .card, .tabs, .pane и прочие остаются нетронутыми. Ни одного
+   цвета в значениях: только переменные темы, чтобы раздел жил и в тёмной,
+   и в светлой без правок.
    --------------------------------------------------------------------------- */
-.mzpane{margin-top:12px}
-.mzpane[hidden]{display:none}
-hr.sep{border:0;border-top:1px solid var(--line);margin:16px 0}
+#p-mill .grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;
+  align-items:start}
+#p-mill .grid>div{min-width:0}
+@media(max-width:1040px){#p-mill .grid{grid-template-columns:1fr}}
 
-.mzhint{margin-top:8px;padding:8px 11px;border-radius:9px;font-size:13px;
-  line-height:1.45;color:var(--tx2);background:var(--bg2);
-  border-left:3px solid var(--line2)}
-.mzhint.ok{background:var(--okbg);border-left-color:var(--ok);color:var(--tx)}
-.mzhint.warn{background:var(--warnbg);border-left-color:var(--warn);color:var(--tx)}
-.mzhint.bad{background:var(--badbg);border-left-color:var(--bad);color:var(--tx)}
+#p-mill .card{background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+  padding:16px;margin-bottom:14px;box-shadow:0 1px 3px var(--shadow);overflow:hidden}
+#p-mill .cardhead{display:flex;justify-content:space-between;align-items:center;
+  gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line);padding-bottom:9px;
+  margin-bottom:13px}
+#p-mill .cardhead h2,#p-mill .card>h2{margin:0;font-size:14px;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--or)}
+#p-mill .card>h2{border-bottom:2px solid var(--line);padding-bottom:9px;margin-bottom:13px}
 
-.mzcard{margin-top:12px;border:1px solid var(--line);border-radius:11px;
-  background:var(--bg2);overflow:hidden}
-.mzcard-h{padding:9px 13px;border-bottom:1px solid var(--line);
-  display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
-.mzcard-h b{font-size:14px;color:var(--tx)}
-.mzcard-h span{font-size:12.5px;color:var(--muted)}
-.mzcard-n{padding:10px 13px;font-size:12.5px;line-height:1.5;color:var(--tx2);
-  border-top:1px solid var(--line)}
-table.mzspec{width:100%;border-collapse:collapse}
-table.mzspec th,table.mzspec td{padding:6px 13px;font-size:12.5px;text-align:left;
-  vertical-align:top;border-bottom:1px solid var(--line)}
-table.mzspec tr:last-child th,table.mzspec tr:last-child td{border-bottom:0}
-table.mzspec th{width:44%;font-weight:400;color:var(--muted)}
-table.mzspec td{color:var(--tx)}
+#p-mill .f{display:flex;flex-direction:column;gap:4px;min-width:0}
+#p-mill .f>label{font-size:11.5px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.4px}
+#p-mill select,#p-mill input[type=text],#p-mill input[type=number]{width:100%;
+  padding:8px 10px;border:1px solid var(--line2);border-radius:7px;font:inherit;
+  font-size:14px;background:var(--bg3);color:var(--tx);min-width:0}
+#p-mill select:disabled,#p-mill input:disabled{background:var(--bg4);color:var(--muted)}
+#p-mill select:focus,#p-mill input:focus{outline:none;border-color:var(--or);
+  box-shadow:0 0 0 3px var(--orbg)}
+#p-mill input.num{text-align:right}
 
-.mzready{display:grid;gap:9px;margin-top:12px;
-  grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
-.mzrcard{display:flex;flex-direction:column;gap:4px;text-align:left;cursor:pointer;
-  padding:10px 12px;border:1px solid var(--line);border-radius:11px;
-  background:var(--bg2);color:var(--tx);font:inherit}
-.mzrcard:hover{border-color:var(--line2)}
-.mzrcard.on{border-color:var(--or);box-shadow:inset 0 0 0 1px var(--or)}
-.mzrcard b{font-size:13px;line-height:1.35}
-.mzrs{font-size:11.5px;color:var(--muted)}
-.mzrp{font-size:14px;font-weight:600;margin-top:2px}
-.mzrp em{display:block;font-size:11px;font-weight:400;font-style:normal;
-  color:var(--muted)}
+#p-mill .volt{display:flex;gap:6px}
+#p-mill .volt label{flex:1;position:relative;cursor:pointer;margin:0}
+#p-mill .volt input{position:absolute;opacity:0;pointer-events:none}
+#p-mill .volt span{display:block;text-align:center;padding:8px 4px;
+  border:1px solid var(--line2);border-radius:7px;font-size:13px;font-weight:600;
+  color:var(--muted);background:var(--bg3)}
+#p-mill .volt input:checked+span{background:var(--or);border-color:var(--or);
+  color:var(--onor)}
+#p-mill .volt input:disabled+span{background:var(--bg4);color:var(--muted);
+  cursor:not-allowed}
 
-.mzsim{margin-top:12px}
-.mzsim-h{font-size:12px;color:var(--muted);margin-bottom:6px}
-.mzsim-r{display:flex;width:100%;gap:10px;align-items:center;text-align:left;
-  justify-content:space-between;cursor:pointer;padding:8px 11px;font:inherit;
-  border:1px solid var(--line);border-radius:9px;background:var(--bg2);
-  color:var(--tx);margin-bottom:6px}
-.mzsim-r:hover{border-color:var(--line2)}
-.mzsim-r span{font-size:12.5px;line-height:1.35}
-.mzsim-r em{display:block;font-size:11px;font-style:normal;color:var(--muted)}
-.mzsim-r b{font-size:12.5px;white-space:nowrap}
-.mzsim-r b.up{color:var(--bad)}
-.mzsim-r b.dn{color:var(--ok)}
-.mzsim-r b.eq{color:var(--muted)}
+#p-mill .hints:empty{display:none}
+#p-mill .hints{margin-top:11px;display:flex;flex-direction:column;gap:6px}
+#p-mill .hint{font-size:12px;color:var(--tx2);padding:6px 9px;border-radius:0 6px 6px 0;
+  background:var(--bg3);border-left:3px solid var(--line2);line-height:1.45}
+#p-mill .hint.warn{color:var(--tx);background:var(--warnbg);border-left-color:var(--warn)}
+#p-mill .hint.ok{color:var(--tx);background:var(--okbg);border-left-color:var(--ok)}
+#p-mill .hint.bad{color:var(--tx);background:var(--badbg);border-left-color:var(--bad)}
 
-.pill.flag-warn::after{content:"";display:inline-block;width:6px;height:6px;
-  margin-left:5px;border-radius:50%;background:var(--warn);vertical-align:middle}
-.pill.flag-bad::after{content:"";display:inline-block;width:6px;height:6px;
-  margin-left:5px;border-radius:50%;background:var(--bad);vertical-align:middle}
+#p-mill .tabs{display:flex;gap:5px;overflow-x:auto;padding-bottom:3px;
+  scrollbar-width:thin;max-width:100%}
+#p-mill .tab{padding:6px 11px;border:1px solid var(--line2);border-radius:20px;
+  background:var(--bg3);font:inherit;font-size:12.5px;font-weight:600;color:var(--tx2);
+  cursor:pointer;white-space:nowrap;flex:0 0 auto}
+#p-mill .tab:hover{border-color:var(--or);color:var(--or)}
+#p-mill .tab.on{background:var(--or);border-color:var(--or);color:var(--onor)}
+#p-mill .tab.sel{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+#p-mill .tab.sel::before{content:'✓ '}
+#p-mill .tab.on.sel{background:var(--ok);border-color:var(--ok);color:var(--onok)}
+#p-mill .tab.f-warn::after,#p-mill .tab.f-bad::after{content:'!';display:inline-block;
+  margin-left:6px;width:14px;height:14px;line-height:14px;border-radius:50%;
+  font-size:10px;text-align:center;vertical-align:middle}
+#p-mill .tab.f-warn::after{background:var(--warn);color:var(--onwarn)}
+#p-mill .tab.f-bad::after{background:var(--bad);color:var(--onbad)}
+#p-mill .pane{display:none}
+#p-mill .pane.on{display:block}
 
-.spec-line{display:flex;justify-content:space-between;gap:10px;padding:5px 0}
-.spec-line b{font-size:16px}
-.spec-line.small{font-size:12px}
+#p-mill .seg{display:flex;border:1px solid var(--line2);border-radius:8px;
+  overflow:hidden;flex:0 0 auto}
+#p-mill .seg button{padding:7px 14px;border:0;background:var(--bg3);color:var(--tx2);
+  font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+#p-mill .seg button+button{border-left:1px solid var(--line2)}
+#p-mill .seg button.on{background:var(--or);color:var(--onor)}
+#p-mill .seg button:not(.on):hover{background:var(--bg4);color:var(--or)}
+
+#p-mill .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:8px;margin-bottom:12px}
+#p-mill .rcard{border:1px solid var(--line);border-radius:9px;padding:9px 11px;
+  cursor:pointer;background:var(--bg3);min-width:0;text-align:left;font:inherit;
+  color:var(--tx);display:block;width:100%}
+#p-mill .rcard:hover{border-color:var(--or)}
+#p-mill .rcard.on{border-color:var(--or);background:var(--orbg);
+  box-shadow:inset 0 0 0 1px var(--or)}
+#p-mill .rcard b{display:block;font-size:13px;color:var(--or);line-height:1.3;
+  overflow-wrap:anywhere}
+#p-mill .rcard .rs{font-size:11.5px;color:var(--muted);margin:3px 0 6px;line-height:1.4}
+#p-mill .rcard .rp{font-size:14px;font-weight:700;color:var(--tx)}
+#p-mill .rcard .rp em{font-style:normal;font-size:11px;color:var(--muted);
+  font-weight:400;margin-left:5px}
+
+#p-mill .simh{font-size:11px;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--muted);font-weight:700;margin:14px 0 7px;padding-top:11px;
+  border-top:1px dashed var(--line2)}
+#p-mill .sim{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+#p-mill .simc{border:1px solid var(--line);border-radius:9px;padding:8px 10px;
+  cursor:pointer;background:var(--bg3);min-width:0;text-align:left;font:inherit;
+  color:var(--tx);display:block;width:100%}
+#p-mill .simc:hover{border-color:var(--or)}
+#p-mill .simc b{display:block;font-size:12.5px;color:var(--or);line-height:1.3;
+  overflow-wrap:anywhere}
+#p-mill .simc .df{font-size:11.5px;color:var(--tx2);margin:4px 0 5px;line-height:1.4}
+#p-mill .simc .dp{font-size:12.5px;font-weight:700}
+#p-mill .simc .dp.up{color:var(--warn)}
+#p-mill .simc .dp.dn{color:var(--ok)}
+#p-mill .simc .dp.eq{color:var(--muted)}
+
+#p-mill .panehead{display:grid;gap:9px;align-items:end;margin-bottom:11px;
+  grid-template-columns:minmax(0,1fr) 130px auto}
+#p-mill .panehead.b3{grid-template-columns:140px minmax(0,1fr) 130px auto}
+#p-mill .panehead.b4{grid-template-columns:minmax(0,1fr) 140px 130px auto}
+#p-mill .panehead.b5{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 150px 130px auto}
+#p-mill .panehead.rot{grid-template-columns:minmax(0,1fr) 215px 130px auto}
+#p-mill .mhead{display:grid;gap:10px;align-items:end;margin-bottom:12px}
+#p-mill .mhead.main{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 150px 150px}
+@media(max-width:900px){#p-mill .mhead.main{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+#p-mill .mhead.spin{grid-template-columns:minmax(0,1fr) 128px minmax(0,1fr)}
+#p-mill .mhead.tbl{grid-template-columns:minmax(0,1fr) 128px}
+#p-mill .mhead.one{grid-template-columns:minmax(0,460px)}
+@media(max-width:700px){
+  #p-mill .mhead,#p-mill .mhead.main,#p-mill .mhead.spin,#p-mill .mhead.tbl,
+  #p-mill .mhead.one{grid-template-columns:1fr}
+  #p-mill .panehead,#p-mill .panehead.b3,#p-mill .panehead.b4,
+  #p-mill .panehead.b5,#p-mill .panehead.rot{grid-template-columns:1fr}
+}
+
+#p-mill .tgl{position:relative;cursor:pointer;user-select:none;display:block;margin:0}
+#p-mill .tgl input{position:absolute;opacity:0;pointer-events:none}
+#p-mill .tgl span{display:block;white-space:nowrap;padding:8px 15px;
+  border:1px solid var(--line2);border-radius:7px;font-size:12.5px;font-weight:600;
+  color:var(--muted);background:var(--bg3);text-align:center}
+#p-mill .tgl:hover span{border-color:var(--ok);color:var(--ok)}
+#p-mill .tgl input:checked+span{background:var(--ok);border-color:var(--ok);
+  color:var(--onok)}
+#p-mill .tgl input:checked+span::before{content:'✓ '}
+#p-mill .tgl input:disabled+span{background:var(--bg4);color:var(--muted);
+  border-color:var(--line);cursor:not-allowed}
+
+#p-mill .specbox{background:var(--bg3);border:1px solid var(--line);border-radius:9px;
+  overflow:hidden;margin-top:11px}
+#p-mill .specbox summary{padding:9px 12px;cursor:pointer;font-size:12px;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--or);font-weight:700;
+  list-style:none}
+#p-mill .specbox summary::-webkit-details-marker{display:none}
+#p-mill .specbox summary::before{content:'▸ ';color:var(--muted)}
+#p-mill .specbox[open] summary::before{content:'▾ '}
+#p-mill .specbox summary span{text-transform:none;letter-spacing:0;font-weight:400;
+  color:var(--muted);font-size:12px}
+#p-mill .specbox .body{padding:0 12px 11px}
+#p-mill .specbox dl{display:grid;grid-template-columns:repeat(4,minmax(0,auto));
+  gap:3px 12px;margin:0;font-size:12.5px}
+@media(max-width:760px){#p-mill .specbox dl{grid-template-columns:auto auto}}
+#p-mill .specbox dt{color:var(--muted);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+#p-mill .specbox dd{margin:0;text-align:right;font-weight:600;color:var(--tx);
+  min-width:0;overflow-wrap:anywhere}
+#p-mill .specbox .idx{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line2);
+  font-size:12px;color:var(--tx2);line-height:1.5}
+
+#p-mill .matches{margin-top:12px;border-top:1px dashed var(--line2)}
+#p-mill .matches summary{padding:8px 0;cursor:pointer;font-size:12.5px;font-weight:600;
+  color:var(--tx2)}
+#p-mill .mlist{max-height:250px;overflow-y:auto;padding-right:3px}
+#p-mill .mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;
+  align-items:center;padding:7px 9px;border:1px solid var(--line);border-radius:7px;
+  margin-bottom:5px;cursor:pointer;font:inherit;font-size:12.5px;background:var(--bg3);
+  color:var(--tx);text-align:left;width:100%}
+#p-mill .mrow:hover{border-color:var(--or)}
+#p-mill .mrow b{color:var(--or);white-space:nowrap}
+#p-mill .mrow.best{border-color:var(--ok);background:var(--okbg)}
+
+#p-mill .side{position:sticky;top:96px}
+#p-mill .cfg{background:var(--bg3);border:1px solid var(--line);border-radius:9px;
+  padding:10px 12px;margin-bottom:12px}
+#p-mill .cfg b{display:block;font-size:15px;color:var(--or);line-height:1.3}
+#p-mill .cfg span{font-size:12px;color:var(--muted);display:block;margin-top:3px;
+  line-height:1.45}
+#p-mill .sec{margin-bottom:11px}
+#p-mill .sech{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);
+  font-weight:700;padding-bottom:5px;border-bottom:1px solid var(--line);margin-bottom:4px}
+#p-mill .sech b{color:var(--or);font-size:12.5px;letter-spacing:0;white-space:nowrap}
+#p-mill .srow{display:flex;justify-content:space-between;gap:10px;padding:5px 0;
+  font-size:13px;border-bottom:1px solid var(--line);line-height:1.35}
+#p-mill .srow:last-child{border-bottom:0}
+#p-mill .srow .v{white-space:nowrap;font-weight:600}
+#p-mill .srow .v.no{color:var(--bad);font-weight:700;font-size:11.5px}
+#p-mill .sdet{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;
+  color:var(--muted);padding:0 0 4px 11px;line-height:1.4}
+#p-mill .sdet span:last-child{text-align:right}
+#p-mill .split{display:flex;height:8px;border-radius:5px;overflow:hidden;
+  margin:13px 0 8px;background:var(--bg4)}
+#p-mill .split i{display:block;transition:width .18s}
+#p-mill .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+#p-mill .legend em{font-style:normal;display:inline-block;width:8px;height:8px;
+  border-radius:2px;margin-right:5px;vertical-align:middle}
+#p-mill .total{display:flex;justify-content:space-between;align-items:baseline;
+  margin-top:12px;padding-top:11px;border-top:2px solid var(--or);font-size:14px;
+  font-weight:700;color:var(--or)}
+#p-mill .total .sum{font-size:25px;letter-spacing:-.5px}
+#p-mill .vat{text-align:right;font-size:11.5px;color:var(--muted);margin-top:3px}
+#p-mill .issues{margin-top:11px;display:flex;flex-direction:column;gap:5px}
+#p-mill .issues:empty{display:none}
+#p-mill .issue{font-size:11.5px;color:var(--tx);background:var(--badbg);
+  border-left:3px solid var(--bad);padding:5px 8px;border-radius:0 5px 5px 0;
+  line-height:1.4}
+#p-mill .issue.warn{background:var(--warnbg);border-left-color:var(--warn)}
+#p-mill .btns{display:flex;gap:7px;margin-top:13px;flex-wrap:wrap}
+#p-mill button.main{flex:1 1 46%;padding:11px 12px;border:0;border-radius:9px;
+  background:var(--or);color:var(--onor);font:inherit;font-weight:600;cursor:pointer;
+  min-width:130px}
+#p-mill button.sec{flex:1 1 100%;padding:11px 12px;border:1px solid var(--line2);
+  border-radius:9px;background:var(--bg3);color:var(--or);font:inherit;font-weight:600;
+  cursor:pointer}
+#p-mill button.main:hover{background:var(--or2)}
+#p-mill button.sec:hover{border-color:var(--or)}
+#p-mill .vatrow{display:flex;align-items:center;justify-content:flex-end;gap:8px;
+  margin-top:9px;font-size:11.5px;color:var(--muted)}
+#p-mill .vatrow select{width:auto;padding:4px 8px;font-size:12px}
+#p-mill .links{display:flex;gap:14px;justify-content:center;margin-top:10px}
+#p-mill .links a{font-size:11.5px;color:var(--muted);text-decoration:none;
+  border-bottom:1px dotted var(--line2);cursor:pointer}
+#p-mill .links a:hover{color:var(--or)}
+#p-mill .note{font-size:10.5px;color:var(--muted);margin-top:11px;line-height:1.45}
+#p-mill textarea{width:100%;height:150px;margin-top:10px;font:12px/1.45 monospace;
+  padding:10px;border:1px solid var(--line2);border-radius:7px;background:var(--bg3);
+  color:var(--tx);display:none}
+#p-mill textarea.on{display:block}
+
+/* липкая плашка итога на узком экране — как в исходном конфигураторе */
+#mzBar{display:none}
+@media(max-width:1040px){
+  #p-mill .side{position:static}
+  #p-mill.active~#mzBar,#mzBar.on{display:flex;position:fixed;left:0;right:0;bottom:0;
+    z-index:30;background:var(--or);color:var(--onor);padding:11px 16px;
+    justify-content:space-between;align-items:center;
+    box-shadow:0 -2px 12px var(--shadow)}
+  #mzBar b{font-size:19px}
+  #mzBar button{border:0;background:var(--bg2);color:var(--or);border-radius:7px;
+    padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+  #mzBar span{display:flex;gap:7px;align-items:center}
+}
 </style>
 <script>
 /* Тема применяется до отрисовки: иначе у выбравших светлую тему на секунду
@@ -1950,268 +2128,265 @@ table.mzspec td{color:var(--tx)}
     <div>
       <h1 class="btitle">Фрезерный станок</h1>
       <p class="lead">Готовая конфигурация из прайса или своя сборка по узлам.
-        Допоборудование, поворотная ось и ПНР подбираются под выбранный станок,
-        нестыковки показываются сразу. Готовая спецификация уходит в смету.</p>
+        Обвязка, поворотная ось и ПНР подбираются под выбранный станок, нестыковки
+        видны сразу. Готовая спецификация уходит в смету.</p>
     </div>
     <span class="pill on" id="mzCfgCnt">110 конфигураций в прайсе</span>
   </div>
 
-  <div class="cfggrid printkeep">
-  <div class="cfgmain">
+  <div class="grid printkeep">
+  <div>
 
     <div class="card">
       <div class="cardhead">
         <h2>1 · Станок</h2>
-        <div class="pills" id="mzModes" role="tablist" aria-label="Как выбираем станок"><button type="button" class="pill on" data-mode="ready" role="tab">Готовая из прайса</button><button type="button" class="pill" data-mode="custom" role="tab">Своя конфигурация</button></div>
+        <div class="seg noprint" id="mzModes">
+          <button type="button" data-mode="ready" class="on">Готовая из прайса</button>
+          <button type="button" data-mode="custom">Своя конфигурация</button>
+        </div>
       </div>
 
-      <div class="row">
-        <div style="flex:1 1 160px"><label class="f" for="mzSeries">Серия</label>
-          <select id="mzSeries" data-touched="0"><option value="MINI">MINI</option><option value="MINI Cabine">MINI Cabine</option><option value="A1">A1</option><option value="M1">M1</option><option value="M1 RD">M1 RD</option><option value="M1 S2X">M1 S2X</option><option value="M1 S3">M1 S3</option><option value="M1 S4">M1 S4</option><option value="M2">M2</option><option value="M3">M3</option></select></div>
-        <div style="flex:1 1 200px"><label class="f" for="mzFmt">Рабочее поле</label>
-          <select id="mzFmt" data-touched="0"><option value="0404">0404 · 400×400 мм · mini</option><option value="0609">0609 · 600×900 мм · mini</option></select></div>
-        <div style="flex:1 1 160px"><label class="f" for="mzPrice">Цена станка, ₽</label>
-          <input type="number" id="mzPrice" min="0" step="100" placeholder="нет в прайсе" data-touched="0"></div>
-        <div style="flex:1 1 150px"><label class="f" for="mzStock">Поставка</label>
+      <div class="mhead main">
+        <div class="f"><label for="mzSeries">Серия</label><select id="mzSeries" data-touched="0"><option value="MINI">MINI</option><option value="MINI Cabine">MINI Cabine</option><option value="A1">A1</option><option value="M1">M1</option><option value="M1 RD">M1 RD</option><option value="M1 S2X">M1 S2X</option><option value="M1 S3">M1 S3</option><option value="M1 S4">M1 S4</option><option value="M2">M2</option><option value="M3">M3</option></select></div>
+        <div class="f"><label for="mzFmt">Рабочее поле</label><select id="mzFmt" data-touched="0"><option value="6090">6090 · 600×900 мм</option><option value="1610">1610 · 1600×1000 мм</option><option value="1313">1313 · 1300×1300 мм</option><option value="1616">1616 · 1600×1600 мм</option><option value="1325">1325 · 1300×2500 мм</option><option value="1625">1625 · 1600×2500 мм</option><option value="1630">1630 · 1600×3000 мм</option><option value="2030">2030 · 2000×3000 мм</option><option value="2040">2040 · 2000×4000 мм</option><option value="2060">2060 · 2000×6000 мм</option></select></div>
+        <div class="f"><label for="mzPrice">Цена станка, ₽</label>
+          <input class="num" id="mzPrice" type="number" min="0" step="100" placeholder="нет в прайсе" data-touched="0"></div>
+        <div class="f"><label for="mzStock">Поставка</label>
           <select id="mzStock" data-touched="0">
             <option value="order">Под заказ</option>
             <option value="stock">Из наличия</option>
           </select></div>
       </div>
 
-      <div id="mzReady"><div class="mzready"><button type="button" class="mzrcard" data-cfg="0"><b>0404 mini, 1.5wc, б\контр.</b><span class="mzrs">1,5 кВт · водяное · стол PROF · без контр.</span><span class="mzrp">247 800 ₽<em>под заказ</em></span></button><button type="button" class="mzrcard" data-cfg="1"><b>0404 mini, 1.5wc, NC</b><span class="mzrs">1,5 кВт · водяное · стол PROF · NC</span><span class="mzrp">252 000 ₽<em>под заказ</em></span></button><button type="button" class="mzrcard" data-cfg="2"><b>0404 mini, 1.5wc, A11</b><span class="mzrs">1,5 кВт · водяное · стол PROF · A11</span><span class="mzrp">299 250 ₽<em>под заказ</em></span></button></div></div>
+      <div id="mzReady"><div class="rgrid" id="mzReadyList"><button type="button" class="rcard on" data-cfg="31"><b>M1 1325, 4.5ac, A11 + Leadshine</b><div class="rs">4,5 кВт · воздушное · стол PROF · A11</div><div class="rp">811 650 ₽<em>под заказ</em></div></button><button type="button" class="rcard" data-cfg="61"><b>M1 1325, 4.5ac, A11 + Leadshine, VAC</b><div class="rs">4,5 кВт · воздушное · стол VAC · A11</div><div class="rp">919 695 ₽<em>под заказ</em></div></button></div></div>
 
-      <div class="pills noprint" id="mzMTabs" role="tablist" aria-label="Узлы станка" hidden=""><button type="button" class="pill on" data-mcat="spin" role="tab">Шпиндель</button><button type="button" class="pill" data-mcat="tab" role="tab">Стол</button><button type="button" class="pill" data-mcat="ctrl" role="tab">Стойка ЧПУ</button><button type="button" class="pill" data-mcat="mot" role="tab">Двигатели</button></div>
+      <div class="tabs noprint" id="mzMTabs"><button type="button" class="tab on" data-mcat="spin">Шпиндель</button><button type="button" class="tab" data-mcat="tab">Стол</button><button type="button" class="tab" data-mcat="ctrl">Стойка ЧПУ</button><button type="button" class="tab" data-mcat="mot">Двигатели</button></div>
 
-      <div class="mzpane" id="mzp_spin" hidden="">
-        <div class="row">
-          <div style="flex:1 1 150px"><label class="f" for="mzSpindle">Шпиндель, кВт</label>
-            <select id="mzSpindle" data-touched="0"><option value="0.8">0,8 кВт</option><option value="1.5">1,5 кВт</option><option value="2.2">2,2 кВт</option><option value="3.0">3,0 кВт</option><option value="3.2">3,2 кВт</option><option value="3.5">3,5 кВт</option><option value="4.5">4,5 кВт</option><option value="5.5">5,5 кВт</option><option value="6.0">6,0 кВт</option><option value="7.5">7,5 кВт</option><option value="9.0">9,0 кВт</option><option value="12.0">12,0 кВт</option></select></div>
-          <div style="flex:1 1 150px"><label class="f" for="mzSV">Питание шпинделя</label>
-            <div class="pills" id="mzSV" role="group">
-              <button type="button" class="pill" data-sv="220">220 В</button>
-              <button type="button" class="pill on" data-sv="380">380 В</button>
+      <div class="pane" id="mzp_spin">
+        <div class="mhead spin">
+          <div class="f"><label for="mzSpindle">Мощность, кВт</label><select id="mzSpindle" data-touched="0"><option value="0.8">0,8</option><option value="1.5">1,5</option><option value="2.2">2,2</option><option value="3.0">3,0</option><option value="3.2">3,2</option><option value="3.5">3,5</option><option value="4.5">4,5</option><option value="5.5">5,5</option><option value="6.0">6,0</option><option value="7.5">7,5</option><option value="9.0">9,0</option><option value="12.0">12,0</option></select></div>
+          <div class="f"><label>Питание</label>
+            <div class="volt">
+              <label><input type="radio" name="mzsv" id="mzSV220" value="220" disabled=""><span>220</span></label>
+              <label><input type="radio" name="mzsv" id="mzSV380" value="380" disabled=""><span>380</span></label>
             </div></div>
-          <div style="flex:1 1 190px"><label class="f" for="mzCool">Охлаждение</label>
+          <div class="f"><label for="mzCool">Охлаждение</label>
             <select id="mzCool" data-touched="0">
               <option value="wc">wc — водяное</option>
               <option value="ac">ac — воздушное</option>
             </select></div>
         </div>
-        <div id="mzSpindleCard"><div class="mzcard"><div class="mzcard-h"><b>Шпиндель 3,2 кВт</b><span>средний</span></div><table class="mzspec"><tbody><tr><th>Типичное охлаждение</th><td>водяное</td></tr><tr><th>Класс</th><td>средний</td></tr><tr><th>Назначение</th><td>дерево, алюминий</td></tr><tr><th>Где у Wattsan</th><td>A1 6090, A1 1313, A1 1616, A1 1325, M1 6090, M2 1616, M1 S2X 1616 · GDZ-100-3.2</td></tr><tr><th>Питание</th><td>380 В</td></tr></tbody></table><div class="mzcard-n">Водяное охлаждение эффективнее по теплосъёму: шпиндель 3,5 кВт с водой гравирует сталь, воздушный той же мощности — нет. До 3,2 кВт преобладает водяное, от 3,5 кВт чаще воздушное. Причины: у крупного шпинделя есть место под радиатор и крыльчатку, обороты ниже (до 18 000 против 24 000), а вода на больших мощностях требует чиллера на 6–12 кВт тепла плюс помпу, шланги и дистиллят. Воду на мощных ставят там, где нужен максимум теплосъёма или работа по твёрдым материалам на пределе — например на 9 кВт по меди и алюминию.</div></div></div>
+        <div id="mzSpindleCard"><details class="specbox"><summary>Шпиндель 4,5 кВт <span>· мощный</span></summary><div class="body"><dl><dt>Типичное охлаждение</dt><dd>воздушное</dd><dt>Класс</dt><dd>мощный</dd><dt>Назначение</dt><dd>твёрдое дерево, глубокая 3D-фрезеровка</dd><dt>Где у Wattsan</dt><dd>M1 1325, базовый M3</dd><dt>Питание</dt><dd>380 В</dd></dl><div class="idx">Водяное охлаждение эффективнее по теплосъёму: шпиндель 3,5 кВт с водой гравирует сталь, воздушный той же мощности — нет. До 3,2 кВт преобладает водяное, от 3,5 кВт чаще воздушное. Причины: у крупного шпинделя есть место под радиатор и крыльчатку, обороты ниже (до 18 000 против 24 000), а вода на больших мощностях требует чиллера на 6–12 кВт тепла плюс помпу, шланги и дистиллят. Воду на мощных ставят там, где нужен максимум теплосъёма или работа по твёрдым материалам на пределе — например на 9 кВт по меди и алюминию.</div></div></details></div>
       </div>
 
-      <div class="mzpane" id="mzp_tab" hidden="">
-        <div class="row">
-          <div style="flex:1 1 220px"><label class="f" for="mzTable">Тип стола</label>
+      <div class="pane" id="mzp_tab">
+        <div class="mhead tbl">
+          <div class="f"><label for="mzTable">Тип стола</label>
             <select id="mzTable" data-touched="0">
-              <option value="PROF">PROF — профильный, Т-пазы</option>
+              <option value="PROF">PROF — профильный</option>
               <option value="VAC">VAC — вакуумный</option>
               <option value="СОЖ">С СОЖ — мягкие металлы</option>
             </select></div>
-          <div style="flex:1 1 170px"><label class="f" for="mzTV">Питание насоса</label>
-            <div class="pills" id="mzTV" role="group">
-              <button type="button" class="pill" data-tv="220" disabled="">220 В</button>
-              <button type="button" class="pill on" data-tv="380" disabled="">380 В</button>
+          <div class="f"><label>Питание насоса</label>
+            <div class="volt">
+              <label><input type="radio" name="mztv" id="mzTV220" value="220" disabled=""><span>220</span></label>
+              <label><input type="radio" name="mztv" id="mzTV380" value="380" checked="" disabled=""><span>380</span></label>
             </div></div>
         </div>
-        <div id="mzTableCard"><div class="mzcard"><div class="mzcard-h"><b>Стол PROF</b><span>профильный, Т-пазы</span></div><table class="mzspec"><tbody><tr><th>Крепление</th><td>прижимы в Т-пазах</td></tr><tr><th>Материал заготовки</th><td>любой листовой и брусковый</td></tr><tr><th>Питание</th><td>не требуется</td></tr><tr><th>В прайсе</th><td>базовое исполнение, входит в цену станка</td></tr></tbody></table><div class="mzcard-n">Универсальный вариант: держит и лист, и брусок, и мелкую деталь. Минус — прижимы занимают край заготовки и мешают проходу фрезы по периметру.</div></div></div>
+        <div id="mzTableCard"><details class="specbox"><summary>Стол PROF <span>· профильный, Т-пазы</span></summary><div class="body"><dl><dt>Крепление</dt><dd>прижимы в Т-пазах</dd><dt>Материал заготовки</dt><dd>любой листовой и брусковый</dd><dt>Питание</dt><dd>не требуется</dd><dt>В прайсе</dt><dd>базовое исполнение, входит в цену станка</dd></dl><div class="idx">Универсальный вариант: держит и лист, и брусок, и мелкую деталь. Минус — прижимы занимают край заготовки и мешают проходу фрезы по периметру.</div></div></details></div>
       </div>
 
-      <div class="mzpane" id="mzp_ctrl" hidden="">
-        <div class="row">
-          <div style="flex:1 1 260px"><label class="f" for="mzCtrl">Система управления</label>
-            <select id="mzCtrl" data-touched="0"><option value="NC Studio">NC Studio</option><option value="NC Studio 8">NC Studio 8</option><option value="DSP RichAuto A11">DSP RichAuto A11</option><option value="DSP RichAuto A18">DSP RichAuto A18</option><option value="Syntec">Syntec</option><option value="F7324">F7324</option><option value="Без контроллера">Без контроллера</option><option value="NC8">NC8</option></select></div>
+      <div class="pane" id="mzp_ctrl">
+        <div class="mhead one">
+          <div class="f"><label for="mzCtrl">Система управления</label><select id="mzCtrl" data-touched="0"><option value="NC Studio">NC Studio</option><option value="NC Studio 8">NC Studio 8</option><option value="DSP RichAuto A11">DSP RichAuto A11</option><option value="DSP RichAuto A18">DSP RichAuto A18</option><option value="Syntec">Syntec</option><option value="F7324">F7324</option><option value="Без контроллера">Без контроллера</option><option value="NC8">NC8</option></select></div>
         </div>
-        <div id="mzCtrlCard"><div class="mzcard"><div class="mzcard-h"><b>DSP RichAuto A11</b><span>выносной пульт, 3 оси</span></div><table class="mzspec"><tbody><tr><th>Тип</th><td>автономный выносной пульт</td></tr><tr><th>Цена по прайсу</th><td>50 538 ₽</td></tr><tr><th>Где штатно</th><td>69 конфигураций: mini, A1, M1, M2</td></tr><tr><th>Компьютер</th><td>не нужен во время работы</td></tr></tbody></table><div class="mzcard-n">Штатная стойка большинства конфигураций. Программа заливается на флешку, компьютер у станка не нужен — цех остаётся без лишней техники в пыли.</div></div></div>
+        <div id="mzCtrlCard"><details class="specbox"><summary>DSP RichAuto A11 <span>· выносной пульт, 3 оси</span></summary><div class="body"><dl><dt>Тип</dt><dd>автономный выносной пульт</dd><dt>Цена по прайсу</dt><dd>50 538 ₽</dd><dt>Где штатно</dt><dd>69 конфигураций: mini, A1, M1, M2</dd><dt>Компьютер</dt><dd>не нужен во время работы</dd></dl><div class="idx">Штатная стойка большинства конфигураций. Программа заливается на флешку, компьютер у станка не нужен — цех остаётся без лишней техники в пыли.</div></div></details></div>
       </div>
 
-      <div class="mzpane" id="mzp_mot" hidden="">
-        <div class="row">
-          <div style="flex:1 1 300px"><label class="f" for="mzMotor">Двигатели</label>
-            <select id="mzMotor" data-touched="0"><option value="Шаговые (ноунейм)">Шаговые (ноунейм)</option><option value="Шаговые (Leadshine)">Шаговые (Leadshine)</option><option value="Шаговые с обратной связью (Leadshine)">Шаговые с обратной связью (Leadshine)</option><option value="Серво">Серво</option></select></div>
+      <div class="pane" id="mzp_mot">
+        <div class="mhead one">
+          <div class="f"><label for="mzMotor">Двигатели</label><select id="mzMotor" data-touched="0"><option value="Шаговые (ноунейм)">Шаговые (ноунейм)</option><option value="Шаговые (Leadshine)">Шаговые (Leadshine)</option><option value="Шаговые с обратной связью (Leadshine)">Шаговые с обратной связью (Leadshine)</option><option value="Серво">Серво</option></select></div>
         </div>
-        <div id="mzMotorCard"><div class="mzcard"><div class="mzcard-h"><b>Двигатели: Гибридный (сервошаговый)</b><span>обратная связь — есть, энкодер</span></div><table class="mzspec"><tbody><tr><th>Тип</th><td>шаговый с энкодером</td></tr><tr><th>Обратная связь</th><td>есть</td></tr><tr><th>Пропуск шагов</th><td>отслеживается и компенсируется</td></tr><tr><th>Цена</th><td>компромисс цена / точность</td></tr><tr><th>Производитель</th><td>Leadshine</td></tr></tbody></table><div class="mzcard-n">Шаговый двигатель с энкодером. Контроллер видит фактическое положение вала и добирает пропущенные шаги, поэтому потеря позиции исключена. По скорости и динамике остаётся ближе к обычному ШД, чем к серво — точных цифр в справке нет. Это штатный вариант в прайсовых конфигурациях серий A1 и M1, там он помечен как «+ Leadshine».<br><br>Коротко по типам приводов. <b>Шаговые (ШД)</b> — самые дешёвые и распространённые на бюджетных станках, работают без обратной связи, при перегрузке возможен пропуск шагов; скорость перемещения 20–25 м/мин, разгон до 120 об/мин за 1 с. <b>Гибридные (сервошаговые)</b> — шаговый двигатель с энкодером, компромисс по цене и точности. <b>Серводвигатели</b> — обратная связь, скорость от 60 м/мин, разгон до 1000 об/мин за 0,2 с, шаги не теряют; дороже, ставятся на промышленные станки.</div></div></div>
-        <div id="mzMotorHint"></div>
+        <div id="mzMotorCard"><details class="specbox"><summary>Двигатели: Гибридный (сервошаговый) <span>· обратная связь — есть, энкодер</span></summary><div class="body"><dl><dt>Тип</dt><dd>шаговый с энкодером</dd><dt>Обратная связь</dt><dd>есть</dd><dt>Пропуск шагов</dt><dd>отслеживается и компенсируется</dd><dt>Цена</dt><dd>компромисс цена / точность</dd><dt>Производитель</dt><dd>Leadshine</dd></dl><div class="idx">Шаговый двигатель с энкодером. Контроллер видит фактическое положение вала и добирает пропущенные шаги, поэтому потеря позиции исключена. По скорости и динамике остаётся ближе к обычному ШД, чем к серво — точных цифр в справке нет. Это штатный вариант в прайсовых конфигурациях серий A1 и M1, там он помечен как «+ Leadshine».<br><br>Коротко по типам приводов. <b>Шаговые (ШД)</b> — самые дешёвые и распространённые на бюджетных станках, работают без обратной связи, при перегрузке возможен пропуск шагов; скорость перемещения 20–25 м/мин, разгон до 120 об/мин за 1 с. <b>Гибридные (сервошаговые)</b> — шаговый двигатель с энкодером, компромисс по цене и точности. <b>Серводвигатели</b> — обратная связь, скорость от 60 м/мин, разгон до 1000 об/мин за 0,2 с, шаги не теряют; дороже, ставятся на промышленные станки.</div></div></details></div>
       </div>
 
-      <details class="noprint" id="mzMatchWrap" hidden="">
+      <details class="matches noprint" id="mzMatchWrap">
         <summary>Все конфигурации серии в прайсе</summary>
-        <div id="mzMatchList"><button type="button" class="mzsim-r" data-price="247800"><span>0404 mini, 1.5wc, б\контр.<em>1,5 кВт · водяное · стол PROF · без контр.</em></span><b>247 800 ₽</b></button><button type="button" class="mzsim-r" data-price="252000"><span>0404 mini, 1.5wc, NC<em>1,5 кВт · водяное · стол PROF · NC</em></span><b>252 000 ₽</b></button><button type="button" class="mzsim-r" data-price="299250"><span>0404 mini, 1.5wc, A11<em>1,5 кВт · водяное · стол PROF · A11</em></span><b>299 250 ₽</b></button></div>
+        <div class="mlist" id="mzMatchList"><button type="button" class="mrow best" data-price="811650"><span>▸ M1 1325, 4.5ac, A11 + Leadshine<br><span style="color:var(--muted);font-size:11.5px">4,5 кВт · воздушное · стол PROF · A11</span></span><b>811 650 ₽</b></button><button type="button" class="mrow" data-price="919695"><span>M1 1325, 4.5ac, A11 + Leadshine, VAC<br><span style="color:var(--muted);font-size:11.5px">4,5 кВт · воздушное · стол VAC · A11</span></span><b>919 695 ₽</b></button></div>
       </details>
 
-      <div id="mzMachineHints"><div class="mzhint warn">Шпиндели 3–3,2 кВт встречаются и на 220, и на 380 В — уточните исполнение в заказе.</div><div class="mzhint ok">Воздушное охлаждение (ac) — чиллер не требуется.</div><div class="mzhint warn">Для 3,2 кВт типично водяное охлаждение, а выбрано воздушное. Сочетание встречается, но проверьте исполнение шпинделя в заказе.</div><div class="mzhint ok">У серии MINI в прайсе 2 рабочих поля: 0404, 0609. Список полей отфильтрован под серию.</div></div>
-      <div id="mzSeriesCard"><div class="mzcard"><div class="mzcard-h"><b>Серия Wattsan MINI</b><span>настольный, начальный уровень</span></div><table class="mzspec"><tbody><tr><th>Уровень</th><td>настольный</td></tr><tr><th>Форматы</th><td>0404, 0609</td></tr><tr><th>Шпиндель</th><td>1,5–2,2 кВт, водяное</td></tr><tr><th>Ход Z</th><td>120 мм</td></tr><tr><th>Цанга</th><td>ER-11</td></tr><tr><th>Стойка</th><td>NC Studio, DSP A11 или без контроллера</td></tr><tr><th>Масса</th><td>92 и 135 кг</td></tr><tr><th>Конфигураций в прайсе</th><td>8</td></tr></tbody></table><div class="mzcard-n">Компактный станок для гравировки и мелкого раскроя: сувенирка, шильды, макетирование. Есть исполнение Cabine — тот же станок в закрытом корпусе.<br><br>Общее по линейке: привод X и Y — зубчатая кривозубая рейка, Z — ШВП, направляющие Hiwin 20, система смазки ручная, питание 220 В (у вакуумных версий 380 В). Массы и габариты — из файла «Массы и габариты», он подтверждён как верный источник; габариты из карточки товаров с ним расходятся и не используются.</div></div></div>
-      <div id="mzFmtCard"><div class="mzcard"><div class="mzcard-h"><b>Формат 0404</b><span>mini</span></div><table class="mzspec"><tbody><tr><th>Рабочее поле</th><td>400×400 мм</td></tr><tr><th>Масса</th><td>92 кг</td></tr><tr><th>Ход по Z</th><td>100 мм</td></tr><tr><th>Конфигураций в прайсе</th><td>3</td></tr><tr><th>Цена в прайсе</th><td>247 800 ₽ – 299 250 ₽</td></tr></tbody></table></div></div>
-      <div id="mzSimilar"></div>
+      <div class="hints" id="mzMotorHint"></div>
+      <div class="hints" id="mzMachineHints"><div class="hint ok">Шпиндель от 4,5 кВт — питание 380 В.</div><div class="hint ok">Воздушное охлаждение (ac) — чиллер не требуется.</div><div class="hint ok">У серии M1 в прайсе 10 рабочих полей: 1313, 1325, 1610, 1616, 1625, 1630, 2030, 2040, 2060, 6090. Список полей отфильтрован под серию.</div></div>
+      <div id="mzSeriesCard" style="margin-top:11px"><details class="specbox"><summary>Серия Wattsan M1 <span>· профессиональный, планетарный редуктор</span></summary><div class="body"><dl><dt>Уровень</dt><dd>профессиональный</dd><dt>Редуктор</dt><dd>планетарный Newgear PFL-90-5-P2, 1:5</dd><dt>МДФ, фанера, мягкое дерево</dt><dd>да</dd><dt>Твёрдые породы</dt><dd>да</dd><dt>Акрил, пластик, алюминий</dt><dd>да</dd><dt>Глубокая 3D</dt><dd>да</dd><dt>Металл</dt><dd>только тонкий лист</dd><dt>Конфигураций в прайсе</dt><dd>25</dd></dl><div class="idx">Мебельный и модельный цех: дуб, бук, ясень, глубокая 3D-фрезеровка. Самая широкая линейка форматов — от 6090 до 2060.<br><br>Общее по линейке: привод X и Y — зубчатая кривозубая рейка, Z — ШВП, направляющие Hiwin 20, система смазки ручная, питание 220 В (у вакуумных версий 380 В). Массы и габариты — из файла «Массы и габариты», он подтверждён как верный источник; габариты из карточки товаров с ним расходятся и не используются.</div></div></details></div>
+      <div id="mzFmtCard" style="margin-top:8px"><details class="specbox"><summary>Формат 1325</summary><div class="body"><dl><dt>Рабочее поле</dt><dd>1300×2500 мм</dd><dt>Масса</dt><dd>880 кг</dd><dt>Габариты</dt><dd>3240×2090 мм</dd><dt>Ход по Z</dt><dd>300 мм</dd><dt>Конфигураций</dt><dd>2</dd><dt>Цена в прайсе</dt><dd>811 650 ₽ – 919 695 ₽</dd></dl></div></details></div>
+      <div id="mzSimilar"><div class="simh">Рядом в прайсе</div><div class="sim"><button type="button" class="simc" data-cfg="61"><b>M1 1325, 4.5ac, A11 + Leadshine, VAC</b><div class="df">вакуумный стол</div><div class="dp up">+108 045 ₽</div></button><button type="button" class="simc" data-cfg="21"><b>A1 1325, 4.5ac, A11 + Leadshine</b><div class="df">серия A1</div><div class="dp dn">−137 865 ₽</div></button><button type="button" class="simc" data-cfg="77"><b>M2 1325, 4.5ac, A11</b><div class="df">серия M2</div><div class="dp up">+258 090 ₽</div></button><button type="button" class="simc" data-cfg="100"><b>M1 S2X 1325, 4.5ac, F7324 + Leadshine</b><div class="df">серия M1 S2X</div><div class="dp up">+278 145 ₽</div></button><button type="button" class="simc" data-cfg="32"><b>M1 1325 RD, 4.5ac, A18 + Leadshine</b><div class="df">серия M1 RD</div><div class="dp up">+429 975 ₽</div></button><button type="button" class="simc" data-cfg="88"><b>M3 1325, 4.5ac, NC8</b><div class="df">серия M3</div><div class="dp up">+566 895 ₽</div></button></div></div>
     </div>
 
     <div class="card">
       <div class="cardhead">
         <h2>2 · Доп. оборудование</h2>
-        <div class="pills noprint" id="mzTabs" role="tablist" aria-label="Допоборудование"><button type="button" class="pill" data-cat="stab" role="tab">Стабилизатор</button><button type="button" class="pill flag-bad" data-cat="ch" role="tab">Чиллер</button><button type="button" class="pill flag-warn" data-cat="vib" role="tab">Датчик и опоры</button><button type="button" class="pill flag-warn" data-cat="asp" role="tab">Аспирация</button><button type="button" class="pill" data-cat="dsp" role="tab">DSP-контроллер</button><button type="button" class="pill on flag-warn" data-cat="rot" role="tab">4-я ось</button><button type="button" class="pill" data-cat="extra" role="tab">Своя позиция</button></div>
+        <div class="tabs noprint" id="mzTabs"><button type="button" class="tab" data-cat="stab">Стабилизатор</button><button type="button" class="tab f-bad" data-cat="ch">Чиллер</button><button type="button" class="tab" data-cat="vib">Датчик и опоры</button><button type="button" class="tab f-warn" data-cat="asp">Аспирация</button><button type="button" class="tab" data-cat="dsp">DSP-контроллер</button><button type="button" class="tab on f-warn" data-cat="rot">4-я ось</button><button type="button" class="tab" data-cat="extra">Своя позиция</button></div>
       </div>
 
-      <div class="mzpane" id="mzp_stab" hidden="">
-        <div class="row">
-          <div style="flex:1 1 130px"><label class="f" for="mzStabB">Бренд</label>
-            <select id="mzStabB" data-touched="0"><option value="resanta">Ресанта</option><option value="shtyl">Штиль</option></select></div>
-          <div style="flex:2 1 260px"><label class="f" for="mzStab">Модель</label>
-            <select id="mzStab" data-touched="0"><option value="r3000-1c">Ресанта АСН-3000/1-Ц — 3 кВт</option><option value="r5000-1c">Ресанта АСН-5000/1-Ц — 5 кВт</option><option value="r8000-1c">Ресанта АСН-8000/1-Ц — 8 кВт</option><option value="r10000-1c">Ресанта АСН-10000/1-Ц — 10 кВт</option><option value="r12000-1c">Ресанта АСН-12000/1-Ц — 12 кВт</option><option value="r5000-1em">Ресанта АСН-5000/1-ЭМ — 5 кВт</option><option value="r8000-1em">Ресанта АСН-8000/1-ЭМ — 8 кВт</option><option value="r10000-1em">Ресанта АСН-10000/1-ЭМ — 10 кВт</option><option value="r12000-1em">Ресанта АСН-12000/1-ЭМ — 12 кВт</option><option value="r20000-1em">Ресанта АСН-20000/1-ЭМ — 20 кВт</option><option value="r30000-1em">Ресанта АСН-30000/1-ЭМ — 30 кВт</option><option value="r6000-3em">Ресанта АСН-6000/3-ЭМ — 6 кВт</option><option value="r9000-3em">Ресанта АСН-9000/3-ЭМ — 9 кВт</option><option value="r15000-3em">Ресанта АСН-15000/3-ЭМ — 15 кВт</option><option value="r20000-3em">Ресанта АСН-20000/3-ЭМ — 20 кВт</option><option value="r30000-3em">Ресанта АСН-30000/3-ЭМ — 30 кВт</option><option value="r45000-3em">Ресанта АСН-45000/3-ЭМ — 45 кВт</option><option value="r60000-3em">Ресанта АСН-60000/3-ЭМ — 60 кВт</option><option value="r100000-3em">Ресанта АСН-100000/3-ЭМ — 100 кВт</option><option value="r150000-3em">Ресанта АСН-150000/3-ЭМ — 150 кВт</option><option value="r15000-3c">Ресанта АСН-15000/3-Ц — 15 кВт</option><option value="r30000-3c">Ресанта АСН-30000/3-Ц — 30 кВт</option></select></div>
-          <div style="flex:1 1 130px"><label class="f" for="mzStabP">Цена, ₽</label>
-            <input type="number" id="mzStabP" min="0" step="10" data-touched="0"></div>
-          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzStabOn"> В смету</label></div>
+      <div class="pane" id="mzp_stab">
+        <div class="panehead b3">
+          <div class="f"><label for="mzStabB">Бренд</label><select id="mzStabB" data-touched="0"><option value="resanta">Ресанта</option><option value="shtyl">Штиль</option></select></div>
+          <div class="f"><label for="mzStab">Модель</label><select id="mzStab" data-touched="0"><option value="r3000-1c">Ресанта АСН-3000/1-Ц</option><option value="r5000-1c">Ресанта АСН-5000/1-Ц</option><option value="r8000-1c">Ресанта АСН-8000/1-Ц</option><option value="r10000-1c">Ресанта АСН-10000/1-Ц</option><option value="r12000-1c">Ресанта АСН-12000/1-Ц</option><option value="r5000-1em">Ресанта АСН-5000/1-ЭМ</option><option value="r8000-1em">Ресанта АСН-8000/1-ЭМ</option><option value="r10000-1em">Ресанта АСН-10000/1-ЭМ</option><option value="r12000-1em">Ресанта АСН-12000/1-ЭМ</option><option value="r20000-1em">Ресанта АСН-20000/1-ЭМ</option><option value="r30000-1em">Ресанта АСН-30000/1-ЭМ</option><option value="r6000-3em">Ресанта АСН-6000/3-ЭМ</option><option value="r9000-3em">Ресанта АСН-9000/3-ЭМ</option><option value="r15000-3em">Ресанта АСН-15000/3-ЭМ</option><option value="r20000-3em">Ресанта АСН-20000/3-ЭМ</option><option value="r30000-3em">Ресанта АСН-30000/3-ЭМ</option><option value="r45000-3em">Ресанта АСН-45000/3-ЭМ</option><option value="r60000-3em">Ресанта АСН-60000/3-ЭМ</option><option value="r100000-3em">Ресанта АСН-100000/3-ЭМ</option><option value="r150000-3em">Ресанта АСН-150000/3-ЭМ</option><option value="r15000-3c">Ресанта АСН-15000/3-Ц</option><option value="r30000-3c">Ресанта АСН-30000/3-Ц</option></select></div>
+          <div class="f"><label for="mzStabP">Цена, ₽</label>
+            <input class="num" id="mzStabP" type="number" min="0" step="10" data-touched="0"></div>
+          <label class="tgl"><input type="checkbox" id="mzStabOn"><span>В смету</span></label>
         </div>
-        <div id="mzStabCard"><div class="mzcard"><div class="mzcard-h"><b>Ресанта АСН-6000/3-ЭМ</b><span>6 кВт · 3 фазы</span></div><table class="mzspec"><tbody><tr><th>Мощность</th><td>6 000 Вт</td></tr><tr><th>Тип</th><td>ЭМ, дисплей LED</td></tr><tr><th>Вход</th><td>240–430 В</td></tr><tr><th>Точность</th><td>±2 %</td></tr><tr><th>Питание</th><td>3 фазы, 380 В</td></tr><tr><th>КПД</th><td>97 %</td></tr><tr><th>Охлаждение</th><td>естественное</td></tr><tr><th>Масса</th><td>35,11 кг</td></tr><tr><th>Артикул</th><td>63/4/3</td></tr></tbody></table><div class="mzcard-n"><b>Источник:</b> resanta.ru<br><br>Ц — релейный: переключает отводы трансформатора ступенями, точность ±8 %, реакция менее 15 мс, дешевле. ЭМ — электромеханический: щётка плавно ходит по обмотке, точность ±2 %, но отработка медленная (30–40 В/с). Для стойки ЧПУ и частотника важнее не сама точность, а то, что у релейного напряжение меняется скачком в момент коммутации — это потенциальный сброс программы. Трёхфазный стабилизатор Ресанты — это три независимых однофазных канала, поэтому при перекосе фаз стоит поставить перед ним реле контроля фаз. Цены — resanta.ru, Москва, 31.07.2026.</div></div></div><div id="mzStabHint"><div class="mzhint ok">Расчётное потребление станка — около 5 кВт: шпиндель 3,2 кВт плюс приводы и стойка.</div></div>
+        <div id="mzStabCard"><details class="specbox"><summary>Ресанта АСН-6000/3-ЭМ <span>· 6 кВт · 3 фазы</span></summary><div class="body"><dl><dt>Мощность</dt><dd>6 000 Вт</dd><dt>Тип</dt><dd>ЭМ, дисплей LED</dd><dt>Вход</dt><dd>240–430 В</dd><dt>Точность</dt><dd>±2 %</dd><dt>Питание</dt><dd>3 фазы, 380 В</dd><dt>КПД</dt><dd>97 %</dd><dt>Охлаждение</dt><dd>естественное</dd><dt>Масса</dt><dd>35,11 кг</dd><dt>Артикул</dt><dd>63/4/3</dd></dl><div class="idx"><b>Источник:</b> resanta.ru<br><br>Ц — релейный: переключает отводы трансформатора ступенями, точность ±8 %, реакция менее 15 мс, дешевле. ЭМ — электромеханический: щётка плавно ходит по обмотке, точность ±2 %, но отработка медленная (30–40 В/с). Для стойки ЧПУ и частотника важнее не сама точность, а то, что у релейного напряжение меняется скачком в момент коммутации — это потенциальный сброс программы. Трёхфазный стабилизатор Ресанты — это три независимых однофазных канала, поэтому при перекосе фаз стоит поставить перед ним реле контроля фаз. Цены — resanta.ru, Москва, 31.07.2026.</div></div></details></div><div class="hints" id="mzStabHint"><div class="hint ok">Расчётное потребление станка — около 6 кВт: шпиндель 4,5 кВт плюс приводы и стойка.</div></div>
       </div>
 
-      <div class="mzpane" id="mzp_ch" hidden="">
-        <div class="row">
-          <div style="flex:2 1 260px"><label class="f" for="mzCh">Чиллер S&amp;A</label>
-            <select id="mzCh" data-touched="0"><option value="3000">S&amp;A CW-3000 — 1–3 кВт</option><option value="5000">S&amp;A CW-5000 — 3–6 кВт</option><option value="5200">S&amp;A CW-5200 — 7–14 кВт</option><option value="5300">S&amp;A CW-5300 — 16–32 кВт</option></select></div>
-          <div style="flex:1 1 130px"><label class="f" for="mzChP">Цена, ₽</label>
-            <input type="number" id="mzChP" min="0" step="10" data-touched="0"></div>
-          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzChOn"> В смету</label></div>
+      <div class="pane" id="mzp_ch">
+        <div class="panehead">
+          <div class="f"><label for="mzCh">Чиллер S&amp;A</label><select id="mzCh" data-touched="0"><option value="3000">S&amp;A CW-3000</option><option value="5000">S&amp;A CW-5000</option><option value="5200">S&amp;A CW-5200</option><option value="5300">S&amp;A CW-5300</option></select></div>
+          <div class="f"><label for="mzChP">Цена, ₽</label>
+            <input class="num" id="mzChP" type="number" min="0" step="10" data-touched="0"></div>
+          <label class="tgl"><input type="checkbox" id="mzChOn"><span>В смету</span></label>
         </div>
-        <div id="mzChCard"><div class="mzcard"><div class="mzcard-h"><b>S&amp;A CW-5000</b><span>3–6 кВт по TEYU</span></div><table class="mzspec"><tbody><tr><th>Тип</th><td>компрессорный</td></tr><tr><th>Холодопроизводительность</th><td>750 Вт</td></tr><tr><th>Бак</th><td>8 л</td></tr><tr><th>Насос</th><td>6 л/мин, 1 бар</td></tr><tr><th>Точность t</th><td>±0,3 °C, диапазон 5–35 °C</td></tr><tr><th>Потребление</th><td>410 Вт</td></tr><tr><th>Питание</th><td>220–240 В, 50/60 Гц</td></tr><tr><th>Масса</th><td>21 кг</td></tr><tr><th>Габариты</th><td>58×29×47 см</td></tr><tr><th>Шпиндель по TEYU</th><td>3–6 кВт</td></tr></tbody></table><div class="mzcard-n"><b>Источник:</b> прайс LASERCUT<br><br>Индексы в названии: первая буква — питание (T — 220–240 В 50/60 Гц, D — 110 В), вторая — насос (G — 1 бар / 6 л/мин, H — 1,2 бар / 8 л/мин, I — 2,5 бар / 10 л/мин). Диапазоны мощности шпинделя — официальная рекомендация TEYU; российские магазины часто дают свои, более узкие цифры (для CW-3000 пишут «до 2,2 кВт»).</div></div></div><div id="mzChHint"><div class="mzhint bad">У станка воздушное охлаждение шпинделя — чиллер не нужен. Если оставите позицию, она попадёт в смету лишней.</div></div>
+        <div id="mzChCard"><details class="specbox"><summary>S&amp;A CW-5000 <span>· 3–6 кВт по TEYU</span></summary><div class="body"><dl><dt>Тип</dt><dd>компрессорный</dd><dt>Холодопроизводительность</dt><dd>750 Вт</dd><dt>Бак</dt><dd>8 л</dd><dt>Насос</dt><dd>6 л/мин, 1 бар</dd><dt>Точность t</dt><dd>±0,3 °C, диапазон 5–35 °C</dd><dt>Потребление</dt><dd>410 Вт</dd><dt>Питание</dt><dd>220–240 В, 50/60 Гц</dd><dt>Масса</dt><dd>21 кг</dd><dt>Габариты</dt><dd>58×29×47 см</dd><dt>Шпиндель по TEYU</dt><dd>3–6 кВт</dd></dl><div class="idx"><b>Источник:</b> прайс LASERCUT<br><br>Индексы в названии: первая буква — питание (T — 220–240 В 50/60 Гц, D — 110 В), вторая — насос (G — 1 бар / 6 л/мин, H — 1,2 бар / 8 л/мин, I — 2,5 бар / 10 л/мин). Диапазоны мощности шпинделя — официальная рекомендация TEYU; российские магазины часто дают свои, более узкие цифры (для CW-3000 пишут «до 2,2 кВт»).</div></div></details></div><div class="hints" id="mzChHint"><div class="hint bad">У станка воздушное охлаждение шпинделя — чиллер не нужен. Если оставите позицию, она попадёт в смету лишней.</div></div>
       </div>
 
-      <div class="mzpane" id="mzp_vib" hidden="">
-        <div class="row">
-          <div style="flex:2 1 240px"><label class="f" for="mzSens">Датчик высоты инструмента</label>
-            <select id="mzSens" data-touched="0"><option value="Магнитный">Магнитный</option><option value="Нажимной">Нажимной</option></select></div>
-          <div style="flex:1 1 130px"><label class="f" for="mzSensP">Цена, ₽</label>
-            <input type="number" id="mzSensP" min="0" step="1" data-touched="0"></div>
-          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzSensOn"> В смету</label></div>
+      <div class="pane" id="mzp_vib">
+        <div class="panehead">
+          <div class="f"><label for="mzSens">Датчик высоты инструмента</label><select id="mzSens" data-touched="0"><option value="Магнитный">Магнитный</option><option value="Нажимной">Нажимной</option></select></div>
+          <div class="f"><label for="mzSensP">Цена, ₽</label>
+            <input class="num" id="mzSensP" type="number" min="0" step="1" data-touched="0"></div>
+          <label class="tgl"><input type="checkbox" id="mzSensOn"><span>В смету</span></label>
         </div>
-        <div id="mzSensCard"><div class="mzcard"><div class="mzcard-h"><b>Датчик высоты инструмента, магнитный</b></div><table class="mzspec"><tbody><tr><th>Тип</th><td>Магнитный</td></tr><tr><th>Цена по прайсу</th><td>3 369 ₽</td></tr></tbody></table><div class="mzcard-n">Датчик ставит ноль по Z автоматически: оператор не выставляет вылет фрезы на глаз. Магнитный держится на столе магнитом и удобен на настольных станках, нажимной устойчивее на больших полях.</div></div></div><div id="mzSensHint"></div>
-        <hr class="sep">
-        <div class="row">
-          <div style="flex:2 1 220px"><label class="f" for="mzVib">Виброопоры</label>
-            <select id="mzVib" data-touched="0"><option value="4">4 шт</option><option value="6">6 шт</option><option value="8">8 шт</option><option value="10">10 шт</option></select></div>
-          <div style="flex:1 1 130px"><label class="f" for="mzVibP">Цена за штуку, ₽</label>
-            <input type="number" id="mzVibP" min="0" step="10" data-touched="0"></div>
-          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzVibOn"> В смету</label></div>
+        <div id="mzSensCard"><details class="specbox"><summary>Датчик высоты инструмента, нажимной</summary><div class="body"><dl><dt>Тип</dt><dd>Нажимной</dd><dt>Цена по прайсу</dt><dd>9 180 ₽</dd></dl><div class="idx">Датчик ставит ноль по Z автоматически: оператор не выставляет вылет фрезы на глаз. Магнитный держится на столе магнитом и удобен на настольных станках, нажимной устойчивее на больших полях.</div></div></details></div><div class="hints" id="mzSensHint"></div>
+        <div style="height:1px;background:var(--line);margin:14px 0"></div>
+        <div class="panehead b4">
+          <div class="f"><label for="mzVibM">Виброопоры</label>
+            <select id="mzVibM" data-touched="0"><option value="S-78">Wattsan S-78-7d185</option></select></div>
+          <div class="f"><label for="mzVib">Количество</label><select id="mzVib" data-touched="0"><option value="4">4 шт</option><option value="6">6 шт</option><option value="8">8 шт</option><option value="10">10 шт</option></select></div>
+          <div class="f"><label for="mzVibP">Цена за шт, ₽</label>
+            <input class="num" id="mzVibP" type="number" min="0" step="10" data-touched="0"></div>
+          <label class="tgl"><input type="checkbox" id="mzVibOn"><span>В смету</span></label>
         </div>
-        <div id="mzVibCard"><div class="mzcard"><div class="mzcard-h"><b>Виброопора Wattsan S-78-7d185</b><span>4 шт</span></div><table class="mzspec"><tbody><tr><th>Цена за штуку</th><td>1 400 ₽</td></tr><tr><th>Количество</th><td>4 шт</td></tr><tr><th>Сумма</th><td>5 600 ₽</td></tr></tbody></table><div class="mzcard-n">Виброопоры гасят вибрацию станины и позволяют выставить станок по уровню на неровном полу. Количество зависит от длины станины.</div></div></div><div id="mzVibHint"><div class="mzhint warn">Для этого формата рекомендации по числу опор в данных нет.</div></div>
+        <div id="mzVibCard"><details class="specbox"><summary>Виброопора Wattsan S-78-7d185 <span>· 6 шт</span></summary><div class="body"><dl><dt>Цена за штуку</dt><dd>1 400 ₽</dd><dt>Количество</dt><dd>6 шт</dd><dt>Сумма</dt><dd>8 400 ₽</dd></dl><div class="idx">Виброопоры гасят вибрацию станины и позволяют выставить станок по уровню на неровном полу. Количество зависит от длины станины.</div></div></details></div><div class="hints" id="mzVibHint"></div>
       </div>
 
-      <div class="mzpane" id="mzp_asp" hidden="">
-        <div class="row">
-          <div style="flex:2 1 260px"><label class="f" for="mzAsp">Аспирация BELMASH</label>
-            <select id="mzAsp" data-touched="0"><option value="BDC200">BELMASH BDC200</option><option value="DC850">BELMASH DC850</option><option value="DC850C">BELMASH DC850C</option><option value="DC1200">BELMASH DC1200</option><option value="DC1600M">BELMASH DC1600M</option><option value="DC2500">BELMASH DC2500</option><option value="DC2500-AT">BELMASH DC2500-AT</option><option value="DC2500MC">BELMASH DC2500MC</option><option value="DC2500MC-AT">BELMASH DC2500MC-AT</option><option value="DC2500-PS">BELMASH DC2500-PS</option><option value="DC3900">BELMASH DC3900</option><option value="DC3900MC-AT">BELMASH DC3900MC-AT</option><option value="DC3900-PS">BELMASH DC3900-PS</option><option value="DC4500-F3">BELMASH DC4500-F3</option><option value="DC4500-F4">BELMASH DC4500-F4</option></select></div>
-          <div style="flex:1 1 150px"><label class="f">Питание</label>
-            <div class="pills" id="mzAV" role="group">
-              <button type="button" class="pill on" data-av="220">220 В</button>
-              <button type="button" class="pill" data-av="380" disabled="">380 В</button>
+      <div class="pane" id="mzp_asp">
+        <div class="panehead b4">
+          <div class="f"><label for="mzAsp">Аспирация BELMASH</label><select id="mzAsp" data-touched="0"><option value="BDC200">BELMASH BDC200</option><option value="DC850">BELMASH DC850</option><option value="DC850C">BELMASH DC850C</option><option value="DC1200">BELMASH DC1200</option><option value="DC1600M">BELMASH DC1600M</option><option value="DC2500">BELMASH DC2500</option><option value="DC2500-AT">BELMASH DC2500-AT</option><option value="DC2500MC">BELMASH DC2500MC</option><option value="DC2500MC-AT">BELMASH DC2500MC-AT</option><option value="DC2500-PS">BELMASH DC2500-PS</option><option value="DC3900">BELMASH DC3900</option><option value="DC3900MC-AT">BELMASH DC3900MC-AT</option><option value="DC3900-PS">BELMASH DC3900-PS</option><option value="DC4500-F3">BELMASH DC4500-F3</option><option value="DC4500-F4">BELMASH DC4500-F4</option></select></div>
+          <div class="f"><label>Питание</label>
+            <div class="volt">
+              <label><input type="radio" name="mzav" id="mzAV220" value="220"><span>220</span></label>
+              <label><input type="radio" name="mzav" id="mzAV380" value="380"><span>380</span></label>
             </div></div>
-          <div style="flex:1 1 130px"><label class="f" for="mzAspP">Цена, ₽</label>
-            <input type="number" id="mzAspP" min="0" step="10" data-touched="0"></div>
-          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzAspOn"> В смету</label></div>
+          <div class="f"><label for="mzAspP">Цена, ₽</label>
+            <input class="num" id="mzAspP" type="number" min="0" step="10" data-touched="0"></div>
+          <label class="tgl"><input type="checkbox" id="mzAspOn"><span>В смету</span></label>
         </div>
-        <div id="mzAspCard"><div class="mzcard"><div class="mzcard-h"><b>BELMASH BDC200</b><span>220 В</span></div><table class="mzspec"><tbody><tr><th>Производительность</th><td>200 м³/ч</td></tr><tr><th>Мощность</th><td>1200 Вт</td></tr><tr><th>Патрубков</th><td>1</td></tr><tr><th>Диаметр патрубка</th><td>100 мм</td></tr><tr><th>Фильтрация</th><td>0,5 мкм · Картридж, 2 ступени</td></tr><tr><th>Мешок</th><td>50 л</td></tr><tr><th>Масса</th><td>10 кг</td></tr><tr><th>Шум</th><td>85 дБ</td></tr><tr><th>Артикул</th><td>D125A</td></tr><tr><th>Розница BELMASH</th><td>14 990 ₽</td></tr><tr><th>С наценкой 20 %</th><td>17 990 ₽</td></tr></tbody></table><div class="mzcard-n">Аспирация уносит стружку и пыль от фрезы. Производительность подбирают по числу патрубков и длине магистрали.</div></div></div><div id="mzAspHint"><div class="mzhint ok">Цена в смету идёт с наценкой 20 % к рознице belmash.ru.</div></div>
-        <hr class="sep">
-        <div class="row">
-          <div style="flex:2 1 240px"><label class="f" for="mzBr">Щётка аспирации, ⌀ патрона</label>
-            <select id="mzBr" data-touched="0"><option value="75">⌀75 мм</option><option value="80">⌀80 мм</option><option value="85">⌀85 мм</option><option value="90">⌀90 мм</option><option value="100">⌀100 мм</option><option value="110">⌀110 мм</option><option value="120">⌀120 мм</option><option value="130">⌀130 мм</option></select></div>
-          <div style="flex:1 1 130px"><label class="f" for="mzBrP">Цена, ₽</label>
-            <input type="number" id="mzBrP" min="0" step="10" data-touched="0"></div>
-          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzBrOn"> В смету</label></div>
+        <div id="mzAspCard"><details class="specbox"><summary>BELMASH DC2500 <span>· 220 В</span></summary><div class="body"><dl><dt>Производительность</dt><dd>2530 м³/ч</dd><dt>Мощность</dt><dd>1500 Вт</dd><dt>Патрубков</dt><dd>2</dd><dt>Диаметр патрубка</dt><dd>125 мм</dd><dt>Фильтрация</dt><dd>5 мкм · Фильтр-мешок</dd><dt>Мешок</dt><dd>157 л</dd><dt>Шум</dt><dd>80 дБ</dd><dt>Масса</dt><dd>39 кг</dd><dt>Артикул</dt><dd>D089A</dd><dt>Розница BELMASH</dt><dd>33 990 ₽</dd><dt>С наценкой 20 %</dt><dd>40 790 ₽</dd></dl><div class="idx">Аспирация уносит стружку и пыль от фрезы. Производительность подбирают по числу патрубков и длине магистрали.</div></div></details></div><div class="hints" id="mzAspHint"><div class="hint ok">Цена в смету идёт с наценкой 20 % к рознице belmash.ru.</div></div>
+        <div style="height:1px;background:var(--line);margin:14px 0"></div>
+        <div class="panehead">
+          <div class="f"><label for="mzBr">Щётка аспирации, ⌀ патрона</label><select id="mzBr" data-touched="0"><option value="75">⌀ 75 мм</option><option value="80">⌀ 80 мм</option><option value="85">⌀ 85 мм</option><option value="90">⌀ 90 мм</option><option value="100">⌀ 100 мм</option><option value="110">⌀ 110 мм</option><option value="120">⌀ 120 мм</option><option value="130">⌀ 130 мм</option></select></div>
+          <div class="f"><label for="mzBrP">Цена, ₽</label>
+            <input class="num" id="mzBrP" type="number" min="0" step="10" data-touched="0"></div>
+          <label class="tgl"><input type="checkbox" id="mzBrOn"><span>В смету</span></label>
         </div>
-        <div id="mzBrCard"><div class="mzcard"><div class="mzcard-h"><b>Щётка аспирации ⌀75 мм</b></div><table class="mzspec"><tbody><tr><th>Диаметр патрона</th><td>75 мм</td></tr><tr><th>Цена по прайсу</th><td>5 220 ₽</td></tr></tbody></table><div class="mzcard-n">Щётка надевается на шпиндель и не даёт стружке разлетаться, работая вместе с аспирацией. Диаметр подбирается под патрон.</div></div></div><div id="mzBrHint"><div class="mzhint warn">Диаметр щётки должен совпадать с диаметром патрона вашего шпинделя — проверьте по паспорту станка.</div></div>
+        <div id="mzBrCard"><details class="specbox"><summary>Щётка аспирации ⌀100 мм</summary><div class="body"><dl><dt>Диаметр патрона</dt><dd>100 мм</dd><dt>Цена по прайсу</dt><dd>5 220 ₽</dd></dl><div class="idx">Щётка надевается на шпиндель и не даёт стружке разлетаться, работая вместе с аспирацией. Диаметр подбирается под патрон.</div></div></details></div><div class="hints" id="mzBrHint"><div class="hint warn">Диаметр щётки должен совпадать с диаметром патрона вашего шпинделя — проверьте по паспорту станка.</div></div>
       </div>
 
-      <div class="mzpane" id="mzp_dsp" hidden="">
-        <div class="row">
-          <div style="flex:2 1 300px"><label class="f" for="mzDsp">Стойка ЧПУ</label>
+      <div class="pane" id="mzp_dsp">
+        <div class="panehead">
+          <div class="f"><label for="mzDsp">Стойка ЧПУ</label>
             <select id="mzDsp" data-touched="0">
-              <option value="up">Замена A11 → A18, доплата</option>
+              <option value="up">Замена A11 → A18 (доплата)</option>
               <option value="a11">DSP RichAuto A11 — отдельной позицией</option>
               <option value="a18">DSP RichAuto A18 — отдельной позицией</option>
             </select></div>
-          <div style="flex:1 1 130px"><label class="f" for="mzDspP">Цена, ₽</label>
-            <input type="number" id="mzDspP" min="0" step="1" data-touched="0"></div>
-          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzDspOn"> В смету</label></div>
+          <div class="f"><label for="mzDspP">Цена, ₽</label>
+            <input class="num" id="mzDspP" type="number" min="0" step="1" data-touched="0"></div>
+          <label class="tgl"><input type="checkbox" id="mzDspOn"><span>В смету</span></label>
         </div>
-        <div id="mzDspCard"><div class="mzcard"><div class="mzcard-h"><b>Замена стойки A11 на A18, доплата</b><span>доплата</span></div><table class="mzspec"><tbody><tr><th>RichAuto A11</th><td>50 538 ₽</td></tr><tr><th>RichAuto A18</th><td>75 380 ₽</td></tr><tr><th>Доплата за замену</th><td>24 842 ₽</td></tr><tr><th>Штатно A18</th><td>только M1 1325 RD</td></tr></tbody></table><div class="mzcard-n">Цены из прайса LASERCUT от 25.03.2026. Стойка уже входит в стоимость конфигурации станка — эта вкладка нужна либо для доплаты за замену, либо когда стойка идёт отдельной строкой. В остальных случаях позиция задвоится.<br><br>A11 — трёхосевой пульт, A18 — четырёхосевой с полноценной осью A/C. По руководству RichAuto A11 тоже способен крутить поворотную ось, но методом подмены: ось C подключается вместо X или Y через внешний переключатель, одновременной четырёхосевой интерполяции нет.</div></div></div><div id="mzDspHint"><div class="mzhint ok">В станке стоит A11 — доплата за замену корректна. После замены стойка станет четырёхосевой и сможет работать с поворотным устройством.</div></div>
+        <div id="mzDspCard"><details class="specbox"><summary>Замена стойки A11 на A18, доплата <span>· доплата</span></summary><div class="body"><dl><dt>RichAuto A11</dt><dd>50 538 ₽</dd><dt>RichAuto A18</dt><dd>75 380 ₽</dd><dt>Доплата за замену</dt><dd>24 842 ₽</dd><dt>Штатно A18</dt><dd>только M1 1325 RD</dd></dl><div class="idx">Цены из прайса LASERCUT от 25.03.2026. Стойка уже входит в стоимость конфигурации станка — эта вкладка нужна либо для доплаты за замену, либо когда стойка идёт отдельной строкой. В остальных случаях позиция задвоится.<br><br>A11 — трёхосевой пульт, A18 — четырёхосевой с полноценной осью A/C. По руководству RichAuto A11 тоже способен крутить поворотную ось, но методом подмены: ось C подключается вместо X или Y через внешний переключатель, одновременной четырёхосевой интерполяции при этом нет.</div></div></details></div><div class="hints" id="mzDspHint"><div class="hint ok">В станке стоит A11 — доплата за замену корректна. После замены стойка станет четырёхосевой и сможет работать с поворотным устройством.</div></div>
       </div>
 
-      <div class="mzpane" id="mzp_rot">
-        <div class="row">
-          <div style="flex:2 1 280px"><label class="f" for="mzRot">Поворотное устройство</label>
-            <select id="mzRot" data-touched="0"><option value="wattsan">Встроенная в станок (исполнение RD)</option><option value="d65">Ø63 мм, патрон K01-63</option><option value="d80">Ø80 мм, патрон K11-80</option><option value="d100">Ø100 мм, патрон K11-100</option><option value="d160">Ø160 мм, червячный редуктор</option><option value="d300">Ø200–300 мм, под колонны</option></select></div>
-          <div style="flex:1 1 200px"><label class="f" for="mzRotT">Задняя бабка</label>
-            <select id="mzRotT" data-touched="0" disabled="">
+      <div class="pane on" id="mzp_rot">
+        <div class="panehead rot">
+          <div class="f"><label for="mzRot">Поворотное устройство</label><select id="mzRot" data-touched="0"><option value="wattsan">Встроенная в станок (исполнение RD)</option><option value="d65">Ø63 мм, патрон K01-63</option><option value="d80">Ø80 мм, патрон K11-80</option><option value="d100">Ø100 мм, патрон K11-100</option><option value="d160">Ø160 мм, червячный редуктор</option><option value="d300">Ø200–300 мм, под колонны</option></select></div>
+          <div class="f"><label for="mzRotT">Задняя бабка</label>
+            <select id="mzRotT" disabled="" data-touched="0">
               <option value="0">не нужна или в комплекте</option>
-              <option value="1">отдельной позицией</option>
+              <option value="1">отдельной позицией, +5 560 ₽</option>
             </select></div>
-          <div style="flex:1 1 140px"><label class="f" for="mzRotP">Цена, ₽</label>
-            <input type="number" id="mzRotP" min="0" step="100" data-touched="0"></div>
-          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzRotOn" disabled=""> В смету</label></div>
+          <div class="f"><label for="mzRotP">Цена, ₽ — своя сохранится</label>
+            <input class="num" id="mzRotP" type="number" min="0" step="100" data-touched="0"></div>
+          <label class="tgl"><input type="checkbox" id="mzRotOn" disabled=""><span>В смету</span></label>
         </div>
-        <div id="mzRotCard"><div class="mzcard"><div class="mzcard-h"><b>Встроенная в станок (исполнение RD)</b><span>входит в цену станка</span></div><table class="mzspec"><tbody><tr><th>Тип</th><td>поворотное устройство в станине, отдельная зона</td></tr><tr><th>Макс. Ø заготовки</th><td>300 мм</td></tr><tr><th>Макс. длина</th><td>2100 мм у M1 1325 RD</td></tr><tr><th>Зона</th><td>+700 мм по ширине станка, рабочее поле не уменьшается</td></tr><tr><th>Стойка</th><td>RichAuto A18 по паспорту</td></tr></tbody></table><div class="mzcard-n">Заводское исполнение Wattsan. Проверено по паспорту M1 1313RD/1325RD: длина заготовки 2100 мм у 1325 RD и 900 мм у 1313 RD, диаметр 300 мм у обеих. Ось стоит сбоку от стола — ширина станка растёт с 2000 до 2700 мм, а рабочее поле 1300×2500 мм остаётся целиком. Две оговорки: модели M1 1313 RD в текущем каталоге wattsan.ru и у дилеров нет, она есть только в паспорте; задняя бабка на фото просматривается, но ни в паспорте, ни в комплектации на сайте не заявлена — уточняйте. Диаметр патрона и передаточное число производитель не публикует.<br><br>Что нужно, чтобы ось заработала: контроллер с поддержкой четвёртой оси, отдельный драйвер и двигатель, датчик нуля оси A/C, настройка Pulse Equiv и CAM с развёрткой по цилиндру. Четырёхосевые модели RichAuto: A18, B18, B58, F141, F741. Трёхосевой A11 тоже способен крутить ось, но методом подмены — ось C подключается вместо X или Y через внешний переключатель, одновременной четырёхосевой интерполяции не будет. Pulse Equiv для оси вращения считается как импульсов на оборот, делённое на 360, причём импульсы на оборот берутся уже с учётом передаточного отношения редуктора; у серводрайвера формула другая. Цены — розница магазинов ЧПУ-комплектующих на август 2026, проверены по карточкам товаров; разброс между продавцами достигает двух раз, а SPBCNC ведёт два каталога с разными ценами на один и тот же артикул.<br><br>Расчёт ориентировочный и учитывает только высоту центра оси, радиус заготовки, вылет фрезы и запас. Явной формулы ни один производитель и ни один продавец не публикует — есть только качественное указание, что габарит заготовки зависит от высоты патрона и высоты портала. Отдельно проверяйте два разных ограничения: просвет под порталом должен пропускать узел с заготовкой, а хода по Z должно хватать, чтобы фреза дошла до нижней точки обработки.</div></div></div><div id="mzRotHint"><div class="mzhint ok">Это заводское исполнение RD: ось входит в цену станка, отдельной позицией в смету не идёт. Выберите конфигурацию RD в списке станков.</div><div class="mzhint ok">Задняя бабка у этого исполнения уже в комплекте.</div><div class="mzhint warn">Цена — розница магазинов ЧПУ-комплектующих, разброс между продавцами достигает двух раз. Перед КП подтвердите её у поставщика.</div></div>
+        <div id="mzRotCard"><details class="specbox"><summary>Встроенная в станок (исполнение RD) <span>· входит в цену станка</span></summary><div class="body"><dl><dt>Тип</dt><dd>поворотное устройство в станине, отдельная зона</dd><dt>Макс. Ø заготовки</dt><dd>300 мм</dd><dt>Макс. длина</dt><dd>2100 мм у M1 1325 RD</dd><dt>Зона</dt><dd>+700 мм по ширине станка, рабочее поле не уменьшается</dd><dt>Стойка</dt><dd>RichAuto A18 по паспорту</dd></dl><div class="idx">Заводское исполнение Wattsan. Проверено по паспорту M1 1313RD/1325RD: длина заготовки 2100 мм у 1325 RD и 900 мм у 1313 RD, диаметр 300 мм у обеих. Ось стоит сбоку от стола — ширина станка растёт с 2000 до 2700 мм, а рабочее поле 1300×2500 мм остаётся целиком. Две оговорки: модели M1 1313 RD в текущем каталоге wattsan.ru и у дилеров нет, она есть только в паспорте; задняя бабка на фото просматривается, но ни в паспорте, ни в комплектации на сайте не заявлена — уточняйте. Диаметр патрона и передаточное число производитель не публикует.<br><br>Что нужно, чтобы ось заработала: контроллер с поддержкой четвёртой оси, отдельный драйвер и двигатель, датчик нуля оси A/C, настройка Pulse Equiv и CAM с развёрткой по цилиндру. Четырёхосевые модели RichAuto: A18, B18, B58, F141, F741. Трёхосевой A11 тоже способен крутить ось, но методом подмены — ось C подключается вместо X или Y через внешний переключатель, одновременной четырёхосевой интерполяции не будет. Pulse Equiv для оси вращения считается как импульсов на оборот, делённое на 360, причём импульсы на оборот берутся уже с учётом передаточного отношения редуктора; у серводрайвера формула другая. Цены — розница магазинов ЧПУ-комплектующих на август 2026, проверены по карточкам товаров; разброс между продавцами достигает двух раз, а SPBCNC ведёт два каталога с разными ценами на один и тот же артикул.<br><br>Расчёт ориентировочный и учитывает только высоту центра оси, радиус заготовки, вылет фрезы и запас. Явной формулы ни один производитель и ни один продавец не публикует — есть только качественное указание, что габарит заготовки зависит от высоты патрона и высоты портала. Отдельно проверяйте два разных ограничения: просвет под порталом должен пропускать узел с заготовкой, а хода по Z должно хватать, чтобы фреза дошла до нижней точки обработки.</div></div></details></div><div class="hints" id="mzRotHint"><div class="hint ok">Это заводское исполнение RD: ось входит в цену станка, отдельной позицией в смету не идёт. Выберите конфигурацию RD в списке станков.</div><div class="hint ok">Максимум для этой серии по расчёту — Ø100 мм, патрон K11-100.</div><div class="hint ok">Задняя бабка у этого исполнения уже в комплекте.</div><div class="hint warn">Цена — розница магазинов ЧПУ-комплектующих, разброс между продавцами достигает двух раз. Перед КП подтвердите её у поставщика.</div></div>
       </div>
 
-      <div class="mzpane" id="mzp_extra" hidden="">
-        <div class="row">
-          <div style="flex:2 1 300px"><label class="f" for="mzExtraN">Название позиции</label>
-            <input type="text" id="mzExtraN" placeholder="доставка, оснастка, ЗИП, монтаж вытяжки…" data-touched="0"></div>
-          <div style="flex:1 1 140px"><label class="f" for="mzExtraP">Цена, ₽</label>
-            <input type="number" id="mzExtraP" min="0" step="100" data-touched="0"></div>
-          <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzExtraOn"> В смету</label></div>
+      <div class="pane" id="mzp_extra">
+        <div class="panehead">
+          <div class="f"><label for="mzExtraN">Название позиции</label>
+            <input id="mzExtraN" type="text" placeholder="доставка, оснастка, ЗИП, монтаж вытяжки…" data-touched="0"></div>
+          <div class="f"><label for="mzExtraP">Цена, ₽</label>
+            <input class="num" id="mzExtraP" type="number" min="0" step="100" data-touched="0"></div>
+          <label class="tgl"><input type="checkbox" id="mzExtraOn"><span>В смету</span></label>
         </div>
-        <div class="note small">Свободная строка для всего, чего нет в прайсе.</div>
+        <div class="hints"><div class="hint">Свободная строка для всего, чего нет в прайсе.</div></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="cardhead"><h2>3 · ПНР и обучение</h2></div>
-      <div class="row">
-        <div style="flex:1 1 200px"><label class="f" for="mzPnrGroup">Группа по прайсу</label>
-          <select id="mzPnrGroup" data-touched="0"><option value="mini">0404 / 0609 mini</option><option value="miniCab">0404 / 0609 mini Cabine</option><option value="6090">A1 / M1 6090</option><option value="1313">A1 / M1 1313</option><option value="1616">A1 / M1 1616</option><option value="1325">A1 / M1 1325</option><option value="2030">M1 2030 / 2040</option><option value="s4">M1 1313 S4</option><option value="rd">M1 1313 RD / 1325 RD</option><option value="m3">M3 1313–2060</option></select></div>
-        <div style="flex:2 1 260px"><label class="f" for="mzPnrVar">Состав услуги</label>
-          <select id="mzPnrVar" data-touched="0"><option value="pnr">Только ПНР, 1 день — 23 000 ₽</option><option value="d1">ПНР плюс 1 день — 31 000 ₽</option><option value="d2">ПНР плюс 2 дня — 38 000 ₽</option><option value="edu">Только обучение — 35 000 ₽</option><option value="both">ПНР и обучение — 46 000 ₽</option></select></div>
-        <div style="flex:1 1 190px"><label class="f" for="mzPnrK">Выезд</label>
+      <h2>3 · ПНР и обучение</h2>
+      <div class="panehead b5">
+        <div class="f"><label for="mzPnrGroup">Группа по прайсу</label><select id="mzPnrGroup" data-touched="0"><option value="mini">0404 / 0609 mini</option><option value="miniCab">0404 / 0609 mini Cabine</option><option value="6090">A1 / M1 6090</option><option value="1313">A1 / M1 1313</option><option value="1616">A1 / M1 1616</option><option value="1325">A1 / M1 1325</option><option value="2030">M1 2030 / 2040</option><option value="s4">M1 1313 S4</option><option value="rd">M1 1313 RD / 1325 RD</option><option value="m3">M3 1313–2060</option></select></div>
+        <div class="f"><label for="mzPnrVar">Состав услуги</label><select id="mzPnrVar" data-touched="0"><option value="pnr">Только ПНР, 1 день — 45 000 ₽</option><option value="d1">ПНР плюс 1 день — 53 000 ₽</option><option value="d2">ПНР плюс 2 дня — 60 000 ₽</option><option value="edu">Только обучение — 35 000 ₽</option><option value="both">ПНР и обучение — 64 000 ₽</option></select></div>
+        <div class="f"><label for="mzPnrK">Выезд</label>
           <select id="mzPnrK" data-touched="0">
-            <option value="10">Обычный</option>
-            <option value="12">Сторонний станок, ×1,2</option>
+            <option value="10">Обычный (×1)</option>
+            <option value="12">Сторонний станок (×1,2)</option>
           </select></div>
-        <div style="flex:1 1 130px"><label class="f" for="mzPnrP">Цена, ₽</label>
-          <input type="number" id="mzPnrP" min="0" step="100" data-touched="0"></div>
-        <div style="align-self:end"><label class="chk small"><input type="checkbox" id="mzPnrOn"> В смету</label></div>
+        <div class="f"><label for="mzPnrP">Цена, ₽</label>
+          <input class="num" id="mzPnrP" type="number" min="0" step="100" data-touched="0"></div>
+        <label class="tgl"><input type="checkbox" id="mzPnrOn"><span>В смету</span></label>
       </div>
-      <div id="mzPnrHint"><div class="mzhint ok">Группа подобрана по прайсу под выбранный станок.</div></div>
-      <div class="note small">На сторонние станки коэффициент ×1,2 Штраф за ложный выезд 19 000 ₽ или по договору Минимальный выезд за день — 22 000 ₽ У M3 обучение входит в ПНР — единственный случай в прайсе</div>
+      <div class="hints" id="mzPnrHint"><div class="hint ok">Группа подобрана по прайсу под выбранный станок.</div></div>
+      <div class="hints"><div class="hint">На сторонние станки коэффициент ×1,2 Штраф за ложный выезд 19 000 ₽ или по договору Минимальный выезд за день — 22 000 ₽ У M3 обучение входит в ПНР — единственный случай в прайсе</div></div>
     </div>
 
   </div>
 
-  <aside class="cfgside">
-    <div class="card spec-card">
-      <div class="cardhead">
-        <h2>Спецификация</h2>
-        <span class="spec-cnt" id="mzCnt"></span>
-      </div>
-      <div id="mzHead" class="note small">Своя конфигурация — цену вводите вручную.</div>
-      <div id="mzEmpty" class="empty small">Выберите станок — остальное подставится
-        под него.</div>
-      <table class="spec" id="mzTable2"><tbody id="mzBody"></tbody></table>
-      <div class="spec-tot" id="mzTotals"><div class="spec-line"><span>Итого</span><b>0 ₽</b></div><div class="spec-line small muted"><span>в том числе НДС 22 %</span><span>NaN ₽</span></div></div>
-      <div id="mzIssues"><div class="mzhint bad">Цена станка не заполнена — выберите конфигурацию из прайса или введите цену вручную.</div><div class="mzhint warn">Стабилизатора в спецификации нет. Паспорт требует стабильного питания, без него гарантия под вопросом.</div><div class="mzhint warn">ПНР и обучение не включены. Они платные и в цену станка не входят — клиент должен видеть их отдельной строкой или знать, что их нет.</div></div>
+  <div class="side">
+    <div class="card">
+      <h2>Спецификация</h2>
+      <div id="mzSpecMeta" style="font-size:12px;color:var(--muted);margin-bottom:8px">Конфигурация из прайса, цена под заказ</div>
+      <div class="cfg" id="mzCfgHead"><b>Wattsan M1 1325, 4.5ac, A11 + Leadshine</b><span>4,5 кВт · воздушное · стол PROF · DSP RichAuto A11</span></div>
+      <div id="mzSpecBody"><div class="sec"><div class="sech"><span>Станок</span><b>811 650 ₽</b></div><div class="srow"><span>Фрезерный станок с ЧПУ Wattsan M1 1325, 4.5ac, A11 + Leadshine</span><span class="v">811 650 ₽</span></div><div class="sdet"><span>Рабочее поле</span><span>1300×2500 мм</span></div><div class="sdet"><span>Шпиндель</span><span>4,5 кВт · воздушное · 380 В</span></div><div class="sdet"><span>Стол</span><span>PROF</span></div><div class="sdet"><span>Стойка ЧПУ</span><span>DSP RichAuto A11</span></div><div class="sdet"><span>Двигатели</span><span>Шаговые с обратной связью (Leadshine)</span></div><div class="sdet"><span>Поставка</span><span>до 80 раб. дней</span></div></div></div>
+      <div class="split" id="mzSplit"><i style="width:100.00%;background:var(--or)"></i></div>
+      <div class="legend" id="mzLegend"><span><em style="background:var(--or)"></em>Станок — 811 650 ₽</span></div>
+      <div class="total"><span>Итого<span id="mzPosCount" style="font-weight:400;color:var(--muted);font-size:11.5px"> · 1 позиция</span></span>
+        <span class="sum" id="mzSum">811 650 ₽</span></div>
+      <div class="vat" id="mzVat">в том числе НДС 22 % — 146 363 ₽</div>
+      <div class="issues noprint" id="mzIssues"><div class="issue warn">Стабилизатора в спецификации нет. Паспорт требует стабильного питания, без него гарантия под вопросом.</div><div class="issue warn">ПНР и обучение не включены. Они платные и в цену станка не входят — клиент должен видеть их отдельной строкой.</div></div>
       <div class="btns noprint">
-        <button class="btn mini" type="button" id="mzToSmeta">Перенести в смету</button>
-        <button class="btn mini sec" type="button" id="mzCopy">Скопировать текстом</button>
-        <button class="btn mini sec" type="button" id="mzPrint">Печать</button>
-        <button class="btn mini sec" type="button" id="mzReset">Сбросить</button>
+        <button class="main" type="button" id="mzToSmeta">Перенести в смету</button>
+        <button class="main" type="button" id="mzPrint">Печать</button>
+        <button class="sec" type="button" id="mzCopy">Скопировать текстом</button>
       </div>
-      <textarea id="mzOut" class="specout" readonly="" aria-label="конфигурация текстом"></textarea>
-      <div class="note small">Станки — прайс LASERCUT август 2026, наценка +5 % уже в цене и здесь, в отличие от остальных разделов, не округляется до 100 ₽. Допоборудование — прайс 25.03.2026, ПНР — прайс ПНР по фрезерным. Стабилизаторы — resanta.ru и ГК «Штиль», аспирация — розница belmash.ru плюс наценка 20 %, поворотные устройства — розница магазинов ЧПУ-комплектующих. Источник указан в карточке каждой позиции. Гарантия 12 месяцев.
-        Срок поставки под заказ — до 80 раб. дней, из наличия — 1–3 раб. дня.
-        Доставка в цену не входит.</div>
+      <div class="links noprint">
+        <a id="mzReset">Сбросить</a>
+      </div>
+      <textarea id="mzOut" readonly="" aria-label="конфигурация текстом"></textarea>
+      <div class="note">Станки — прайс LASERCUT август 2026, наценка +5 % уже в цене и здесь, в отличие от остальных разделов, не округляется до 100 ₽. Допоборудование — прайс 25.03.2026, ПНР — прайс ПНР по фрезерным. Стабилизаторы — resanta.ru и ГК «Штиль», аспирация — розница belmash.ru плюс наценка 20 %, поворотные устройства — розница магазинов ЧПУ-комплектующих. Источник указан в карточке каждой позиции. Гарантия 12 месяцев. Срок поставки
+        под заказ — до 80 раб. дней, из наличия — 1–3 раб. дня.
+        Доставка в цену не входит. Лист предложения и файл для Word собирает
+        раздел «Смета и ТКП».</div>
     </div>
-  </aside>
+  </div>
   </div>
 </section>
+
+<div id="mzBar" class="noprint"><span>Итого: <b id="mzSumBar">811 650 ₽</b></span>
+  <span><button type="button" id="mzBarSmeta">В смету</button>
+    <button type="button" id="mzBarSpec">Спецификация</button></span></div>
 
 <!-- ================= СМЕТА И ТКП ================= -->
 <span class="nojs-title">Смета и ТКП</span>
@@ -9597,13 +9772,15 @@ var DOCX = (function () {
   $('sumBarGo').addEventListener('click', function () { showTab('smeta'); });
   // ------------------------------------------- вкладка «Фрезерный»
   /* Вкладка «Фрезерный»: сборка станка по узлам, допоборудование, ПНР.
-   Вставляется в ui.js по маркеру, поэтому пользуется его $, esc, toast,
-   addItem, showTab, state и save. Деньги — только через money.js, в копейках.
-   Документ отсюда не печатается: готовая спецификация уходит в смету. */
+   Вёрстка и порядок блоков — как в присланном конфигураторе, цвета берутся
+   из темы приложения. Файл вставляется в ui.js по маркеру, поэтому пользуется
+   его $, esc, cnt, toast, addItem, showTab, state и save. Деньги считаются
+   только через money.js, в копейках. Документ отсюда не печатается:
+   спецификация уходит в раздел «Смета и ТКП». */
 var M = APP.mill;
 
-// Точная мощность шпинделя есть только в названии конфигурации: в прайсе
-// колонка округлена до целых, а 3,0 и 3,2 кВт — разные шпиндели.
+// Точная мощность шпинделя есть только в названии конфигурации: в колонке
+// прайса она округлена до целых, а 3,0 и 3,2 кВт — разные шпиндели.
 function mzKw(row) {
   var m = String(row.name).match(/(\d+[.,]?\d*)\s*(wc|ac)/i);
   return m ? parseFloat(m[1].replace(',', '.')) : row.kw;
@@ -9622,15 +9799,14 @@ function mzNum(id) { return +$(id).value || 0; }
 function mzTouched(id) { return $(id).dataset.touched === '1'; }
 function mzTouch(id, on) { $(id).dataset.touched = on === false ? '0' : '1'; }
 
-// Черновик вкладки живёт в общем состоянии приложения — как и остальные разделы.
 if (!state.mill) state.mill = {};
 var mzS = state.mill;
 if (!mzS.rotPrices) mzS.rotPrices = {};
 if (!mzS.mode) mzS.mode = 'ready';
-var mzSel = null;              // индекс выбранной готовой конфигурации
-var mzCat = 'stab';            // активная вкладка допоборудования
-var mzMCat = 'spin';           // активная вкладка узлов станка
-var mzFlags = {};              // худший статус подсказок по блокам
+var mzSel = null;
+var mzCat = 'stab';
+var mzMCat = 'spin';
+var mzFlags = {};
 
 // --------------------------------------------------------------- подсказки
 function mzHints(id, list) {
@@ -9644,20 +9820,24 @@ function mzHints(id, list) {
   });
   mzFlags[id] = worst;
   box.innerHTML = rows.map(function (r) {
-    return '<div class="mzhint ' + (r[1] || '') + '">' + r[0] + '</div>';
+    return '<div class="hint ' + (r[1] || '') + '">' + r[0] + '</div>';
   }).join('');
 }
-// Карточка-справка узла: заголовок, подзаголовок, таблица, пояснение.
-function mzCard(id, title, sub, rows, note) {
+// Карточка узла: раскрывающийся блок с парами «параметр — значение» и пояснением.
+function mzCard(id, title, sub, pairs, foot, open) {
   var box = $(id);
   if (!box) return;
-  var t = (rows || []).map(function (r) {
-    return '<tr><th>' + esc(r[0]) + '</th><td>' + esc(String(r[1])) + '</td></tr>';
-  }).join('');
-  box.innerHTML = '<div class="mzcard"><div class="mzcard-h"><b>' + esc(title) +
-    '</b>' + (sub ? '<span>' + esc(sub) + '</span>' : '') + '</div>' +
-    (t ? '<table class="mzspec"><tbody>' + t + '</tbody></table>' : '') +
-    (note ? '<div class="mzcard-n">' + note + '</div>' : '') + '</div>';
+  var wasOpen = open;
+  var det = box.querySelector('details');
+  if (det && wasOpen === undefined) wasOpen = det.open;
+  var dl = (pairs && pairs.length)
+    ? '<dl>' + pairs.map(function (p) {
+      return '<dt>' + esc(p[0]) + '</dt><dd>' + esc(String(p[1])) + '</dd>';
+    }).join('') + '</dl>' : '';
+  box.innerHTML = '<details class="specbox"' + (wasOpen ? ' open' : '') +
+    '><summary>' + esc(title) + (sub ? ' <span>· ' + esc(sub) + '</span>' : '') +
+    '</summary><div class="body">' + dl +
+    (foot ? '<div class="idx">' + foot + '</div>' : '') + '</div></details>';
 }
 
 // ------------------------------------------------------------ серия и формат
@@ -9694,7 +9874,6 @@ function mzBySeries(s) {
 }
 function mzKey() { return $('mzStock').value === 'stock' ? 'stock' : 'order'; }
 function mzPriceOf(c) { return c[mzKey()]; }
-
 function mzFillFmt() {
   var s = $('mzSeries').value, cur = $('mzFmt').value;
   var avail = {};
@@ -9707,7 +9886,6 @@ function mzFillFmt() {
   }).join('');
   var has = use.some(function (f) { return f[0] === cur; });
   $('mzFmt').value = has ? cur : use[0][0];
-  return { n: list.length, all: !list.length };
 }
 
 // ------------------------------------------------- готовые конфигурации прайса
@@ -9748,22 +9926,23 @@ function mzApplyCfg(idx) {
   mzUpdate();
 }
 function mzRenderReady() {
-  var box = $('mzReady');
+  var box = $('mzReadyList');
+  $('mzReady').style.display = mzS.mode === 'ready' ? '' : 'none';
   if (mzS.mode !== 'ready') { box.innerHTML = ''; return; }
   var list = mzBySeries($('mzSeries').value).filter(function (c) {
     return c.f === $('mzFmt').value;
   });
   if (!list.length) {
-    box.innerHTML = '<div class="mzhint warn">Готовых конфигураций для этой пары ' +
+    box.innerHTML = '<div class="hint warn">Готовых конфигураций для этой пары ' +
       'в прайсе нет. Соберите свою и введите цену вручную.</div>';
     return;
   }
-  box.innerHTML = '<div class="mzready">' + list.map(function (c) {
-    return '<button type="button" class="mzrcard' + (mzSel === c.i ? ' on' : '') +
-      '" data-cfg="' + c.i + '"><b>' + esc(c.n) + '</b><span class="mzrs">' +
-      esc(mzCfgSpec(c)) + '</span><span class="mzrp">' + mzRub(mzPriceOf(c)) +
-      '<em>' + (mzKey() === 'order' ? 'под заказ' : 'из наличия') + '</em></span></button>';
-  }).join('') + '</div>';
+  box.innerHTML = list.map(function (c) {
+    return '<button type="button" class="rcard' + (mzSel === c.i ? ' on' : '') +
+      '" data-cfg="' + c.i + '"><b>' + esc(c.n) + '</b><div class="rs">' +
+      esc(mzCfgSpec(c)) + '</div><div class="rp">' + mzRub(mzPriceOf(c)) +
+      '<em>' + (mzKey() === 'order' ? 'под заказ' : 'из наличия') + '</em></div></button>';
+  }).join('');
 }
 // Похожие конфигурации: чем отличаются и на сколько дороже или дешевле.
 function mzRenderSimilar() {
@@ -9786,17 +9965,19 @@ function mzRenderSimilar() {
     if (c.vac !== vac) { diff.push(c.vac ? 'вакуумный стол' : 'профильный стол'); w += 1; }
     if (w && w <= 3) scored.push({ c: c, d: diff, w: w });
   });
-  scored.sort(function (a, b) { return a.w - b.w || Math.abs(mzPriceOf(a.c) - base) - Math.abs(mzPriceOf(b.c) - base); });
+  scored.sort(function (a, b) {
+    return a.w - b.w || Math.abs(mzPriceOf(a.c) - base) - Math.abs(mzPriceOf(b.c) - base);
+  });
   scored = scored.slice(0, 6);
   if (!scored.length) { box.innerHTML = ''; return; }
-  box.innerHTML = '<div class="mzsim"><div class="mzsim-h">Рядом в прайсе</div>' +
+  box.innerHTML = '<div class="simh">Рядом в прайсе</div><div class="sim">' +
     scored.map(function (x) {
       var dp = mzPriceOf(x.c) - base;
       var cls = dp > 0 ? 'up' : (dp < 0 ? 'dn' : 'eq');
       var txt = dp > 0 ? '+' + mzRub(dp) : (dp < 0 ? '−' + mzRub(-dp) : 'та же цена');
-      return '<button type="button" class="mzsim-r" data-cfg="' + x.c.i + '"><span>' +
-        esc(x.c.n) + '<em>' + esc(x.d.join(', ')) + '</em></span>' +
-        '<b class="' + cls + '">' + txt + '</b></button>';
+      return '<button type="button" class="simc" data-cfg="' + x.c.i + '"><b>' +
+        esc(x.c.n) + '</b><div class="df">' + esc(x.d.join(', ')) +
+        '</div><div class="dp ' + cls + '">' + txt + '</div></button>';
     }).join('') + '</div>';
 }
 function mzRenderMatches() {
@@ -9804,15 +9985,17 @@ function mzRenderMatches() {
     return c.f === $('mzFmt').value;
   });
   var box = $('mzMatchList');
+  var e = mzExact();
   if (!list.length) {
-    box.innerHTML = '<div class="mzhint warn">В прайсе нет такой связки ' +
-      '«серия и рабочее поле».</div>';
+    box.innerHTML = '<div class="hint warn">В прайсе нет такой связки ' +
+      '«серия и рабочее поле». Проверьте выбор или введите цену вручную.</div>';
     return;
   }
   box.innerHTML = list.map(function (c) {
-    return '<button type="button" class="mzsim-r" data-price="' + mzPriceOf(c) +
-      '"><span>' + esc(c.n) + '<em>' + esc(mzCfgSpec(c)) + '</em></span><b>' +
-      mzRub(mzPriceOf(c)) + '</b></button>';
+    return '<button type="button" class="mrow' + (e && e.i === c.i ? ' best' : '') +
+      '" data-price="' + mzPriceOf(c) + '"><span>' + (e && e.i === c.i ? '▸ ' : '') +
+      esc(c.n) + '<br><span style="color:var(--muted);font-size:11.5px">' +
+      esc(mzCfgSpec(c)) + '</span></span><b>' + mzRub(mzPriceOf(c)) + '</b></button>';
   }).join('');
 }
 
@@ -9827,14 +10010,14 @@ function mzSpindleVolt() {
 function mzApplyVolt() {
   var v = mzSpindleVolt();
   mzS.sv = v.v;
-  Array.prototype.forEach.call($('mzSV').children, function (b) {
-    b.classList.toggle('on', b.dataset.sv === v.v);
-    b.disabled = v.only;
-  });
+  $('mzSV220').checked = v.v === '220';
+  $('mzSV380').checked = v.v === '380';
+  $('mzSV220').disabled = v.only;
+  $('mzSV380').disabled = v.only;
 }
 function mzSV() { return mzSpindleVolt().v; }
-function mzTV() { return mzS.tv || '380'; }
-function mzAV() { return mzS.av || '220'; }
+function mzTV() { return $('mzTV220').checked ? '220' : '380'; }
+function mzAV() { return $('mzAV220').checked ? '220' : '380'; }
 function mzZ() { return M.zTravel[$('mzSeries').value] || null; }
 
 function mzRenderSeries() {
@@ -9857,11 +10040,10 @@ function mzRenderFmt() {
   if (dim) rows.push(['Габариты', dim]);
   var z = mzZ();
   if (z) rows.push(['Ход по Z', z + ' мм']);
-  rows.push(['Конфигураций в прайсе', list.length]);
+  rows.push(['Конфигураций', list.length]);
   if (prices.length) {
     rows.push(['Цена в прайсе', prices.length > 1
-      ? mzRub(prices[0]) + ' – ' + mzRub(prices[prices.length - 1])
-      : mzRub(prices[0])]);
+      ? mzRub(prices[0]) + ' – ' + mzRub(prices[prices.length - 1]) : mzRub(prices[0])]);
   }
   mzCard('mzFmtCard', 'Формат ' + f, F && F[2] ? F[2] : '', rows, '');
 }
@@ -9904,15 +10086,12 @@ function mzRenderMotor() {
   }
   mzHints('mzMotorHint', h);
 }
-// Проверка станка целиком: питание, охлаждение, стол, стойка, наличие в прайсе.
 function mzSyncMachine() {
   var tbl = $('mzTable').value, cool = $('mzCool').value;
   var s = $('mzSeries').value, kw = parseFloat($('mzSpindle').value);
   var isVac = tbl === 'VAC';
-  Array.prototype.forEach.call($('mzTV').children, function (b) {
-    b.disabled = !isVac;
-    b.classList.toggle('on', b.dataset.tv === mzTV());
-  });
+  $('mzTV220').disabled = !isVac;
+  $('mzTV380').disabled = !isVac;
   var v = mzSpindleVolt(), h = [];
   h.push([esc(v.txt), v.only ? 'ok' : 'warn']);
   if (M.catSpindles.indexOf(kw) < 0) {
@@ -9965,7 +10144,6 @@ function mzChillerFor(kw) {
   return out;
 }
 function mzStabNeed() {
-  // Потребление станка: шпиндель плюс приводы, насос и стойка. Берём с запасом.
   var kw = parseFloat($('mzSpindle').value) || 0;
   var need = kw + 1.5;
   if ($('mzTable').value === 'VAC') need += 2.2;
@@ -9986,9 +10164,7 @@ function mzAutoApply(force) {
     var st = mzStabAuto();
     if (st) $('mzStab').value = st.k;
   }
-  if (force || !mzTouched('mzSens')) {
-    $('mzSens').value = M.sensorByFormat[f] || 'Нажимной';
-  }
+  if (force || !mzTouched('mzSens')) $('mzSens').value = M.sensorByFormat[f] || 'Нажимной';
   var v = M.vibroByFormat[f];
   if (v && (force || !mzTouched('mzVib'))) $('mzVib').value = v;
   if (force || !mzTouched('mzCh')) $('mzCh').value = mzChillerFor(kw);
@@ -10020,19 +10196,17 @@ function mzFillStab() {
   var b = $('mzStabB').value, cur = $('mzStab').value;
   var list = APP.stabsFull.filter(function (s) { return s.b === b; });
   $('mzStab').innerHTML = list.map(function (s) {
-    return '<option value="' + s.k + '">' + esc(s.n) + ' — ' + mzDec(s.kw) + ' кВт' +
-      (s.p == null ? ', цены нет' : '') + '</option>';
+    return '<option value="' + s.k + '">' + esc(s.n) + '</option>';
   }).join('');
-  var has = list.some(function (s) { return s.k === cur; });
-  if (has) $('mzStab').value = cur;
+  if (list.some(function (s) { return s.k === cur; })) $('mzStab').value = cur;
 }
 function mzRenderStab() {
   var s = mzStabM();
   if (!s) return;
   var req = mzStabNeed();
   mzCard('mzStabCard', s.n, mzDec(s.kw) + ' кВт · ' + (s.ph === 3 ? '3 фазы' : '1 фаза'),
-    s.d, esc(s.idx || '') + (s.idx ? '<br><br>' : '') +
-    '<b>Источник:</b> ' + esc(s.src) + '<br><br>' + esc(APP.stabNote[s.b] || ''));
+    s.d, esc(s.idx || '') + (s.idx ? '<br><br>' : '') + '<b>Источник:</b> ' +
+    esc(s.src) + '<br><br>' + esc(APP.stabNote[s.b] || ''));
   var h = [];
   h.push(['Расчётное потребление станка — около ' + req + ' кВт: шпиндель ' +
     mzDec($('mzSpindle').value) + ' кВт плюс приводы и стойка' +
@@ -10042,12 +10216,8 @@ function mzRenderStab() {
       req + ' кВт. Возьмите мощнее — иначе он уйдёт в защиту под нагрузкой.', 'bad']);
   }
   var need380 = mzSV() === '380' || ($('mzTable').value === 'VAC' && mzTV() === '380');
-  if (need380 && s.ph === 1) {
-    h.push(['Станку нужны три фазы, а выбран однофазный стабилизатор.', 'bad']);
-  }
-  if (!need380 && s.ph === 3) {
-    h.push(['Станок однофазный, а стабилизатор трёхфазный — переплата без пользы.', 'warn']);
-  }
+  if (need380 && s.ph === 1) h.push(['Станку нужны три фазы, а выбран однофазный стабилизатор.', 'bad']);
+  if (!need380 && s.ph === 3) h.push(['Станок однофазный, а стабилизатор трёхфазный — переплата без пользы.', 'warn']);
   if (s.p == null) h.push(['Цены этой модели в прайсе нет — поставьте её вручную.', 'warn']);
   mzHints('mzStabHint', h);
 }
@@ -10064,8 +10234,7 @@ function mzRenderCh() {
       'Если оставите позицию, она попадёт в смету лишней.', 'bad']);
   } else if (kw < c.kwMin || kw > c.kwMax) {
     h.push(['Шпиндель ' + mzDec(kw) + ' кВт вне диапазона ' + c.kwMin + '–' + c.kwMax +
-      ' кВт этой модели. Рекомендуемая по мощности — ' +
-      esc(mzChillerFor(kw)) + '.', 'warn']);
+      ' кВт этой модели. По мощности подходит CW-' + esc(mzChillerFor(kw)) + '.', 'warn']);
   } else {
     h.push(['Чиллер подходит по мощности шпинделя.', 'ok']);
   }
@@ -10077,21 +10246,18 @@ function mzRenderSens() {
   var s = M.sensors.filter(function (x) { return x.k === k; })[0];
   if (!s) return;
   mzCard('mzSensCard', s.n, '', [['Тип', s.k], ['Цена по прайсу', mzRub(s.p)]],
-    'Датчик ставит ноль по Z автоматически: оператор не выставляет вылет фрезы на глаз. ' +
-    'Магнитный держится на столе магнитом и удобен на настольных станках, ' +
+    'Датчик ставит ноль по Z автоматически: оператор не выставляет вылет фрезы ' +
+    'на глаз. Магнитный держится на столе магнитом и удобен на настольных станках, ' +
     'нажимной устойчивее на больших полях.');
   var f = $('mzFmt').value, rec = M.sensorByFormat[f] || 'Нажимной', h = [];
-  if (rec !== k) {
-    h.push(['Для формата ' + f + ' обычно берут ' + rec.toLowerCase() + ' датчик.', 'warn']);
-  }
+  if (rec !== k) h.push(['Для формата ' + f + ' обычно берут ' + rec.toLowerCase() + ' датчик.', 'warn']);
   mzHints('mzSensHint', h);
 }
 function mzRenderVib() {
   var q = parseInt($('mzVib').value, 10) || 0;
+  var p = mzNum('mzVibP') || M.vibro.p;
   mzCard('mzVibCard', M.vibro.n, q + ' шт',
-    [['Цена за штуку', mzRub(mzNum('mzVibP') || M.vibro.p)],
-     ['Количество', q + ' шт'],
-     ['Сумма', mzRub((mzNum('mzVibP') || M.vibro.p) * q)]],
+    [['Цена за штуку', mzRub(p)], ['Количество', q + ' шт'], ['Сумма', mzRub(p * q)]],
     'Виброопоры гасят вибрацию станины и позволяют выставить станок по уровню ' +
     'на неровном полу. Количество зависит от длины станины.');
   var f = $('mzFmt').value, rec = M.vibroByFormat[f], h = [];
@@ -10111,34 +10277,31 @@ function mzAspIdx(name) {
 function mzRenderAsp() {
   var a = mzAspM();
   if (!a) return;
-  Array.prototype.forEach.call($('mzAV').children, function (b) {
-    var can = (a.v || []).indexOf(+b.dataset.av) >= 0;
-    b.disabled = !can;
-    b.classList.toggle('on', can && b.dataset.av === mzAV());
-  });
+  var can220 = (a.v || []).indexOf(220) >= 0, can380 = (a.v || []).indexOf(380) >= 0;
+  $('mzAV220').disabled = !can220;
+  $('mzAV380').disabled = !can380;
+  if (!can220 && can380) $('mzAV380').checked = true;
+  if (!can380 && can220) $('mzAV220').checked = true;
+  if (!$('mzAV220').checked && !$('mzAV380').checked) $('mzAV220').checked = true;
   if (a.nodata) {
     mzCard('mzAspCard', a.n, '', [['Данные', 'в источнике нет']],
       'По этой модели в рознице BELMASH характеристик и цены нет — уточняйте у поставщика.');
-    mzHints('mzAspHint', [['Ни характеристик, ни цены по модели нет. ' +
-      'Цену поставьте вручную.', 'bad']]);
+    mzHints('mzAspHint', [['Ни характеристик, ни цены по модели нет. Цену поставьте вручную.', 'bad']]);
     return;
   }
   var rows = [['Производительность', a.q + ' м³/ч'], ['Мощность', a.w + ' Вт'],
     ['Патрубков', a.np], ['Диаметр патрубка', a.dp + ' мм'],
-    ['Фильтрация', a.f + ' мкм · ' + a.fe], ['Мешок', a.bag + ' л'],
-    ['Масса', a.kg + ' кг'], ['Артикул', (a.art || {})[mzAV()] || '—'],
-    ['Розница BELMASH', mzRub(a.p)],
-    ['С наценкой 20 %', mzRub(mzAspPrice(a.p))]];
-  if (a.db) rows.splice(7, 0, ['Шум', a.db + ' дБ']);
+    ['Фильтрация', a.f + ' мкм · ' + a.fe], ['Мешок', a.bag + ' л']];
+  if (a.db) rows.push(['Шум', a.db + ' дБ']);
+  rows.push(['Масса', a.kg + ' кг']);
+  rows.push(['Артикул', (a.art || {})[mzAV()] || '—']);
+  rows.push(['Розница BELMASH', mzRub(a.p)]);
+  rows.push(['С наценкой 20 %', mzRub(mzAspPrice(a.p))]);
   mzCard('mzAspCard', a.n, mzAV() + ' В', rows,
     mzAspIdx(a.k).map(esc).join('<br><br>') ||
     'Аспирация уносит стружку и пыль от фрезы. Производительность подбирают ' +
     'по числу патрубков и длине магистрали.');
-  var h = [];
-  if ((a.v || []).indexOf(+mzAV()) < 0) {
-    h.push(['В этом исполнении модели нет питания ' + mzAV() + ' В.', 'bad']);
-  }
-  var kw = parseFloat($('mzSpindle').value);
+  var h = [], kw = parseFloat($('mzSpindle').value);
   if (kw >= 4.5 && a.q < 2000) {
     h.push(['Шпиндель ' + mzDec(kw) + ' кВт снимает много стружки, а у модели ' +
       a.q + ' м³/ч. Возьмите производительнее.', 'warn']);
@@ -10147,13 +10310,13 @@ function mzRenderAsp() {
   mzHints('mzAspHint', h);
 }
 function mzRenderBr() {
-  var d = $('mzBr').value;
-  mzCard('mzBrCard', M.brush.n + ' ⌀' + d + ' мм', '',
-    [['Диаметр патрона', d + ' мм'], ['Цена по прайсу', mzRub(M.brush.p)]],
-    'Щётка надевается на шпиндель и не даёт стружке разлетаться, ' +
-    'работая вместе с аспирацией. Диаметр подбирается под патрон.');
-  mzHints('mzBrHint', [['Диаметр щётки должен совпадать с диаметром патрона ' +
-    'вашего шпинделя — проверьте по паспорту станка.', 'warn']]);
+  var dd = $('mzBr').value;
+  mzCard('mzBrCard', M.brush.n + ' ⌀' + dd + ' мм', '',
+    [['Диаметр патрона', dd + ' мм'], ['Цена по прайсу', mzRub(M.brush.p)]],
+    'Щётка надевается на шпиндель и не даёт стружке разлетаться, работая вместе ' +
+    'с аспирацией. Диаметр подбирается под патрон.');
+  mzHints('mzBrHint', [['Диаметр щётки должен совпадать с диаметром патрона вашего ' +
+    'шпинделя — проверьте по паспорту станка.', 'warn']]);
 }
 function mzDspPrice() { return (M.dsp[$('mzDsp').value] || {}).p || 0; }
 function mzRenderDsp() {
@@ -10161,13 +10324,13 @@ function mzRenderDsp() {
   mzCard('mzDspCard', i.n, v === 'up' ? 'доплата' : 'полная стоимость',
     [['RichAuto A11', mzRub(M.dsp.a11.p)], ['RichAuto A18', mzRub(M.dsp.a18.p)],
      ['Доплата за замену', mzRub(M.dsp.up.p)], ['Штатно A18', 'только M1 1325 RD']],
-    'Цены из прайса LASERCUT от ' + '25.03.2026. ' +
-    'Стойка уже входит в стоимость конфигурации станка — эта вкладка нужна либо ' +
-    'для доплаты за замену, либо когда стойка идёт отдельной строкой. ' +
-    'В остальных случаях позиция задвоится.<br><br>A11 — трёхосевой пульт, ' +
-    'A18 — четырёхосевой с полноценной осью A/C. По руководству RichAuto A11 тоже ' +
-    'способен крутить поворотную ось, но методом подмены: ось C подключается вместо ' +
-    'X или Y через внешний переключатель, одновременной четырёхосевой интерполяции нет.');
+    'Цены из прайса LASERCUT от 25.03.2026. Стойка уже входит в стоимость ' +
+    'конфигурации станка — эта вкладка нужна либо для доплаты за замену, либо ' +
+    'когда стойка идёт отдельной строкой. В остальных случаях позиция задвоится.' +
+    '<br><br>A11 — трёхосевой пульт, A18 — четырёхосевой с полноценной осью A/C. ' +
+    'По руководству RichAuto A11 тоже способен крутить поворотную ось, но методом ' +
+    'подмены: ось C подключается вместо X или Y через внешний переключатель, ' +
+    'одновременной четырёхосевой интерполяции при этом нет.');
   var h = [];
   if (v === 'up') {
     if (/A11/.test(ctrl)) {
@@ -10180,12 +10343,8 @@ function mzRenderDsp() {
         'к ней не применима.', 'warn']);
     }
   }
-  if (v === 'a11' && /A11/.test(ctrl)) {
-    h.push(['A11 уже указана как стойка станка — позиция задвоится.', 'bad']);
-  }
-  if (v === 'a18' && /A18/.test(ctrl)) {
-    h.push(['A18 уже указана как стойка станка — позиция задвоится.', 'bad']);
-  }
+  if (v === 'a11' && /A11/.test(ctrl)) h.push(['A11 уже указана как стойка станка — позиция задвоится.', 'bad']);
+  if (v === 'a18' && /A18/.test(ctrl)) h.push(['A18 уже указана как стойка станка — позиция задвоится.', 'bad']);
   mzHints('mzDspHint', h);
 }
 // Влезает ли заготовка: высота центра оси, ход Z и вылет фрезы.
@@ -10217,8 +10376,7 @@ function mzRenderRot() {
   if (fit) {
     rows.push(['Ход по Z у серии', fit.z + ' мм']);
     rows.push(['Просвет над патроном', fit.free + ' мм']);
-    rows.push(['Заготовка по расчёту', fit.bad ? 'не проходит'
-      : 'до ⌀' + fit.eff + ' мм']);
+    rows.push(['Заготовка по расчёту', fit.bad ? 'не проходит' : 'до ⌀' + fit.eff + ' мм']);
   }
   mzCard('mzRotCard', r.n, r.sub, rows,
     esc(r.idx) + '<br><br>' + esc(M.rotNote) + '<br><br>' + esc(M.rotFitNote));
@@ -10238,9 +10396,7 @@ function mzRenderRot() {
   } else if (fit) {
     h.push(['Заготовка до ⌀' + r.dmax + ' мм проходит по ходу Z.', 'ok']);
   }
-  if (best && best.k !== r.k) {
-    h.push(['Максимум для этой серии по расчёту — ' + esc(best.n) + '.', 'ok']);
-  }
+  if (best && best.k !== r.k) h.push(['Максимум для этой серии по расчёту — ' + esc(best.n) + '.', 'ok']);
   var ctrl = $('mzCtrl').value;
   if (r.k !== 'wattsan' && !/A18|Syntec|NC8|F7324/.test(ctrl)) {
     h.push(['Стойка ' + esc(ctrl) + ' не четырёхосевая. Нужна A18 или промышленная ' +
@@ -10294,11 +10450,10 @@ function mzPnrBase() {
   var row = mzPnrVars(g).filter(function (x) { return x[0] === v; })[0];
   return row ? row[2] : 0;
 }
-// Коэффициент выезда — наценка, поэтому считаем её в копейках через money.js.
+// Коэффициент выезда — это наценка, поэтому считаем её в копейках через money.js.
 function mzPnrPrice() {
   var base = toCents(mzPnrBase());
-  var k = $('mzPnrK').value === '12' ? 200 : 0;
-  return k ? sNacenkoy(base, k) : base;
+  return $('mzPnrK').value === '12' ? sNacenkoy(base, 200) : base;
 }
 function mzRenderPnr() {
   var g = mzPnrM(), auto = mzPnrGroupOf(), h = [];
@@ -10317,47 +10472,42 @@ function mzRenderPnr() {
   } else if (auto.k) {
     h.push(['Группа подобрана по прайсу под выбранный станок.', 'ok']);
   }
-  if (g.eduIncl) h.push(['У этой группы обучение входит в ПНР — отдельной строкой ' +
-    'его ставить не нужно.', 'ok']);
+  if (g.eduIncl) h.push(['У этой группы обучение входит в ПНР — отдельной строкой его ставить не нужно.', 'ok']);
   if ($('mzPnrK').value === '12') {
-    h.push(['Коэффициент 1,2 применяется, когда инженер выезжает к станку, ' +
-      'купленному не у нас.', 'ok']);
+    h.push(['Коэффициент 1,2 применяется, когда инженер выезжает к станку, купленному не у нас.', 'ok']);
   }
   mzHints('mzPnrHint', h);
 }
 
 // ------------------------------------------------------- спецификация и смета
-// Каждая строка: наименование, цена в копейках, количество, тип для сметы.
+var MZ_SECS = [{ k: 'eq', n: 'Станок', c: 'var(--or)' },
+  { k: 'opt', n: 'Допоборудование', c: 'var(--ok)' },
+  { k: 'srv', n: 'Услуги', c: 'var(--warn)' }];
+
 function mzSpec() {
   var out = [];
   var f = $('mzFmt').value;
   var F = M.formats.filter(function (x) { return x[0] === f; })[0];
-  var name = 'Фрезерный станок с ЧПУ Wattsan ' + $('mzSeries').value + ' ' + f +
-    ', ' + mzDec($('mzSpindle').value) + ' кВт ' +
-    ($('mzCool').value === 'wc' ? 'wc' : 'ac') + ', ' + $('mzCtrl').value +
-    ($('mzTable').value === 'VAC' ? ', вакуумный стол' : '');
   var c = MZCAT[mzSel];
-  if (c && c.i === mzSel) name = 'Фрезерный станок с ЧПУ Wattsan ' + c.n;
+  var name = c ? 'Фрезерный станок с ЧПУ Wattsan ' + c.n
+    : 'Фрезерный станок с ЧПУ Wattsan ' + $('mzSeries').value + ' ' + f + ', ' +
+      mzDec($('mzSpindle').value) + ' кВт ' + ($('mzCool').value === 'wc' ? 'wc' : 'ac') +
+      ', ' + $('mzCtrl').value + ($('mzTable').value === 'VAC' ? ', вакуумный стол' : '');
   if (mzNum('mzPrice')) {
     out.push({ n: name, c: toCents(mzNum('mzPrice')), q: 1, t: 'eq',
       d: [['Рабочее поле', (F ? F[1] : f) + ' мм'],
         ['Шпиндель', mzDec($('mzSpindle').value) + ' кВт · ' +
           ($('mzCool').value === 'wc' ? 'водяное' : 'воздушное') + ' · ' + mzSV() + ' В'],
-        ['Стол', $('mzTable').value + ($('mzTable').value === 'VAC'
-          ? ', насос ' + mzTV() + ' В' : '')],
-        ['Стойка ЧПУ', $('mzCtrl').value], ['Двигатели', $('mzMotor').value],
+        ['Стол', $('mzTable').value + ($('mzTable').value === 'VAC' ? ', насос ' + mzTV() + ' В' : '')],
+        ['Стойка ЧПУ', $('mzCtrl').value],
+        ['Двигатели', $('mzMotor').value],
         ['Поставка', mzKey() === 'order' ? APP.deliveryOrder : APP.deliveryStock]] });
   }
-  if ($('mzStabOn').checked && mzStabM()) {
-    out.push({ n: mzStabM().n, c: toCents(mzNum('mzStabP')), q: 1, t: 'opt' });
-  }
-  if ($('mzChOn').checked && mzChM()) {
-    out.push({ n: 'Чиллер ' + mzChM().n, c: toCents(mzNum('mzChP')), q: 1, t: 'opt' });
-  }
+  if ($('mzStabOn').checked && mzStabM()) out.push({ n: mzStabM().n, c: toCents(mzNum('mzStabP')), q: 1, t: 'opt' });
+  if ($('mzChOn').checked && mzChM()) out.push({ n: 'Чиллер ' + mzChM().n, c: toCents(mzNum('mzChP')), q: 1, t: 'opt' });
   if ($('mzSensOn').checked) {
     var sn = M.sensors.filter(function (x) { return x.k === $('mzSens').value; })[0];
-    out.push({ n: (sn ? sn.n : 'Датчик высоты инструмента'),
-      c: toCents(mzNum('mzSensP')), q: 1, t: 'opt' });
+    out.push({ n: sn ? sn.n : 'Датчик высоты инструмента', c: toCents(mzNum('mzSensP')), q: 1, t: 'opt' });
   }
   if ($('mzVibOn').checked) {
     out.push({ n: M.vibro.n, c: toCents(mzNum('mzVibP')),
@@ -10368,8 +10518,7 @@ function mzSpec() {
       c: toCents(mzNum('mzAspP')), q: 1, t: 'opt' });
   }
   if ($('mzBrOn').checked) {
-    out.push({ n: M.brush.n + ' ⌀' + $('mzBr').value + ' мм',
-      c: toCents(mzNum('mzBrP')), q: 1, t: 'opt' });
+    out.push({ n: M.brush.n + ' ⌀' + $('mzBr').value + ' мм', c: toCents(mzNum('mzBrP')), q: 1, t: 'opt' });
   }
   if ($('mzDspOn').checked) {
     out.push({ n: M.dsp[$('mzDsp').value].n, c: toCents(mzNum('mzDspP')), q: 1, t: 'opt' });
@@ -10391,67 +10540,86 @@ function mzSpec() {
   }
   return out;
 }
-// Нестыковки всей сборки: то, что менеджер не должен отправить клиенту.
 function mzIssues() {
   var out = [];
   if (!mzNum('mzPrice')) {
-    out.push(['Цена станка не заполнена — выберите конфигурацию из прайса ' +
-      'или введите цену вручную.', 'bad']);
+    out.push(['Цена станка не заполнена — выберите конфигурацию из прайса или введите цену вручную.', 'bad']);
   }
   if ($('mzCool').value === 'wc' && !$('mzChOn').checked) {
-    out.push(['Шпиндель с водяным охлаждением, а чиллера в спецификации нет. ' +
-      'Без него станок работать не должен.', 'bad']);
+    out.push(['Шпиндель с водяным охлаждением, а чиллера в спецификации нет. Без него станок работать не должен.', 'bad']);
   }
   if ($('mzCool').value === 'ac' && $('mzChOn').checked) {
     out.push(['Охлаждение воздушное, а чиллер в спецификации есть — лишняя позиция.', 'bad']);
   }
   if (!$('mzStabOn').checked) {
-    out.push(['Стабилизатора в спецификации нет. Паспорт требует стабильного питания, ' +
-      'без него гарантия под вопросом.', 'warn']);
+    out.push(['Стабилизатора в спецификации нет. Паспорт требует стабильного питания, без него гарантия под вопросом.', 'warn']);
   }
   if (!$('mzPnrOn').checked) {
-    out.push(['ПНР и обучение не включены. Они платные и в цену станка не входят — ' +
-      'клиент должен видеть их отдельной строкой или знать, что их нет.', 'warn']);
+    out.push(['ПНР и обучение не включены. Они платные и в цену станка не входят — клиент должен видеть их отдельной строкой.', 'warn']);
   }
   if ($('mzRotOn').checked && !/A18|Syntec|NC8|F7324/.test($('mzCtrl').value)) {
     out.push(['В смете есть поворотная ось, а стойка станка не четырёхосевая.', 'bad']);
   }
-  ['mzStabHint', 'mzChHint', 'mzSensHint', 'mzVibHint', 'mzAspHint', 'mzBrHint',
-    'mzDspHint', 'mzRotHint'].forEach(function (id) {
-    if (mzFlags[id] === 'bad') {
-      var box = id.replace('Hint', 'On');
-      if ($(box) && $(box).checked) {
-        out.push(['В позиции «' + esc(($(box).closest('.mzpane')
-          .querySelector('label.f') || {}).textContent || 'допоборудование') +
-          '» есть нестыковка — проверьте вкладку.', 'bad']);
-      }
-    }
-  });
   return out;
 }
 function mzRenderSpec() {
-  var rows = mzSpec(), sum = 0;
-  rows.forEach(function (r) { sum += r.c * r.q; });
-  $('mzEmpty').hidden = !!rows.length;
-  $('mzBody').innerHTML = rows.map(function (r) {
-    return '<tr><td>' + esc(r.n) + (r.q > 1 ? ' <span class="muted">× ' + r.q + '</span>' : '') +
-      '</td><td class="num">' + fmtRub(r.c * r.q) + ' ₽</td></tr>';
-  }).join('');
-  var nds = ndsIznutri(sum, APP.ndsDefault * 10);
-  $('mzTotals').innerHTML = '<div class="spec-line"><span>Итого</span><b>' +
-    fmtRub(sum) + ' ₽</b></div><div class="spec-line small muted"><span>в том числе НДС ' +
-    APP.ndsDefault + ' %</span><span>' + fmtRub(nds) + ' ₽</span></div>';
-  $('mzCnt').textContent = rows.length ? cnt(rows.length, ['позиция', 'позиции', 'позиций']) : '';
-  var iss = mzIssues();
-  $('mzIssues').innerHTML = iss.map(function (r) {
-    return '<div class="mzhint ' + r[1] + '">' + r[0] + '</div>';
+  var rows = mzSpec(), sum = 0, byType = { eq: 0, opt: 0, srv: 0 };
+  rows.forEach(function (r) { sum += r.c * r.q; byType[r.t] += r.c * r.q; });
+
+  var c = MZCAT[mzSel];
+  $('mzCfgHead').innerHTML = '<b>' + esc(c ? 'Wattsan ' + c.n
+    : 'Wattsan ' + $('mzSeries').value + ' ' + $('mzFmt').value) + '</b><span>' +
+    esc(mzDec($('mzSpindle').value) + ' кВт · ' +
+      ($('mzCool').value === 'wc' ? 'водяное' : 'воздушное') + ' · стол ' +
+      $('mzTable').value + ' · ' + $('mzCtrl').value) + '</span>';
+  $('mzSpecMeta').textContent = c ? 'Конфигурация из прайса, ' +
+    (mzKey() === 'order' ? 'цена под заказ' : 'цена из наличия')
+    : 'Своя конфигурация — цену вводите вручную';
+
+  var html = '';
+  MZ_SECS.forEach(function (sec) {
+    var list = rows.filter(function (r) { return r.t === sec.k; });
+    if (!list.length) return;
+    html += '<div class="sec"><div class="sech"><span>' + sec.n + '</span><b>' +
+      fmtRub(byType[sec.k]) + ' ₽</b></div>';
+    list.forEach(function (r) {
+      html += '<div class="srow"><span>' + esc(r.n) +
+        (r.q > 1 ? ' × ' + r.q : '') + '</span><span class="v">' +
+        fmtRub(r.c * r.q) + ' ₽</span></div>';
+      (r.d || []).forEach(function (dd) {
+        html += '<div class="sdet"><span>' + esc(dd[0]) + '</span><span>' +
+          esc(String(dd[1])) + '</span></div>';
+      });
+    });
+    html += '</div>';
+  });
+  $('mzSpecBody').innerHTML = html;
+
+  // полоса долей: сразу видно, сколько в смете станка, обвязки и услуг
+  $('mzSplit').innerHTML = sum ? MZ_SECS.map(function (sec) {
+    var w = byType[sec.k] / sum * 100;
+    return w ? '<i style="width:' + w.toFixed(2) + '%;background:' + sec.c + '"></i>' : '';
+  }).join('') : '';
+  $('mzLegend').innerHTML = sum ? MZ_SECS.filter(function (sec) { return byType[sec.k]; })
+    .map(function (sec) {
+      return '<span><em style="background:' + sec.c + '"></em>' + sec.n + ' — ' +
+        fmtRub(byType[sec.k]) + ' ₽</span>';
+    }).join('') : '';
+
+  $('mzSum').textContent = fmtRub(sum) + ' ₽';
+  $('mzSumBar').textContent = fmtRub(sum) + ' ₽';
+  $('mzPosCount').textContent = rows.length
+    ? ' · ' + cnt(rows.length, ['позиция', 'позиции', 'позиций']) : '';
+  // ndsIznutri отдаёт пару «без НДС и сам НДС» — в плашке нужен второй
+  $('mzVat').textContent = sum
+    ? 'в том числе НДС ' + APP.ndsDefault + ' % — ' +
+      fmtRub(ndsIznutri(sum, APP.ndsDefault * 10).nds) + ' ₽' : '';
+  $('mzIssues').innerHTML = mzIssues().map(function (r) {
+    return '<div class="issue' + (r[1] === 'warn' ? ' warn' : '') + '">' + r[0] + '</div>';
   }).join('');
   $('mzOut').value = rows.map(function (r) {
     return r.n + (r.q > 1 ? ' × ' + r.q : '') + ' — ' + fmtRub(r.c * r.q) + ' руб.';
   }).join('\n') + (rows.length ? '\nИтого: ' + fmtRub(sum) + ' руб.' : '');
-  var c = MZCAT[mzSel];
-  $('mzHead').textContent = c ? 'Из прайса: ' + c.n
-    : 'Своя конфигурация — цену вводите вручную.';
 }
 
 // ------------------------------------------------------------- цены по умолчанию
@@ -10482,13 +10650,15 @@ function mzPriceDefaults() {
 
 // ------------------------------------------------------------------ вкладки
 function mzRenderMTabs() {
+  $('mzMTabs').style.display = mzS.mode === 'custom' ? '' : 'none';
+  $('mzMatchWrap').style.display = mzS.mode === 'custom' ? '' : 'none';
   $('mzMTabs').innerHTML = M.mcats.map(function (c) {
-    return '<button type="button" class="pill' + (c.k === mzMCat ? ' on' : '') +
-      '" data-mcat="' + c.k + '" role="tab">' + esc(c.n) + '</button>';
+    return '<button type="button" class="tab' + (c.k === mzMCat ? ' on' : '') +
+      '" data-mcat="' + c.k + '">' + esc(c.n) + '</button>';
   }).join('');
   M.mcats.forEach(function (c) {
     var p = $('mzp_' + c.k);
-    if (p) p.hidden = !(mzS.mode === 'custom' && c.k === mzMCat);
+    if (p) p.classList.toggle('on', mzS.mode === 'custom' && c.k === mzMCat);
   });
 }
 function mzRenderTabs() {
@@ -10497,30 +10667,26 @@ function mzRenderTabs() {
     var flag = '';
     ids.forEach(function (x) {
       var key = 'mz' + x.charAt(0).toUpperCase() + x.slice(1);
-      if (mzFlags[key] === 'bad') flag = 'bad';
-      else if (mzFlags[key] === 'warn' && flag !== 'bad') flag = 'warn';
+      if (mzFlags[key] === 'bad') flag = 'f-bad';
+      else if (mzFlags[key] === 'warn' && flag !== 'f-bad') flag = 'f-warn';
     });
     var on = (c.on || []).some(function (id) {
       var box = $('mz' + id.charAt(0).toUpperCase() + id.slice(1));
       return box && box.checked;
     });
-    return '<button type="button" class="pill' + (c.k === mzCat ? ' on' : '') +
-      (flag ? ' flag-' + flag : '') + '" data-cat="' + c.k + '" role="tab">' +
-      esc(c.n) + (on ? ' ·' : '') + '</button>';
+    return '<button type="button" class="tab' + (c.k === mzCat ? ' on' : '') +
+      (on ? ' sel' : '') + (flag ? ' ' + flag : '') + '" data-cat="' + c.k + '">' +
+      esc(c.n) + '</button>';
   }).join('');
   M.cats.forEach(function (c) {
     var p = $('mzp_' + c.k);
-    if (p) p.hidden = c.k !== mzCat;
+    if (p) p.classList.toggle('on', c.k === mzCat);
   });
 }
 function mzRenderModes() {
-  $('mzModes').innerHTML = [['ready', 'Готовая из прайса'], ['custom', 'Своя конфигурация']]
-    .map(function (m) {
-      return '<button type="button" class="pill' + (mzS.mode === m[0] ? ' on' : '') +
-        '" data-mode="' + m[0] + '" role="tab">' + m[1] + '</button>';
-    }).join('');
-  $('mzMTabs').hidden = mzS.mode !== 'custom';
-  $('mzMatchWrap').hidden = mzS.mode !== 'custom';
+  Array.prototype.forEach.call($('mzModes').children, function (b) {
+    b.classList.toggle('on', b.dataset.mode === mzS.mode);
+  });
 }
 
 // ------------------------------------------------------------- пересчёт всего
@@ -10541,26 +10707,26 @@ function mzUpdate() {
   mzRenderModes(); mzRenderMTabs(); mzRenderTabs();
   mzRenderReady(); mzRenderMatches(); mzRenderSimilar();
   mzRenderSpec();
-  $('mzCfgCnt').textContent = cnt(MZCAT.length, ['конфигурация', 'конфигурации',
-    'конфигураций']) + ' в прайсе';
+  $('mzCfgCnt').textContent = cnt(MZCAT.length,
+    ['конфигурация', 'конфигурации', 'конфигураций']) + ' в прайсе';
   mzSave();
   mzBusy = false;
 }
-// Черновик вкладки: поля и галочки переживают перезагрузку, как в других разделах.
 var MZ_FIELDS = ['mzSeries', 'mzFmt', 'mzPrice', 'mzStock', 'mzSpindle', 'mzCool',
   'mzTable', 'mzCtrl', 'mzMotor', 'mzStabB', 'mzStab', 'mzStabP', 'mzCh', 'mzChP',
-  'mzSens', 'mzSensP', 'mzVib', 'mzVibP', 'mzAsp', 'mzAspP', 'mzBr', 'mzBrP',
+  'mzSens', 'mzSensP', 'mzVibM', 'mzVib', 'mzVibP', 'mzAsp', 'mzAspP', 'mzBr', 'mzBrP',
   'mzDsp', 'mzDspP', 'mzRot', 'mzRotT', 'mzRotP', 'mzExtraN', 'mzExtraP',
   'mzPnrGroup', 'mzPnrVar', 'mzPnrK', 'mzPnrP'];
 var MZ_CHECKS = ['mzStabOn', 'mzChOn', 'mzSensOn', 'mzVibOn', 'mzAspOn', 'mzBrOn',
   'mzDspOn', 'mzRotOn', 'mzExtraOn', 'mzPnrOn'];
+var MZ_RADIO = ['mzSV220', 'mzSV380', 'mzTV220', 'mzTV380', 'mzAV220', 'mzAV380'];
 function mzSave() {
   var f = {};
   MZ_FIELDS.forEach(function (id) {
     if ($(id)) f[id] = { v: $(id).value, t: $(id).dataset.touched || '0' };
   });
   var ch = {};
-  MZ_CHECKS.forEach(function (id) { if ($(id)) ch[id] = $(id).checked; });
+  MZ_CHECKS.concat(MZ_RADIO).forEach(function (id) { if ($(id)) ch[id] = $(id).checked; });
   mzS.fields = f; mzS.checks = ch; mzS.cat = mzCat; mzS.mcat = mzMCat;
   save();
 }
@@ -10588,7 +10754,7 @@ function mzFill() {
     return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
   }).join('');
   $('mzSpindle').innerHTML = M.spindles.map(function (s) {
-    return '<option value="' + s + '">' + mzDec(s) + ' кВт</option>';
+    return '<option value="' + s + '">' + mzDec(s) + '</option>';
   }).join('');
   $('mzCtrl').innerHTML = Object.keys(M.ctrlInfo).map(function (k) {
     return '<option value="' + esc(k) + '">' + esc(k) + '</option>';
@@ -10600,8 +10766,7 @@ function mzFill() {
     return '<option value="' + b[0] + '">' + esc(b[1]) + '</option>';
   }).join('');
   $('mzCh').innerHTML = APP.chillersFull.map(function (c) {
-    return '<option value="' + c.k + '">' + esc(c.n) + ' — ' + c.kwMin + '–' +
-      c.kwMax + ' кВт</option>';
+    return '<option value="' + c.k + '">' + esc(c.n) + '</option>';
   }).join('');
   $('mzSens').innerHTML = M.sensors.map(function (s) {
     return '<option value="' + esc(s.k) + '">' + esc(s.k) + '</option>';
@@ -10613,7 +10778,7 @@ function mzFill() {
     return '<option value="' + a.k + '">' + esc(a.n) + '</option>';
   }).join('');
   $('mzBr').innerHTML = APP.brushes.map(function (b) {
-    return '<option value="' + b + '">⌀' + b + ' мм</option>';
+    return '<option value="' + b + '">⌀ ' + b + ' мм</option>';
   }).join('');
   $('mzRot').innerHTML = M.rot.map(function (r) {
     return '<option value="' + r.k + '">' + esc(r.n) + '</option>';
@@ -10621,9 +10786,12 @@ function mzFill() {
   $('mzPnrGroup').innerHTML = APP.pnrGroups.map(function (g) {
     return '<option value="' + g.k + '">' + esc(g.n) + '</option>';
   }).join('');
+  $('mzSeries').value = 'M1';
   $('mzCtrl').value = 'DSP RichAuto A11';
   $('mzMotor').value = 'Шаговые с обратной связью (Leadshine)';
-  $('mzSpindle').value = '3.2';
+  $('mzSpindle').value = '4.5';
+  $('mzAsp').value = 'DC2500';
+  $('mzBr').value = '100';
   mzFillFmt();
   var g = mzPnrGroupOf();
   if (g.k) $('mzPnrGroup').value = g.k;
@@ -10637,14 +10805,10 @@ function mzBind() {
     if (!box) return;
     box.addEventListener('change', function () {
       mzTouch(id);
-      if (id === 'mzSeries') {
-        mzFillFmt();
+      if (id === 'mzSeries') mzFillFmt();
+      if (id === 'mzSeries' || id === 'mzFmt') {
         var g = mzPnrGroupOf();
         if (g.k && !mzTouched('mzPnrGroup')) $('mzPnrGroup').value = g.k;
-      }
-      if (id === 'mzFmt') {
-        var g2 = mzPnrGroupOf();
-        if (g2.k && !mzTouched('mzPnrGroup')) $('mzPnrGroup').value = g2.k;
       }
       if (id === 'mzStabB') mzTouch('mzStab', false);
       if (id === 'mzRot' || id === 'mzRotT') mzTouch('mzRotP', false);
@@ -10664,6 +10828,14 @@ function mzBind() {
   });
   MZ_CHECKS.forEach(function (id) {
     if ($(id)) $(id).addEventListener('change', mzUpdate);
+  });
+  MZ_RADIO.forEach(function (id) {
+    if ($(id)) {
+      $(id).addEventListener('change', function () {
+        if (id.indexOf('mzSV') === 0) mzS.sv = $(id).value;
+        mzUpdate();
+      });
+    }
   });
   $('mzModes').addEventListener('click', function (e) {
     var b = e.target.closest('[data-mode]');
@@ -10685,50 +10857,38 @@ function mzBind() {
     mzRenderTabs();
     mzSave();
   });
-  $('mzSV').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-sv]');
-    if (!b || b.disabled) return;
-    mzS.sv = b.dataset.sv;
-    mzUpdate();
-  });
-  $('mzTV').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-tv]');
-    if (!b || b.disabled) return;
-    mzS.tv = b.dataset.tv;
-    mzUpdate();
-  });
-  $('mzAV').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-av]');
-    if (!b || b.disabled) return;
-    mzS.av = b.dataset.av;
-    mzUpdate();
-  });
-  ['mzReady', 'mzSimilar', 'mzMatchList'].forEach(function (id) {
+  ['mzReadyList', 'mzSimilar', 'mzMatchList'].forEach(function (id) {
     $(id).addEventListener('click', function (e) {
       var b = e.target.closest('[data-cfg]');
       if (b) { mzApplyCfg(+b.dataset.cfg); return; }
       var p = e.target.closest('[data-price]');
       if (p) {
+        if (mzTouched('mzPrice') && mzNum('mzPrice') && mzNum('mzPrice') !== +p.dataset.price &&
+            !window.confirm('Цена станка была введена вручную. Заменить на ' +
+              mzRub(+p.dataset.price) + '?')) return;
         $('mzPrice').value = +p.dataset.price;
         mzTouch('mzPrice');
         mzUpdate();
       }
     });
   });
-  // Документ отсюда не собирается: позиции уходят в раздел «Смета и ТКП»,
-  // где лист предложения и файл для Word делаются фирменным шаблоном.
-  $('mzToSmeta').addEventListener('click', function () {
+  // Документ собирает раздел «Смета и ТКП»: сюда позиции только уходят.
+  function toSmeta() {
     var rows = mzSpec();
     if (!rows.length) { toast('Спецификация пуста — начните со станка'); return; }
-    rows.forEach(function (r) {
-      addItem(r.n, Math.round(r.c / 100), r.q, r.t);
-    });
+    rows.forEach(function (r) { addItem(r.n, Math.round(r.c / 100), r.q, r.t); });
     toast('Перенесено в смету: ' + cnt(rows.length, ['позиция', 'позиции', 'позиций']));
     showTab('smeta');
+  }
+  $('mzToSmeta').addEventListener('click', toSmeta);
+  $('mzBarSmeta').addEventListener('click', toSmeta);
+  $('mzBarSpec').addEventListener('click', function () {
+    $('p-mill').querySelector('.side').scrollIntoView({ behavior: 'smooth' });
   });
   $('mzCopy').addEventListener('click', function () {
     var ta = $('mzOut');
     if (!ta.value) { toast('Спецификация пуста'); return; }
+    ta.classList.add('on');
     ta.select();
     var ok = false;
     try { ok = d.execCommand('copy'); } catch (e) { ok = false; }
@@ -10753,6 +10913,7 @@ function mzBind() {
     MZ_CHECKS.forEach(function (id) { if ($(id)) $(id).checked = false; });
     state.mill = { rotPrices: {}, mode: 'ready' };
     mzS = state.mill;
+    $('mzOut').classList.remove('on');
     mzFill();
     mzUpdate();
     toast('Конфигурация сброшена');
@@ -10763,6 +10924,12 @@ mzFill();
 mzLoad();
 mzBind();
 mzUpdate();
+if (!mzS.fields || !mzS.fields.mzPrice || !mzS.fields.mzPrice.v) {
+  var mzFirst = mzBySeries($('mzSeries').value).filter(function (c) {
+    return c.f === $('mzFmt').value;
+  })[0];
+  if (mzFirst) mzApplyCfg(mzFirst.i);
+}
 
 
   var hash = (location.hash || '').replace('#', '');

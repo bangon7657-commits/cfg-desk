@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 34', /const CACHE = 'cfg-v34'/.test(swTxt),
+check('кеш: версия поднята до 35', /const CACHE = 'cfg-v35'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -2042,20 +2042,20 @@ check('вкладки: значок сметы жив после перерис�
 
   mz('mzSeries').value = 'MINI Cabine'; mzFire('mzSeries');
   mz('mzFmt').value = '0404'; mzFire('mzFmt');
-  const rcards = doc.querySelectorAll('#mzReady .mzrcard');
+  const rcards = doc.querySelectorAll('#mzReadyList .rcard');
   check('фрезерный: готовые конфигурации из прайса показаны', rcards.length > 0, rcards.length);
   rcards[0].click();
   check('фрезерный: цена подставилась ровно как в прайсе',
     mz('mzPrice').value === '371805', mz('mzPrice').value);
   check('фрезерный: спецификация посчитала станок',
-    /371 805/.test(mz('mzTotals').textContent), mz('mzTotals').textContent.slice(0, 60));
+    /371 805/.test(mz('mzSum').textContent), mz('mzSum').textContent);
   check('фрезерный: водяное охлаждение без чиллера — это ошибка сборки',
     /чиллера в спецификации нет/.test(mz('mzIssues').textContent), '');
   mz('mzChOn').checked = true; mzFire('mzChOn');
   check('фрезерный: чиллер подобран под шпиндель 1,5 кВт',
     mz('mzCh').value === '3000', mz('mzCh').value);
   check('фрезерный: чиллер вошёл в сумму',
-    /391 905/.test(mz('mzTotals').textContent), mz('mzTotals').textContent.slice(0, 60));
+    /391 905/.test(mz('mzSum').textContent), mz('mzSum').textContent);
 
   // серия без готовой конфигурации под эту связку — цена не выдумывается
   mz('mzSeries').value = 'M1'; mzFire('mzSeries');
@@ -2089,7 +2089,7 @@ check('вкладки: значок сметы жив после перерис�
   mz('mzPnrK').value = '10'; mzFire('mzPnrK');
 
   // перенос в смету: документ собирает раздел «Смета и ТКП», не эта вкладка
-  doc.querySelector('#mzReady .mzrcard').click();
+  doc.querySelector('#mzReadyList .rcard').click();
   mz('mzStabOn').checked = true; mzFire('mzStabOn');
   mz('mzPnrOn').checked = true; mzFire('mzPnrOn');
   const wasRows = doc.querySelectorAll('#smetaBody tr').length;
@@ -2104,13 +2104,36 @@ check('вкладки: значок сметы жив после перерис�
     nowRows.some(t => /Пусконаладка и обучение/.test(t)), '');
   check('фрезерный: после переноса открывается смета',
     doc.getElementById('p-smeta').classList.contains('active'), '');
-  check('фрезерный: своей кнопки Word и печати ТКП у раздела нет',
+  check('фрезерный: своей кнопки Word и листа ТКП у раздела нет',
     !mz('p-mill').querySelector('[id*="Word"], [id*="Kp"], [id*="kp"]'), '');
+  check('фрезерный: вёрстка исходного конфигуратора — вкладки, тумблеры, карточки',
+    doc.querySelectorAll('#p-mill .tab').length > 8 &&
+    doc.querySelectorAll('#p-mill .tgl').length === 10 &&
+    doc.querySelectorAll('#p-mill .specbox').length > 5 &&
+    !!doc.querySelector('#p-mill .seg button.on'),
+    doc.querySelectorAll('#p-mill .tab').length + '/' +
+    doc.querySelectorAll('#p-mill .tgl').length + '/' +
+    doc.querySelectorAll('#p-mill .specbox').length);
+  check('фрезерный: спецификация разбита на секции с полосой долей',
+    doc.querySelectorAll('#mzSpecBody .sec').length >= 2 &&
+    doc.querySelectorAll('#mzSplit i').length >= 2 &&
+    /₽/.test(mz('mzLegend').textContent),
+    doc.querySelectorAll('#mzSpecBody .sec').length + '/' +
+    doc.querySelectorAll('#mzSplit i').length);
+  // цвет в разделе только из переменных темы: иначе он не переживёт светлую тему
+  var mzCss = (src.match(/#p-mill[^{]*\{[^}]*\}/g) || []).join('');
+  check('фрезерный: ни одного цвета мимо переменных темы',
+    !/#[0-9a-f]{3,8}\b/i.test(mzCss) && !/\brgba?\(/i.test(mzCss),
+    (mzCss.match(/#[0-9a-f]{3,8}\b/i) || [''])[0]);
   menuGo('mill');
   mz('mzReset') && (win.confirm = function () { return true; });
   mz('mzReset').click();
-  check('фрезерный: сброс очищает конфигурацию', !mz('mzPrice').value &&
-    !mz('mzStabOn').checked && !mz('mzPnrOn').checked, mz('mzPrice').value);
+  // сброс возвращает раздел в исходное состояние: галочки сняты, ручные
+  // правки забыты, цена снова подставляется из прайса под станок по умолчанию
+  check('фрезерный: сброс очищает конфигурацию',
+    !mz('mzStabOn').checked && !mz('mzPnrOn').checked &&
+    mz('mzPrice').dataset.touched !== '1',
+    mz('mzPrice').value + ' / ' + mz('mzPrice').dataset.touched);
 }());
 
 // ---- пререндер: снимаем класс js, чтобы без скриптов было видно всё ----
