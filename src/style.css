@@ -30,9 +30,9 @@ html[data-theme="light"]{
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--tx);
-  font:16px/1.6 "Segoe UI",Roboto,system-ui,-apple-system,sans-serif;
+  font:17.5px/1.6 "Segoe UI",Roboto,system-ui,-apple-system,sans-serif;
   -webkit-font-smoothing:antialiased}
-.wrap{max-width:1200px;margin:0 auto;padding:0 16px 80px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 16px 80px}
 
 /* ---------- шапка ---------- */
 header{background:var(--head);
@@ -44,35 +44,35 @@ header{background:var(--head);
 .brand{display:flex;align-items:center;gap:11px;text-decoration:none;
   color:var(--tx);line-height:1.15}
 .brand-mark{flex:0 0 auto;display:block;height:38px;width:auto}
-.brand-tx{font-size:19px;font-weight:700;letter-spacing:.2px;color:var(--tx)}
+.brand-tx{font-size:21px;font-weight:700;letter-spacing:.2px;color:var(--tx)}
 .brand-tx b{color:var(--or)}
-.brand small{display:block;font-size:11px;font-weight:400;color:var(--muted);
+.brand small{display:block;font-size:12px;font-weight:400;color:var(--muted);
   letter-spacing:.5px;text-transform:uppercase;margin-top:3px}
 .brand:hover .brand-tx{color:var(--or2)}
 .brand:hover .brand-mark{filter:brightness(1.12)}
 @media(max-width:560px){
   .brand-mark{height:30px}
-  .brand-tx{font-size:17px}
-  .brand small{font-size:10px}
+  .brand-tx{font-size:18.5px}
+  .brand small{font-size:11px}
 }
 .head-right{margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .toggle{display:inline-flex;align-items:center;gap:9px;background:var(--bg3);
-  border:1px solid var(--line2);padding:8px 14px;border-radius:24px;font-size:14px;
+  border:1px solid var(--line2);padding:8px 14px;border-radius:24px;font-size:15.5px;
   cursor:pointer;user-select:none;color:var(--tx2)}
 .toggle:hover{border-color:var(--or);color:var(--tx)}
 .toggle input{width:18px;height:18px;margin:0;cursor:pointer;accent-color:var(--or)}
-.savedot{font-size:13px;color:var(--or2);min-height:19px}
-.themebtn{font:inherit;font-size:13.5px;font-weight:600;padding:8px 14px;
+.savedot{font-size:14.5px;color:var(--or2);min-height:19px}
+.themebtn{font:inherit;font-size:15px;font-weight:600;padding:8px 14px;
   border-radius:24px;cursor:pointer;background:var(--bg3);color:var(--tx2);
   border:1px solid var(--line2)}
 .themebtn:hover{border-color:var(--or);color:var(--or2)}
 
 /* баннер демо-режима с выходом */
 .demo-banner{display:none;background:var(--or);color:var(--onor);padding:10px 16px;
-  font-size:14.5px;font-weight:600;text-align:center}
+  font-size:16px;font-weight:600;text-align:center}
 body.demo .demo-banner{display:flex;gap:14px;align-items:center;justify-content:center;
   flex-wrap:wrap}
-.demo-banner button{font:inherit;font-size:13.5px;font-weight:700;padding:5px 14px;
+.demo-banner button{font:inherit;font-size:15px;font-weight:700;padding:5px 14px;
   border-radius:20px;border:2px solid var(--onor);background:transparent;color:var(--onor);
   cursor:pointer}
 .demo-banner button:hover{background:var(--onor);color:var(--or)}
@@ -96,7 +96,7 @@ body.js nav{display:block}
   flex:1 1 auto}
 .navtabs::-webkit-scrollbar{display:none}
 .navtabs button{border:1px solid var(--line2);border-radius:16px;font:inherit;
-  font-size:13.5px;font-weight:600;padding:6px 13px;cursor:pointer;color:var(--tx2);
+  font-size:15px;font-weight:600;padding:6px 13px;cursor:pointer;color:var(--tx2);
   white-space:nowrap;display:flex;align-items:center;gap:6px;line-height:1.25;
   background:color-mix(in srgb, var(--bg3) 62%, transparent);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
@@ -110,7 +110,7 @@ body.js nav{display:block}
 /* кнопка «Разделы» — фирменный оранжевый блок с меню */
 .navmenu{position:relative;flex:0 0 auto}
 /* Размер кнопки: было 20 px, стало 18 px — на 10 % меньше. */
-.menubtn{font:inherit;font-size:18px;font-weight:700;padding:8px 19px 8px 43px;
+.menubtn{font:inherit;font-size:20px;font-weight:700;padding:8px 19px 8px 43px;
   border-radius:20px;cursor:pointer;border:1px solid var(--or);
   background:color-mix(in srgb, var(--or) 16%, transparent);color:var(--or);
   position:relative;line-height:1.25;white-space:nowrap}
@@ -131,41 +131,41 @@ body.js nav{display:block}
    или ниже — порядок запоминается. */
 .menulist .mrow{display:flex;align-items:stretch;gap:2px;border-radius:9px}
 .menulist .mgrip{flex:0 0 auto;display:flex;align-items:center;padding:0 6px 0 4px;
-  color:var(--muted);font-size:15px;line-height:1;cursor:grab;user-select:none}
+  color:var(--muted);font-size:16.5px;line-height:1;cursor:grab;user-select:none}
 .menulist .mrow:hover .mgrip{color:var(--or2)}
 .menulist .mrow.drag{opacity:.45;cursor:grabbing}
 .menulist .mrow.over{box-shadow:inset 0 2px 0 var(--or);background:var(--bg3)}
 .menulist .mrow:hover{background:var(--bg3)}
 .menulist .mrow>button[data-t]{display:block;flex:1 1 auto;font:inherit;
-  font-size:13.5px;text-align:left;padding:7px 11px;border:0;border-radius:9px;
+  font-size:15px;text-align:left;padding:7px 11px;border:0;border-radius:9px;
   background:none;color:var(--tx2);cursor:pointer;line-height:1.3}
 .menulist .mrow>button[data-t]:hover{color:var(--tx)}
 .menulist .mrow>button[aria-selected="true"]{color:var(--or);font-weight:700;
   background:var(--orbg)}
-.menulist .mrow>button[data-t] small{display:block;font-size:11px;
+.menulist .mrow>button[data-t] small{display:block;font-size:12px;
   color:var(--muted);font-weight:400;margin-top:1px}
 .pinbtn{flex:0 0 auto;width:34px;border:0;border-radius:9px;background:none;
-  color:var(--muted);cursor:pointer;font:inherit;font-size:16px;line-height:1}
+  color:var(--muted);cursor:pointer;font:inherit;font-size:17.5px;line-height:1}
 .pinbtn:hover{background:var(--bg4);color:var(--or)}
 .pinbtn[aria-pressed="true"]{color:var(--or)}
 .menulist .mfoot{display:flex;gap:6px;align-items:center;
   border-top:1px solid var(--line);margin-top:5px;padding:6px 8px 2px}
-.menulist .mfoot span{font-size:11px;color:var(--muted);flex:1 1 auto}
-.menulist .mfoot button{font:inherit;font-size:11.5px;padding:4px 9px;
+.menulist .mfoot span{font-size:12px;color:var(--muted);flex:1 1 auto}
+.menulist .mfoot button{font:inherit;font-size:12.5px;padding:4px 9px;
   border:1px solid var(--line2);border-radius:8px;background:none;
   color:var(--tx2);cursor:pointer}
 .menulist .mfoot button:hover{border-color:var(--or2);color:var(--tx)}
 /* крестик снятия вкладки — виден при наведении и всегда на тач-экранах */
-.navtabs button .tabx{font-size:14px;line-height:1;opacity:.45;margin-left:1px}
+.navtabs button .tabx{font-size:15.5px;line-height:1;opacity:.45;margin-left:1px}
 .navtabs button:hover .tabx{opacity:1}
 @media(max-width:560px){
   .navinner{padding:6px 8px 6px 3px;gap:8px}
-  .navtabs button{font-size:13px;padding:6px 11px}
-  .menubtn{font-size:15.5px;padding:7px 14px 7px 36px}
+  .navtabs button{font-size:14.5px;padding:6px 11px}
+  .menubtn{font-size:17px;padding:7px 14px 7px 36px}
   .menubtn::before{left:13px;width:16px}
   .menulist{min-width:min(80vw, 320px)}
 }
-.badge{background:var(--or);color:var(--onor);font-size:12px;font-weight:700;
+.badge{background:var(--or);color:var(--onor);font-size:13px;font-weight:700;
   min-width:20px;padding:1px 6px;border-radius:10px;line-height:1.5}
 .badge:empty{display:none}
 
@@ -174,16 +174,16 @@ body.js nav{display:block}
 body.js .panel{display:none}
 body.js .panel.active{display:block}
 .nojs-title{display:block;margin:34px 0 0;padding:12px 16px;background:var(--or);
-  color:var(--onor);font-size:19px;font-weight:700;border-radius:6px}
+  color:var(--onor);font-size:21px;font-weight:700;border-radius:6px}
 body.js .nojs-title{display:none}
 
-h2{font-size:22px;color:var(--tx);margin:32px 0 12px;padding-bottom:8px;
+h2{font-size:24px;color:var(--tx);margin:32px 0 12px;padding-bottom:8px;
   border-bottom:2px solid var(--line2);font-weight:700}
-h3{font-size:17px;color:var(--or2);margin:22px 0 10px;font-weight:700}
+h3{font-size:18.5px;color:var(--or2);margin:22px 0 10px;font-weight:700}
 p{margin:10px 0}
 a{color:var(--or2)}
-.muted{color:var(--muted);font-size:14px}
-.lead{font-size:15.5px;color:var(--tx2);margin-bottom:18px;max-width:900px}
+.muted{color:var(--muted);font-size:15.5px}
+.lead{font-size:17px;color:var(--tx2);margin-bottom:18px;max-width:900px}
 
 /* ---------- шаги ---------- */
 .step{background:var(--bg2);border:1px solid var(--line);border-radius:10px;
@@ -191,18 +191,18 @@ a{color:var(--or2)}
 .step-h{display:flex;align-items:center;gap:12px;padding:14px 18px;
   background:var(--bg3);border-bottom:1px solid var(--line)}
 .step-n{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--or);
-  color:var(--onor);font-weight:700;font-size:15px;display:flex;align-items:center;
+  color:var(--onor);font-weight:700;font-size:16.5px;display:flex;align-items:center;
   justify-content:center}
-.step-t{font-size:16.5px;font-weight:700;color:var(--tx)}
-.step-t small{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:1px}
+.step-t{font-size:18px;font-weight:700;color:var(--tx)}
+.step-t small{display:block;font-size:14.5px;font-weight:400;color:var(--muted);margin-top:1px}
 /* ---------------- Главная: три плитки ---------------- */
 /* Тренажёр: полоса прогресса, крупные варианты ответа, разбор ошибок */
 .quizbar{height:6px;border-radius:4px;background:var(--bg4);overflow:hidden;
   margin:4px 0 14px}
 .quizbar-i{height:100%;width:0;background:var(--or);transition:width .2s}
-.quizq{font-size:17.5px;font-weight:600;margin:0 0 14px;line-height:1.45}
+.quizq{font-size:19px;font-weight:600;margin:0 0 14px;line-height:1.45}
 .quizopts{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.quizopt{font:inherit;font-size:15.5px;text-align:left;padding:12px 14px;
+.quizopt{font:inherit;font-size:17px;text-align:left;padding:12px 14px;
   border-radius:9px;border:1px solid var(--line2);background:var(--bg4);
   color:var(--tx);cursor:pointer;transition:.12s}
 .quizopt:hover:not(:disabled){border-color:var(--or);color:var(--or2)}
@@ -211,9 +211,9 @@ a{color:var(--or2)}
 .quizopt.bad{border-color:var(--bad);background:var(--badbg);color:var(--tx);opacity:1}
 .note.ok-note{border-color:var(--ok);background:var(--okbg)}
 .quizerr{padding:10px 12px;margin:8px 0;border-radius:9px;border:1px solid var(--line);
-  background:var(--bg3);font-size:14.5px}
+  background:var(--bg3);font-size:16px}
 .quizerr b{display:block;margin-bottom:4px}
-.quizerr .muted{font-size:13px}
+.quizerr .muted{font-size:14.5px}
 
 /* Справочник: три части в одном разделе — показываем ту, что выбрана */
 .subtabs{margin:0 0 18px}
@@ -239,7 +239,7 @@ a{color:var(--or2)}
   mask:var(--oath-img) center/contain no-repeat}
 .oath-tip{position:absolute;right:0;bottom:calc(100% + 8px);width:214px;
   padding:8px 11px;border-radius:11px;border:1px solid var(--or);
-  background:var(--bg2);color:var(--tx);font-size:12.5px;line-height:1.4;
+  background:var(--bg2);color:var(--tx);font-size:14px;line-height:1.4;
   box-shadow:0 10px 26px var(--shadow);opacity:0;visibility:hidden;
   transform:translateY(4px);transition:.16s}
 .oath:hover .oath-tip,.oath:focus-visible .oath-tip{opacity:1;visibility:visible;
@@ -259,7 +259,7 @@ a{color:var(--or2)}
 /* Свёрнутая справка в шаге: заголовок в одну строку, без рамки-плашки */
 .hint-det{margin-top:10px;border:1px solid var(--line);border-radius:10px;
   background:var(--bg2)}
-.hint-det>summary{cursor:pointer;padding:8px 12px;font-size:13px;color:var(--tx2);
+.hint-det>summary{cursor:pointer;padding:8px 12px;font-size:14.5px;color:var(--tx2);
   list-style:none}
 .hint-det>summary::-webkit-details-marker{display:none}
 .hint-det>summary::before{content:"＋ ";color:var(--or)}
@@ -275,11 +275,11 @@ a{color:var(--or2)}
   overflow:hidden}
 .ltracc-i.open{border-color:var(--or)}
 .ltracc-h{display:flex;align-items:center;gap:12px;width:100%;font:inherit;
-  font-size:16px;font-weight:700;padding:14px 16px;border:0;cursor:pointer;
+  font-size:17.5px;font-weight:700;padding:14px 16px;border:0;cursor:pointer;
   background:none;color:var(--tx);text-align:left}
 .ltracc-h:hover{color:var(--or2)}
 .ltracc-i.open .ltracc-h{color:var(--or);background:var(--orbg)}
-.ltracc-h .la-c{font-size:12.5px;font-weight:600;color:var(--muted);
+.ltracc-h .la-c{font-size:14px;font-weight:600;color:var(--muted);
   text-transform:uppercase;letter-spacing:.5px}
 .ltracc-h .la-x{margin-left:auto;width:12px;height:12px;flex:0 0 auto;
   border-right:2px solid currentColor;border-bottom:2px solid currentColor;
@@ -310,7 +310,7 @@ a{color:var(--or2)}
 .lp-addr.staff{display:block;text-align:right}
 .lp-addr.staff .lp-to{margin-bottom:14px}
 .lp-addr.staff .lp-from{display:block;text-align:right}
-.lp-hint{display:block;font-size:10px;color:#7a8798;margin:0 0 8px}
+.lp-hint{display:block;font-size:11px;color:#7a8798;margin:0 0 8px}
 .lp-sign.staff{display:flex;gap:26px;align-items:flex-end;justify-content:space-between}
 .lp-sign.staff .lp-line{min-width:150px;text-align:center}
 .lp-sign.staff .lp-hint{text-align:center;margin-top:2px}
@@ -328,75 +328,75 @@ a{color:var(--or2)}
 /* Песочница: поиск, сценарии, карточки инструментов. Карточка отвечает на
    три вопроса — что делает, что ей нужно, что дальше. */
 .maptop{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
-.maptop input[type=search]{width:100%;font:inherit;font-size:16px;padding:13px 15px;
+.maptop input[type=search]{width:100%;font:inherit;font-size:17.5px;padding:13px 15px;
   border:1px solid var(--line2);border-radius:10px;background:var(--bg4);color:var(--tx)}
 .maptop input[type=search]:focus{outline:0;border-color:var(--or);
   box-shadow:0 0 0 3px rgba(255,122,24,.22)}
 .maptop .pills{margin:0}
 .mapflow{margin-bottom:22px}
 .mapflow-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px}
-.mapflow-h b{font-size:15px;text-transform:uppercase;letter-spacing:.6px;color:var(--or)}
-.mapflow-h .muted{font-size:13.5px}
+.mapflow-h b{font-size:16.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--or)}
+.mapflow-h .muted{font-size:15px}
 .mapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:12px}
 .mapcard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:15px 16px;
   border:1px solid var(--line);border-radius:13px;background:var(--bg2);cursor:pointer;
   font:inherit;color:inherit;transition:.14s}
 .mapcard:hover{border-color:var(--or);transform:translateY(-2px);
   box-shadow:0 10px 24px var(--shadow)}
-.mapcard .mc-t{font-size:16px;font-weight:700;color:var(--tx)}
-.mapcard .mc-w{font-size:13.5px;color:var(--tx2);line-height:1.45}
-.mapcard .mc-n{font-size:12.5px;color:var(--muted)}
+.mapcard .mc-t{font-size:17.5px;font-weight:700;color:var(--tx)}
+.mapcard .mc-w{font-size:15px;color:var(--tx2);line-height:1.45}
+.mapcard .mc-n{font-size:14px;color:var(--muted)}
 .mapcard .mc-n i{font-style:normal;text-transform:uppercase;letter-spacing:.5px;
-  font-size:11px;color:var(--or2)}
-.mapcard .mc-x{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line2);
+  font-size:12px;color:var(--or2)}
+.mapcard .mc-x{font-size:14px;color:var(--muted);border-top:1px dashed var(--line2);
   padding-top:6px;margin-top:2px}
-.mapcard .mc-a{font-size:13px;font-weight:700;color:var(--or2);margin-top:auto}
+.mapcard .mc-a{font-size:14.5px;font-weight:700;color:var(--or2);margin-top:auto}
 @media(max-width:560px){.mapgrid{grid-template-columns:1fr}}
 
 .maprow{display:flex;gap:10px;align-items:center;justify-content:space-between;
-  padding:8px 0;border-bottom:1px dashed var(--line2);font-size:13.5px;flex-wrap:wrap}
+  padding:8px 0;border-bottom:1px dashed var(--line2);font-size:15px;flex-wrap:wrap}
 .maprow b{color:var(--tx)}
 .maprow .muted{flex:1 1 200px}
 /* ---------------- Письма: бланк А4 ---------------- */
-.bodyarea{width:100%;min-height:220px;font:14px/1.6 inherit;padding:11px 12px;
+.bodyarea{width:100%;min-height:220px;font:15.5px/1.6 inherit;padding:11px 12px;
   border:1px solid var(--line);border-radius:9px;background:var(--bg3);color:var(--tx);
   resize:vertical}
-.clientfield label .cf{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;
+.clientfield label .cf{font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;
   color:var(--muted);border:1px solid var(--line2);border-radius:4px;padding:1px 4px;
   margin-left:5px}
 .clientfield input{border-style:dashed}
-.howto{margin:0;padding-left:20px;font-size:13.5px;color:var(--muted);line-height:1.6}
+.howto{margin:0;padding-left:20px;font-size:15px;color:var(--muted);line-height:1.6}
 .ltrpage{background:#fff;color:#16202e;border-radius:6px;padding:28px 30px;
-  max-width:820px;margin:0 auto;font:14.5px/1.6 Georgia,"Times New Roman",serif}
+  max-width:820px;margin:0 auto;font:16px/1.6 Georgia,"Times New Roman",serif}
 .lp-head{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;
   border-bottom:2px solid #0f2b52;padding-bottom:10px;margin-bottom:16px;flex-wrap:wrap}
 .lp-logo{max-width:230px;height:auto}
-.lp-co{font-size:11px;line-height:1.45;text-align:right;color:#4a5a70;max-width:330px}
-.lp-co b{display:block;font-size:12.5px;color:#0f2b52;margin-bottom:2px}
+.lp-co{font-size:12px;line-height:1.45;text-align:right;color:#4a5a70;max-width:330px}
+.lp-co b{display:block;font-size:14px;color:#0f2b52;margin-bottom:2px}
 .lp-co span{display:block}
 .lp-addr{display:flex;gap:20px;justify-content:space-between;margin-bottom:18px;
-  font-size:13px;flex-wrap:wrap}
+  font-size:14.5px;flex-wrap:wrap}
 .lp-to,.lp-from{max-width:48%;min-width:220px}
 .lp-to{text-align:right;margin-left:auto}
 .lp-from{order:-1}
 .lp-addr .muted{color:#7b8ba3}
-.lp-h{font-size:16px;text-align:center;margin:18px 0 6px;color:#0f2b52}
-.lp-sub{text-align:center;font-size:13.5px;color:#4a5a70;margin-bottom:12px}
+.lp-h{font-size:17.5px;text-align:center;margin:18px 0 6px;color:#0f2b52}
+.lp-sub{text-align:center;font-size:15px;color:#4a5a70;margin-bottom:12px}
 .lp-body p{margin:0 0 10px;text-align:justify;white-space:pre-wrap}
 .lp-blank{display:inline-block;min-width:200px;border-bottom:1px solid #16202e}
 .lp-sign{display:flex;justify-content:space-between;gap:16px;margin-top:26px;
-  font-size:13.5px;flex-wrap:wrap}
+  font-size:15px;flex-wrap:wrap}
 .ltrstep{border:0;background:none}
 .ltrstep .step-b{padding:0}
 /* ---------------- Зарплата ---------------- */
 .zphero{background:linear-gradient(160deg,#0e2a5c,#1b4fa8);color:#fff;border-radius:12px;
   padding:16px 18px;margin-bottom:12px}
-.zphero .l{font-size:11px;opacity:.78;text-transform:uppercase;letter-spacing:.06em}
-.zphero .v{font-size:30px;font-weight:750;margin-top:3px;font-variant-numeric:tabular-nums}
+.zphero .l{font-size:12px;opacity:.78;text-transform:uppercase;letter-spacing:.06em}
+.zphero .v{font-size:33px;font-weight:750;margin-top:3px;font-variant-numeric:tabular-nums}
 .zphero .split{display:flex;gap:14px;margin-top:14px;padding-top:12px;
   border-top:1px solid rgba(255,255,255,.2)}
 .zphero .split>div{flex:1}
-.zphero .split .s{font-size:16px;font-weight:650;margin-top:2px;
+.zphero .split .s{font-size:17.5px;font-weight:650;margin-top:2px;
   font-variant-numeric:tabular-nums}
 table.spec td.minus{color:var(--bad)}
 @media print{
@@ -412,26 +412,26 @@ table.spec td.minus{color:var(--bad)}
 /* ---------------- Сборка комплекта по слотам ---------------- */
 .bhead{display:flex;gap:16px;justify-content:space-between;align-items:flex-start;
   flex-wrap:wrap;margin-bottom:6px}
-.btitle{font-size:22px;margin:0 0 4px;color:var(--tx)}
-.cardhead .chk.small{font-size:12.5px;color:var(--muted);margin:0}
+.btitle{font-size:24px;margin:0 0 4px;color:var(--tx)}
+.cardhead .chk.small{font-size:14px;color:var(--muted);margin:0}
 /* строка-слот */
 .slot{display:grid;grid-template-columns:200px minmax(0,1fr) auto;gap:12px;
   align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:10px;
   margin-bottom:8px;background:var(--bg3)}
 .slot.filled{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
 .slot.req:not(.filled){border-color:color-mix(in srgb,var(--or) 45%,var(--line))}
-.slot-h b{font-size:13.5px;color:var(--tx)}
-.slot-h .muted{display:block;font-size:12px;margin-top:2px}
+.slot-h b{font-size:15px;color:var(--tx)}
+.slot-h .muted{display:block;font-size:13px;margin-top:2px}
 .slot-h .star{color:var(--or)}
 .slot-b{display:flex;gap:12px;align-items:baseline;justify-content:space-between;min-width:0}
-.slot-n{min-width:0;font-size:13.5px}
+.slot-n{min-width:0;font-size:15px}
 .slot-n b{color:var(--tx);font-weight:600}
-.slot-n .muted{display:block;font-size:12px;margin-top:2px}
+.slot-n .muted{display:block;font-size:13px;margin-top:2px}
 .slot-p{white-space:nowrap;font-weight:700;color:var(--or);font-variant-numeric:tabular-nums}
 /* Строка выбора внутри слота: количество опор и вид ПНР */
 .slot-q{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
-.slot-q>.muted{font-size:12px}
-.pill.sm{padding:4px 10px;font-size:12.5px;border-radius:14px}
+.slot-q>.muted{font-size:13px}
+.pill.sm{padding:4px 10px;font-size:14px;border-radius:14px}
 .slot-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 @media screen and (max-width:820px){
   .slot{grid-template-columns:1fr}
@@ -439,7 +439,7 @@ table.spec td.minus{color:var(--bad)}
 }
 /* полоса заполнения слотов */
 .fillbar{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font-size:11px;font-weight:700;letter-spacing:.4px;padding:5px 9px;border-radius:6px;
+.chip{font-size:12px;font-weight:700;letter-spacing:.4px;padding:5px 9px;border-radius:6px;
   background:var(--bg3);color:var(--muted);border:1px solid var(--line)}
 .chip.req{border-style:dashed;border-color:color-mix(in srgb,var(--or) 55%,var(--line))}
 .chip.on{background:var(--ok);color:var(--onok);border-color:var(--ok)}
@@ -447,16 +447,16 @@ table.spec td.minus{color:var(--bad)}
 .tplrow{display:flex;gap:10px;align-items:center;justify-content:space-between;
   padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;
   background:var(--bg3);flex-wrap:wrap}
-.tplrow .pn{flex:1 1 220px;min-width:0;font-size:13.5px}
+.tplrow .pn{flex:1 1 220px;min-width:0;font-size:15px}
 .tplrow .pn b{color:var(--tx)}
-.tplrow .pn .muted{display:block;font-size:12px;margin-top:2px}
+.tplrow .pn .muted{display:block;font-size:13px;margin-top:2px}
 .tplrow .pp{font-weight:700;color:var(--or);white-space:nowrap}
 /* проверка сборки */
-.chk-h{margin:10px 0 6px;font-size:13px;font-weight:700}
+.chk-h{margin:10px 0 6px;font-size:14.5px;font-weight:700}
 .chk-h.ok{color:var(--ok)}
 .chk-h.warn{color:var(--warn)}
 .chk-h.bad{color:var(--bad)}
-.chk-i{font-size:12.5px;line-height:1.5;padding:6px 9px;border-radius:0 6px 6px 0;
+.chk-i{font-size:14px;line-height:1.5;padding:6px 9px;border-radius:0 6px 6px 0;
   margin-bottom:5px;border-left:3px solid var(--line2);background:var(--bg3)}
 .chk-i.stop{border-left-color:var(--bad)}
 .chk-i.warn{border-left-color:var(--warn)}
@@ -469,7 +469,7 @@ table.spec td.minus{color:var(--bad)}
   width:min(760px,100%);max-height:86vh;display:flex;flex-direction:column}
 .modal-h{display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:12px 14px;border-bottom:1px solid var(--line)}
-.modal-h b{font-size:14.5px;color:var(--tx)}
+.modal-h b{font-size:16px;color:var(--tx)}
 .modal-f{display:flex;gap:8px;align-items:center;padding:10px 14px;
   border-bottom:1px solid var(--line);flex-wrap:wrap}
 .modal-f input[type=search]{flex:2 1 240px}
@@ -478,9 +478,9 @@ table.spec td.minus{color:var(--bad)}
 .pickrow{display:flex;gap:10px;align-items:center;justify-content:space-between;
   padding:8px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;
   background:var(--bg3);flex-wrap:wrap}
-.pickrow .pn{flex:1 1 260px;min-width:0;font-size:13.5px}
+.pickrow .pn{flex:1 1 260px;min-width:0;font-size:15px}
 .pickrow .pn b{color:var(--tx)}
-.pickrow .pn .muted{display:block;font-size:12px;margin-top:2px}
+.pickrow .pn .muted{display:block;font-size:13px;margin-top:2px}
 .pickrow .pp{font-weight:700;color:var(--or);white-space:nowrap}
 @media print{.modal{display:none !important}}
 
@@ -495,49 +495,49 @@ table.spec td.minus{color:var(--bad)}
   padding:14px 16px}
 .spec-card .cardhead{display:flex;align-items:center;justify-content:space-between;
   gap:10px;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px}
-.spec-card h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.5px;
+.spec-card h2{margin:0;font-size:15.5px;text-transform:uppercase;letter-spacing:.5px;
   color:var(--tx)}
-.spec-cnt{font-size:12.5px;color:var(--muted)}
-table.spec{width:100%;border-collapse:collapse;font-size:13px}
+.spec-cnt{font-size:14px;color:var(--muted)}
+table.spec{width:100%;border-collapse:collapse;font-size:14.5px}
 table.spec td{padding:6px 4px;border-bottom:1px dashed var(--line2);vertical-align:top}
 table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;
   font-weight:600}
-.xbtn{border:0;background:none;color:var(--muted);font-size:16px;line-height:1;
+.xbtn{border:0;background:none;color:var(--muted);font-size:17.5px;line-height:1;
   cursor:pointer;padding:0 2px}
 .xbtn:hover{color:var(--bad)}
-.spec-tot{margin-top:10px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.spec-tot{margin-top:10px;display:flex;flex-direction:column;gap:4px;font-size:14.5px}
 .spec-tot>div{display:flex;justify-content:space-between;gap:10px}
-.spec-tot .big{font-size:16px;font-weight:700;color:var(--tx);border-top:1px solid var(--line);
+.spec-tot .big{font-size:17.5px;font-weight:700;color:var(--tx);border-top:1px solid var(--line);
   padding-top:7px;margin-top:3px}
 .spec-tot .gain{color:var(--ok)}
-.specout{width:100%;height:74px;margin-top:10px;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;
+.specout{width:100%;height:74px;margin-top:10px;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;
   background:var(--bg3);color:var(--muted);border:1px solid var(--line);border-radius:8px;
   padding:7px 9px;resize:vertical}
-.empty.small{font-size:13px;padding:10px 0}
-.note.small{font-size:12px}
+.empty.small{font-size:14.5px;padding:10px 0}
+.note.small{font-size:13px}
 /* Таблетки выбора категории */
 .pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .pill{padding:6px 12px;border:1px solid var(--line2);border-radius:20px;
-  background:color-mix(in srgb,var(--bg3) 70%,transparent);font-size:13px;font-weight:600;
+  background:color-mix(in srgb,var(--bg3) 70%,transparent);font-size:14.5px;font-weight:600;
   color:var(--muted);cursor:pointer;transition:.12s}
 .pill:hover{border-color:var(--or);color:var(--tx)}
 .pill.on{background:var(--or);border-color:var(--or);color:var(--onor)}
 /* Карточка характеристик */
 .specbox{background:var(--bg3);border:1px solid var(--line);border-radius:9px;
   padding:10px 12px;margin:2px 0 10px}
-.specbox h4{margin:0 0 7px;font-size:12px;text-transform:uppercase;letter-spacing:.4px;
+.specbox h4{margin:0 0 7px;font-size:13px;text-transform:uppercase;letter-spacing:.4px;
   color:var(--or)}
-.specbox dl{display:grid;grid-template-columns:auto auto;gap:3px 14px;margin:0;font-size:12.5px}
+.specbox dl{display:grid;grid-template-columns:auto auto;gap:3px 14px;margin:0;font-size:14px}
 .specbox dt{color:var(--muted)}
 .specbox dd{margin:0;text-align:right;font-weight:600;color:var(--tx)}
 .specbox .idx{margin-top:8px;padding-top:7px;border-top:1px dashed var(--line2);
-  font-size:12px;color:var(--muted);line-height:1.5}
+  font-size:13px;color:var(--muted);line-height:1.5}
 /* Совпадения в прайсе */
 .matches{margin-top:12px;border-top:1px dashed var(--line2);padding-top:10px}
-.matches h3{margin:0 0 7px;font-size:12.5px;color:var(--muted);font-weight:600}
+.matches h3{margin:0 0 7px;font-size:14px;color:var(--muted);font-weight:600}
 .mrow{display:flex;justify-content:space-between;gap:10px;align-items:center;
   padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin-bottom:5px;
-  cursor:pointer;font-size:13px;background:var(--bg3)}
+  cursor:pointer;font-size:14.5px;background:var(--bg3)}
 .mrow:hover{border-color:var(--or)}
 .mrow b{color:var(--or);white-space:nowrap}
 .mrow .nm{flex:1;min-width:0}
@@ -551,8 +551,8 @@ table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabul
 .think{display:flex;flex-direction:column;gap:8px}
 .step-b.has-think>.think{border-left:2px dashed var(--line2);padding-left:14px}
 .think>*{margin:0}
-.think .note,.think .calcsteps{font-size:13px}
-.think .muted{font-size:12.5px;color:var(--muted)}
+.think .note,.think .calcsteps{font-size:14.5px}
+.think .muted{font-size:14px;color:var(--muted)}
 @media screen and (min-width:1000px){
   .step-b.has-think>.think{position:sticky;top:96px;max-height:calc(100vh - 130px);
     overflow:auto}
@@ -576,9 +576,9 @@ table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabul
 .sumdot.show{display:flex}
 .sumdot:hover{border-color:var(--or);transform:translateY(-1px)}
 .sumdot-n{min-width:24px;height:24px;border-radius:12px;background:var(--or);
-  color:var(--onor);font-size:12.5px;font-weight:700;display:flex;
+  color:var(--onor);font-size:14px;font-weight:700;display:flex;
   align-items:center;justify-content:center;padding:0 6px}
-.sumdot-tx{font-size:13.5px;font-weight:600;white-space:nowrap}
+.sumdot-tx{font-size:15px;font-weight:600;white-space:nowrap}
 @media(max-width:560px){.sumdot-tx{display:none}
   .sumdot{padding:8px;left:10px;bottom:10px}}
 @media print{.sumdot{display:none!important}}
@@ -590,10 +590,10 @@ table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabul
   padding:16px 18px;margin:14px 0}
 
 /* ---------- поля ---------- */
-label.f{display:block;font-size:12.5px;color:var(--or2);margin:12px 0 5px;
+label.f{display:block;font-size:14px;color:var(--or2);margin:12px 0 5px;
   text-transform:uppercase;letter-spacing:.7px;font-weight:600}
 select,input[type=text],input[type=number],input[type=date],textarea{width:100%;font:inherit;
-  font-size:15.5px;padding:11px 12px;border:1px solid var(--line2);border-radius:7px;
+  font-size:17px;padding:11px 12px;border:1px solid var(--line2);border-radius:7px;
   background:var(--bg4);color:var(--tx)}
 select{cursor:pointer}
 /* Поля с датой: тот же корпус, что у остальных полей, своя иконка календаря
@@ -615,36 +615,36 @@ input[type=date]:hover::-webkit-calendar-picker-indicator,
 input[type=date]:focus::-webkit-calendar-picker-indicator{opacity:1}
 /* Подзаголовок внутри карточки: раньше эти блоки прятались за плюсиком */
 .cardsub{margin:18px 0 2px;padding-top:13px;border-top:1px solid var(--line);
-  font-size:12.5px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;
+  font-size:14px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;
   color:var(--or)}
 select:focus,input:focus,textarea:focus{outline:0;border-color:var(--or);
   box-shadow:0 0 0 3px rgba(255,122,24,.22)}
 input::placeholder{color:var(--muted);opacity:.85}
 .row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
 .row>div{flex:1 1 190px;min-width:0}
-.chk{display:flex;align-items:center;gap:11px;margin:10px 0;font-size:15px;cursor:pointer;
+.chk{display:flex;align-items:center;gap:11px;margin:10px 0;font-size:16.5px;cursor:pointer;
   padding:8px 10px;border-radius:7px;border:1px solid transparent}
 .chk:hover{background:var(--bg3);border-color:var(--line)}
 .chk input[type=checkbox]{width:20px;height:20px;margin:0;flex:0 0 auto;cursor:pointer;
   accent-color:var(--or)}
 
-button.btn{font:inherit;font-size:15px;font-weight:600;padding:12px 20px;border-radius:8px;
+button.btn{font:inherit;font-size:16.5px;font-weight:600;padding:12px 20px;border-radius:8px;
   cursor:pointer;border:0;background:var(--or);color:var(--onor)}
 button.btn:hover{background:var(--or2)}
 button.btn.sec{background:var(--bg4);color:var(--tx);border:1px solid var(--line2)}
 button.btn.sec:hover{border-color:var(--or);color:var(--or2);background:var(--bg3)}
-button.btn.mini{padding:6px 12px;font-size:13.5px}
+button.btn.mini{padding:6px 12px;font-size:15px}
 button.btn.danger{background:var(--bg4);color:var(--bad);border:1px solid var(--line2)}
 button.btn.danger:hover{border-color:var(--bad)}
 .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 
 /* тост */
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:60;
-  background:var(--or);color:var(--onor);font-weight:700;font-size:15px;padding:12px 22px;
+  background:var(--or);color:var(--onor);font-weight:700;font-size:16.5px;padding:12px 22px;
   border-radius:26px;box-shadow:0 6px 24px rgba(0,0,0,.5);display:none;
   align-items:center;gap:14px}
 .toast.show{display:flex}
-.toast button{font:inherit;font-size:13.5px;font-weight:700;background:var(--onor);
+.toast button{font:inherit;font-size:15px;font-weight:700;background:var(--onor);
   color:var(--or);border:0;padding:6px 14px;border-radius:18px;cursor:pointer}
 
 /* ---------- цена ---------- */
@@ -652,11 +652,11 @@ button.btn.danger:hover{border-color:var(--bad)}
 @media(max-width:660px){.pricebox{grid-template-columns:1fr}}
 .pb{border:1px solid var(--line2);border-radius:9px;padding:14px 16px;background:var(--bg3)}
 .pb.stock{background:var(--orbg);border-color:var(--or)}
-.pb .lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);
+.pb .lbl{font-size:12.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);
   font-weight:600}
-.pb .val{font-size:29px;font-weight:700;color:var(--or);margin-top:4px;line-height:1.15}
-.pb .sub{font-size:13px;color:var(--tx2);margin-top:6px}
-.calcsteps{margin-top:14px;font-size:14px;background:var(--bg3);
+.pb .val{font-size:32px;font-weight:700;color:var(--or);margin-top:4px;line-height:1.15}
+.pb .sub{font-size:14.5px;color:var(--tx2);margin-top:6px}
+.calcsteps{margin-top:14px;font-size:15.5px;background:var(--bg3);
   border-left:3px solid var(--or);padding:12px 15px;border-radius:0 7px 7px 0}
 .calcsteps div{padding:3px 0;color:var(--tx2)}
 .calcsteps b{color:var(--or2)}
@@ -664,18 +664,18 @@ button.btn.danger:hover{border-color:var(--bad)}
 /* результат подбора */
 .rec{background:var(--bg3);border:1px solid var(--line2);border-left:4px solid var(--or);
   border-radius:0 9px 9px 0;padding:14px 17px;margin:12px 0}
-.rec-l{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--or2);
+.rec-l{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--or2);
   font-weight:700}
-.rec-t{font-size:19px;font-weight:700;color:var(--tx);margin:4px 0 6px}
-.rec-d{font-size:14px;color:var(--tx2)}
-.rec-p{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14.5px}
-.rec-p b{color:var(--or);font-size:17px}
+.rec-t{font-size:21px;font-weight:700;color:var(--tx);margin:4px 0 6px}
+.rec-d{font-size:15.5px;color:var(--tx2)}
+.rec-p{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:16px}
+.rec-p b{color:var(--or);font-size:18.5px}
 
 /* ---------- таблицы ---------- */
-table{border-collapse:collapse;width:100%;font-size:14.5px;margin:12px 0;
+table{border-collapse:collapse;width:100%;font-size:16px;margin:12px 0;
   background:var(--bg2)}
 th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
-th{background:var(--bg4);color:var(--or2);font-weight:700;font-size:13px;
+th{background:var(--bg4);color:var(--or2);font-weight:700;font-size:14.5px;
   text-transform:uppercase;letter-spacing:.4px}
 tbody tr:nth-child(even){background:var(--bg3)}
 tbody tr:hover{background:var(--bg4)}
@@ -686,60 +686,60 @@ td b{color:var(--or)}
 .scroll th:first-child,.scroll td:first-child{border-left:0}
 .scroll th:last-child,.scroll td:last-child{border-right:0}
 table.wide{min-width:760px}
-td.grp{color:var(--muted);font-size:13px}
+td.grp{color:var(--muted);font-size:14.5px}
 
 /* ---------- сворачиваемые блоки ---------- */
 details{background:var(--bg2);border:1px solid var(--line);border-radius:10px;
   margin:14px 0;overflow:hidden}
 details[open]{border-color:var(--line2)}
-summary{cursor:pointer;padding:15px 18px;font-size:16px;font-weight:700;color:var(--tx);
+summary{cursor:pointer;padding:15px 18px;font-size:17.5px;font-weight:700;color:var(--tx);
   list-style:none;display:flex;align-items:center;gap:11px;background:var(--bg3)}
 summary::-webkit-details-marker{display:none}
 summary::before{content:"+";flex:0 0 auto;width:24px;height:24px;border-radius:6px;
-  background:var(--or);color:var(--onor);font-size:17px;font-weight:700;
+  background:var(--or);color:var(--onor);font-size:18.5px;font-weight:700;
   display:flex;align-items:center;justify-content:center;line-height:1}
 details[open] summary::before{content:"\2212"}
 summary:hover{color:var(--or2)}
-summary span.cnt{margin-left:auto;font-size:13px;font-weight:400;color:var(--muted)}
+summary span.cnt{margin-left:auto;font-size:14.5px;font-weight:400;color:var(--muted)}
 .det-b{padding:4px 18px 18px}
 
 /* ---------- смета ---------- */
 #smetaBody td{vertical-align:middle}
-#smetaBody input[type=number]{width:74px;padding:7px 8px;font-size:14.5px}
+#smetaBody input[type=number]{width:74px;padding:7px 8px;font-size:16px}
 /* цена правится прямо в строке: поле выглядит как текст, пока в него не зашли */
-#smetaBody input.pricein{width:118px;padding:7px 8px;font-size:14.5px;
+#smetaBody input.pricein{width:118px;padding:7px 8px;font-size:16px;
   text-align:right;font-variant-numeric:tabular-nums}
 #smetaBody input.pricein.own{border-color:var(--or);
   background:color-mix(in srgb,var(--or) 12%,transparent)}
 @media print{#smetaBody input.pricein{border:0;background:none;padding:0;width:auto}}
-tr.grouphead td{background:var(--bg4);color:var(--or2);font-weight:700;font-size:12.5px;
+tr.grouphead td{background:var(--bg4);color:var(--or2);font-weight:700;font-size:14px;
   text-transform:uppercase;letter-spacing:.5px}
-.empty{padding:26px 18px;text-align:center;color:var(--muted);font-size:15px;
+.empty{padding:26px 18px;text-align:center;color:var(--muted);font-size:16.5px;
   border:1px dashed var(--line2);border-radius:10px;background:var(--bg2)}
 .totals{margin-top:16px;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
 .totals div{display:flex;justify-content:space-between;gap:16px;padding:11px 16px;
-  font-size:15px;border-bottom:1px solid var(--line);background:var(--bg2)}
+  font-size:16.5px;border-bottom:1px solid var(--line);background:var(--bg2)}
 .totals div:last-child{border-bottom:0}
-.totals .big{background:var(--orbg);font-size:20px;font-weight:700;color:var(--or)}
+.totals .big{background:var(--orbg);font-size:22px;font-weight:700;color:var(--or)}
 .totals .gain{color:var(--ok);font-weight:600}
 .propis{margin-top:12px;padding:13px 16px;background:var(--bg3);border-radius:8px;
-  font-size:14.5px;color:var(--tx2);border-left:3px solid var(--or3)}
+  font-size:16px;color:var(--tx2);border-left:3px solid var(--or3)}
 
-.check{margin-top:14px;padding:13px 16px;border-radius:8px;font-size:14.5px}
+.check{margin-top:14px;padding:13px 16px;border-radius:8px;font-size:16px}
 .check.good{background:var(--okbg);border-left:4px solid var(--ok);color:var(--tx)}
 .check.fail{background:var(--badbg);border-left:4px solid var(--bad);color:var(--tx)}
 .check ul{margin:8px 0 0 20px;padding:0}
 .check b{color:var(--tx)}
 
 /* ---------- флаги ---------- */
-.flag-block{display:inline-block;background:var(--bad);color:var(--onbad);font-size:11.5px;
+.flag-block{display:inline-block;background:var(--bad);color:var(--onbad);font-size:12.5px;
   padding:3px 9px;border-radius:5px;text-transform:uppercase;letter-spacing:.5px;
   font-weight:700}
 .ok{color:var(--ok);font-weight:700}
 .warn{color:var(--warn);font-weight:700}
 .bad{color:var(--bad);font-weight:700}
 .note{background:var(--bg3);border-left:4px solid var(--or3);padding:13px 16px;
-  border-radius:0 8px 8px 0;margin:14px 0;font-size:14.5px;color:var(--tx2)}
+  border-radius:0 8px 8px 0;margin:14px 0;font-size:16px;color:var(--tx2)}
 .note b{color:var(--tx)}
 .note.alert{background:var(--warnbg);border-left-color:var(--warn)}
 .note.stop{background:var(--badbg);border-left-color:var(--bad)}
@@ -748,21 +748,21 @@ tr.grouphead td{background:var(--bg4);color:var(--or2);font-weight:700;font-size
 
 .conflict{background:var(--bg2);border:1px solid var(--line);border-left:4px solid var(--warn);
   border-radius:0 8px 8px 0;padding:13px 16px;margin:11px 0}
-.conflict-t{font-weight:700;color:var(--tx);font-size:15.5px}
-.conflict-b{font-size:14.5px;margin-top:5px;color:var(--tx2)}
-.conflict-a{font-size:14px;color:var(--warn);margin-top:7px}
+.conflict-t{font-weight:700;color:var(--tx);font-size:17px}
+.conflict-b{font-size:16px;margin-top:5px;color:var(--tx2)}
+.conflict-a{font-size:15.5px;color:var(--warn);margin-top:7px}
 .miss{background:var(--bg2);border:1px solid var(--line);border-radius:8px;
   padding:12px 15px;margin:9px 0}
-.miss b{color:var(--or2);display:block;font-size:15px}
-.miss span{font-size:14px;color:var(--tx2)}
+.miss b{color:var(--or2);display:block;font-size:16.5px}
+.miss span{font-size:15.5px;color:var(--tx2)}
 .advice{background:var(--bg3);border:1px solid var(--line);border-radius:8px;
   padding:12px 15px;margin:9px 0}
-.advice b{display:block;color:var(--or2);font-size:15px}
-.advice span{font-size:14px;color:var(--tx2)}
-.rule{display:flex;gap:13px;align-items:baseline;padding:9px 0;font-size:14.5px;
+.advice b{display:block;color:var(--or2);font-size:16.5px}
+.advice span{font-size:15.5px;color:var(--tx2)}
+.rule{display:flex;gap:13px;align-items:baseline;padding:9px 0;font-size:16px;
   border-bottom:1px solid var(--line)}
 .rule:last-child{border-bottom:0}
-.st{flex:0 0 auto;font-size:11.5px;padding:3px 10px;border-radius:5px;
+.st{flex:0 0 auto;font-size:12.5px;padding:3px 10px;border-radius:5px;
   text-transform:uppercase;letter-spacing:.5px;font-weight:700}
 .st-0{background:var(--ok);color:var(--onok)}
 .st-1{background:var(--warn);color:var(--onwarn)}
@@ -770,7 +770,7 @@ tr.grouphead td{background:var(--bg4);color:var(--or2);font-weight:700;font-size
 
 /* внутреннее */
 body.demo .internal{display:none !important}
-.internal-mark{font-size:10px;background:var(--or);color:var(--onor);padding:1px 5px;
+.internal-mark{font-size:11px;background:var(--or);color:var(--onor);padding:1px 5px;
   border-radius:2px;margin-left:6px;vertical-align:1px;letter-spacing:.3px}
 
 /* ---------- лист ТКП: фирменное оформление шаблона lasercut-kp ----------
@@ -898,14 +898,14 @@ body.demo .internal{display:none !important}
 /* Только screen: при печати A4 ширина листа около 700 px, и без этой оговорки
    узкий формат (A5, «уместить на страницу») ломал бы таблицы в ТКП. */
 @media screen and (max-width:640px){
-  body{font-size:15.5px;overflow-x:hidden}
+  body{font-size:17px;overflow-x:hidden}
   .wrap{padding:0 12px 70px}
   .head{padding:10px 12px}
-  .brand{font-size:16.5px}
+  .brand{font-size:18px}
   nav{top:59px}
-  h2{font-size:20px;margin-top:26px}
+  h2{font-size:22px;margin-top:26px}
   .step-b,.det-b{padding:14px}
-  .pb .val{font-size:25px}
+  .pb .val{font-size:27.5px}
   .kp{padding:14px}
 
   /* Смета на телефоне: таблица шириной в шесть колонок не влезает никуда,
@@ -923,10 +923,10 @@ body.demo .internal{display:none !important}
   #smetaTable td{border:0;padding:5px 0;display:flex;gap:12px;
     align-items:center;justify-content:space-between}
   #smetaTable td::before{content:attr(data-label);flex:0 0 auto;
-    font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;
+    font-size:14px;text-transform:uppercase;letter-spacing:.5px;
     color:var(--muted)}
   #smetaTable td:first-child{display:block;font-weight:700;color:var(--tx);
-    font-size:16px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+    font-size:17.5px;padding-bottom:8px;border-bottom:1px solid var(--line)}
   #smetaTable td:first-child::before{display:none}
   #smetaTable td:last-child{justify-content:flex-end;padding-top:10px}
   #smetaTable input[type=number]{width:92px;text-align:right}
@@ -942,18 +942,18 @@ body.demo .internal{display:none !important}
 
 /* Крупные кнопки-шаблоны: их надо видеть сразу */
 .pills.big{gap:8px}
-.pills.big .pill{font-size:15px;padding:11px 18px;border-radius:24px;font-weight:700}
+.pills.big .pill{font-size:16.5px;padding:11px 18px;border-radius:24px;font-weight:700}
 /* Конфигурация в диалоге выбора станка */
 /* Фильтры конфигурации: компактная строка, все параметры влезают по ширине */
 .modal-cfg{padding:8px 14px;border-bottom:1px solid var(--line);background:var(--bg3)}
-.modal-cfg .mc-h{font-size:12px;color:var(--muted);margin-bottom:6px}
-.modal-cfg label.f{font-size:11px;margin-bottom:2px}
-.modal-cfg select{padding:5px 8px;font-size:12.5px;border-radius:8px}
-.modal-cfg .mc-req{font-size:11.5px;color:var(--warn);margin:4px 0 0}
-.modal-cfg .btn.mini{padding:4px 10px;font-size:11.5px}
+.modal-cfg .mc-h{font-size:13px;color:var(--muted);margin-bottom:6px}
+.modal-cfg label.f{font-size:12px;margin-bottom:2px}
+.modal-cfg select{padding:5px 8px;font-size:14px;border-radius:8px}
+.modal-cfg .mc-req{font-size:12.5px;color:var(--warn);margin:4px 0 0}
+.modal-cfg .btn.mini{padding:4px 10px;font-size:12.5px}
 .modal-cfg .mc-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));
   gap:8px;margin-bottom:8px}
-.modal-cfg .mc-f{font-size:11.5px;color:var(--muted);margin:6px 0;line-height:1.4}
+.modal-cfg .mc-f{font-size:12.5px;color:var(--muted);margin:6px 0;line-height:1.4}
 /* Параметр прямо в названии позиции: клик открывает список значений */
 .pickrow .seg{font:inherit;font-size:inherit;font-weight:600;padding:0 4px;
   border:1px dashed var(--line2);border-radius:6px;background:none;
@@ -961,21 +961,21 @@ body.demo .internal{display:none !important}
 .pickrow .seg:hover{border-color:var(--or);color:var(--or);background:var(--orbg)}
 .segpop{position:absolute;z-index:60;min-width:150px;padding:5px;border-radius:10px;
   border:1px solid var(--or);background:var(--bg2);box-shadow:0 12px 28px var(--shadow)}
-.segpop button{display:block;width:100%;text-align:left;font:inherit;font-size:12.5px;
+.segpop button{display:block;width:100%;text-align:left;font:inherit;font-size:14px;
   padding:6px 9px;border:0;border-radius:7px;background:none;color:var(--tx2);
   cursor:pointer}
 .segpop button:hover{background:var(--bg3);color:var(--tx)}
 .segpop button.on{color:var(--or);font-weight:700}
 /* Разница цены к базовой конфигурации */
 .pickrow .pp{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-.pickrow .pd{font-size:11.5px;font-weight:600}
+.pickrow .pd{font-size:12.5px;font-weight:600}
 .pickrow .pd.up{color:var(--bad)}
 .pickrow .pd.dn{color:var(--ok)}
 .pickrow .pd.same{color:var(--muted);font-weight:400}
 /* Карточка менеджера в правой колонке подбора */
 .mgr-card .row.tight{gap:8px;margin-bottom:8px}
 .mgr-card .row.tight>div{flex:1 1 130px}
-.mgr-card input{padding:7px 9px;font-size:13.5px}
+.mgr-card input{padding:7px 9px;font-size:15px}
 .cfghead{display:flex;gap:14px;align-items:center;justify-content:space-between;
   flex-wrap:wrap;margin:6px 0 12px}
 .cfghead .btitle{margin:0}
@@ -1001,16 +1001,16 @@ body.demo .internal{display:none !important}
 #p-mill .cardhead{display:flex;justify-content:space-between;align-items:center;
   gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line);padding-bottom:9px;
   margin-bottom:13px}
-#p-mill .cardhead h2,#p-mill .card>h2{margin:0;font-size:14px;text-transform:uppercase;
+#p-mill .cardhead h2,#p-mill .card>h2{margin:0;font-size:15.5px;text-transform:uppercase;
   letter-spacing:.6px;color:var(--or)}
 #p-mill .card>h2{border-bottom:2px solid var(--line);padding-bottom:9px;margin-bottom:13px}
 
 #p-mill .f{display:flex;flex-direction:column;gap:4px;min-width:0}
-#p-mill .f>label{font-size:11.5px;font-weight:700;color:var(--muted);
+#p-mill .f>label{font-size:12.5px;font-weight:700;color:var(--muted);
   text-transform:uppercase;letter-spacing:.4px}
 #p-mill select,#p-mill input[type=text],#p-mill input[type=number]{width:100%;
   padding:8px 10px;border:1px solid var(--line2);border-radius:7px;font:inherit;
-  font-size:14px;background:var(--bg3);color:var(--tx);min-width:0}
+  font-size:15.5px;background:var(--bg3);color:var(--tx);min-width:0}
 #p-mill select:disabled,#p-mill input:disabled{background:var(--bg4);color:var(--muted)}
 #p-mill select:focus,#p-mill input:focus{outline:none;border-color:var(--or);
   box-shadow:0 0 0 3px var(--orbg)}
@@ -1020,7 +1020,7 @@ body.demo .internal{display:none !important}
 #p-mill .volt label{flex:1;position:relative;cursor:pointer;margin:0}
 #p-mill .volt input{position:absolute;opacity:0;pointer-events:none}
 #p-mill .volt span{display:block;text-align:center;padding:8px 4px;
-  border:1px solid var(--line2);border-radius:7px;font-size:13px;font-weight:600;
+  border:1px solid var(--line2);border-radius:7px;font-size:14.5px;font-weight:600;
   color:var(--muted);background:var(--bg3)}
 #p-mill .volt input:checked+span{background:var(--or);border-color:var(--or);
   color:var(--onor)}
@@ -1029,7 +1029,7 @@ body.demo .internal{display:none !important}
 
 #p-mill .hints:empty{display:none}
 #p-mill .hints{margin-top:11px;display:flex;flex-direction:column;gap:6px}
-#p-mill .hint{font-size:12px;color:var(--tx2);padding:6px 9px;border-radius:0 6px 6px 0;
+#p-mill .hint{font-size:13px;color:var(--tx2);padding:6px 9px;border-radius:0 6px 6px 0;
   background:var(--bg3);border-left:3px solid var(--line2);line-height:1.45}
 #p-mill .hint.warn{color:var(--tx);background:var(--warnbg);border-left-color:var(--warn)}
 #p-mill .hint.ok{color:var(--tx);background:var(--okbg);border-left-color:var(--ok)}
@@ -1038,7 +1038,7 @@ body.demo .internal{display:none !important}
 #p-mill .tabs{display:flex;gap:5px;overflow-x:auto;padding-bottom:3px;
   scrollbar-width:thin;max-width:100%}
 #p-mill .tab{padding:6px 11px;border:1px solid var(--line2);border-radius:20px;
-  background:var(--bg3);font:inherit;font-size:12.5px;font-weight:600;color:var(--tx2);
+  background:var(--bg3);font:inherit;font-size:14px;font-weight:600;color:var(--tx2);
   cursor:pointer;white-space:nowrap;flex:0 0 auto}
 #p-mill .tab:hover{border-color:var(--or);color:var(--or)}
 #p-mill .tab.on{background:var(--or);border-color:var(--or);color:var(--onor)}
@@ -1047,7 +1047,7 @@ body.demo .internal{display:none !important}
 #p-mill .tab.on.sel{background:var(--ok);border-color:var(--ok);color:var(--onok)}
 #p-mill .tab.f-warn::after,#p-mill .tab.f-bad::after{content:'!';display:inline-block;
   margin-left:6px;width:14px;height:14px;line-height:14px;border-radius:50%;
-  font-size:10px;text-align:center;vertical-align:middle}
+  font-size:11px;text-align:center;vertical-align:middle}
 #p-mill .tab.f-warn::after{background:var(--warn);color:var(--onwarn)}
 #p-mill .tab.f-bad::after{background:var(--bad);color:var(--onbad)}
 #p-mill .pane{display:none}
@@ -1056,7 +1056,7 @@ body.demo .internal{display:none !important}
 #p-mill .seg{display:flex;border:1px solid var(--line2);border-radius:8px;
   overflow:hidden;flex:0 0 auto}
 #p-mill .seg button{padding:7px 14px;border:0;background:var(--bg3);color:var(--tx2);
-  font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+  font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
 #p-mill .seg button+button{border-left:1px solid var(--line2)}
 #p-mill .seg button.on{background:var(--or);color:var(--onor)}
 #p-mill .seg button:not(.on):hover{background:var(--bg4);color:var(--or)}
@@ -1069,14 +1069,14 @@ body.demo .internal{display:none !important}
 #p-mill .rcard:hover{border-color:var(--or)}
 #p-mill .rcard.on{border-color:var(--or);background:var(--orbg);
   box-shadow:inset 0 0 0 1px var(--or)}
-#p-mill .rcard b{display:block;font-size:13px;color:var(--or);line-height:1.3;
+#p-mill .rcard b{display:block;font-size:14.5px;color:var(--or);line-height:1.3;
   overflow-wrap:anywhere}
-#p-mill .rcard .rs{font-size:11.5px;color:var(--muted);margin:3px 0 6px;line-height:1.4}
-#p-mill .rcard .rp{font-size:14px;font-weight:700;color:var(--tx)}
-#p-mill .rcard .rp em{font-style:normal;font-size:11px;color:var(--muted);
+#p-mill .rcard .rs{font-size:12.5px;color:var(--muted);margin:3px 0 6px;line-height:1.4}
+#p-mill .rcard .rp{font-size:15.5px;font-weight:700;color:var(--tx)}
+#p-mill .rcard .rp em{font-style:normal;font-size:12px;color:var(--muted);
   font-weight:400;margin-left:5px}
 
-#p-mill .simh{font-size:11px;text-transform:uppercase;letter-spacing:.5px;
+#p-mill .simh{font-size:12px;text-transform:uppercase;letter-spacing:.5px;
   color:var(--muted);font-weight:700;margin:14px 0 7px;padding-top:11px;
   border-top:1px dashed var(--line2)}
 #p-mill .sim{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
@@ -1084,10 +1084,10 @@ body.demo .internal{display:none !important}
   cursor:pointer;background:var(--bg3);min-width:0;text-align:left;font:inherit;
   color:var(--tx);display:block;width:100%}
 #p-mill .simc:hover{border-color:var(--or)}
-#p-mill .simc b{display:block;font-size:12.5px;color:var(--or);line-height:1.3;
+#p-mill .simc b{display:block;font-size:14px;color:var(--or);line-height:1.3;
   overflow-wrap:anywhere}
-#p-mill .simc .df{font-size:11.5px;color:var(--tx2);margin:4px 0 5px;line-height:1.4}
-#p-mill .simc .dp{font-size:12.5px;font-weight:700}
+#p-mill .simc .df{font-size:12.5px;color:var(--tx2);margin:4px 0 5px;line-height:1.4}
+#p-mill .simc .dp{font-size:14px;font-weight:700}
 #p-mill .simc .dp.up{color:var(--warn)}
 #p-mill .simc .dp.dn{color:var(--ok)}
 #p-mill .simc .dp.eq{color:var(--muted)}
@@ -1114,7 +1114,7 @@ body.demo .internal{display:none !important}
 #p-mill .tgl{position:relative;cursor:pointer;user-select:none;display:block;margin:0}
 #p-mill .tgl input{position:absolute;opacity:0;pointer-events:none}
 #p-mill .tgl span{display:block;white-space:nowrap;padding:8px 15px;
-  border:1px solid var(--line2);border-radius:7px;font-size:12.5px;font-weight:600;
+  border:1px solid var(--line2);border-radius:7px;font-size:14px;font-weight:600;
   color:var(--muted);background:var(--bg3);text-align:center}
 #p-mill .tgl:hover span{border-color:var(--ok);color:var(--ok)}
 #p-mill .tgl input:checked+span{background:var(--ok);border-color:var(--ok);
@@ -1125,32 +1125,32 @@ body.demo .internal{display:none !important}
 
 #p-mill .specbox{background:var(--bg3);border:1px solid var(--line);border-radius:9px;
   overflow:hidden;margin-top:11px}
-#p-mill .specbox summary{padding:9px 12px;cursor:pointer;font-size:12px;
+#p-mill .specbox summary{padding:9px 12px;cursor:pointer;font-size:13px;
   text-transform:uppercase;letter-spacing:.5px;color:var(--or);font-weight:700;
   list-style:none}
 #p-mill .specbox summary::-webkit-details-marker{display:none}
 #p-mill .specbox summary::before{content:'▸ ';color:var(--muted)}
 #p-mill .specbox[open] summary::before{content:'▾ '}
 #p-mill .specbox summary span{text-transform:none;letter-spacing:0;font-weight:400;
-  color:var(--muted);font-size:12px}
+  color:var(--muted);font-size:13px}
 #p-mill .specbox .body{padding:0 12px 11px}
 #p-mill .specbox dl{display:grid;grid-template-columns:repeat(4,minmax(0,auto));
-  gap:3px 12px;margin:0;font-size:12.5px}
+  gap:3px 12px;margin:0;font-size:14px}
 @media(max-width:760px){#p-mill .specbox dl{grid-template-columns:auto auto}}
 #p-mill .specbox dt{color:var(--muted);white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis}
 #p-mill .specbox dd{margin:0;text-align:right;font-weight:600;color:var(--tx);
   min-width:0;overflow-wrap:anywhere}
 #p-mill .specbox .idx{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line2);
-  font-size:12px;color:var(--tx2);line-height:1.5}
+  font-size:13px;color:var(--tx2);line-height:1.5}
 
 #p-mill .matches{margin-top:12px;border-top:1px dashed var(--line2)}
-#p-mill .matches summary{padding:8px 0;cursor:pointer;font-size:12.5px;font-weight:600;
+#p-mill .matches summary{padding:8px 0;cursor:pointer;font-size:14px;font-weight:600;
   color:var(--tx2)}
 #p-mill .mlist{max-height:250px;overflow-y:auto;padding-right:3px}
 #p-mill .mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;
   align-items:center;padding:7px 9px;border:1px solid var(--line);border-radius:7px;
-  margin-bottom:5px;cursor:pointer;font:inherit;font-size:12.5px;background:var(--bg3);
+  margin-bottom:5px;cursor:pointer;font:inherit;font-size:14px;background:var(--bg3);
   color:var(--tx);text-align:left;width:100%}
 #p-mill .mrow:hover{border-color:var(--or)}
 #p-mill .mrow b{color:var(--or);white-space:nowrap}
@@ -1159,36 +1159,36 @@ body.demo .internal{display:none !important}
 #p-mill .side{position:sticky;top:96px}
 #p-mill .cfg{background:var(--bg3);border:1px solid var(--line);border-radius:9px;
   padding:10px 12px;margin-bottom:12px}
-#p-mill .cfg b{display:block;font-size:15px;color:var(--or);line-height:1.3}
-#p-mill .cfg span{font-size:12px;color:var(--muted);display:block;margin-top:3px;
+#p-mill .cfg b{display:block;font-size:16.5px;color:var(--or);line-height:1.3}
+#p-mill .cfg span{font-size:13px;color:var(--muted);display:block;margin-top:3px;
   line-height:1.45}
 #p-mill .sec{margin-bottom:11px}
 #p-mill .sech{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
-  font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);
+  font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);
   font-weight:700;padding-bottom:5px;border-bottom:1px solid var(--line);margin-bottom:4px}
-#p-mill .sech b{color:var(--or);font-size:12.5px;letter-spacing:0;white-space:nowrap}
+#p-mill .sech b{color:var(--or);font-size:14px;letter-spacing:0;white-space:nowrap}
 #p-mill .srow{display:flex;justify-content:space-between;gap:10px;padding:5px 0;
-  font-size:13px;border-bottom:1px solid var(--line);line-height:1.35}
+  font-size:14.5px;border-bottom:1px solid var(--line);line-height:1.35}
 #p-mill .srow:last-child{border-bottom:0}
 #p-mill .srow .v{white-space:nowrap;font-weight:600}
-#p-mill .srow .v.no{color:var(--bad);font-weight:700;font-size:11.5px}
-#p-mill .sdet{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;
+#p-mill .srow .v.no{color:var(--bad);font-weight:700;font-size:12.5px}
+#p-mill .sdet{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;
   color:var(--muted);padding:0 0 4px 11px;line-height:1.4}
 #p-mill .sdet span:last-child{text-align:right}
 #p-mill .split{display:flex;height:8px;border-radius:5px;overflow:hidden;
   margin:13px 0 8px;background:var(--bg4)}
 #p-mill .split i{display:block;transition:width .18s}
-#p-mill .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+#p-mill .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 #p-mill .legend em{font-style:normal;display:inline-block;width:8px;height:8px;
   border-radius:2px;margin-right:5px;vertical-align:middle}
 #p-mill .total{display:flex;justify-content:space-between;align-items:baseline;
-  margin-top:12px;padding-top:11px;border-top:2px solid var(--or);font-size:14px;
+  margin-top:12px;padding-top:11px;border-top:2px solid var(--or);font-size:15.5px;
   font-weight:700;color:var(--or)}
-#p-mill .total .sum{font-size:25px;letter-spacing:-.5px}
-#p-mill .vat{text-align:right;font-size:11.5px;color:var(--muted);margin-top:3px}
+#p-mill .total .sum{font-size:27.5px;letter-spacing:-.5px}
+#p-mill .vat{text-align:right;font-size:12.5px;color:var(--muted);margin-top:3px}
 #p-mill .issues{margin-top:11px;display:flex;flex-direction:column;gap:5px}
 #p-mill .issues:empty{display:none}
-#p-mill .issue{font-size:11.5px;color:var(--tx);background:var(--badbg);
+#p-mill .issue{font-size:12.5px;color:var(--tx);background:var(--badbg);
   border-left:3px solid var(--bad);padding:5px 8px;border-radius:0 5px 5px 0;
   line-height:1.4}
 #p-mill .issue.warn{background:var(--warnbg);border-left-color:var(--warn)}
@@ -1202,14 +1202,14 @@ body.demo .internal{display:none !important}
 #p-mill button.main:hover{background:var(--or2)}
 #p-mill button.sec:hover{border-color:var(--or)}
 #p-mill .vatrow{display:flex;align-items:center;justify-content:flex-end;gap:8px;
-  margin-top:9px;font-size:11.5px;color:var(--muted)}
-#p-mill .vatrow select{width:auto;padding:4px 8px;font-size:12px}
+  margin-top:9px;font-size:12.5px;color:var(--muted)}
+#p-mill .vatrow select{width:auto;padding:4px 8px;font-size:13px}
 #p-mill .links{display:flex;gap:14px;justify-content:center;margin-top:10px}
-#p-mill .links a{font-size:11.5px;color:var(--muted);text-decoration:none;
+#p-mill .links a{font-size:12.5px;color:var(--muted);text-decoration:none;
   border-bottom:1px dotted var(--line2);cursor:pointer}
 #p-mill .links a:hover{color:var(--or)}
-#p-mill .note{font-size:10.5px;color:var(--muted);margin-top:11px;line-height:1.45}
-#p-mill textarea{width:100%;height:150px;margin-top:10px;font:12px/1.45 monospace;
+#p-mill .note{font-size:11.5px;color:var(--muted);margin-top:11px;line-height:1.45}
+#p-mill textarea{width:100%;height:150px;margin-top:10px;font:13px/1.45 monospace;
   padding:10px;border:1px solid var(--line2);border-radius:7px;background:var(--bg3);
   color:var(--tx);display:none}
 #p-mill textarea.on{display:block}
@@ -1222,7 +1222,7 @@ body.demo .internal{display:none !important}
     z-index:30;background:var(--or);color:var(--onor);padding:11px 16px;
     justify-content:space-between;align-items:center;
     box-shadow:0 -2px 12px var(--shadow)}
-  #mzBar b{font-size:19px}
+  #mzBar b{font-size:21px}
   #mzBar button{border:0;background:var(--bg2);color:var(--or);border-radius:7px;
     padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
   #mzBar span{display:flex;gap:7px;align-items:center}
@@ -1237,13 +1237,13 @@ body.demo .internal{display:none !important}
   height:calc(100vh - var(--cmp-top, 210px));min-height:420px}
 .cmpbox iframe{display:block;width:100%;height:100%;border:0;background:var(--bg)}
 .cmp-load{position:absolute;inset:0;display:flex;align-items:center;
-  justify-content:center;color:var(--muted);font-size:14px;background:var(--bg2)}
+  justify-content:center;color:var(--muted);font-size:15.5px;background:var(--bg2)}
 .cmp-load[hidden]{display:none}
 .cmp-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .cmp-zoom{display:flex;align-items:center;gap:6px;border:1px solid var(--line2);
   border-radius:8px;padding:3px 8px 3px 3px}
-.cmp-zoom .btn{padding:4px 9px;font-size:13px}
-#cmpZoomVal{font-size:12.5px;color:var(--muted);min-width:44px;text-align:center}
+.cmp-zoom .btn{padding:4px 9px;font-size:14.5px}
+#cmpZoomVal{font-size:14px;color:var(--muted);min-width:44px;text-align:center}
 
 /* В разделе сравнения документам нужен весь экран: снимаем ограничение ширины
    и сжимаем шапку — иначе два листа A4 рядом ужимаются до нечитаемого. */
@@ -1260,6 +1260,6 @@ body.cmpmax #p-cmp .bhead{display:none}
 body.cmpmax .cmp-acts{position:fixed;top:9px;right:12px;z-index:60}
 body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0}
 @media(max-width:700px){
-  body.cmpmax #p-cmp .btitle{font-size:15px}
+  body.cmpmax #p-cmp .btitle{font-size:16.5px}
   .cmp-zoom{padding:2px 6px 2px 2px}
 }
