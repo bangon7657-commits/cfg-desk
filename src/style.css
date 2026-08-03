@@ -996,6 +996,77 @@ body.demo .internal{display:none !important}
    цвета в значениях: только переменные темы, чтобы раздел жил и в тёмной,
    и в светлой без правок.
    --------------------------------------------------------------------------- */
+/* Акцент раздела — синий, как в исходном конфигураторе: оранжевый на плотных
+   таблицах прайса читался хуже. Меняем только переменные, поэтому все правила
+   ниже остаются прежними и работают в обеих темах. */
+#p-mill{--or:#6ba4ff; --or2:#96c0ff; --or3:#3f7fd8; --orbg:#101d30; --onor:#08121f}
+html[data-theme="light"] #p-mill{--or:#0f2b52; --or2:#2f6fd0; --or3:#173d70;
+  --orbg:#eaf1fb; --onor:#ffffff}
+
+/* Шапка раздела: слева название, справа поля будущего ТКП */
+.mzhead{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;
+  margin:14px 0;align-items:stretch}
+@media(max-width:1040px){.mzhead{grid-template-columns:1fr}}
+.mzhead>div{background:var(--or);color:var(--onor);padding:14px 18px;
+  border-radius:12px;display:flex;align-items:center;min-width:0}
+.mzhead h1{margin:0;font-size:21px;line-height:1.25}
+.mzhead p{margin:3px 0 0;opacity:.75;font-size:13.5px}
+.mzhead p span{opacity:.9}
+.mzmeta{display:grid;grid-template-columns:1fr 96px 116px;gap:8px;width:100%;
+  align-content:center}
+.mzmeta input.wide{grid-column:1/-1}
+.mzhead .mzmeta input{width:100%;padding:9px 11px;border:1px solid var(--line2);
+  border-radius:7px;background:var(--bg2);color:var(--tx);font:inherit;font-size:14px}
+.mzhead .mzmeta input::placeholder{color:var(--muted)}
+.mzhead .mzmeta input:focus{outline:none;border-color:var(--or2);
+  box-shadow:0 0 0 3px var(--orbg)}
+
+/* Шаги: слева колонка с линией, справа один блок за раз */
+.mzflow{display:grid;grid-template-columns:210px minmax(0,1fr);gap:18px;
+  align-items:start;min-width:0}
+@media(max-width:900px){.mzflow{grid-template-columns:1fr}}
+.mzsteps{list-style:none;margin:0;padding:0;position:relative}
+.mzsteps::before{content:"";position:absolute;left:15px;top:16px;bottom:16px;
+  width:2px;background:var(--line)}
+.mzstep-b{position:relative;display:flex;gap:11px;align-items:flex-start;
+  width:100%;text-align:left;background:none;border:0;font:inherit;cursor:pointer;
+  padding:9px 6px;color:var(--tx2);border-radius:9px}
+.mzstep-b:hover{background:var(--bg3);color:var(--tx)}
+.mzstep-b .n{flex:0 0 auto;width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  font-weight:700;background:var(--bg3);color:var(--muted);
+  border:2px solid var(--line);position:relative;z-index:1}
+.mzstep-b .t{font-size:14.5px;font-weight:600;line-height:1.3;padding-top:5px}
+.mzstep-b .t small{display:block;font-size:12px;font-weight:400;color:var(--muted);
+  margin-top:2px}
+.mzstep-b.on{color:var(--tx)}
+.mzstep-b.on .n{background:var(--or);color:var(--onor);border-color:var(--or)}
+.mzstep-b.done .n{background:var(--ok);color:var(--onok);border-color:var(--ok)}
+.mzstep-b.done .n::after{content:"✓"}
+.mzstep-b.done .n span{display:none}
+@media(max-width:900px){
+  .mzsteps{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+  .mzsteps::before{display:none}
+  .mzstep-b{width:auto;white-space:nowrap;border:1px solid var(--line);
+    padding:7px 12px}
+  .mzstep-b .t small{display:none}
+}
+
+/* Листалка под блоком */
+.mznav{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:6px 0 18px}
+.mznav span{font-size:13px;color:var(--muted)}
+.mznav .mini{border:1px solid var(--line2);background:var(--bg2);color:var(--tx);
+  border-radius:9px;padding:10px 18px;font:inherit;font-size:14.5px;font-weight:600;
+  cursor:pointer}
+.mznav .mini:hover:not(:disabled){border-color:var(--or);color:var(--or)}
+.mznav .mini:disabled{opacity:.4;cursor:not-allowed}
+.mznav .mini.next{background:var(--or);border-color:var(--or);color:var(--onor)}
+.mznav .mini.next:hover:not(:disabled){background:var(--or2);border-color:var(--or2);
+  color:var(--onor)}
+#p-mill .mzstep{display:none}
+#p-mill .mzstep.on{display:block}
+
 #p-mill .grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;
   align-items:start}
 #p-mill .grid>div{min-width:0}

@@ -875,6 +875,46 @@ function mzPriceDefaults() {
   if (!mzTouched('mzPnrP')) $('mzPnrP').value = Math.round(mzPnrPrice() / 100);
 }
 
+// -------------------------------------------------------------------- шаги
+// Три блока показываются по одному: слева видно, где ты находишься и что уже
+// заполнено, внизу — листалка. Так на экране помещается сам блок, а не его шапка.
+var MZ_STEPS = [
+  { n: 1, t: 'Станок', s: 'серия, поле, узлы' },
+  { n: 2, t: 'Доп. оборудование', s: 'обвязка и 4-я ось' },
+  { n: 3, t: 'ПНР и обучение', s: 'пусконаладка по прайсу' }
+];
+function mzStepDone(n) {
+  if (n === 1) return !!mzNum('mzPrice');
+  if (n === 2) {
+    return ['mzStabOn', 'mzChOn', 'mzSensOn', 'mzVibOn', 'mzAspOn', 'mzBrOn',
+      'mzDspOn', 'mzRotOn', 'mzExtraOn'].some(function (id) {
+      return $(id) && $(id).checked;
+    });
+  }
+  return $('mzPnrOn') && $('mzPnrOn').checked;
+}
+function mzShowStep(n) {
+  n = Math.min(MZ_STEPS.length, Math.max(1, n || 1));
+  mzS.step = n;
+  var box = $('p-mill');
+  Array.prototype.forEach.call(box.querySelectorAll('.mzstep'), function (c) {
+    c.classList.toggle('on', +c.dataset.step === n);
+  });
+  $('mzStepNav').innerHTML = MZ_STEPS.map(function (st) {
+    var done = mzStepDone(st.n) && st.n !== n;
+    return '<li><button type="button" class="mzstep-b' + (st.n === n ? ' on' : '') +
+      (done ? ' done' : '') + '" data-step="' + st.n + '"' +
+      (st.n === n ? ' aria-current="step"' : '') + '><span class="n"><span>' +
+      st.n + '</span></span><span class="t">' + esc(st.t) +
+      '<small>' + esc(st.s) + '</small></span></button></li>';
+  }).join('');
+  $('mzPrev').disabled = n === 1;
+  $('mzNext').disabled = n === MZ_STEPS.length;
+  $('mzStepTx').textContent = 'Шаг ' + n + ' из ' + MZ_STEPS.length + ' · ' +
+    MZ_STEPS[n - 1].t;
+  save();
+}
+
 // ------------------------------------------------------------------ вкладки
 function mzRenderMTabs() {
   $('mzMTabs').style.display = mzS.mode === 'custom' ? '' : 'none';
@@ -934,7 +974,8 @@ function mzUpdate() {
   mzRenderModes(); mzRenderMTabs(); mzRenderTabs();
   mzRenderReady(); mzRenderMatches(); mzRenderSimilar();
   mzRenderSpec();
-  $('mzCfgCnt').textContent = cnt(MZCAT.length,
+  mzShowStep(mzS.step || 1);
+  $('mzCfgCnt').textContent = ' · ' + cnt(MZCAT.length,
     ['конфигурация', 'конфигурации', 'конфигураций']) + ' в прайсе';
   mzSave();
   mzBusy = false;
@@ -1084,6 +1125,31 @@ function mzBind() {
     mzRenderTabs();
     mzSave();
   });
+  $('mzStepNav').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-step]');
+    if (b) mzShowStep(+b.dataset.step);
+  });
+  $('mzPrev').addEventListener('click', function () { mzShowStep((mzS.step || 1) - 1); });
+  $('mzNext').addEventListener('click', function () { mzShowStep((mzS.step || 1) + 1); });
+  // Поля шапки — это поля будущего ТКП: пишем прямо в них, второго места
+  // для клиента и номера в приложении быть не должно.
+  [['mzClient', 'kpClient'], ['mzNum', 'kpNum'], ['mzDate', 'kpDate']]
+    .forEach(function (pair) {
+      var here = $(pair[0]), there = $(pair[1]);
+      if (!here || !there) return;
+      here.value = there.value;
+      here.addEventListener('input', function () {
+        there.value = here.value;
+        there.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      there.addEventListener('input', function () { here.value = there.value; });
+    });
+  if ($('mzMgr')) {
+    var m = mgr();
+    $('mzMgr').value = [m.name, m.phone, m.email].filter(Boolean).join(' · ');
+    $('mzMgr').readOnly = true;
+    $('mzMgr').title = 'Меняется в разделе «Смета и ТКП», в блоке менеджера';
+  }
   ['mzReadyList', 'mzSimilar', 'mzMatchList'].forEach(function (id) {
     $(id).addEventListener('click', function (e) {
       var b = e.target.closest('[data-cfg]');

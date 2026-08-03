@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 45', /const CACHE = 'cfg-v45'/.test(swTxt),
+check('кеш: версия поднята до 46', /const CACHE = 'cfg-v46'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -2162,11 +2162,58 @@ check('вкладки: значок сметы жив после перерис�
     /₽/.test(mz('mzLegend').textContent),
     doc.querySelectorAll('#mzSpecBody .sec').length + '/' +
     doc.querySelectorAll('#mzSplit i').length);
-  // цвет в разделе только из переменных темы: иначе он не переживёт светлую тему
-  var mzCss = (src.match(/#p-mill[^{]*\{[^}]*\}/g) || []).join('');
+  // Цвет в разделе задаётся только переменными: свой синий акцент объявлен
+  // один раз для тёмной и светлой темы, а дальше везде идёт var(--or).
+  // Прямых цветов в свойствах быть не должно — иначе тема их не переопределит.
+  var mzCss = (src.match(/#p-mill[^{]*\{[^}]*\}/g) || []).join('')
+    .replace(/--[\w-]+:[^;}]+;?/g, '');
   check('фрезерный: ни одного цвета мимо переменных темы',
     !/#[0-9a-f]{3,8}\b/i.test(mzCss) && !/\brgba?\(/i.test(mzCss),
     (mzCss.match(/#[0-9a-f]{3,8}\b/i) || [''])[0]);
+  check('фрезерный: заголовок и подпись как в исходном конфигураторе',
+    /Конфигуратор фрезерного станка Wattsan/.test(textOf(doc, '#p-mill .mzhead h1')) &&
+    /подбор конфигурации, допоборудования и ПНР/.test(textOf(doc, '#p-mill .mzhead p')),
+    textOf(doc, '#p-mill .mzhead h1'));
+  check('фрезерный: в шапке поля будущего ТКП',
+    [...doc.querySelectorAll('#p-mill .mzmeta input')]
+      .map(i => i.getAttribute('placeholder')).join('|') ===
+      'Клиент|№ КП|Дата|Менеджер: имя · телефон · почта',
+    [...doc.querySelectorAll('#p-mill .mzmeta input')]
+      .map(i => i.getAttribute('placeholder')).join('|'));
+  (function () {
+    var cl = doc.getElementById('mzClient');
+    cl.value = 'ООО «Ромашка»';
+    cl.dispatchEvent(new win.Event('input', { bubbles: true }));
+    check('фрезерный: клиент из шапки уходит прямо в ТКП, а не заводится дважды',
+      doc.getElementById('kpClient').value === 'ООО «Ромашка»',
+      doc.getElementById('kpClient').value);
+    cl.value = '';
+    cl.dispatchEvent(new win.Event('input', { bubbles: true }));
+  }());
+  check('фрезерный: три шага с колонкой слева',
+    doc.querySelectorAll('#mzStepNav .mzstep-b').length === 3 &&
+    doc.querySelectorAll('#p-mill .mzstep').length === 3, '');
+  check('фрезерный: на экране один блок за раз',
+    doc.querySelectorAll('#p-mill .mzstep.on').length === 1,
+    doc.querySelectorAll('#p-mill .mzstep.on').length);
+  (function () {
+    doc.getElementById('mzNext').click();
+    var on2 = doc.querySelector('#p-mill .mzstep.on');
+    check('фрезерный: «Далее» листает на следующий шаг',
+      on2 && on2.getAttribute('data-step') === '2' &&
+      /Шаг 2 из 3/.test(textOf(doc, '#mzStepTx')), textOf(doc, '#mzStepTx'));
+    doc.querySelector('#mzStepNav [data-step="3"]').click();
+    check('фрезерный: на последнем шаге «Далее» выключено',
+      doc.getElementById('mzNext').disabled &&
+      !doc.getElementById('mzPrev').disabled, '');
+    doc.querySelector('#mzStepNav [data-step="1"]').click();
+    check('фрезерный: на первом шаге выключено «Назад»',
+      doc.getElementById('mzPrev').disabled, '');
+  }());
+  check('фрезерный: акцент раздела синий, а не оранжевый',
+    /#p-mill\{--or:#6ba4ff/.test(src.replace(/\s+/g, '')) &&
+    /html\[data-theme="light"\] #p-mill\{--or:#0f2b52/
+      .test(src.replace(/\s+/g, ' ')), '');
   menuGo('mill');
   mz('mzReset') && (win.confirm = function () { return true; });
   mz('mzReset').click();

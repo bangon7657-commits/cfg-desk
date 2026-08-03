@@ -956,20 +956,32 @@
 <!-- ================= ФРЕЗЕРНЫЙ ================= -->
 <span class="nojs-title">Фрезерный</span>
 <section class="panel" id="p-mill">
-  <div class="bhead">
+  <!-- Шапка как в исходном конфигураторе: слева название, справа поля будущего
+       ТКП. Поля не свои — они пишут прямо в шапку раздела «Смета и ТКП»,
+       чтобы клиент и номер не заводились в приложении дважды. -->
+  <div class="mzhead">
     <div>
-      <h1 class="btitle">Фрезерный станок</h1>
-      <p class="lead">Готовая конфигурация из прайса или своя сборка по узлам.
-        Обвязка, поворотная ось и ПНР подбираются под выбранный станок, нестыковки
-        видны сразу. Готовая спецификация уходит в смету.</p>
+      <h1>Конфигуратор фрезерного станка Wattsan</h1>
+      <p>LASERCUT · подбор конфигурации, допоборудования и ПНР
+        <span id="mzCfgCnt"></span></p>
     </div>
-    <span class="pill on" id="mzCfgCnt"></span>
+    <div class="mzmeta">
+      <input id="mzClient" type="text" placeholder="Клиент" aria-label="Клиент">
+      <input id="mzNum" type="text" placeholder="№ КП" aria-label="Номер КП">
+      <input id="mzDate" type="text" placeholder="Дата" aria-label="Дата">
+      <input id="mzMgr" class="wide" type="text" aria-label="Менеджер"
+        placeholder="Менеджер: имя · телефон · почта">
+    </div>
   </div>
 
   <div class="grid printkeep">
-  <div>
+  <div class="mzflow">
+    <!-- Шаги листаются по одному: на экране только текущий блок, слева видно,
+         где ты находишься и что уже заполнено. -->
+    <ol class="mzsteps" id="mzStepNav"></ol>
+    <div class="mzstage">
 
-    <div class="card">
+    <div class="card mzstep" data-step="1">
       <div class="cardhead">
         <h2>1 · Станок</h2>
         <div class="seg noprint" id="mzModes">
@@ -1054,7 +1066,7 @@
       <div id="mzSimilar"></div>
     </div>
 
-    <div class="card">
+    <div class="card mzstep" data-step="2">
       <div class="cardhead">
         <h2>2 · Доп. оборудование</h2>
         <div class="tabs noprint" id="mzTabs"></div>
@@ -1166,7 +1178,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card mzstep" data-step="3">
       <h2>3 · ПНР и обучение</h2>
       <div class="panehead b5">
         <div class="f"><label for="mzPnrGroup">Группа по прайсу</label><select id="mzPnrGroup"></select></div>
@@ -1184,6 +1196,12 @@
       <div class="hints"><div class="hint">__PNR_TERMS_MILL__</div></div>
     </div>
 
+      <div class="mznav noprint">
+        <button class="mini" type="button" id="mzPrev">← Назад</button>
+        <span id="mzStepTx"></span>
+        <button class="mini next" type="button" id="mzNext">Далее →</button>
+      </div>
+    </div>
   </div>
 
   <div class="side">
