@@ -915,17 +915,6 @@ function mzShowStep(n) {
   save();
 }
 
-// Свёрнутая шапка ТКП: в строке видно заполненное, чтобы не открывать зря.
-function mzMetaTx() {
-  var box = $('mzMetaTx');
-  if (!box) return;
-  var parts = [$('mzClient') && $('mzClient').value.trim(),
-    $('mzNum') && $('mzNum').value.trim() ? '№ ' + $('mzNum').value.trim() : '',
-    $('mzDate') && $('mzDate').value.trim()].filter(Boolean);
-  box.textContent = parts.length ? 'Шапка ТКП: ' + parts.join(' · ')
-    : 'Шапка ТКП — не заполнена';
-}
-
 // ------------------------------------------------------------------ вкладки
 function mzRenderMTabs() {
   $('mzMTabs').style.display = mzS.mode === 'custom' ? '' : 'none';
@@ -1142,30 +1131,6 @@ function mzBind() {
   });
   $('mzPrev').addEventListener('click', function () { mzShowStep((mzS.step || 1) - 1); });
   $('mzNext').addEventListener('click', function () { mzShowStep((mzS.step || 1) + 1); });
-  // Поля шапки — это поля будущего ТКП: пишем прямо в них, второго места
-  // для клиента и номера в приложении быть не должно.
-  [['mzClient', 'kpClient'], ['mzNum', 'kpNum'], ['mzDate', 'kpDate']]
-    .forEach(function (pair) {
-      var here = $(pair[0]), there = $(pair[1]);
-      if (!here || !there) return;
-      here.value = there.value;
-      here.addEventListener('input', function () {
-        there.value = here.value;
-        there.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-      there.addEventListener('input', function () { here.value = there.value; });
-    });
-  if ($('mzMgr')) {
-    var m = mgr();
-    $('mzMgr').value = [m.name, m.phone, m.email].filter(Boolean).join(' · ');
-    $('mzMgr').readOnly = true;
-    $('mzMgr').title = 'Меняется в разделе «Смета и ТКП», в блоке менеджера';
-  }
-  // в свёрнутом виде строка показывает, что уже заполнено
-  ['mzClient', 'mzNum', 'mzDate'].forEach(function (id) {
-    if ($(id)) $(id).addEventListener('input', mzMetaTx);
-  });
-  mzMetaTx();
   ['mzReadyList', 'mzSimilar', 'mzMatchList'].forEach(function (id) {
     $(id).addEventListener('click', function (e) {
       var b = e.target.closest('[data-cfg]');

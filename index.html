@@ -241,7 +241,7 @@ a{color:var(--or2)}
    даёт CSS, поэтому она живёт и в тёмной, и в светлой теме. Место — правый
    нижний угол окна, приподнята над краем; блок лежит вне панелей, поэтому
    видна на каждой вкладке. */
-.oath{position:fixed;right:18px;bottom:56px;width:132px;z-index:26;
+.oath{position:fixed;right:18px;bottom:56px;width:198px;z-index:26;
   display:block;text-decoration:none;
   color:var(--tx2);opacity:.6;cursor:pointer;
   transition:opacity .16s, transform .16s, color .16s}
@@ -1017,41 +1017,12 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
 
 /* Шапка раздела: слева название, справа свёрнутая шапка ТКП. Обе половины
    одной высоты — раньше правая была выше и линия шапки ломалась. */
-.mzhead{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;
-  margin:14px 0;align-items:stretch}
-@media(max-width:1040px){.mzhead{grid-template-columns:1fr}}
-.mzhead>div,.mzhead>details{background:var(--or);color:var(--onor);
-  padding:13px 18px;border-radius:12px;min-width:0;display:flex;
-  flex-direction:column;justify-content:center}
+.mzhead{margin:14px 0}
+.mzhead>div{background:var(--or);color:var(--onor);padding:14px 18px;
+  border-radius:12px;min-width:0}
 .mzhead h1{margin:0;font-size:21px;line-height:1.25}
 .mzhead p{margin:3px 0 0;opacity:.78;font-size:13.5px}
 
-/* Шапка ТКП: строка с подсказкой, по нажатию — поля */
-.mzmeta{position:relative;cursor:pointer}
-.mzmeta>summary{list-style:none;display:flex;align-items:center;gap:9px;
-  font-size:14.5px;font-weight:600}
-.mzmeta>summary::-webkit-details-marker{display:none}
-.mzmeta>summary::before{content:"▸";opacity:.7;font-size:13px}
-.mzmeta[open]>summary::before{content:"▾"}
-.mzmeta-t{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mzmeta-tip{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:20;
-  padding:11px 14px;border-radius:10px;font-size:13px;font-weight:400;
-  line-height:1.45;color:var(--tx);border:1px solid var(--line2);
-  background:color-mix(in srgb, var(--bg2) 92%, transparent);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  box-shadow:0 10px 26px var(--shadow);opacity:0;visibility:hidden;
-  transition:opacity .12s}
-.mzmeta>summary:hover .mzmeta-tip{opacity:1;visibility:visible}
-.mzmeta[open]>summary .mzmeta-tip{display:none}
-.mzmeta-in{display:grid;grid-template-columns:1fr 88px 108px;gap:8px;
-  margin-top:11px}
-.mzmeta-in input.wide{grid-column:1/-1}
-.mzhead .mzmeta-in input{width:100%;padding:9px 11px;border:1px solid var(--line2);
-  border-radius:7px;background:var(--bg2);color:var(--tx);font:inherit;font-size:14px}
-.mzhead .mzmeta-in input::placeholder{color:var(--muted)}
-.mzhead .mzmeta-in input:focus{outline:none;border-color:var(--or2);
-  box-shadow:0 0 0 3px var(--orbg)}
-@media(max-width:560px){.mzmeta-in{grid-template-columns:1fr}}
 
 /* Шаги: слева колонка с линией, справа один блок за раз */
 .mzflow{display:grid;grid-template-columns:210px minmax(0,1fr);gap:18px;
@@ -1405,15 +1376,10 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
     </a>
     <div class="head-right">
       <button type="button" class="themebtn" id="themeBtn" aria-pressed="false" title="Светлая или тёмная тема">Светлая тема</button>
-      <label class="toggle"><input type="checkbox" id="demoMode"> Режим демонстрации</label>
       <span class="savedot" id="saveDot"></span>
     </div>
   </div>
 </header>
-<div class="demo-banner">
-  <span>Режим демонстрации: наценка, лестница скидок и служебные пометки скрыты</span>
-  <button type="button" id="demoOff">Вернуть внутренний режим</button>
-</div>
 
 <nav aria-label="Разделы" style="top: 0px;">
   <div class="navinner">
@@ -2325,22 +2291,6 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
       <p>LASERCUT · подбор конфигурации, допоборудования и ПНР
         <span id="mzCfgCnt"> · 110 конфигураций в прайсе</span></p>
     </div>
-    <!-- Шапка ТКП свёрнута в одну строку: поля нужны редко, а места занимали
-         половину блока. Раскрывается нажатием, при наведении видно, что внутри. -->
-    <details class="mzmeta" id="mzMeta">
-      <summary>
-        <span class="mzmeta-t" id="mzMetaTx">Шапка ТКП: 03.08.2026</span>
-        <span class="mzmeta-tip">Клиент, исходящий номер и дата первого листа ТКП.
-          Это те же поля, что в разделе «Смета и ТКП» — заполните здесь или там,
-          второй раз вводить не нужно. Менеджер берётся из настроек.</span>
-      </summary>
-      <div class="mzmeta-in">
-        <input id="mzClient" type="text" placeholder="Клиент" aria-label="Клиент">
-        <input id="mzNum" type="text" placeholder="№ КП" aria-label="Номер КП">
-        <input id="mzDate" type="text" placeholder="Дата" aria-label="Дата">
-        <input id="mzMgr" class="wide" type="text" aria-label="Менеджер" placeholder="Менеджер: имя · телефон · почта" readonly="" title="Меняется в разделе «Смета и ТКП», в блоке менеджера">
-      </div>
-    </details>
   </div>
 
   <div class="grid printkeep">
@@ -4436,13 +4386,17 @@ var DOCX = (function () {
   // ------------------------------------------------------------------ демо-режим
   function applyDemo(on, silent) {
     state.demo = on;
-    $('demoMode').checked = on;
+    if ($('demoMode')) $('demoMode').checked = on;
     d.body.classList.toggle('demo', on);
     if (!silent) save();
     renderMill();
   }
-  $('demoMode').addEventListener('change', function () { applyDemo(this.checked); });
-  $('demoOff').addEventListener('click', function () { applyDemo(false); });
+  // Режим демонстрации остаётся в коде, но кнопок у него больше нет:
+  // на планёрках им не пользовались, а место в шапке он занимал.
+  if ($('demoMode')) {
+    $('demoMode').addEventListener('change', function () { applyDemo(this.checked); });
+  }
+  if ($('demoOff')) $('demoOff').addEventListener('click', function () { applyDemo(false); });
   applyDemo(!!state.demo, true);
 
   // ------------------------------------------------------------------ тема
@@ -11067,17 +11021,6 @@ function mzShowStep(n) {
   save();
 }
 
-// Свёрнутая шапка ТКП: в строке видно заполненное, чтобы не открывать зря.
-function mzMetaTx() {
-  var box = $('mzMetaTx');
-  if (!box) return;
-  var parts = [$('mzClient') && $('mzClient').value.trim(),
-    $('mzNum') && $('mzNum').value.trim() ? '№ ' + $('mzNum').value.trim() : '',
-    $('mzDate') && $('mzDate').value.trim()].filter(Boolean);
-  box.textContent = parts.length ? 'Шапка ТКП: ' + parts.join(' · ')
-    : 'Шапка ТКП — не заполнена';
-}
-
 // ------------------------------------------------------------------ вкладки
 function mzRenderMTabs() {
   $('mzMTabs').style.display = mzS.mode === 'custom' ? '' : 'none';
@@ -11294,30 +11237,6 @@ function mzBind() {
   });
   $('mzPrev').addEventListener('click', function () { mzShowStep((mzS.step || 1) - 1); });
   $('mzNext').addEventListener('click', function () { mzShowStep((mzS.step || 1) + 1); });
-  // Поля шапки — это поля будущего ТКП: пишем прямо в них, второго места
-  // для клиента и номера в приложении быть не должно.
-  [['mzClient', 'kpClient'], ['mzNum', 'kpNum'], ['mzDate', 'kpDate']]
-    .forEach(function (pair) {
-      var here = $(pair[0]), there = $(pair[1]);
-      if (!here || !there) return;
-      here.value = there.value;
-      here.addEventListener('input', function () {
-        there.value = here.value;
-        there.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-      there.addEventListener('input', function () { here.value = there.value; });
-    });
-  if ($('mzMgr')) {
-    var m = mgr();
-    $('mzMgr').value = [m.name, m.phone, m.email].filter(Boolean).join(' · ');
-    $('mzMgr').readOnly = true;
-    $('mzMgr').title = 'Меняется в разделе «Смета и ТКП», в блоке менеджера';
-  }
-  // в свёрнутом виде строка показывает, что уже заполнено
-  ['mzClient', 'mzNum', 'mzDate'].forEach(function (id) {
-    if ($(id)) $(id).addEventListener('input', mzMetaTx);
-  });
-  mzMetaTx();
   ['mzReadyList', 'mzSimilar', 'mzMatchList'].forEach(function (id) {
     $(id).addEventListener('click', function (e) {
       var b = e.target.closest('[data-cfg]');

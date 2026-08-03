@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 47', /const CACHE = 'cfg-v47'/.test(swTxt),
+check('кеш: версия поднята до 48', /const CACHE = 'cfg-v48'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -2174,27 +2174,11 @@ check('вкладки: значок сметы жив после перерис�
     /Конфигуратор фрезерного станка Wattsan/.test(textOf(doc, '#p-mill .mzhead h1')) &&
     /подбор конфигурации, допоборудования и ПНР/.test(textOf(doc, '#p-mill .mzhead p')),
     textOf(doc, '#p-mill .mzhead h1'));
-  check('фрезерный: шапка ТКП свёрнута в строку и не ест место',
-    !doc.getElementById('mzMeta').open &&
-    /Шапка ТКП/.test(textOf(doc, '#mzMetaTx')) &&
-    /Клиент, исходящий номер и дата/.test(textOf(doc, '#p-mill .mzmeta-tip')),
-    textOf(doc, '#mzMetaTx'));
-  check('фрезерный: под строкой те же поля, что в ТКП',
-    [...doc.querySelectorAll('#p-mill .mzmeta-in input')]
-      .map(i => i.getAttribute('placeholder')).join('|') ===
-      'Клиент|№ КП|Дата|Менеджер: имя · телефон · почта',
-    [...doc.querySelectorAll('#p-mill .mzmeta-in input')]
-      .map(i => i.getAttribute('placeholder')).join('|'));
-  (function () {
-    var cl = doc.getElementById('mzClient');
-    cl.value = 'ООО «Ромашка»';
-    cl.dispatchEvent(new win.Event('input', { bubbles: true }));
-    check('фрезерный: клиент из шапки уходит прямо в ТКП, а не заводится дважды',
-      doc.getElementById('kpClient').value === 'ООО «Ромашка»',
-      doc.getElementById('kpClient').value);
-    cl.value = '';
-    cl.dispatchEvent(new win.Event('input', { bubbles: true }));
-  }());
+  // Клиент, номер и дата живут в одном месте — в шапке раздела «Смета и ТКП».
+  // В конфигураторе их нет: вторая точка ввода тех же полей только путала.
+  check('фрезерный: полей ТКП в разделе нет, шапка литая',
+    !doc.getElementById('mzMeta') && !doc.getElementById('mzClient') &&
+    doc.querySelectorAll('#p-mill .mzhead > *').length === 1, '');
   check('фрезерный: три шага с колонкой слева',
     doc.querySelectorAll('#mzStepNav .mzstep-b').length === 3 &&
     doc.querySelectorAll('#p-mill .mzstep').length === 3, '');
@@ -2224,8 +2208,13 @@ check('вкладки: значок сметы жив после перерис�
       .test(src.replace(/\s+/g, '')), '');
   check('фрезерный: в тёмной теме акцент остаётся оранжевым',
     !/(^|\})#p-mill\{--or:/.test(src.replace(/\s+/g, '')), '');
-  check('фрезерный: половины шапки одной высоты',
-    /\.mzhead>div,\.mzhead>details\{/.test(src.replace(/\s+/g, '')), '');
+  check('плашка-клятва крупнее в полтора раза',
+    /\.oath\{[^}]*width:198px/.test(src.replace(/\s+/g, '')), '');
+  check('режим демонстрации убран из шапки',
+    !doc.getElementById('demoMode') && !doc.querySelector('.demo-banner') &&
+    !doc.querySelector('.toggle'), '');
+  check('фрезерный: шапка идёт во всю ширину блоков под ней',
+    /\.mzhead\{margin:14px 0\}/.test(src.replace(/\s+/g, ' ')), '');
   menuGo('mill');
   mz('mzReset') && (win.confirm = function () { return true; });
   mz('mzReset').click();

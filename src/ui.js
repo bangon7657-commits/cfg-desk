@@ -691,13 +691,17 @@
   // ------------------------------------------------------------------ демо-режим
   function applyDemo(on, silent) {
     state.demo = on;
-    $('demoMode').checked = on;
+    if ($('demoMode')) $('demoMode').checked = on;
     d.body.classList.toggle('demo', on);
     if (!silent) save();
     renderMill();
   }
-  $('demoMode').addEventListener('change', function () { applyDemo(this.checked); });
-  $('demoOff').addEventListener('click', function () { applyDemo(false); });
+  // Режим демонстрации остаётся в коде, но кнопок у него больше нет:
+  // на планёрках им не пользовались, а место в шапке он занимал.
+  if ($('demoMode')) {
+    $('demoMode').addEventListener('change', function () { applyDemo(this.checked); });
+  }
+  if ($('demoOff')) $('demoOff').addEventListener('click', function () { applyDemo(false); });
   applyDemo(!!state.demo, true);
 
   // ------------------------------------------------------------------ тема
