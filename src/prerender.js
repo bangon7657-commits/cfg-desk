@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 42', /const CACHE = 'cfg-v42'/.test(swTxt),
+check('кеш: версия поднята до 43', /const CACHE = 'cfg-v43'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1660,6 +1660,16 @@ check('справочник: старый адрес #gas ведёт в спра
 // Масштаб интерфейса: в версии 41 всё подросло на 10 %, потому что читать
 // с рабочего ноутбука было мелко. Лист ТКП при этом обязан остаться прежним:
 // там A4 и миллиметры, любое увеличение поедет по вёрстке страницы.
+// Шапка и лента разделов должны стоять по одной линии: и та и другая идут
+// во всю ширину окна, знак слева, тема и демонстрация справа.
+check('шапка: идёт во всю ширину, вровень с лентой разделов',
+  /\.head\{max-width:none;margin:0/.test(src.replace(/\s+/g, '')) &&
+  /\.navinner\{max-width:none;margin:0/.test(src.replace(/\s+/g, '')), '');
+check('шапка: знак у левого края, кнопки у правого',
+  /\.head\.head-right\{margin-left:auto\}/.test(src.replace(/\s+/g, '')) &&
+  doc.querySelector('.head > .brand') === doc.querySelector('.head').firstElementChild &&
+  doc.querySelector('.head > .head-right') === doc.querySelector('.head').lastElementChild,
+  '');
 check('масштаб: базовый шрифт интерфейса 19 px',
   /body\{[^}]*font:19px/.test(src.replace(/\s+/g, '')),
   (src.replace(/\s+/g, '').match(/body\{[^}]*font:[\d.]+px/) || [''])[0]);
