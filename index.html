@@ -1007,30 +1007,51 @@ body.demo .internal{display:none !important}
    цвета в значениях: только переменные темы, чтобы раздел жил и в тёмной,
    и в светлой без правок.
    --------------------------------------------------------------------------- */
-/* Акцент раздела — синий, как в исходном конфигураторе: оранжевый на плотных
-   таблицах прайса читался хуже. Меняем только переменные, поэтому все правила
-   ниже остаются прежними и работают в обеих темах. */
-#p-mill{--or:#6ba4ff; --or2:#96c0ff; --or3:#3f7fd8; --orbg:#101d30; --onor:#08121f}
-html[data-theme="light"] #p-mill{--or:#0f2b52; --or2:#2f6fd0; --or3:#173d70;
-  --orbg:#eaf1fb; --onor:#ffffff}
+/* В светлой теме раздел берёт холодную палитру исходного конфигуратора: серый
+   фон, белые карточки, синий акцент. В тёмной всё остаётся фирменным оранжевым —
+   синий на тёмном читался хуже, чем привычный акцент приложения. */
+html[data-theme="light"] #p-mill{--bg:#eef1f5; --bg2:#ffffff; --bg3:#f6f8fb;
+  --bg4:#e9edf3; --line:#e3e9f1; --line2:#cdd6e2;
+  --or:#1e4f96; --or2:#3d80dd; --or3:#173d70; --orbg:#e9f0fb; --onor:#ffffff}
+html[data-theme="light"] body.millbg{background:#eef1f5}
 
-/* Шапка раздела: слева название, справа поля будущего ТКП */
-.mzhead{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;
+/* Шапка раздела: слева название, справа свёрнутая шапка ТКП. Обе половины
+   одной высоты — раньше правая была выше и линия шапки ломалась. */
+.mzhead{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;
   margin:14px 0;align-items:stretch}
 @media(max-width:1040px){.mzhead{grid-template-columns:1fr}}
-.mzhead>div{background:var(--or);color:var(--onor);padding:14px 18px;
-  border-radius:12px;display:flex;align-items:center;min-width:0}
+.mzhead>div,.mzhead>details{background:var(--or);color:var(--onor);
+  padding:13px 18px;border-radius:12px;min-width:0;display:flex;
+  flex-direction:column;justify-content:center}
 .mzhead h1{margin:0;font-size:21px;line-height:1.25}
-.mzhead p{margin:3px 0 0;opacity:.75;font-size:13.5px}
-.mzhead p span{opacity:.9}
-.mzmeta{display:grid;grid-template-columns:1fr 96px 116px;gap:8px;width:100%;
-  align-content:center}
-.mzmeta input.wide{grid-column:1/-1}
-.mzhead .mzmeta input{width:100%;padding:9px 11px;border:1px solid var(--line2);
+.mzhead p{margin:3px 0 0;opacity:.78;font-size:13.5px}
+
+/* Шапка ТКП: строка с подсказкой, по нажатию — поля */
+.mzmeta{position:relative;cursor:pointer}
+.mzmeta>summary{list-style:none;display:flex;align-items:center;gap:9px;
+  font-size:14.5px;font-weight:600}
+.mzmeta>summary::-webkit-details-marker{display:none}
+.mzmeta>summary::before{content:"▸";opacity:.7;font-size:13px}
+.mzmeta[open]>summary::before{content:"▾"}
+.mzmeta-t{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mzmeta-tip{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:20;
+  padding:11px 14px;border-radius:10px;font-size:13px;font-weight:400;
+  line-height:1.45;color:var(--tx);border:1px solid var(--line2);
+  background:color-mix(in srgb, var(--bg2) 92%, transparent);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:0 10px 26px var(--shadow);opacity:0;visibility:hidden;
+  transition:opacity .12s}
+.mzmeta>summary:hover .mzmeta-tip{opacity:1;visibility:visible}
+.mzmeta[open]>summary .mzmeta-tip{display:none}
+.mzmeta-in{display:grid;grid-template-columns:1fr 88px 108px;gap:8px;
+  margin-top:11px}
+.mzmeta-in input.wide{grid-column:1/-1}
+.mzhead .mzmeta-in input{width:100%;padding:9px 11px;border:1px solid var(--line2);
   border-radius:7px;background:var(--bg2);color:var(--tx);font:inherit;font-size:14px}
-.mzhead .mzmeta input::placeholder{color:var(--muted)}
-.mzhead .mzmeta input:focus{outline:none;border-color:var(--or2);
+.mzhead .mzmeta-in input::placeholder{color:var(--muted)}
+.mzhead .mzmeta-in input:focus{outline:none;border-color:var(--or2);
   box-shadow:0 0 0 3px var(--orbg)}
+@media(max-width:560px){.mzmeta-in{grid-template-columns:1fr}}
 
 /* Шаги: слева колонка с линией, справа один блок за раз */
 .mzflow{display:grid;grid-template-columns:210px minmax(0,1fr);gap:18px;
@@ -2304,12 +2325,22 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
       <p>LASERCUT · подбор конфигурации, допоборудования и ПНР
         <span id="mzCfgCnt"> · 110 конфигураций в прайсе</span></p>
     </div>
-    <div class="mzmeta">
-      <input id="mzClient" type="text" placeholder="Клиент" aria-label="Клиент">
-      <input id="mzNum" type="text" placeholder="№ КП" aria-label="Номер КП">
-      <input id="mzDate" type="text" placeholder="Дата" aria-label="Дата">
-      <input id="mzMgr" class="wide" type="text" aria-label="Менеджер" placeholder="Менеджер: имя · телефон · почта" readonly="" title="Меняется в разделе «Смета и ТКП», в блоке менеджера">
-    </div>
+    <!-- Шапка ТКП свёрнута в одну строку: поля нужны редко, а места занимали
+         половину блока. Раскрывается нажатием, при наведении видно, что внутри. -->
+    <details class="mzmeta" id="mzMeta">
+      <summary>
+        <span class="mzmeta-t" id="mzMetaTx">Шапка ТКП: 03.08.2026</span>
+        <span class="mzmeta-tip">Клиент, исходящий номер и дата первого листа ТКП.
+          Это те же поля, что в разделе «Смета и ТКП» — заполните здесь или там,
+          второй раз вводить не нужно. Менеджер берётся из настроек.</span>
+      </summary>
+      <div class="mzmeta-in">
+        <input id="mzClient" type="text" placeholder="Клиент" aria-label="Клиент">
+        <input id="mzNum" type="text" placeholder="№ КП" aria-label="Номер КП">
+        <input id="mzDate" type="text" placeholder="Дата" aria-label="Дата">
+        <input id="mzMgr" class="wide" type="text" aria-label="Менеджер" placeholder="Менеджер: имя · телефон · почта" readonly="" title="Меняется в разделе «Смета и ТКП», в блоке менеджера">
+      </div>
+    </details>
   </div>
 
   <div class="grid printkeep">
@@ -4354,6 +4385,8 @@ var DOCX = (function () {
     // Архив показывает свою шапку, а под ней — сам старый раздел целиком.
     if (name === 'trash') showTrashPart(tpart || state.trashPart || 'build');
     d.body.classList.toggle('cmpmax', name === 'cmp');
+    // в светлой теме у фрезерного раздела холодный фон исходного конфигуратора
+    d.body.classList.toggle('millbg', name === 'mill');
     // на самой смете кнопка «перейти в смету» бессмысленна,
     // а в сравнении она закрывает угол документа
     var sb = $('sumBar');
@@ -11034,6 +11067,17 @@ function mzShowStep(n) {
   save();
 }
 
+// Свёрнутая шапка ТКП: в строке видно заполненное, чтобы не открывать зря.
+function mzMetaTx() {
+  var box = $('mzMetaTx');
+  if (!box) return;
+  var parts = [$('mzClient') && $('mzClient').value.trim(),
+    $('mzNum') && $('mzNum').value.trim() ? '№ ' + $('mzNum').value.trim() : '',
+    $('mzDate') && $('mzDate').value.trim()].filter(Boolean);
+  box.textContent = parts.length ? 'Шапка ТКП: ' + parts.join(' · ')
+    : 'Шапка ТКП — не заполнена';
+}
+
 // ------------------------------------------------------------------ вкладки
 function mzRenderMTabs() {
   $('mzMTabs').style.display = mzS.mode === 'custom' ? '' : 'none';
@@ -11269,6 +11313,11 @@ function mzBind() {
     $('mzMgr').readOnly = true;
     $('mzMgr').title = 'Меняется в разделе «Смета и ТКП», в блоке менеджера';
   }
+  // в свёрнутом виде строка показывает, что уже заполнено
+  ['mzClient', 'mzNum', 'mzDate'].forEach(function (id) {
+    if ($(id)) $(id).addEventListener('input', mzMetaTx);
+  });
+  mzMetaTx();
   ['mzReadyList', 'mzSimilar', 'mzMatchList'].forEach(function (id) {
     $(id).addEventListener('click', function (e) {
       var b = e.target.closest('[data-cfg]');

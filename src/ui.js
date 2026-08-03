@@ -640,6 +640,8 @@
     // Архив показывает свою шапку, а под ней — сам старый раздел целиком.
     if (name === 'trash') showTrashPart(tpart || state.trashPart || 'build');
     d.body.classList.toggle('cmpmax', name === 'cmp');
+    // в светлой теме у фрезерного раздела холодный фон исходного конфигуратора
+    d.body.classList.toggle('millbg', name === 'mill');
     // на самой смете кнопка «перейти в смету» бессмысленна,
     // а в сравнении она закрывает угол документа
     var sb = $('sumBar');

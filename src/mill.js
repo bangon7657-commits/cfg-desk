@@ -915,6 +915,17 @@ function mzShowStep(n) {
   save();
 }
 
+// Свёрнутая шапка ТКП: в строке видно заполненное, чтобы не открывать зря.
+function mzMetaTx() {
+  var box = $('mzMetaTx');
+  if (!box) return;
+  var parts = [$('mzClient') && $('mzClient').value.trim(),
+    $('mzNum') && $('mzNum').value.trim() ? '№ ' + $('mzNum').value.trim() : '',
+    $('mzDate') && $('mzDate').value.trim()].filter(Boolean);
+  box.textContent = parts.length ? 'Шапка ТКП: ' + parts.join(' · ')
+    : 'Шапка ТКП — не заполнена';
+}
+
 // ------------------------------------------------------------------ вкладки
 function mzRenderMTabs() {
   $('mzMTabs').style.display = mzS.mode === 'custom' ? '' : 'none';
@@ -1150,6 +1161,11 @@ function mzBind() {
     $('mzMgr').readOnly = true;
     $('mzMgr').title = 'Меняется в разделе «Смета и ТКП», в блоке менеджера';
   }
+  // в свёрнутом виде строка показывает, что уже заполнено
+  ['mzClient', 'mzNum', 'mzDate'].forEach(function (id) {
+    if ($(id)) $(id).addEventListener('input', mzMetaTx);
+  });
+  mzMetaTx();
   ['mzReadyList', 'mzSimilar', 'mzMatchList'].forEach(function (id) {
     $(id).addEventListener('click', function (e) {
       var b = e.target.closest('[data-cfg]');

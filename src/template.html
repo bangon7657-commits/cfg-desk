@@ -965,13 +965,23 @@
       <p>LASERCUT · подбор конфигурации, допоборудования и ПНР
         <span id="mzCfgCnt"></span></p>
     </div>
-    <div class="mzmeta">
-      <input id="mzClient" type="text" placeholder="Клиент" aria-label="Клиент">
-      <input id="mzNum" type="text" placeholder="№ КП" aria-label="Номер КП">
-      <input id="mzDate" type="text" placeholder="Дата" aria-label="Дата">
-      <input id="mzMgr" class="wide" type="text" aria-label="Менеджер"
-        placeholder="Менеджер: имя · телефон · почта">
-    </div>
+    <!-- Шапка ТКП свёрнута в одну строку: поля нужны редко, а места занимали
+         половину блока. Раскрывается нажатием, при наведении видно, что внутри. -->
+    <details class="mzmeta" id="mzMeta">
+      <summary>
+        <span class="mzmeta-t" id="mzMetaTx">Шапка ТКП — не заполнена</span>
+        <span class="mzmeta-tip">Клиент, исходящий номер и дата первого листа ТКП.
+          Это те же поля, что в разделе «Смета и ТКП» — заполните здесь или там,
+          второй раз вводить не нужно. Менеджер берётся из настроек.</span>
+      </summary>
+      <div class="mzmeta-in">
+        <input id="mzClient" type="text" placeholder="Клиент" aria-label="Клиент">
+        <input id="mzNum" type="text" placeholder="№ КП" aria-label="Номер КП">
+        <input id="mzDate" type="text" placeholder="Дата" aria-label="Дата">
+        <input id="mzMgr" class="wide" type="text" aria-label="Менеджер"
+          placeholder="Менеджер: имя · телефон · почта">
+      </div>
+    </details>
   </div>
 
   <div class="grid printkeep">

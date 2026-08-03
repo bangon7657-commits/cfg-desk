@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 46', /const CACHE = 'cfg-v46'/.test(swTxt),
+check('кеш: версия поднята до 47', /const CACHE = 'cfg-v47'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -2174,11 +2174,16 @@ check('вкладки: значок сметы жив после перерис�
     /Конфигуратор фрезерного станка Wattsan/.test(textOf(doc, '#p-mill .mzhead h1')) &&
     /подбор конфигурации, допоборудования и ПНР/.test(textOf(doc, '#p-mill .mzhead p')),
     textOf(doc, '#p-mill .mzhead h1'));
-  check('фрезерный: в шапке поля будущего ТКП',
-    [...doc.querySelectorAll('#p-mill .mzmeta input')]
+  check('фрезерный: шапка ТКП свёрнута в строку и не ест место',
+    !doc.getElementById('mzMeta').open &&
+    /Шапка ТКП/.test(textOf(doc, '#mzMetaTx')) &&
+    /Клиент, исходящий номер и дата/.test(textOf(doc, '#p-mill .mzmeta-tip')),
+    textOf(doc, '#mzMetaTx'));
+  check('фрезерный: под строкой те же поля, что в ТКП',
+    [...doc.querySelectorAll('#p-mill .mzmeta-in input')]
       .map(i => i.getAttribute('placeholder')).join('|') ===
       'Клиент|№ КП|Дата|Менеджер: имя · телефон · почта',
-    [...doc.querySelectorAll('#p-mill .mzmeta input')]
+    [...doc.querySelectorAll('#p-mill .mzmeta-in input')]
       .map(i => i.getAttribute('placeholder')).join('|'));
   (function () {
     var cl = doc.getElementById('mzClient');
@@ -2210,10 +2215,17 @@ check('вкладки: значок сметы жив после перерис�
     check('фрезерный: на первом шаге выключено «Назад»',
       doc.getElementById('mzPrev').disabled, '');
   }());
-  check('фрезерный: акцент раздела синий, а не оранжевый',
-    /#p-mill\{--or:#6ba4ff/.test(src.replace(/\s+/g, '')) &&
-    /html\[data-theme="light"\] #p-mill\{--or:#0f2b52/
-      .test(src.replace(/\s+/g, ' ')), '');
+  // В светлой теме раздел берёт холодную палитру исходного конфигуратора,
+  // в тёмной остаётся фирменный оранжевый: синий на тёмном читался хуже.
+  check('фрезерный: в светлой теме синий акцент и серый фон',
+    /html\[data-theme="light"\]#p-mill\{[^}]*--or:#1e4f96/
+      .test(src.replace(/\s+/g, '')) &&
+    /html\[data-theme="light"\]body\.millbg\{background:#eef1f5\}/
+      .test(src.replace(/\s+/g, '')), '');
+  check('фрезерный: в тёмной теме акцент остаётся оранжевым',
+    !/(^|\})#p-mill\{--or:/.test(src.replace(/\s+/g, '')), '');
+  check('фрезерный: половины шапки одной высоты',
+    /\.mzhead>div,\.mzhead>details\{/.test(src.replace(/\s+/g, '')), '');
   menuGo('mill');
   mz('mzReset') && (win.confirm = function () { return true; });
   mz('mzReset').click();
