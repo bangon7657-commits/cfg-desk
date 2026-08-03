@@ -32,7 +32,7 @@ html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--tx);
   font:21px/1.6 "Segoe UI",Roboto,system-ui,-apple-system,sans-serif;
   -webkit-font-smoothing:antialiased}
-.wrap{max-width:1600px;margin:0 auto;padding:0 16px 80px}
+.wrap{max-width:1600px;margin:0 auto;padding:0 1cm 80px}
 
 /* ---------- шапка ---------- */
 header{background:var(--head);
@@ -41,7 +41,7 @@ header{background:var(--head);
    прижат к левому краю, тема и режим демонстрации — к правому. Раньше шапка
    была ограничена шириной колонки и висела в воздухе посреди экрана, пока
    лента под ней начиналась от самого края. */
-.head{max-width:none;margin:0;padding:10px 12px 10px 4px;display:flex;gap:16px;
+.head{max-width:none;margin:0;padding:10px 1cm;display:flex;gap:16px;
   align-items:center;flex-wrap:wrap}
 .head .head-right{margin-left:auto}
 /* Знак + название: знак фирменный, текст живёт в теме сайта. Ссылка ведёт
@@ -95,7 +95,7 @@ body.js nav{display:block}
 /* Кнопка «Разделы» прижата к самому левому краю окна: строка навигации не
    ограничена шириной колонки текста, слева почти нет отступа. Раскрытое меню
    ложится в поле у края, а не на статью. */
-.navinner{max-width:none;margin:0;padding:7px 12px 7px 4px;display:flex;gap:12px;
+.navinner{max-width:none;margin:0;padding:7px 1cm;display:flex;gap:12px;
   align-items:center}
 .navtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px 0;
   flex:1 1 auto}
@@ -1267,4 +1267,12 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
 @media(max-width:700px){
   body.cmpmax #p-cmp .btitle{font-size:20px}
   .cmp-zoom{padding:2px 6px 2px 2px}
+}
+
+/* Отступ от края окна — сантиметр. На узком экране это пятая часть ширины,
+   поэтому там возвращаемся к обычным двенадцати пикселям. */
+@media(max-width:560px){
+  .head{padding:10px 12px}
+  .navinner{padding:7px 12px}
+  .wrap{padding:0 12px 80px}
 }

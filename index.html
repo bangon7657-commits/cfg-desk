@@ -43,7 +43,7 @@ html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--tx);
   font:21px/1.6 "Segoe UI",Roboto,system-ui,-apple-system,sans-serif;
   -webkit-font-smoothing:antialiased}
-.wrap{max-width:1600px;margin:0 auto;padding:0 16px 80px}
+.wrap{max-width:1600px;margin:0 auto;padding:0 1cm 80px}
 
 /* ---------- шапка ---------- */
 header{background:var(--head);
@@ -52,7 +52,7 @@ header{background:var(--head);
    прижат к левому краю, тема и режим демонстрации — к правому. Раньше шапка
    была ограничена шириной колонки и висела в воздухе посреди экрана, пока
    лента под ней начиналась от самого края. */
-.head{max-width:none;margin:0;padding:10px 12px 10px 4px;display:flex;gap:16px;
+.head{max-width:none;margin:0;padding:10px 1cm;display:flex;gap:16px;
   align-items:center;flex-wrap:wrap}
 .head .head-right{margin-left:auto}
 /* Знак + название: знак фирменный, текст живёт в теме сайта. Ссылка ведёт
@@ -106,7 +106,7 @@ body.js nav{display:block}
 /* Кнопка «Разделы» прижата к самому левому краю окна: строка навигации не
    ограничена шириной колонки текста, слева почти нет отступа. Раскрытое меню
    ложится в поле у края, а не на статью. */
-.navinner{max-width:none;margin:0;padding:7px 12px 7px 4px;display:flex;gap:12px;
+.navinner{max-width:none;margin:0;padding:7px 1cm;display:flex;gap:12px;
   align-items:center}
 .navtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px 0;
   flex:1 1 auto}
@@ -1279,6 +1279,14 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
   body.cmpmax #p-cmp .btitle{font-size:20px}
   .cmp-zoom{padding:2px 6px 2px 2px}
 }
+
+/* Отступ от края окна — сантиметр. На узком экране это пятая часть ширины,
+   поэтому там возвращаемся к обычным двенадцати пикселям. */
+@media(max-width:560px){
+  .head{padding:10px 12px}
+  .navinner{padding:7px 12px}
+  .wrap{padding:0 12px 80px}
+}
 </style>
 <script>
 /* Тема применяется до отрисовки: иначе у выбравших светлую тему на секунду
@@ -2403,7 +2411,7 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
         <div class="panehead rot">
           <div class="f"><label for="mzRot">Поворотное устройство</label><select id="mzRot" data-touched="0"><option value="wattsan">Встроенная в станок (исполнение RD)</option><option value="d65">Ø63 мм, патрон K01-63</option><option value="d80">Ø80 мм, патрон K11-80</option><option value="d100">Ø100 мм, патрон K11-100</option><option value="d160">Ø160 мм, червячный редуктор</option><option value="d300">Ø200–300 мм, под колонны</option></select></div>
           <div class="f"><label for="mzRotT">Задняя бабка</label>
-            <select id="mzRotT" disabled="" data-touched="0">
+            <select id="mzRotT" data-touched="0" disabled="">
               <option value="0">не нужна или в комплекте</option>
               <option value="1">отдельной позицией, +5 560 ₽</option>
             </select></div>

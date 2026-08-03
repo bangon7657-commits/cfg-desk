@@ -1,5 +1,5 @@
 // Версия кеша берётся из cache_version.txt — поднимать при каждом выпуске.
-const CACHE = 'cfg-v44';
+const CACHE = 'cfg-v45';
 const ASSETS = ['./', './index.html', './compare.html', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png',
   './apple-touch-icon-180.png'];

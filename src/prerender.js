@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 44', /const CACHE = 'cfg-v44'/.test(swTxt),
+check('кеш: версия поднята до 45', /const CACHE = 'cfg-v45'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -1662,6 +1662,12 @@ check('справочник: старый адрес #gas ведёт в спра
 // там A4 и миллиметры, любое увеличение поедет по вёрстке страницы.
 // Шапка и лента разделов должны стоять по одной линии: и та и другая идут
 // во всю ширину окна, знак слева, тема и демонстрация справа.
+check('поля: шапка, лента и содержимое отступают от края на сантиметр',
+  /\.head\{[^}]*padding:10px 1cm/.test(src.replace(/\s+/g, ' ')) &&
+  /\.navinner\{[^}]*padding:7px 1cm/.test(src.replace(/\s+/g, ' ')) &&
+  /\.wrap\{[^}]*padding:0 1cm 80px/.test(src.replace(/\s+/g, ' ')), '');
+check('поля: на узком экране сантиметр уступает место обычным отступам',
+  /@media\(max-width:560px\)\{\.head\{padding:10px12px\}/.test(src.replace(/\s+/g, '')), '');
 check('шапка: идёт во всю ширину, вровень с лентой разделов',
   /\.head\{max-width:none;margin:0/.test(src.replace(/\s+/g, '')) &&
   /\.navinner\{max-width:none;margin:0/.test(src.replace(/\s+/g, '')), '');
@@ -1856,8 +1862,8 @@ check('шапка: под названием только «внутренний
   /^внутренний инструмент компании$/i.test(
     (doc.querySelector('.brand small').textContent || '').trim()),
   doc.querySelector('.brand small').textContent);
-check('навигация: строка не ограничена шириной текста, кнопка у левого края',
-  /\.navinner\{max-width:none[^}]*padding:7px 12px 7px 4px/.test(src), '');
+check('навигация: строка не ограничена шириной текста, поле у края — сантиметр',
+  /\.navinner\{max-width:none[^}]*padding:7px 1cm/.test(src), '');
 check('навигация: кнопка «Разделы» крупнее вкладок ровно настолько же, что и раньше',
   /\.menubtn\{[^}]*font-size:24px/.test(src) &&
   /\.navtabs button\{[^}]*font-size:18px/.test(src), '');
