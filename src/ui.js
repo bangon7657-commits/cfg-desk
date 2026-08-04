@@ -1287,15 +1287,16 @@
     var out = fresh('cOut'), r = co2Pick();
     if (!r) return;
     var box = el('div', 'pricebox');
-    box.appendChild(el('div', 'pb stock', '<div class="lbl">Цена с сайта</div>' +
+    box.appendChild(el('div', 'pb stock', '<div class="lbl">Цена в КП</div>' +
       '<div class="val">' + fmtRub(toCents(r.price)) + ' ₽</div>' +
-      '<div class="sub">розничная, НДС включён</div>'));
+      '<div class="sub">витрина сайта плюс наценка 5 %, НДС включён</div>'));
     if (r.was) {
-      box.appendChild(el('div', 'pb', '<div class="lbl">Зачёркнуто на сайте</div>' +
+      box.appendChild(el('div', 'pb', '<div class="lbl">Прежняя цена на сайте</div>' +
         '<div class="val">' + fmtRub(toCents(r.was)) + ' ₽</div>' +
         '<div class="sub">' + (r.was > r.price
           ? 'выгода ' + fmtRub(toCents(r.was - r.price)) + ' ₽'
-          : 'старая цена ниже действующей — ошибка витрины') + '</div>'));
+          : 'прежняя цена ниже действующей — витрина показывает подорожание') +
+        '</div>'));
     }
     out.appendChild(box);
     out.appendChild(el('div', 'muted', 'Поле ' + esc(r.field) + ' мм · трубка ' +

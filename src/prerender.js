@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 51', /const CACHE = 'cfg-v51'/.test(swTxt),
+check('кеш: версия поднята до 52', /const CACHE = 'cfg-v52'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -769,8 +769,8 @@ check('данные: расхождение цен на один стабили�
     .indexOf('Один стабилизатор Ресанта в двух списках') >= 0, '');
 
 // ---- CO₂, маркираторы, «мысли» и полоса итога ----
-check('каталог: 43 модели CO₂ и 126 маркираторов в данных',
-  /"co2":\s*\[/.test(src) && (src.match(/"brand": "Wattsan"/g) || []).length === 31 &&
+check('каталог: 46 моделей CO₂ и 126 маркираторов в данных',
+  /"co2":\s*\[/.test(src) && (src.match(/"brand": "Wattsan"/g) || []).length === 33 &&
   (src.match(/"series": "FL GT"/g) || []).length === 31, '');
 
 win.document.getElementById('cat').value = 'co2';
@@ -781,7 +781,7 @@ check('CO₂: блок показан, остальные скрыты',
 check('CO₂: подсказка о порядке шагов на месте',
   /чиллер/.test(textOf(doc, '#catFlow')), textOf(doc, '#catFlow'));
 const co2Opts = doc.getElementById('cModel').options.length;
-check('CO₂: в списке Wattsan 31 модель', co2Opts === 31, 'моделей ' + co2Opts);
+check('CO₂: в списке Wattsan 33 модели', co2Opts === 33, 'моделей ' + co2Opts);
 check('CO₂: цена и характеристики показаны',
   /₽/.test(textOf(doc, '#cOut')) && /Поле /.test(textOf(doc, '#cOut')),
   textOf(doc, '#cOut').slice(0, 140));
@@ -803,9 +803,9 @@ check('CO₂: ПНР уходит строкой с пометкой «цену 
 check('CO₂: строка без цены не ломает сходимость',
   !/Сходимость нарушена/.test(textOf(doc, '#checkBlock')),
   textOf(doc, '#checkBlock').slice(0, 140));
-check('CO₂: ошибка витрины 1830 Conveyor описана',
-  /1830 Conveyor/.test(doc.getElementById('blkCo2').textContent) ||
-  /1830 Conveyor/.test(src), '');
+check('CO₂: подорожание не выдаётся за скидку',
+  /подорожание, а не скидка/.test(src) &&
+  /витрина показывает подорожание/.test(src), '');
 
 win.document.getElementById('cat').value = 'marker';
 win.document.getElementById('cat').dispatchEvent(new win.Event('change'));

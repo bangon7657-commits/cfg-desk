@@ -722,6 +722,7 @@ repl = {
     '__HEADS_NOTE__': esc(data.HEADS_NOTE),
     '__KIT_TABLE__': KIT_TABLE,
     '__KIT_NOTE__': esc(data.FIBER_KIT_NOTE),
+    '__CTRL_NOTE__': esc(data.TECH_CTRL_NOTE),
     '__SERVO_TABLE__': SERVO_TABLE,
     '__SERVO_DIFF_TABLE__': SERVO_DIFF_TABLE,
     '__SERVO_NOTE__': esc(data.SERVO_NOTE),
