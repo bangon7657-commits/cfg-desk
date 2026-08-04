@@ -1196,16 +1196,32 @@
       <div class="hints"><div class="hint">__PNR_TERMS_MILL__</div></div>
       <!-- По волокну строк ПНР в прайсе сервиса нет — цену спрашивают отдельно -->
       <div id="fbPnrBox" hidden>
-        <div class="panehead">
-          <div class="f"><label for="fbPnrN">Услуга</label>
-            <input id="fbPnrN" type="text" value="Пусконаладка и обучение оператора"></div>
+        <div class="panehead b5">
+          <div class="f"><label for="fbPnrGroup">Группа по прайсу</label>
+            <select id="fbPnrGroup"></select></div>
+          <div class="f"><label for="fbPnrVar">Состав услуги</label>
+            <select id="fbPnrVar">
+              <option value="pnr">Только ПНР</option>
+              <option value="both">ПНР и обучение</option>
+              <option value="edu">Только обучение</option>
+            </select></div>
+          <div class="f"><label for="fbPnrK">Выезд</label>
+            <select id="fbPnrK">
+              <option value="10">Обычный (×1)</option>
+              <option value="12">Сторонний станок (×1,2)</option>
+            </select></div>
           <div class="f"><label for="fbPnrP">Цена, ₽</label>
             <input class="num" id="fbPnrP" type="number" min="0" step="1000"></div>
           <label class="tgl"><input type="checkbox" id="fbPnrOn"><span>В смету</span></label>
         </div>
-        <div class="hints"><div class="hint warn">В прайсе сервиса ПНР и обучение
-          расписаны только по фрезерным станкам. По волокну цену запрашивайте
-          у сервиса и ставьте вручную — приложение её не выдумывает.</div></div>
+        <div class="panehead">
+          <div class="f"><label for="fbPnrAdd">Доплата за узел</label>
+            <select id="fbPnrAdd"></select></div>
+          <div class="f"><label for="fbPnrAddP">Цена, ₽</label>
+            <input class="num" id="fbPnrAddP" type="number" min="0" step="1000"></div>
+          <label class="tgl"><input type="checkbox" id="fbPnrAddOn"><span>В смету</span></label>
+        </div>
+        <div class="hints" id="fbPnrHint"></div>
       </div>
     </div>
 
@@ -1228,19 +1244,43 @@
         <div class="f"><label for="fbServo">Приводы</label><select id="fbServo"></select></div>
       </div>
 
-      <div class="mhead tbl" id="fbOptsRow">
-        <div class="f"><label for="fbTable">Сменный стол</label>
-          <select id="fbTable">
-            <option value="0">не нужен</option>
-            <option value="1">да, второй стол</option>
-          </select></div>
-        <div class="f"><label for="fbRot">Труборез</label><select id="fbRot"></select></div>
+      <div class="tabs noprint" id="fbMTabs"></div>
+
+      <div class="pane" id="fbm_src">
+        <div id="fbKitCard"></div>
+        <div id="fbSeriesCard"></div>
+        <div class="hints" id="fbHints"></div>
       </div>
 
-      <div id="fbKitCard"></div>
-      <div id="fbSeriesCard"></div>
-      <div class="hints" id="fbHints"></div>
-      <div id="fbSimilar"></div>
+      <div class="pane" id="fbm_opt">
+        <div class="mhead tbl" id="fbOptsRow">
+          <div class="f"><label for="fbTable">Сменный стол</label>
+            <select id="fbTable">
+              <option value="0">не нужен</option>
+              <option value="1">да, второй стол</option>
+            </select></div>
+          <div class="f"><label for="fbRot">Труборез</label><select id="fbRot"></select></div>
+        </div>
+        <div id="fbSimilar"></div>
+      </div>
+
+      <div class="pane" id="fbm_cut">
+        <div class="mhead spin">
+          <div class="f"><label for="fbCutM">Материал</label><select id="fbCutM"></select></div>
+          <div class="f"><label for="fbCutT">Толщина, мм</label><select id="fbCutT"></select></div>
+          <div class="f"><label for="fbCutL">Длина реза, м</label>
+            <input class="num" id="fbCutL" type="number" min="0" step="10" value="100"></div>
+        </div>
+        <div id="fbCutCard"></div>
+      </div>
+
+      <div class="pane" id="fbm_unit">
+        <div class="mhead tbl">
+          <div class="f"><label for="fbUnit">Сервисная карточка партии</label>
+            <select id="fbUnit"></select></div>
+        </div>
+        <div id="fbUnitCard"></div>
+      </div>
     </div>
 
     <!-- ============ ВОЛОКНО: обвязка ============ -->
@@ -1288,6 +1328,11 @@
           <label class="tgl"><input type="checkbox" id="fbCryoOn"><span>В смету</span></label>
         </div>
         <div id="fbCryoCard"></div><div class="hints" id="fbCryoHint"></div>
+      </div>
+
+      <div class="pane" id="fbp_shop">
+        <div id="fbShopCard"></div>
+        <div class="hints" id="fbShopHint"></div>
       </div>
 
       <div class="pane" id="fbp_extra">

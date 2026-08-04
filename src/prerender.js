@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 52', /const CACHE = 'cfg-v52'/.test(swTxt),
+check('кеш: версия поднята до 53', /const CACHE = 'cfg-v53'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -282,7 +282,7 @@ check('срок: старых «60 дней» в файле нет',
 win.document.getElementById('kpTerm').value = 'stock';
 win.document.getElementById('kpTerm').dispatchEvent(new win.Event('change'));
 check('срок: переключение на склад меняет строку условий',
-  /1–3 рабочих дня/.test(doc.getElementById('kpTermVal').textContent),
+  /до 10 рабочих дней/.test(doc.getElementById('kpTermVal').textContent),
   doc.getElementById('kpTermVal').textContent);
 win.document.getElementById('kpTerm').value = 'order';
 win.document.getElementById('kpTerm').dispatchEvent(new win.Event('change'));
@@ -317,9 +317,13 @@ check('ТКП полное: характеристики взяты из кон�
 check('ТКП полное: предел и рабочий режим разделены',
   /Предел по таблицам режимов/.test(kpFull) && /запас не менее 30 %/.test(kpFull), '');
 check('ТКП полное: нумерация статических разделов сдвинулась',
-  /7\.\s*Условия поставки/.test(textOf(doc, '#kpSecTerms')) &&
-  /8\.\s*Гарантия и сервис/.test(textOf(doc, '#kpSecService')),
+  /8\.\s*Условия поставки/.test(textOf(doc, '#kpSecTerms')) &&
+  /9\.\s*Гарантия и сервис/.test(textOf(doc, '#kpSecService')),
   textOf(doc, '#kpSecTerms') + ' / ' + textOf(doc, '#kpSecService'));
+check('ТКП полное: по волокну есть раздел «Что режет источник»',
+  /Что режет источник 3 кВт/.test(kpFull) &&
+  /Углеродистая сталь/.test(kpFull) && /м\/мин/.test(kpFull),
+  kpFull.slice(0, 200));
 check('ТКП полное: преимущества не выдуманы, а из данных',
   /Raycus серии S-CE/.test(kpFull) && /шести городах/.test(kpFull), '');
 win.document.getElementById('kpMode').value = 'short';
@@ -2272,10 +2276,82 @@ check('вкладки: значок сметы жив после перерис�
     check('волокно: слабый стабилизатор под 12 кВт помечается непроходным',
       true, '');
 
-    // ПНР: по волокну цены в прайсе нет
-    check('волокно: у ПНР нет прайса, есть ручная строка',
+    // ---- шаг 1: вкладки станка ----
+    check('волокно: у шага «Станок» четыре вкладки',
+      doc.querySelectorAll('#fbMTabs [data-fbm]').length === 4,
+      doc.querySelectorAll('#fbMTabs [data-fbm]').length);
+    doc.querySelector('#fbMTabs [data-fbm="cut"]').click();
+    check('волокно: вкладка «Что режет» открылась',
+      doc.getElementById('fbm_cut').classList.contains('on'), '');
+    var cm = doc.getElementById('fbCutM'), ct = doc.getElementById('fbCutT');
+    cm.value = 'inox';
+    cm.dispatchEvent(new win.Event('change', { bubbles: true }));
+    ct.value = '10';
+    ct.dispatchEvent(new win.Event('change', { bubbles: true }));
+    var cutTx = textOf(doc, '#fbCutCard');
+    check('волокно: режим резки взят из заводской таблицы',
+      /м\/мин/.test(cutTx) && /сопло/.test(cutTx), cutTx.slice(0, 120));
+    check('волокно: расход газа посчитан на длину реза',
+      /Расход газа на 100 м реза/.test(cutTx) && /баллон/.test(cutTx),
+      cutTx.slice(0, 200));
+    check('волокно: скорости не выдаются за обещание',
+      /не гарантия|не обещаем/.test(cutTx), '');
+
+    doc.querySelector('#fbMTabs [data-fbm="unit"]').click();
+    check('волокно: узлы станка показаны из сервисных карточек',
+      /Ось X/.test(textOf(doc, '#fbUnitCard')), textOf(doc, '#fbUnitCard').slice(0, 80));
+    doc.querySelector('#fbMTabs [data-fbm="src"]').click();
+
+    // ---- шаг 2: подготовка цеха ----
+    doc.querySelector('#fbTabs [data-fbcat="shop"]').click();
+    check('волокно: подготовка цеха отдельной вкладкой',
+      /Фундамент/.test(textOf(doc, '#fbShopCard')) &&
+      /в смету не входит/.test(textOf(doc, '#fbShopCard')),
+      textOf(doc, '#fbShopCard').slice(0, 120));
+
+    // ---- шаг 2: источник газа ----
+    doc.querySelector('#fbTabs [data-fbcat="gas"]').click();
+    var gs = doc.getElementById('fbCryo');
+    check('волокно: в источниках газа есть баллоны и криоцилиндры',
+      gs.options.length === 3, gs.options.length);
+    gs.value = 'balloon';
+    gs.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: баллоны в смету не ставятся',
+      /в смету не идёт/.test(textOf(doc, '#fbCryoCard')),
+      textOf(doc, '#fbCryoCard').slice(0, 120));
+    gs.value = 'dpl210';
+    gs.dispatchEvent(new win.Event('change', { bubbles: true }));
+
+    // ---- шаг 3: ПНР волокна по прайсу ----
+    check('волокно: ПНР считается по прайсу, а не руками',
       !doc.getElementById('fbPnrBox').hidden &&
-      /цену запрашивайте/.test(textOf(doc, '#p-mill .mzstep[data-step="3"]')), '');
+      doc.getElementById('fbPnrGroup').options.length === 9,
+      doc.getElementById('fbPnrGroup').options.length);
+    check('волокно: по серии S подставилась цена ПНР из прайса',
+      doc.getElementById('fbPnrP').value === '230000',
+      doc.getElementById('fbPnrP').value);
+    var pv = doc.getElementById('fbPnrVar');
+    pv.value = 'both';
+    pv.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: ПНР с обучением складывает две строки прайса',
+      doc.getElementById('fbPnrP').value === '293000',
+      doc.getElementById('fbPnrP').value);
+    var pk = doc.getElementById('fbPnrK');
+    pk.value = '12';
+    pk.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: коэффициент ×1,2 пересчитывает ПНР',
+      doc.getElementById('fbPnrP').value === '351600',
+      doc.getElementById('fbPnrP').value);
+    pk.value = '10';
+    pk.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: источник цифр ПНР назван честно',
+      /сверяйтесь с сервисом|уточняйте у сервиса/.test(textOf(doc, '#fbPnrHint')),
+      textOf(doc, '#fbPnrHint').slice(0, 160));
+    doc.getElementById('fbPnrOn').checked = true;
+    doc.getElementById('fbPnrOn').dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: ПНР ушла в спецификацию с названием группы',
+      /Металлорез серия S/.test(textOf(doc, '#mzSpecBody')),
+      textOf(doc, '#mzSpecBody').slice(0, 200));
 
     // перенос в смету
     var before = doc.querySelectorAll('#smetaBody tr').length;

@@ -133,6 +133,30 @@ APP = {
     'fiberOrder': sorted(data.FIBER_FORMATS.keys()),
     'options': [{'cat': c, 'name': n, 'price': p} for c, n, p in data.OPTIONS],
     # CO₂ и маркираторы
+    # Волокно: режимы резки, ПНР, подготовка цеха, источник газа
+    'cutModes': {str(w): [{'mat': r[0], 'th': r[1], 'v': r[2], 'kw': r[3],
+                           'gas': r[4], 'bar': r[5], 'noz': r[6], 'foc': r[7],
+                           'h': r[8]} for r in rows]
+                 for w, rows in data.CUT_MODES.items()},
+    'cutModeMat': data.CUT_MODE_MAT,
+    'cutModesNote': data.CUT_MODES_NOTE,
+    'pnrFiber': data.PNR_FIBER,
+    'pnrFiberAdd': data.PNR_FIBER_ADD,
+    'pnrFiberKoef': [{'k': k, 'n': n} for k, n in data.PNR_FIBER_KOEF],
+    'pnrFiberNote': data.PNR_FIBER_NOTE,
+    'shopReady': {k: [{'n': a, 'v': b} for a, b in v]
+                  for k, v in data.SHOP_READY.items()},
+    'shopReadyNote': data.SHOP_READY_NOTE,
+    'components': [{'model': m, 'rows': [{'n': a, 'v': b} for a, b in rows]}
+                   for m, rows in data.COMPONENTS],
+    'componentsCommon': [{'n': a, 'v': b} for a, b in data.COMPONENTS_COMMON],
+    'componentsNote': data.COMPONENTS_NOTE,
+    'gas6kwSteel': [{'mm': m, 'perH': h, 'perMin': mi, 'perM': pm, 'gas': g}
+                    for m, h, mi, pm, g in data.GAS_6KW_STEEL],
+    'gas6kwInox': [{'mm': m, 'perH': h, 'perMin': mi, 'perM': pm, 'gas': g}
+                   for m, h, mi, pm, g in data.GAS_6KW_INOX],
+    'gasSource': data.GAS_SOURCE,
+    'gasSourceNote': data.GAS_SOURCE_NOTE,
     'co2': [{'brand': b, 'name': n, 'field': f, 'tube': t, 'ctrl': c,
              'was': w, 'price': p}
             for b, n, f, t, c, w, p in data.CO2],

@@ -2304,6 +2304,17 @@
       'Серийные параметры — по карточке модели производителя. Точные характеристики ' +
       'конкретного исполнения подтверждаются паспортом завода при отгрузке.'));
 
+    // Что режет источник — только для волокна и только если мощность известна
+    var cutRows = kpCutRows(mach);
+    if (cutRows.length) {
+      box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Что режет источник ' +
+        (mach.cfg.power / 1000).toString().replace('.', ',') + ' кВт'));
+      box.appendChild(kpPairTable(cutRows));
+      box.appendChild(el('p', 'kp-propis',
+        'Режимы завода Raycus. Скорость зависит от марки стали, состояния оптики ' +
+        'и качества газа: точные режимы настраивает инженер на пусконаладке.'));
+    }
+
     box.appendChild(el('div', 'kp-sec', (n++) + '.&nbsp; Как пройдёт запуск'));
     var steps = el('ol', 'kp-list');
     APP.kpLaunch.forEach(function (s) {
@@ -2518,6 +2529,28 @@
     }
     rows.push(['Соответствие', 'ТР ТС 004/2011, 010/2011, 020/2011']);
     return firmRows(rows);
+  }
+  // Что режет источник: по строке на материал, крайние толщины из режимов завода
+  function kpCutRows(m) {
+    if (!m || m.kind !== 'fiber' || !m.cfg) return [];
+    var rows = APP.cutModes[String(m.cfg.power)];
+    if (!rows) return [];
+    var by = {};
+    rows.forEach(function (r) {
+      var t = parseFloat(r.th);
+      if (!by[r.mat] || t > by[r.mat].max) {
+        by[r.mat] = by[r.mat] || { min: t, best: r };
+        by[r.mat].max = t;
+      }
+      if (t < by[r.mat].min) { by[r.mat].min = t; by[r.mat].best = r; }
+    });
+    return Object.keys(by).map(function (k) {
+      var b = by[k];
+      return [APP.cutModeMat[k] || k,
+        'от ' + String(b.min).replace('.', ',') + ' до ' +
+        String(b.max).replace('.', ',') + ' мм · на ' +
+        String(b.min).replace('.', ',') + ' мм до ' + b.best.v + ' м/мин'];
+    });
   }
   // Преимущества: две строки говорят про волоконный источник — в ТКП на
   // фрезер, CO₂ или маркиратор они не идут
@@ -6257,11 +6290,11 @@
     // 5. сроки поставки
     out.push(qMake('Срок поставки станка под заказ?', APP.deliveryOrder,
       [APP.deliveryStock, 'до 30 раб. дней', 'до 120 раб. дней'],
-      'Под заказ — до 80 рабочих дней, из наличия — 1–3 дня. Это разные ' +
+      'Под заказ — до 80 рабочих дней, из наличия — до 10. Это разные ' +
       'сроки и разные цены.', 'shop'));
     out.push(qMake('Срок поставки из наличия?', APP.deliveryStock,
-      [APP.deliveryOrder, '7–10 раб. дней', 'в день оплаты'],
-      'Из наличия отгружаем за 1–3 рабочих дня, но цена выше: наценка ' +
+      [APP.deliveryOrder, 'до 30 раб. дней', 'в день оплаты'],
+      'Из наличия отгружаем до 10 рабочих дней, но цена выше: наценка ' +
       'за склад.', 'shop'));
     // 6. гарантия
     out.push(qMake('Гарантия на станок?', APP.guarantee.label,

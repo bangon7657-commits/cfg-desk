@@ -1442,12 +1442,190 @@ function fbRenderSimilar() {
     }).join('') + '</div>';
 }
 
+// -------------------------------------------------- шаг 1: вкладки станка
+var FB_MTABS = [
+  { k: 'src', n: 'Источник' },
+  { k: 'opt', n: 'Опции' },
+  { k: 'cut', n: 'Что режет' },
+  { k: 'unit', n: 'Узлы станка' }
+];
+var fbMTab = 'src';
+function fbRenderMTabs() {
+  $('fbMTabs').innerHTML = FB_MTABS.map(function (c) {
+    return '<button type="button" class="tab' + (c.k === fbMTab ? ' on' : '') +
+      '" data-fbm="' + c.k + '">' + esc(c.n) + '</button>';
+  }).join('');
+  FB_MTABS.forEach(function (c) {
+    var pane = $('fbm_' + c.k);
+    if (pane) pane.classList.toggle('on', c.k === fbMTab);
+  });
+}
+
+// ------------------------------------------------------- что режет источник
+// Режимы завода: скорость, газ, давление, сопло по материалу и толщине.
+function fbCutPow() {
+  var p = parseInt($('fbPow').value, 10);
+  return APP.cutModes[String(p)] ? p : 3000;
+}
+function fbCutRows() { return APP.cutModes[String(fbCutPow())] || []; }
+function fbFillCut() {
+  var rows = fbCutRows();
+  var mats = [];
+  rows.forEach(function (r) { if (mats.indexOf(r.mat) < 0) mats.push(r.mat); });
+  var m = $('fbCutM').value;
+  if (mats.indexOf(m) < 0) m = mats[0] || '';
+  $('fbCutM').innerHTML = mats.map(function (k) {
+    return '<option value="' + k + '">' + esc(APP.cutModeMat[k] || k) + '</option>';
+  }).join('');
+  $('fbCutM').value = m;
+  var th = [];
+  rows.forEach(function (r) {
+    if (r.mat === m && th.indexOf(r.th) < 0) th.push(r.th);
+  });
+  th.sort(function (a, b) { return (+a) - (+b); });
+  var t = $('fbCutT').value;
+  if (th.indexOf(t) < 0) t = th[0] || '';
+  $('fbCutT').innerHTML = th.map(function (x) {
+    return '<option value="' + x + '">' + esc(x) + '</option>';
+  }).join('');
+  $('fbCutT').value = t;
+}
+// Расход газа берём из заводской таблицы 6 кВт: другой у нас просто нет.
+function fbGasRow(mat, th) {
+  var src = mat === 'inox' ? APP.gas6kwInox : (mat === 'carbon' ? APP.gas6kwSteel : null);
+  if (!src) return null;
+  var best = null;
+  src.forEach(function (r) {
+    if (+r.mm <= +th && (!best || +r.mm > +best.mm)) best = r;
+  });
+  return best;
+}
+function fbRenderCut() {
+  var mat = $('fbCutM').value, th = $('fbCutT').value, len = mzNum('fbCutL');
+  var modes = fbCutRows().filter(function (r) {
+    return r.mat === mat && r.th === th;
+  });
+  if (!modes.length) { $('fbCutCard').innerHTML = ''; return; }
+  var rows = modes.map(function (r) {
+    return [r.gas + ', сопло ' + r.noz,
+      r.v + ' м/мин · ' + r.kw + ' Вт · ' + r.bar + ' атм · фокус ' + r.foc + ' мм'];
+  });
+  var foot = esc(APP.cutModesNote);
+  var g = fbGasRow(mat, th);
+  if (g && len > 0) {
+    var per = (String(g.perM) || '0').replace(',', '.');
+    var total = (+per) * len;
+    var balloons = total / APP.cylinderM3;
+    rows.push(['Расход газа на ' + len + ' м реза',
+      total.toFixed(1).replace('.', ',') + ' м³ ≈ ' +
+      (balloons < 1 ? balloons.toFixed(2) : Math.ceil(balloons)) +
+      ' баллона по 40 л (' + APP.cylinderM3 + ' м³)']);
+    rows.push(['Расход в час', g.perH + ' м³/ч · ' + g.perMin + ' м³/мин · ' + g.gas]);
+    foot = 'Расход — из заводской таблицы для источника 6000 Вт, по ближайшей ' +
+      'толщине снизу. На других мощностях он отличается: точных таблиц по ' +
+      '3 и 12 кВт у нас нет.<br><br>' + foot;
+  }
+  mzCard('fbCutCard', (APP.cutModeMat[mat] || mat) + ' ' + th + ' мм',
+    'источник ' + fbCutPow() + ' Вт', rows, foot, true);
+}
+
+// ------------------------------------------------------------ узлы станка
+function fbFillUnit() {
+  if ($('fbUnit').options.length) return;
+  $('fbUnit').innerHTML = APP.components.map(function (c) {
+    return '<option value="' + esc(c.model) + '">' + esc(c.model) + '</option>';
+  }).join('') + '<option value="__common">Общее по всем партиям</option>';
+}
+function fbRenderUnit() {
+  var k = $('fbUnit').value, rows, title, sub;
+  if (k === '__common') {
+    rows = APP.componentsCommon.map(function (r) { return [r.n, r.v]; });
+    title = 'Общее по всем партиям'; sub = 'электрика, газ, вытяжка, смазка';
+  } else {
+    var c = APP.components.filter(function (x) { return x.model === k; })[0];
+    if (!c) { $('fbUnitCard').innerHTML = ''; return; }
+    rows = c.rows.map(function (r) { return [r.n, r.v]; });
+    title = c.model; sub = 'сервисная карточка партии';
+  }
+  mzCard('fbUnitCard', title, sub, rows, esc(APP.componentsNote), true);
+}
+
+// -------------------------------------------------------- подготовка цеха
+function fbRenderShop() {
+  var k = fbSeries();
+  var rows = (APP.shopReady[k] || []).map(function (r) { return [r.n, r.v]; });
+  mzCard('fbShopCard', 'Подготовка цеха под серию ' + k,
+    'за счёт клиента, в смету не входит', rows, esc(APP.shopReadyNote), true);
+  mzHints('fbShopHint', [
+    ['Это не позиции сметы, а условия запуска. Проговорите их до счёта: ' +
+      'станок, приехавший в неготовый цех, стоит клиенту простоя.', 'warn'],
+    ['Стабилизатор из этого списка — та же позиция, что и во вкладке ' +
+      '«Стабилизатор»: там она попадает в смету, здесь просто названа.', 'ok']
+  ]);
+}
+
+// ------------------------------------------------------------- ПНР волокна
+function fbPnrM() {
+  var k = $('fbPnrGroup').value;
+  return APP.pnrFiber.filter(function (g) { return g.k === k; })[0] || null;
+}
+function fbPnrAddM() {
+  var k = $('fbPnrAdd').value;
+  return APP.pnrFiberAdd.filter(function (g) { return g.k === k; })[0] || null;
+}
+function fbFillPnr() {
+  if (!$('fbPnrGroup').options.length) {
+    $('fbPnrGroup').innerHTML = APP.pnrFiber.map(function (g) {
+      return '<option value="' + g.k + '">' + esc(g.n) + '</option>';
+    }).join('');
+    $('fbPnrAdd').innerHTML = APP.pnrFiberAdd.map(function (g) {
+      return '<option value="' + g.k + '">' + esc(g.n) + '</option>';
+    }).join('');
+  }
+  if (!mzTouched('fbPnrGroup')) {
+    $('fbPnrGroup').value = fbSeries() === 'A' ? 'a' : 's';
+  }
+}
+function fbPnrBase() {
+  var g = fbPnrM();
+  if (!g) return 0;
+  var v = $('fbPnrVar').value;
+  var sum = v === 'edu' ? g.edu : (v === 'both' ? g.pnr + g.edu : g.pnr);
+  return divHalfUp(sum * (+$('fbPnrK').value || 10), 10);
+}
+function fbPnrName() {
+  var g = fbPnrM(), v = $('fbPnrVar').value;
+  if (!g) return 'Пусконаладочные работы';
+  var n = v === 'edu' ? 'Обучение оператора'
+    : (v === 'both' ? 'Пусконаладочные работы и обучение оператора'
+      : 'Пусконаладочные работы');
+  return n + ' (' + g.n + ')';
+}
+function fbRenderPnrHint() {
+  var g = fbPnrM(), h = [];
+  if (g) {
+    h.push(['По прайсу: ПНР ' + mzRub(g.pnr) + ' за ' + g.d + ' дн., обучение ' +
+      mzRub(g.edu) + ' за ' + g.edu_d + ' дн.', 'ok']);
+  }
+  if (+$('fbPnrK').value === 12) {
+    h.push(['Коэффициент ×1,2 — станок не наш. Цена пересчитана.', 'warn']);
+  }
+  var a = fbPnrAddM();
+  if (a && a.k !== 'none') {
+    h.push(['Доплата за узел «' + a.n + '»: ' + mzRub(a.p) + ', +' +
+      String(a.d).replace('.', ',') + ' дн. к выезду.', 'ok']);
+  }
+  h.push([esc(APP.pnrFiberNote), 'warn']);
+  mzHints('fbPnrHint', h);
+}
+
 // ------------------------------------------------------------- обвязка
 var FB_CATS = [
   { k: 'stab', n: 'Стабилизатор', on: 'fbStabOn' },
   { k: 'compr', n: 'Компрессор', on: 'fbComprOn' },
   { k: 'ext', n: 'Дымоуловитель', on: 'fbExtOn' },
   { k: 'gas', n: 'Газ', on: 'fbCryoOn' },
+  { k: 'shop', n: 'Подготовка цеха' },
   { k: 'extra', n: 'Своя позиция', on: 'fbExtraOn' }
 ];
 function fbStabM() {
@@ -1464,7 +1642,7 @@ function fbExtM() {
 }
 function fbCryoM() {
   var k = $('fbCryo').value;
-  return APP.cryo.filter(function (c) { return c.id === k; })[0] || null;
+  return APP.gasSource.filter(function (c) { return c.id === k; })[0] || null;
 }
 function fbFillKit() {
   if (!$('fbStab').options.length) {
@@ -1479,7 +1657,7 @@ function fbFillKit() {
     $('fbExt').innerHTML = APP.extraction.map(function (e) {
       return '<option value="' + e.id + '">' + esc(e.name) + '</option>';
     }).join('');
-    $('fbCryo').innerHTML = APP.cryo.map(function (c) {
+    $('fbCryo').innerHTML = APP.gasSource.map(function (c) {
       return '<option value="' + c.id + '">' + esc(c.name) + '</option>';
     }).join('');
   }
@@ -1537,19 +1715,23 @@ function fbRenderExt() {
 function fbRenderCryo() {
   var c = fbCryoM();
   if (!c) return;
-  mzCard('fbCryoCard', c.name, c.flow + ' нм³/ч',
-    [['Производительность', c.flow + ' нм³/ч'], ['Объём', c.volume + ' л'],
-     ['Цена с НДС', mzRub(c.price)], ['Источник', c.src], ['Срок', c.lead]],
-    esc(APP.cryoNote || ''));
+  var rows = [['Цена с НДС', c.price ? mzRub(c.price) : 'в смету не идёт']];
+  if (c.flow) rows.unshift(['Производительность', c.flow + ' нм³/ч']);
+  mzCard('fbCryoCard', c.name, c.flow ? c.flow + ' нм³/ч' : 'базовый вариант',
+    rows, esc(c.note) + '<br><br>' + esc(APP.gasSourceNote));
   var h = [['Один баллон — ' + APP.cylinderM3 + ' м³ газа. На резе нержавейки ' +
     'азотом расход доходит до ' + String(APP.airDemand.max).replace('.', ',') +
     ' м³/мин, поэтому баллоны заканчиваются за смену — криоцилиндр окупается быстро.',
     'ok']];
+  if (!c.price) {
+    h.push(['Баллоны в смету не ставим: их клиент берёт у своего газового ' +
+      'поставщика. Позиция добавится с нулём — уберите галочку «В смету».', 'warn']);
+  }
   mzHints('fbCryoHint', h);
 }
 function fbRenderTabs() {
   $('fbTabs').innerHTML = FB_CATS.map(function (c) {
-    var on = $(c.on) && $(c.on).checked;
+    var on = c.on && $(c.on) && $(c.on).checked;
     return '<button type="button" class="tab' + (c.k === fbCat ? ' on' : '') +
       (on ? ' sel' : '') + '" data-fbcat="' + c.k + '">' + esc(c.n) + '</button>';
   }).join('');
@@ -1565,6 +1747,9 @@ function fbPriceDefaults() {
   if (!mzTouched('fbComprP')) $('fbComprP').value = c ? c.price : '';
   if (!mzTouched('fbExtP')) $('fbExtP').value = e ? e.price : '';
   if (!mzTouched('fbCryoP')) $('fbCryoP').value = g ? g.price : '';
+  if (!mzTouched('fbPnrP')) $('fbPnrP').value = fbPnrBase() || '';
+  var a = fbPnrAddM();
+  if (!mzTouched('fbPnrAddP')) $('fbPnrAddP').value = a && a.p ? a.p : '';
 }
 // Состав спецификации по волокну — в общем виде, как у фрезерного
 function fbSpec() {
@@ -1595,8 +1780,11 @@ function fbSpec() {
     out.push({ n: $('fbExtraN').value.trim(), c: toCents(mzNum('fbExtraP')), q: 1, t: 'opt' });
   }
   if ($('fbPnrOn').checked && mzNum('fbPnrP')) {
-    out.push({ n: $('fbPnrN').value.trim() || 'Пусконаладка и обучение',
-      c: toCents(mzNum('fbPnrP')), q: 1, t: 'srv' });
+    out.push({ n: fbPnrName(), c: toCents(mzNum('fbPnrP')), q: 1, t: 'srv' });
+  }
+  if ($('fbPnrAddOn').checked && mzNum('fbPnrAddP') && fbPnrAddM()) {
+    out.push({ n: 'Доплата к ПНР: ' + fbPnrAddM().n,
+      c: toCents(mzNum('fbPnrAddP')), q: 1, t: 'srv' });
   }
   return out;
 }
@@ -1614,8 +1802,15 @@ function fbIssues() {
     out.push(['Дымоуловителя нет. Для металла это вопрос охраны труда, а не удобства.', 'warn']);
   }
   if (!$('fbPnrOn').checked) {
-    out.push(['ПНР не включена. По волокну её цены в прайсе нет — запросите ' +
-      'у сервиса и поставьте вручную.', 'warn']);
+    out.push(['ПНР не включена. Металлорез сам себя не запустит: без выезда ' +
+      'инженера станок не вводится в эксплуатацию.', 'warn']);
+  }
+  if ($('fbRot').value && $('fbPnrAdd').value !== 'rot') {
+    out.push(['В конфигурации есть поворотная ось, а доплаты к ПНР за неё нет — ' +
+      'по прайсу это 42 000 ₽ и лишний день выезда.', 'warn']);
+  }
+  if (mzNum('fbTable') && $('fbPnrAdd').value !== 'table' && $('fbTable').value === '1') {
+    out.push(['Сменный стол выбран, а доплаты к ПНР за него нет — 11 000 ₽.', 'warn']);
   }
   return out;
 }
@@ -1630,16 +1825,20 @@ function fbUpdate() {
   Array.prototype.forEach.call($('fbSeries').children, function (b) {
     b.classList.toggle('on', b.dataset.fs === fbSeries());
   });
+  fbFillCut(); fbFillUnit(); fbFillPnr();
   fbPriceDefaults();
   fbRenderKit(); fbRenderSeries(); fbRenderHints(); fbRenderSimilar();
+  fbRenderCut(); fbRenderUnit(); fbRenderShop();
   fbRenderStab(); fbRenderCompr(); fbRenderExt(); fbRenderCryo();
-  fbRenderTabs();
+  fbRenderPnrHint();
+  fbRenderMTabs(); fbRenderTabs();
 }
 
 function fbBind() {
   ['fbFmt', 'fbPow', 'fbPrice', 'fbServo', 'fbTable', 'fbRot', 'fbStab', 'fbStabP',
     'fbCompr', 'fbComprP', 'fbExt', 'fbExtP', 'fbCryo', 'fbCryoP', 'fbExtraN',
-    'fbExtraP', 'fbPnrN', 'fbPnrP'].forEach(function (id) {
+    'fbExtraP', 'fbCutM', 'fbCutT', 'fbCutL', 'fbUnit', 'fbPnrGroup', 'fbPnrVar',
+    'fbPnrK', 'fbPnrP', 'fbPnrAdd', 'fbPnrAddP'].forEach(function (id) {
     var box = $(id);
     if (!box) return;
     box.addEventListener('change', function () {
@@ -1652,11 +1851,16 @@ function fbBind() {
       if (id === 'fbCompr') mzTouch('fbComprP', false);
       if (id === 'fbExt') mzTouch('fbExtP', false);
       if (id === 'fbCryo') mzTouch('fbCryoP', false);
+      if (id === 'fbCutM') $('fbCutT').value = '';
+      if (id === 'fbPnrGroup' || id === 'fbPnrVar' || id === 'fbPnrK') {
+        mzTouch('fbPnrP', false);
+      }
+      if (id === 'fbPnrAdd') mzTouch('fbPnrAddP', false);
       mzUpdate();
     });
   });
-  ['fbStabOn', 'fbComprOn', 'fbExtOn', 'fbCryoOn', 'fbExtraOn', 'fbPnrOn']
-    .forEach(function (id) {
+  ['fbStabOn', 'fbComprOn', 'fbExtOn', 'fbCryoOn', 'fbExtraOn', 'fbPnrOn',
+    'fbPnrAddOn'].forEach(function (id) {
       if ($(id)) $(id).addEventListener('change', mzUpdate);
     });
   $('fbSeries').addEventListener('click', function (e) {
@@ -1671,6 +1875,12 @@ function fbBind() {
     if (!b) return;
     fbCat = b.dataset.fbcat;
     fbRenderTabs();
+  });
+  $('fbMTabs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fbm]');
+    if (!b) return;
+    fbMTab = b.dataset.fbm;
+    fbRenderMTabs();
   });
   $('fbSimilar').addEventListener('click', function (e) {
     var b = e.target.closest('[data-fb]');
