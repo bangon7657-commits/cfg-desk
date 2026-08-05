@@ -1150,8 +1150,28 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
 #p-mill .seg button.on{background:var(--or);color:var(--onor)}
 #p-mill .seg button:not(.on):hover{background:var(--bg4);color:var(--or)}
 
-#p-mill .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+#p-mill .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));
   gap:8px;margin-bottom:12px}
+/* Фильтр над плитками: чипы по мощности и комплектации */
+#p-mill .rfilter{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:12px}
+#p-mill .rfgroup{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#p-mill .rfgroup>b{font-size:14.5px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.4px;margin-right:2px}
+#p-mill .chip{border:1px solid var(--line2);background:var(--bg3);color:var(--tx);
+  border-radius:999px;padding:5px 13px;font:inherit;font-size:16px;cursor:pointer;
+  white-space:nowrap}
+#p-mill .chip:hover{border-color:var(--or)}
+#p-mill .chip.on{background:var(--or);border-color:var(--or);color:var(--onor);
+  font-weight:600}
+#p-mill .chip .n{opacity:.7;margin-left:5px;font-size:14px}
+#p-mill .chip.on .n{opacity:.85}
+#p-mill .rgh{font-size:14.5px;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--muted);font-weight:700;margin:4px 0 7px}
+#p-mill .rgh:not(:first-child){margin-top:14px}
+#p-mill .rempty{padding:10px 0}
+/* Заголовок группы полей внутри вкладки */
+#p-mill h3.mzsub{font-size:17.5px;margin:16px 0 9px;color:var(--or);
+  padding-top:13px;border-top:1px solid var(--line)}
 #p-mill .rcard{border:1px solid var(--line);border-radius:9px;padding:9px 11px;
   cursor:pointer;background:var(--bg3);min-width:0;text-align:left;font:inherit;
   color:var(--tx);display:block;width:100%}
@@ -1161,7 +1181,8 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
 #p-mill .rcard b{display:block;font-size:17.5px;color:var(--or);line-height:1.3;
   overflow-wrap:anywhere}
 #p-mill .rcard .rs{font-size:15.5px;color:var(--muted);margin:3px 0 6px;line-height:1.4}
-#p-mill .rcard .rp{font-size:18.5px;font-weight:700;color:var(--tx)}
+#p-mill .rcard .rp{font-size:18.5px;font-weight:700;color:var(--tx);
+  overflow-wrap:anywhere}
 #p-mill .rcard .rp em{font-style:normal;font-size:14.5px;color:var(--muted);
   font-weight:400;margin-left:5px}
 
@@ -1182,22 +1203,33 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
 #p-mill .simc .dp.eq{color:var(--muted)}
 
 #p-mill .panehead{display:grid;gap:9px;align-items:end;margin-bottom:11px;
-  grid-template-columns:minmax(0,1fr) 130px auto}
-#p-mill .panehead.b3{grid-template-columns:140px minmax(0,1fr) 130px auto}
-#p-mill .panehead.b4{grid-template-columns:minmax(0,1fr) 140px 130px auto}
-#p-mill .panehead.b5{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 150px 130px auto}
-#p-mill .panehead.rot{grid-template-columns:minmax(0,1fr) 215px 130px auto}
+  grid-template-columns:minmax(0,1fr) 172px auto}
+#p-mill .panehead.b3{grid-template-columns:150px minmax(0,1fr) 172px auto}
+#p-mill .panehead.b4{grid-template-columns:minmax(0,1fr) 150px 172px auto}
+#p-mill .panehead.b5{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 175px 172px auto}
+#p-mill .panehead.rot{grid-template-columns:minmax(0,1fr) 215px 172px auto}
+/* Названия групп ПНР длинные — селектам нужна половина ширины, а не пятая часть */
+#p-mill .panehead.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+#p-mill .panehead.svc{grid-template-columns:minmax(0,300px) 172px auto}
 #p-mill .mhead{display:grid;gap:10px;align-items:end;margin-bottom:12px}
-#p-mill .mhead.main{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 150px 150px}
+#p-mill .mhead.main{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 182px 190px}
 @media(max-width:900px){#p-mill .mhead.main{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 #p-mill .mhead.spin{grid-template-columns:minmax(0,1fr) 128px minmax(0,1fr)}
 #p-mill .mhead.tbl{grid-template-columns:minmax(0,1fr) 128px}
-#p-mill .mhead.one{grid-template-columns:minmax(0,460px)}
+#p-mill .mhead.one{grid-template-columns:minmax(0,520px)}
+#p-mill .mhead.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+/* Привод и усиление: подписи вариантов длинные, узкой колонки им мало */
+#p-mill .mhead.drv{grid-template-columns:minmax(0,230px) minmax(0,1fr) 172px}
+@media(max-width:900px){
+  #p-mill .mhead.drv{grid-template-columns:minmax(0,1fr) 172px}
+  #p-mill .mhead.main{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+}
 @media(max-width:700px){
   #p-mill .mhead,#p-mill .mhead.main,#p-mill .mhead.spin,#p-mill .mhead.tbl,
-  #p-mill .mhead.one{grid-template-columns:1fr}
+  #p-mill .mhead.one,#p-mill .mhead.two,#p-mill .mhead.drv{grid-template-columns:1fr}
   #p-mill .panehead,#p-mill .panehead.b3,#p-mill .panehead.b4,
-  #p-mill .panehead.b5,#p-mill .panehead.rot{grid-template-columns:1fr}
+  #p-mill .panehead.b5,#p-mill .panehead.rot,#p-mill .panehead.two,
+  #p-mill .panehead.svc{grid-template-columns:1fr}
 }
 
 #p-mill .tgl{position:relative;cursor:pointer;user-select:none;display:block;margin:0}

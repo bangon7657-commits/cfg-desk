@@ -155,6 +155,8 @@ APP = {
                     for m, h, mi, pm, g in data.GAS_6KW_STEEL],
     'gas6kwInox': [{'mm': m, 'perH': h, 'perMin': mi, 'perM': pm, 'gas': g}
                    for m, h, mi, pm, g in data.GAS_6KW_INOX],
+    'fiberBeds': data.FIBER_BEDS,
+    'fiberBedsNote': data.FIBER_BEDS_NOTE,
     'gasSource': data.GAS_SOURCE,
     'gasSourceNote': data.GAS_SOURCE_NOTE,
     'co2': [{'brand': b, 'name': n, 'field': f, 'tube': t, 'ctrl': c,

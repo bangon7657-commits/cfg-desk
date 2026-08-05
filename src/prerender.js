@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 54', /const CACHE = 'cfg-v54'/.test(swTxt),
+check('кеш: версия поднята до 55', /const CACHE = 'cfg-v55'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -2244,6 +2244,28 @@ check('вкладки: значок сметы жив после перерис�
       doc.getElementById('fbPrice').value);
     doc.querySelector('#fbReadyList [data-fbcfg="1530:3000:0:"]').click();
 
+    // фильтры: без них 24 плитки — стена текста
+    check('волокно: над плитками есть фильтры мощности и комплектации',
+      doc.querySelectorAll('#fbReadyFilter [data-fbf^="pow:"]').length === 4 &&
+      doc.querySelectorAll('#fbReadyFilter [data-fbf^="opt:"]').length === 5,
+      doc.querySelectorAll('#fbReadyFilter [data-fbf]').length);
+    check('волокно: плитки сгруппированы по мощности источника',
+      doc.querySelectorAll('#fbReadyList .rgh').length === 3 &&
+      /Источник 3 кВт/.test(textOf(doc, '#fbReadyList')),
+      doc.querySelectorAll('#fbReadyList .rgh').length);
+    doc.querySelector('#fbReadyFilter [data-fbf="pow:12000"]').click();
+    check('волокно: фильтр по 12 кВт оставляет восемь конфигураций',
+      doc.querySelectorAll('#fbReadyList [data-fbcfg]').length === 8,
+      doc.querySelectorAll('#fbReadyList [data-fbcfg]').length);
+    doc.querySelector('#fbReadyFilter [data-fbf="opt:base"]').click();
+    check('волокно: два фильтра вместе оставляют одну плитку',
+      doc.querySelectorAll('#fbReadyList [data-fbcfg]').length === 1,
+      doc.querySelectorAll('#fbReadyList [data-fbcfg]').length);
+    check('волокно: на чипах показано, сколько конфигураций за ними',
+      /Любая/.test(textOf(doc, '#fbReadyFilter')), '');
+    doc.querySelector('#fbReadyFilter [data-fbf="pow:all"]').click();
+    doc.querySelector('#fbReadyFilter [data-fbf="opt:all"]').click();
+
     doc.querySelector('#fbModes [data-fbmode="custom"]').click();
     check('волокно: в своей конфигурации показаны вкладки и список прайса',
       doc.getElementById('fbMTabs').style.display === '' &&
@@ -2362,6 +2384,38 @@ check('вкладки: значок сметы жив после перерис�
       textOf(doc, '#fbCryoCard').slice(0, 120));
     gs.value = 'dpl210';
     gs.dispatchEvent(new win.Event('change', { bubbles: true }));
+
+    // ---- станины кабины и сменного стола из 1С ----
+    doc.querySelector('#fbMTabs [data-fbm="opt"]').click();
+    var cb = doc.getElementById('fbCabin'), bd = doc.getElementById('fbBed');
+    check('волокно: станины кабины и стола заведены по четыре',
+      cb.options.length === 5 && bd.options.length === 5,
+      cb.options.length + '/' + bd.options.length);
+    check('волокно: без станины галочка в смету заблокирована',
+      doc.getElementById('fbCabinOn').disabled, '');
+    cb.value = 'cab2040';
+    cb.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: цена станины подставилась с копейками',
+      doc.getElementById('fbCabinP').value === '548362.8',
+      doc.getElementById('fbCabinP').value);
+    check('волокно: несовпадение формата станины и станка поймано',
+      /станина на формат 2040, а станок — 1530/.test(textOf(doc, '#fbBedHint')),
+      textOf(doc, '#fbBedHint').slice(0, 160));
+    check('волокно: сказано, что 1325 нет в прайсе металлорезов',
+      /1325/.test(textOf(doc, '#fbBedHint')), '');
+    doc.getElementById('fbCabinOn').checked = true;
+    doc.getElementById('fbCabinOn').dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: станина ушла в спецификацию без потери копеек',
+      /Станина кабинетной защиты/.test(textOf(doc, '#mzSpecBody')) &&
+      /548 362,80/.test(textOf(doc, '#mzSpecBody')),
+      textOf(doc, '#mzSpecBody').slice(-300));
+    check('волокно: целые рубли остались без лишних нулей',
+      /3 839 900 ₽/.test(textOf(doc, '#mzSpecBody')) &&
+      !/3 839 900,00/.test(textOf(doc, '#mzSpecBody')), '');
+    doc.getElementById('fbCabinOn').checked = false;
+    doc.getElementById('fbCabinOn').dispatchEvent(new win.Event('change', { bubbles: true }));
+    cb.value = '';
+    cb.dispatchEvent(new win.Event('change', { bubbles: true }));
 
     // ---- варианты «не нужно» и «уже в комплекте» ----
     doc.querySelector('#fbTabs [data-fbcat="compr"]').click();

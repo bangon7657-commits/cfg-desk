@@ -112,6 +112,20 @@ if errors:
     sys.exit(1)
 print('Расхождений: 0 — money.js считает копейка в копейку как dengi.py')
 
+# ---- fmtMoney: копейки видно только там, где они есть ----
+out = subprocess.run(['node', '-e', f'''
+var m = require("{HERE}/money.js");
+console.log([m.fmtMoney(286700000), m.fmtMoney(54836280),
+             m.fmtMoney(31968900), m.fmtMoney(172331370)].join("|"));
+'''], capture_output=True, text=True)
+got = out.stdout.strip()
+want = '2 867 000|548 362,80|319 689|1 723 313,70'
+print(f'fmtMoney: {got}')
+if got != want:
+    print(f'НЕ СОВПАДАЕТ, ожидалось {want}')
+    sys.exit(1)
+print('Копейки в выводе не теряются, целые рубли не обрастают нулями')
+
 # ---- Проверка самих данных ----
 print()
 print('--- Проверка самих данных ---')
@@ -283,6 +297,25 @@ if cnt != PRICE_COUNT_EXPECTED or tot != PRICE_SUM_EXPECTED:
           f'на сумму {PRICE_SUM_EXPECTED}. Прайс изменён или испорчен.')
     sys.exit(1)
 print('Совпадает с эталоном — цены не изменились')
+
+# ---- Станины кабины и сменного стола: копейки не должны потеряться ----
+print()
+print('--- Станины из 1С ---')
+BEDS_SUM_EXPECTED = 656618310   # копейки, сверка с номенклатурой 1С 05.08.2026
+beds_cents = 0
+for b in data.FIBER_BEDS:
+    cents = int(round(b['price'] * 100))
+    assert abs(b['price'] * 100 - cents) < 1e-6, b['id']
+    beds_cents += cents
+    print(f'  {b["id"]}: {b["price"]:.2f} ₽ · {b["kind"]} · формат {b["format"]}')
+print(f'Позиций: {len(data.FIBER_BEDS)}, сумма: {beds_cents / 100:.2f} ₽')
+if beds_cents != BEDS_SUM_EXPECTED:
+    print(f'НЕ СОВПАДАЕТ: ожидалось {BEDS_SUM_EXPECTED} копеек')
+    sys.exit(1)
+print('Совпадает с эталоном — копейки на месте')
+# Формат 1325 в прайсе металлорезов не значится: проверка держит это в виду
+assert {b['format'] for b in data.FIBER_BEDS} == {'1530', '1325', '2040', '2060'}
+assert '1325' not in data.FIBER_FORMATS, 'формат 1325 появился в прайсе — снимите оговорку'
 
 # ---- Одна модель — одна цена ----
 # Справочник допоборудования и прайс обвязки ведут часть моделей параллельно.

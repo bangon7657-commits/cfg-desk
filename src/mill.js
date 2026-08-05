@@ -21,7 +21,7 @@ var MZ_CTRL = { 'NC': 'NC Studio', 'A11': 'DSP RichAuto A11',
   'F7324': 'F7324', 'без контр.': 'Без контроллера' };
 
 function mzDec(v) { return String(v).replace('.', ','); }
-function mzRub(rub) { return fmtRub(toCents(rub || 0)) + ' ₽'; }
+function mzRub(rub) { return fmtMoney(toCents(rub || 0)) + ' ₽'; }
 function mzNum(id) { return +$(id).value || 0; }
 function mzTouched(id) { return $(id).dataset.touched === '1'; }
 function mzTouch(id, on) { $(id).dataset.touched = on === false ? '0' : '1'; }
@@ -816,11 +816,11 @@ function mzRenderSpec() {
     var list = rows.filter(function (r) { return r.t === sec.k; });
     if (!list.length) return;
     html += '<div class="sec"><div class="sech"><span>' + sec.n + '</span><b>' +
-      fmtRub(byType[sec.k]) + ' ₽</b></div>';
+      fmtMoney(byType[sec.k]) + ' ₽</b></div>';
     list.forEach(function (r) {
       html += '<div class="srow"><span>' + esc(r.n) +
         (r.q > 1 ? ' × ' + r.q : '') + '</span><span class="v">' +
-        fmtRub(r.c * r.q) + ' ₽</span></div>';
+        fmtMoney(r.c * r.q) + ' ₽</span></div>';
       (r.d || []).forEach(function (dd) {
         html += '<div class="sdet"><span>' + esc(dd[0]) + '</span><span>' +
           esc(String(dd[1])) + '</span></div>';
@@ -838,23 +838,23 @@ function mzRenderSpec() {
   $('mzLegend').innerHTML = sum ? MZ_SECS.filter(function (sec) { return byType[sec.k]; })
     .map(function (sec) {
       return '<span><em style="background:' + sec.c + '"></em>' + sec.n + ' — ' +
-        fmtRub(byType[sec.k]) + ' ₽</span>';
+        fmtMoney(byType[sec.k]) + ' ₽</span>';
     }).join('') : '';
 
-  $('mzSum').textContent = fmtRub(sum) + ' ₽';
-  $('mzSumBar').textContent = fmtRub(sum) + ' ₽';
+  $('mzSum').textContent = fmtMoney(sum) + ' ₽';
+  $('mzSumBar').textContent = fmtMoney(sum) + ' ₽';
   $('mzPosCount').textContent = rows.length
     ? ' · ' + cnt(rows.length, ['позиция', 'позиции', 'позиций']) : '';
   // ndsIznutri отдаёт пару «без НДС и сам НДС» — в плашке нужен второй
   $('mzVat').textContent = sum
     ? 'в том числе НДС ' + APP.ndsDefault + ' % — ' +
-      fmtRub(ndsIznutri(sum, APP.ndsDefault * 10).nds) + ' ₽' : '';
+      fmtMoney(ndsIznutri(sum, APP.ndsDefault * 10).nds) + ' ₽' : '';
   $('mzIssues').innerHTML = mzIssues().map(function (r) {
     return '<div class="issue' + (r[1] === 'warn' ? ' warn' : '') + '">' + r[0] + '</div>';
   }).join('');
   $('mzOut').value = rows.map(function (r) {
-    return r.n + (r.q > 1 ? ' × ' + r.q : '') + ' — ' + fmtRub(r.c * r.q) + ' руб.';
-  }).join('\n') + (rows.length ? '\nИтого: ' + fmtRub(sum) + ' руб.' : '');
+    return r.n + (r.q > 1 ? ' × ' + r.q : '') + ' — ' + fmtMoney(r.c * r.q) + ' руб.';
+  }).join('\n') + (rows.length ? '\nИтого: ' + fmtMoney(sum) + ' руб.' : '');
 }
 
 // ------------------------------------------------------------- цены по умолчанию
@@ -925,8 +925,8 @@ function mzStepDone(n) {
   if (mzKind() === 'fiber') {
     if (n === 1) return !!mzNum('fbPrice');
     if (n === 2) {
-      return ['fbStabOn', 'fbComprOn', 'fbExtOn', 'fbCryoOn', 'fbExtraOn']
-        .some(function (id) { return $(id) && $(id).checked; });
+      return ['fbStabOn', 'fbComprOn', 'fbExtOn', 'fbCryoOn', 'fbExtraOn',
+        'fbCabinOn', 'fbBedOn'].some(function (id) { return $(id) && $(id).checked; });
     }
     return $('fbPnrOn') && $('fbPnrOn').checked;
   }
@@ -1510,25 +1510,88 @@ function fbRenderModes() {
   });
   $('fbReady').style.display = fbS.mode === 'ready' ? '' : 'none';
 }
+// Фильтры над плитками: без них 24 карточки на поле — это стена текста.
+function fbOptKind(c) {
+  if (c.tbl && c.rot) return 'both';
+  if (c.tbl) return 'tbl';
+  if (c.rot) return 'rot';
+  return 'base';
+}
+var FB_OPT_NAMES = { base: 'База', tbl: 'Со столом', rot: 'С труборезом',
+  both: 'Стол и труборез' };
+function fbChips(group, items, cur) {
+  return '<div class="rfgroup"><b>' + esc(group.n) + '</b>' +
+    items.map(function (it) {
+      return '<button type="button" class="chip' + (it.k === cur ? ' on' : '') +
+        '" data-fbf="' + group.k + ':' + it.k + '">' + esc(it.n) +
+        (it.c === undefined ? '' : '<span class="n">' + it.c + '</span>') +
+        '</button>';
+    }).join('') + '</div>';
+}
 function fbRenderReady() {
-  var box = $('fbReadyList');
-  if (fbS.mode !== 'ready') { box.innerHTML = ''; return; }
+  var box = $('fbReadyList'), fbox = $('fbReadyFilter');
+  if (fbS.mode !== 'ready') { box.innerHTML = ''; fbox.innerHTML = ''; return; }
   var f = $('fbFmt').value;
-  var list = fbCatalog().filter(function (c) { return c.f === f; });
-  list.sort(function (a, b) { return a.price - b.price; });
+  var all = fbCatalog().filter(function (c) { return c.f === f; });
+  if (!fbS.fPow) fbS.fPow = 'all';
+  if (!fbS.fOpt) fbS.fOpt = 'all';
+
+  // счётчики считаем по второму фильтру, чтобы цифры не врали
+  function count(pred) { return all.filter(pred).length; }
+  var pows = [];
+  all.forEach(function (c) { if (pows.indexOf(c.p) < 0) pows.push(c.p); });
+  pows.sort(function (a, b) { return a - b; });
+  var powItems = [{ k: 'all', n: 'Любая',
+    c: count(function (c) { return fbS.fOpt === 'all' || fbOptKind(c) === fbS.fOpt; }) }];
+  pows.forEach(function (w) {
+    powItems.push({ k: String(w), n: (w / 1000) + ' кВт',
+      c: count(function (c) {
+        return c.p === w && (fbS.fOpt === 'all' || fbOptKind(c) === fbS.fOpt);
+      }) });
+  });
+  var kinds = ['base', 'tbl', 'rot', 'both'].filter(function (k) {
+    return all.some(function (c) { return fbOptKind(c) === k; });
+  });
+  var optItems = [{ k: 'all', n: 'Любая',
+    c: count(function (c) { return fbS.fPow === 'all' || String(c.p) === fbS.fPow; }) }];
+  kinds.forEach(function (k) {
+    optItems.push({ k: k, n: FB_OPT_NAMES[k],
+      c: count(function (c) {
+        return fbOptKind(c) === k && (fbS.fPow === 'all' || String(c.p) === fbS.fPow);
+      }) });
+  });
+  fbox.innerHTML = fbChips({ k: 'pow', n: 'Мощность' }, powItems, fbS.fPow) +
+    fbChips({ k: 'opt', n: 'Комплектация' }, optItems, fbS.fOpt);
+
+  var list = all.filter(function (c) {
+    return (fbS.fPow === 'all' || String(c.p) === fbS.fPow) &&
+      (fbS.fOpt === 'all' || fbOptKind(c) === fbS.fOpt);
+  });
   if (!list.length) {
-    box.innerHTML = '<div class="hint warn">Готовых конфигураций для этого поля ' +
-      'в прайсе нет. Соберите свою и введите цену вручную.</div>';
+    box.innerHTML = '<div class="rempty"><div class="hint warn">Под этот фильтр ' +
+      'в прайсе ничего нет. Снимите ограничение по мощности или комплектации.</div></div>';
     return;
   }
-  var add = fbServoAdd();
-  box.innerHTML = list.map(function (c) {
-    return '<button type="button" class="rcard' +
+  // группируем по мощности: менеджер сначала выбирает киловатты, потом опции
+  var add = fbServoAdd(), out = [], seen = {};
+  list.sort(function (a, b) { return a.p - b.p || a.price - b.price; });
+  list.forEach(function (c) {
+    if (!seen[c.p]) {
+      seen[c.p] = 1;
+      out.push('<div class="rgh">Источник ' + (c.p / 1000) + ' кВт</div>' +
+        '<div class="rgrid" data-pow="' + c.p + '"></div>');
+    }
+  });
+  box.innerHTML = out.join('');
+  list.forEach(function (c) {
+    var g = box.querySelector('.rgrid[data-pow="' + c.p + '"]');
+    if (!g) return;
+    g.insertAdjacentHTML('beforeend', '<button type="button" class="rcard' +
       (fbSel === fbCfgKey(c) ? ' on' : '') + '" data-fbcfg="' + fbCfgKey(c) +
-      '"><b>' + esc(fbCfgName(c)) + '</b><div class="rs">' + esc(fbCfgSpec(c)) +
-      '</div><div class="rp">' + mzRub(c.price + add) + '<em>' +
-      esc(fbServoM().brand) + '</em></div></button>';
-  }).join('');
+      '"><b>' + esc(fbCfgSpec(c)) + '</b><div class="rs">' +
+      esc(fbCfgName(c)) + '</div><div class="rp">' + mzRub(c.price + add) +
+      '<em>' + esc(fbServoM().brand) + '</em></div></button>');
+  });
 }
 function fbRenderMatches() {
   var f = $('fbFmt').value, cur = fbCurKey();
@@ -1607,6 +1670,48 @@ function fbRenderOpt() {
   }
   mzCard('fbOptCard', 'Опции по прайсу', $('fbFmt').value + ' · ' +
     $('fbPow').value + ' Вт', rows, esc(pack));
+}
+
+// ------------------------------------------- станины кабины и сменного стола
+function fbBedList(kind) {
+  return APP.fiberBeds.filter(function (b) { return b.kind === kind; });
+}
+function fbBedM(sel) {
+  var k = $(sel).value;
+  return APP.fiberBeds.filter(function (b) { return b.id === k; })[0] || null;
+}
+function fbFillBeds() {
+  if ($('fbCabin').options.length) return;
+  function opts(kind) {
+    return '<option value="">не нужна</option>' + fbBedList(kind).map(function (b) {
+      return '<option value="' + b.id + '">' + esc(b.format) + ' — ' +
+        mzRub(b.price) + '</option>';
+    }).join('');
+  }
+  $('fbCabin').innerHTML = opts('cabin');
+  $('fbBed').innerHTML = opts('table');
+}
+function fbRenderBeds() {
+  var h = [];
+  var cab = fbBedM('fbCabin'), bed = fbBedM('fbBed');
+  var f = $('fbFmt').value;
+  [cab, bed].forEach(function (b) {
+    if (b && b.format !== f) {
+      h.push(['Выбрана станина на формат ' + b.format + ', а станок — ' + f +
+        '. Либо это осознанно, либо промах в списке.', 'bad']);
+    }
+  });
+  if (bed && $('fbTable').value === '1') {
+    h.push(['В конфигурации уже стоит сменный стол отдельной строкой прайса, ' +
+      'и сверху добавлена станина стола из 1С. Это разные позиции — ' +
+      'убедитесь у сервиса, что клиенту нужны обе.', 'warn']);
+  }
+  if (!fbBedList('cabin').some(function (b) { return b.format === f; })) {
+    h.push(['На формат ' + f + ' станин в номенклатуре 1С нет: там только ' +
+      '1530, 1325, 2040 и 2060.', 'ok']);
+  }
+  h.push([esc(APP.fiberBedsNote), 'warn']);
+  mzHints('fbBedHint', h);
 }
 
 // ------------------------------------------------------- что режет источник
@@ -1910,6 +2015,15 @@ function fbPriceDefaults() {
   if (!mzTouched('fbComprP')) $('fbComprP').value = c ? c.price : '';
   if (!mzTouched('fbExtP')) $('fbExtP').value = e ? e.price : '';
   if (!mzTouched('fbCryoP')) $('fbCryoP').value = g ? g.price : '';
+  var cab = fbBedM('fbCabin'), bed = fbBedM('fbBed');
+  if (!mzTouched('fbCabinP')) $('fbCabinP').value = cab ? cab.price : '';
+  if (!mzTouched('fbBedP')) $('fbBedP').value = bed ? bed.price : '';
+  if (!cab && $('fbCabinOn').checked) $('fbCabinOn').checked = false;
+  if (!bed && $('fbBedOn').checked) $('fbBedOn').checked = false;
+  $('fbCabinOn').disabled = !cab;
+  $('fbBedOn').disabled = !bed;
+  $('fbCabinOn').parentNode.classList.toggle('off', !cab);
+  $('fbBedOn').parentNode.classList.toggle('off', !bed);
   if (!mzTouched('fbPnrP')) $('fbPnrP').value = fbPnrBase() || '';
   var a = fbPnrAddM();
   if (!mzTouched('fbPnrAddP')) $('fbPnrAddP').value = a && a.p ? a.p : '';
@@ -1938,6 +2052,12 @@ function fbSpec() {
   }
   if ($('fbCryoOn').checked && fbCryoM()) {
     out.push({ n: fbCryoM().name, c: toCents(mzNum('fbCryoP')), q: 1, t: 'opt' });
+  }
+  if ($('fbCabinOn').checked && fbBedM('fbCabin')) {
+    out.push({ n: fbBedM('fbCabin').name, c: toCents(mzNum('fbCabinP')), q: 1, t: 'opt' });
+  }
+  if ($('fbBedOn').checked && fbBedM('fbBed')) {
+    out.push({ n: fbBedM('fbBed').name, c: toCents(mzNum('fbBedP')), q: 1, t: 'opt' });
   }
   if ($('fbExtraOn').checked && $('fbExtraN').value.trim()) {
     out.push({ n: $('fbExtraN').value.trim(), c: toCents(mzNum('fbExtraP')), q: 1, t: 'opt' });
@@ -1988,10 +2108,10 @@ function fbUpdate() {
   fbFillKit();
   var isA = fbSeries() === 'A';
   $('fbOptsRow').style.display = isA ? 'none' : '';
-  fbFillCut(); fbFillUnit(); fbFillPnr();
+  fbFillCut(); fbFillUnit(); fbFillPnr(); fbFillBeds();
   fbPriceDefaults();
   fbRenderKit(); fbRenderSeries(); fbRenderHints(); fbRenderSimilar();
-  fbRenderOpt(); fbRenderCut(); fbRenderUnit(); fbRenderShop();
+  fbRenderOpt(); fbRenderBeds(); fbRenderCut(); fbRenderUnit(); fbRenderShop();
   fbRenderStab(); fbRenderCompr(); fbRenderExt(); fbRenderCryo();
   fbRenderPnrHint();
   fbSel = fbCurKey();
@@ -2004,7 +2124,7 @@ function fbBind() {
     'fbCompr', 'fbComprP', 'fbExt', 'fbExtP', 'fbCryo', 'fbCryoP', 'fbExtraN',
     'fbExtraP', 'fbCutM', 'fbCutT', 'fbCutL', 'fbUnit', 'fbPnrGroup', 'fbPnrVar',
     'fbPnrK', 'fbPnrP', 'fbPnrAdd', 'fbPnrAddP', 'fbSeriesSel', 'fbDrive',
-    'fbBoost'].forEach(function (id) {
+    'fbBoost', 'fbCabin', 'fbCabinP', 'fbBed', 'fbBedP'].forEach(function (id) {
     var box = $(id);
     if (!box) return;
     box.addEventListener('change', function () {
@@ -2027,17 +2147,26 @@ function fbBind() {
         mzTouch('fbPnrP', false);
       }
       if (id === 'fbPnrAdd') mzTouch('fbPnrAddP', false);
+      if (id === 'fbCabin') mzTouch('fbCabinP', false);
+      if (id === 'fbBed') mzTouch('fbBedP', false);
       mzUpdate();
     });
   });
   ['fbStabOn', 'fbComprOn', 'fbExtOn', 'fbCryoOn', 'fbExtraOn', 'fbPnrOn',
-    'fbPnrAddOn'].forEach(function (id) {
+    'fbPnrAddOn', 'fbCabinOn', 'fbBedOn'].forEach(function (id) {
       if ($(id)) $(id).addEventListener('change', mzUpdate);
     });
   $('fbModes').addEventListener('click', function (e) {
     var b = e.target.closest('[data-fbmode]');
     if (!b) return;
     fbS.mode = b.dataset.fbmode;
+    mzUpdate();
+  });
+  $('fbReadyFilter').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fbf]');
+    if (!b) return;
+    var parts = b.dataset.fbf.split(':');
+    fbS[parts[0] === 'pow' ? 'fPow' : 'fOpt'] = parts[1];
     mzUpdate();
   });
   $('fbReadyList').addEventListener('click', function (e) {

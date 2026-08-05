@@ -93,8 +93,15 @@ function fmtRub(cents) {
   return String(rub).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
+/* Рубли, а копейки — только если они есть: '2 867 000' или '548 362,80'.
+   Почти весь прайс в целых рублях, но станины из 1С идут с копейками,
+   и округлять их в смете нельзя: это позиция счёта. */
+function fmtMoney(cents) {
+  return cents % 100 === 0 ? fmtRub(cents) : fmt(cents);
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { toCents: toCents, propisyu: propisyu, ndsIznutri: ndsIznutri,
     soSkidkoy: soSkidkoy, sNacenkoy: sNacenkoy, fmt: fmt, fmtRub: fmtRub,
-    chisloPropisyu: chisloPropisyu };
+    fmtMoney: fmtMoney, chisloPropisyu: chisloPropisyu };
 }

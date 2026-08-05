@@ -1180,9 +1180,11 @@
 
     <div class="card mzstep" data-step="3" data-kind="any">
       <h2>3 · ПНР и обучение</h2>
-      <div class="panehead b5">
+      <div class="panehead two">
         <div class="f"><label for="mzPnrGroup">Группа по прайсу</label><select id="mzPnrGroup"></select></div>
         <div class="f"><label for="mzPnrVar">Состав услуги</label><select id="mzPnrVar"></select></div>
+      </div>
+      <div class="panehead svc">
         <div class="f"><label for="mzPnrK">Выезд</label>
           <select id="mzPnrK">
             <option value="10">Обычный (×1)</option>
@@ -1196,7 +1198,7 @@
       <div class="hints"><div class="hint">__PNR_TERMS_MILL__</div></div>
       <!-- По волокну строк ПНР в прайсе сервиса нет — цену спрашивают отдельно -->
       <div id="fbPnrBox" hidden>
-        <div class="panehead b5">
+        <div class="panehead two">
           <div class="f"><label for="fbPnrGroup">Группа по прайсу</label>
             <select id="fbPnrGroup"></select></div>
           <div class="f"><label for="fbPnrVar">Состав услуги</label>
@@ -1205,6 +1207,8 @@
               <option value="both">ПНР и обучение</option>
               <option value="edu">Только обучение</option>
             </select></div>
+        </div>
+        <div class="panehead svc">
           <div class="f"><label for="fbPnrK">Выезд</label>
             <select id="fbPnrK">
               <option value="10">Обычный (×1)</option>
@@ -1248,12 +1252,15 @@
           </select></div>
       </div>
 
-      <div id="fbReady"><div class="rgrid" id="fbReadyList"></div></div>
+      <div id="fbReady">
+        <div class="rfilter noprint" id="fbReadyFilter"></div>
+        <div id="fbReadyList"></div>
+      </div>
 
       <div class="tabs noprint" id="fbMTabs"></div>
 
       <div class="pane" id="fbm_src">
-        <div class="mhead spin">
+        <div class="mhead drv">
           <div class="f"><label for="fbPow">Мощность источника</label><select id="fbPow"></select></div>
           <div class="f"><label for="fbBoost">Усиление приводов</label>
             <select id="fbBoost">
@@ -1268,7 +1275,7 @@
       </div>
 
       <div class="pane" id="fbm_opt">
-        <div class="mhead tbl" id="fbOptsRow">
+        <div class="mhead two" id="fbOptsRow">
           <div class="f"><label for="fbTable">Сменный стол</label>
             <select id="fbTable">
               <option value="0">не нужен</option>
@@ -1277,6 +1284,23 @@
           <div class="f"><label for="fbRot">Труборез</label><select id="fbRot"></select></div>
         </div>
         <div id="fbOptCard"></div>
+
+        <h3 class="mzsub">Станины из номенклатуры 1С</h3>
+        <div class="panehead">
+          <div class="f"><label for="fbCabin">Станина защитной кабины</label>
+            <select id="fbCabin"></select></div>
+          <div class="f"><label for="fbCabinP">Цена, ₽</label>
+            <input class="num" id="fbCabinP" type="number" min="0" step="0.01"></div>
+          <label class="tgl"><input type="checkbox" id="fbCabinOn"><span>В смету</span></label>
+        </div>
+        <div class="panehead">
+          <div class="f"><label for="fbBed">Станина сменного стола</label>
+            <select id="fbBed"></select></div>
+          <div class="f"><label for="fbBedP">Цена, ₽</label>
+            <input class="num" id="fbBedP" type="number" min="0" step="0.01"></div>
+          <label class="tgl"><input type="checkbox" id="fbBedOn"><span>В смету</span></label>
+        </div>
+        <div class="hints" id="fbBedHint"></div>
       </div>
 
       <div class="pane" id="fbm_cut">

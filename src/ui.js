@@ -829,7 +829,7 @@
     rows.slice(0, 12).forEach(function (r) {
       var row = el('div', 'mrow');
       row.innerHTML = '<span class="nm">' + esc(r.name) + '</span><b>' +
-        (r.price ? fmtRub(toCents(r.price)) + ' ₽' : 'цены нет') + '</b>';
+        (r.price ? fmtMoney(toCents(r.price)) + ' ₽' : 'цены нет') + '</b>';
       row.addEventListener('click', function () { onPick(r); });
       n.appendChild(row);
     });
@@ -1025,7 +1025,7 @@
     var box = el('div', 'pricebox');
     box.appendChild(el('div', 'pb stock',
       '<div class="lbl">Цена, НДС включён</div><div class="val">' +
-      fmtRub(toCents(pick.price)) + ' ₽</div><div class="sub">' + esc(pick.name) + '</div>'));
+      fmtMoney(toCents(pick.price)) + ' ₽</div><div class="sub">' + esc(pick.name) + '</div>'));
     box.appendChild(el('div', 'pb',
       '<div class="lbl">Второй ценник</div>' +
       '<div class="val" style="font-size:19px">нет в прайсе</div>' +
@@ -1035,10 +1035,10 @@
       var st = el('div', 'calcsteps');
       pick.steps.forEach(function (s) {
         st.appendChild(el('div', '', esc(s[0]) + ': <b>' + (s[1] < 0 ? '−' : '') +
-          fmtRub(toCents(Math.abs(s[1]))) + ' ₽</b>'));
+          fmtMoney(toCents(Math.abs(s[1]))) + ' ₽</b>'));
       });
       st.appendChild(el('div', '', 'Итого по прайсу: <b>' +
-        fmtRub(toCents(pick.price)) + ' ₽</b>'));
+        fmtMoney(toCents(pick.price)) + ' ₽</b>'));
       out.appendChild(st);
     }
     out.appendChild(el('div', 'note',
@@ -1067,7 +1067,7 @@
       '</b> · ускорение <b>' + esc(sv.accel) + '</b>'));
     box.appendChild(el('div', '', esc(sv.note)));
     box.appendChild(el('div', '', add
-      ? 'Надбавка за усиление: <b>' + fmtRub(toCents(add)) + ' ₽</b>'
+      ? 'Надбавка за усиление: <b>' + fmtMoney(toCents(add)) + ' ₽</b>'
       : 'Надбавки нет: цена берётся прямо из прайса.'));
     out.appendChild(box);
 
@@ -1130,15 +1130,15 @@
     box.appendChild(el('div', 'pb' + (mode === 'order' ? ' stock' : ''),
       '<div class="lbl">Под заказ — завод, ' + esc(APP.deliveryOrder) +
       '</div><div class="val">' +
-      fmtRub(toCents(r.order)) + ' ₽</div><div class="sub">Оплата 50 % + остаток</div>'));
+      fmtMoney(toCents(r.order)) + ' ₽</div><div class="sub">Оплата 50 % + остаток</div>'));
     box.appendChild(el('div', 'pb' + (mode === 'stock' ? ' stock' : ''),
       '<div class="lbl">Из наличия — склад</div><div class="val">' +
-      fmtRub(toCents(r.stock)) + ' ₽</div><div class="sub">Оплата 100 %</div>'));
+      fmtMoney(toCents(r.stock)) + ' ₽</div><div class="sub">Оплата 100 %</div>'));
     out.appendChild(box);
 
     var st = el('div', 'calcsteps internal');
     var diff = r.stock - r.order;
-    st.appendChild(el('div', '', 'Разница: <b>' + fmtRub(toCents(diff)) + ' ₽</b>, это <b>+' +
+    st.appendChild(el('div', '', 'Разница: <b>' + fmtMoney(toCents(diff)) + ' ₽</b>, это <b>+' +
       String(Math.round(diff / r.order * 10000) / 100).replace('.', ',') +
       ' %</b> к цене под заказ'));
     st.appendChild(el('div', '', 'Правило прайса: +11 % с округлением до 100 ₽. ' +
@@ -1184,7 +1184,7 @@
       cats[c].forEach(function (o) {
         var row = el('div', 'chk');
         row.innerHTML = '<span style="flex:1">' + esc(o.name) + ' — <b style="color:var(--or)">' +
-          fmtRub(toCents(o.price)) + ' ₽</b></span>';
+          fmtMoney(toCents(o.price)) + ' ₽</b></span>';
         var qty = el('select');
         qty.style.width = '84px'; qty.style.padding = '6px 8px';
         if (/Виброопор/i.test(c)) {
@@ -1243,11 +1243,11 @@
     var p = pnrPick();
     if (p.price === null) { out.appendChild(el('div', 'note alert', esc(p.text))); return; }
     var st = el('div', 'calcsteps');
-    st.appendChild(el('div', '', 'По прайсу: <b>' + fmtRub(toCents(p.base)) + ' ₽</b>' +
+    st.appendChild(el('div', '', 'По прайсу: <b>' + fmtMoney(toCents(p.base)) + ' ₽</b>' +
       (p.days ? ' · выезд ' + p.days + ' дн.' : '')));
     if (p.third) {
       st.appendChild(el('div', '', 'Коэффициент ×1,2 на сторонний станок: <b>' +
-        fmtRub(toCents(p.price)) + ' ₽</b>'));
+        fmtMoney(toCents(p.price)) + ' ₽</b>'));
     }
     // условия берём из данных: правка прайса должна доходить до экрана
     st.appendChild(el('div', '', esc(APP.pnrTerms.join(' · '))));
@@ -1288,13 +1288,13 @@
     if (!r) return;
     var box = el('div', 'pricebox');
     box.appendChild(el('div', 'pb stock', '<div class="lbl">Цена в КП</div>' +
-      '<div class="val">' + fmtRub(toCents(r.price)) + ' ₽</div>' +
+      '<div class="val">' + fmtMoney(toCents(r.price)) + ' ₽</div>' +
       '<div class="sub">витрина сайта плюс наценка 5 %, НДС включён</div>'));
     if (r.was) {
       box.appendChild(el('div', 'pb', '<div class="lbl">Прежняя цена на сайте</div>' +
-        '<div class="val">' + fmtRub(toCents(r.was)) + ' ₽</div>' +
+        '<div class="val">' + fmtMoney(toCents(r.was)) + ' ₽</div>' +
         '<div class="sub">' + (r.was > r.price
-          ? 'выгода ' + fmtRub(toCents(r.was - r.price)) + ' ₽'
+          ? 'выгода ' + fmtMoney(toCents(r.was - r.price)) + ' ₽'
           : 'прежняя цена ниже действующей — витрина показывает подорожание') +
         '</div>'));
     }
@@ -1318,7 +1318,7 @@
   (function () {
     var sel = fresh('cChiller');
     APP.chillers.forEach(function (c) {
-      opt(sel, c.id, c.name + ' — ' + fmtRub(toCents(c.price)) + ' ₽');
+      opt(sel, c.id, c.name + ' — ' + fmtMoney(toCents(c.price)) + ' ₽');
     });
   }());
   function chillerPick() { return kitFind(APP.chillers, $('cChiller').value); }
@@ -1326,7 +1326,7 @@
     var out = fresh('cChillerOut'), c = chillerPick();
     if (!c) return;
     out.appendChild(el('div', 'calcsteps', '<div>' + esc(c.kind) + '</div>' +
-      '<div>Цена: <b>' + fmtRub(toCents(c.price)) + ' ₽</b></div>'));
+      '<div>Цена: <b>' + fmtMoney(toCents(c.price)) + ' ₽</b></div>'));
     thinkify();
   }
   $('cChiller').addEventListener('change', renderChiller);
@@ -1344,7 +1344,7 @@
   function fillStabSel(id) {
     var sel = fresh(id);
     stabOptions().forEach(function (o) {
-      opt(sel, o.name, nomOption(o.cat, o.name) + ' — ' + fmtRub(toCents(o.price)) + ' ₽');
+      opt(sel, o.name, nomOption(o.cat, o.name) + ' — ' + fmtMoney(toCents(o.price)) + ' ₽');
     });
   }
   function stabOptPick(id) {
@@ -1356,7 +1356,7 @@
     var out = fresh(outId), o = stabOptPick(selId);
     if (!o) return;
     out.appendChild(el('div', 'calcsteps', '<div>Цена: <b>' +
-      fmtRub(toCents(o.price)) + ' ₽</b></div><div>' +
+      fmtMoney(toCents(o.price)) + ' ₽</b></div><div>' +
       (/3-ЭМ|380/.test(o.name) ? 'Трёхфазный, 380 В' : 'Однофазный, 220 В') + '</div>'));
     thinkify();
   }
@@ -1425,11 +1425,11 @@
     var box = el('div', 'pricebox');
     box.appendChild(el('div', 'pb' + (mode === 'order' ? ' stock' : ''),
       '<div class="lbl">Под заказ — завод, ' + esc(APP.deliveryOrder) + '</div>' +
-      '<div class="val">' + fmtRub(toCents(m.order)) + ' ₽</div>' +
+      '<div class="val">' + fmtMoney(toCents(m.order)) + ' ₽</div>' +
       '<div class="sub">Оплата 50 % + остаток</div>'));
     box.appendChild(el('div', 'pb' + (mode === 'stock' ? ' stock' : ''),
       '<div class="lbl">Из наличия — склад</div>' +
-      '<div class="val">' + fmtRub(toCents(m.stock)) + ' ₽</div>' +
+      '<div class="val">' + fmtMoney(toCents(m.stock)) + ' ₽</div>' +
       '<div class="sub">Оплата 100 %</div>'));
     out.appendChild(box);
     out.appendChild(el('div', 'muted', (m.watt ? 'Мощность ' + m.watt + ' Вт · ' : '') +
@@ -1437,7 +1437,7 @@
       ' · MOPA: ' + (m.mopa ? 'да' : 'нет')));
     var st = el('div', 'calcsteps internal');
     st.appendChild(el('div', '', 'Разница: <b>' +
-      fmtRub(toCents(m.stock - m.order)) + ' ₽</b>, это <b>+' +
+      fmtMoney(toCents(m.stock - m.order)) + ' ₽</b>, это <b>+' +
       String(Math.round((m.stock - m.order) / m.order * 10000) / 100)
         .replace('.', ',') + ' %</b> к цене под заказ'));
     out.appendChild(st);
@@ -1512,7 +1512,7 @@
   function fillStabFull() {
     var sel = fresh('cStabFull');
     stabFullList().forEach(function (s) {
-      opt(sel, s.k, s.n + ' — ' + s.kw + ' кВт — ' + fmtRub(toCents(s.p)) + ' ₽');
+      opt(sel, s.k, s.n + ' — ' + s.kw + ' кВт — ' + fmtMoney(toCents(s.p)) + ' ₽');
     });
     renderStabFull();
   }
@@ -1525,7 +1525,7 @@
     var s = stabFullPick();
     if (!s) return;
     var pairs = (s.d || []).slice();
-    pairs.push(['Цена', fmtRub(toCents(s.p)) + ' ₽']);
+    pairs.push(['Цена', fmtMoney(toCents(s.p)) + ' ₽']);
     var foot = 'Источник: ' + s.src +
       (s.idx ? ' · ' + s.idx : '') +
       ' · ' + (APP.stabNote[s.b] || '');
@@ -1557,7 +1557,7 @@
   function fillAsp() {
     var sel = fresh('aspModel');
     aspList().forEach(function (a) {
-      opt(sel, a.k, a.n + ' — ' + a.q + ' м³/ч — ' + fmtRub(toCents(aspPrice(a))) + ' ₽');
+      opt(sel, a.k, a.n + ' — ' + a.q + ' м³/ч — ' + fmtMoney(toCents(aspPrice(a))) + ' ₽');
     });
     fillAspVolt();
   }
@@ -1581,8 +1581,8 @@
       ['Масса', a.kg + ' кг'],
       ['Питание', v + ' В'],
       ['Артикул', (a.art && a.art[v]) || '—'],
-      ['Розница производителя', fmtRub(toCents(a.p)) + ' ₽'],
-      ['Цена в смету (×1,2)', fmtRub(toCents(aspPrice(a))) + ' ₽']
+      ['Розница производителя', fmtMoney(toCents(a.p)) + ' ₽'],
+      ['Цена в смету (×1,2)', fmtMoney(toCents(aspPrice(a))) + ' ₽']
     ];
     var idxKeys = Object.keys(APP.idxNotes || {}).filter(function (key) {
       return new RegExp('(^|[^A-Z])' + key + '($|[^A-Z])').test(a.n);
@@ -1599,7 +1599,7 @@
     var a = aspPickModel(); if (!a) return;
     var v = $('aspVolt').value || '220';
     addItem('Пылеулавливающий агрегат ' + a.n + ' (' + v + ' В)', aspPrice(a), 1, 'opt',
-      { sub: 'розница ' + fmtRub(toCents(a.p)) + ' ₽ × 1,2' });
+      { sub: 'розница ' + fmtMoney(toCents(a.p)) + ' ₽ × 1,2' });
   });
 
   // ---- своя позиция ----
@@ -1953,10 +1953,10 @@
     var zero = 0;
     state.items.forEach(function (it) { if (!it.price) zero++; });
     $('sumBarN').textContent = String(n);
-    $('sumBarTx').textContent = fmtRub(T.total) + ' ₽' +
+    $('sumBarTx').textContent = fmtMoney(T.total) + ' ₽' +
       (zero ? ' · ' + cnt(zero, ['строка', 'строки', 'строк']) + ' без цены' : '');
     bar.title = 'В смете ' + cnt(n, ['позиция', 'позиции', 'позиций']) +
-      ' на ' + fmtRub(T.total) + ' ₽ — перейти';
+      ' на ' + fmtMoney(T.total) + ' ₽ — перейти';
     bar.classList.add('show');
   }
 
@@ -1988,7 +1988,7 @@
       var tr = d.createElement('tr');
       tr.innerHTML = '<td>' + esc(L.item.short || L.item.name) +
         (L.item.qty > 1 ? ' <span class="muted">× ' + L.item.qty + '</span>' : '') +
-        '</td><td class="num">' + (L.line ? fmtRub(L.line) + ' ₽' : '—') +
+        '</td><td class="num">' + (L.line ? fmtMoney(L.line) + ' ₽' : '—') +
         '</td><td class="noprint"><button class="xbtn" type="button" ' +
         'aria-label="убрать позицию">×</button></td>';
       tr.querySelector('button').addEventListener('click', function () {
@@ -2005,9 +2005,9 @@
       n.innerHTML = '<span>' + k + '</span><span>' + v + '</span>';
       tot.appendChild(n);
     }
-    if (T.gain) line('Скидка', '−' + fmtRub(T.gain) + ' ₽', 'gain');
-    line('в т. ч. НДС ' + pctText(T.rate), fmtRub(T.nds) + ' ₽');
-    line('Итого', fmtRub(T.total) + ' ₽', 'big');
+    if (T.gain) line('Скидка', '−' + fmtMoney(T.gain) + ' ₽', 'gain');
+    line('в т. ч. НДС ' + pctText(T.rate), fmtMoney(T.nds) + ' ₽');
+    line('Итого', fmtMoney(T.total) + ' ₽', 'big');
     $('specOut').value = specText(T);
   }
 
@@ -2026,7 +2026,7 @@
     if (st) {
       st.textContent = has
         ? cnt(state.items.length, ['позиция', 'позиции', 'позиций']) + ' · ' +
-          fmtRub(T.total) + ' ₽ с НДС'
+          fmtMoney(T.total) + ' ₽ с НДС'
         : 'смета пуста';
     }
     var rule = $('smetaRule');
@@ -3088,7 +3088,7 @@
         (cheapest ? '<div class="rec-p">Самая доступная сборка этой мощности: S ' +
           cheapest.format + ' ' + cheapest.power + 'W, поле ' +
           APP.fiberFormats[cheapest.format] + ' мм — <b>' +
-          fmtRub(toCents(cheapest.base)) + ' ₽</b></div>' : '');
+          fmtMoney(toCents(cheapest.base)) + ' ₽</b></div>' : '');
       if (cheapest) {
         var b = el('button', 'btn mini noprint', 'Открыть в подборе и ценах');
         b.type = 'button';
@@ -3209,8 +3209,8 @@
         '<div class="rec-d">Шпиндель ' + r.kw + ' кВт · охлаждение ' + esc(r.cool) +
         ' · стойка ' + esc(r.ctrl) + ' · вакуумный стол: ' + (r.vac ? 'да' : 'нет') +
         ' · поле ' + APP.millingFields[r.format] + ' мм</div>' +
-        '<div class="rec-p">Под заказ <b>' + fmtRub(toCents(r.order)) + ' ₽</b>' +
-        '<span class="internal"> · из наличия <b>' + fmtRub(toCents(r.stock)) +
+        '<div class="rec-p">Под заказ <b>' + fmtMoney(toCents(r.order)) + ' ₽</b>' +
+        '<span class="internal"> · из наличия <b>' + fmtMoney(toCents(r.stock)) +
         ' ₽</b></span></div>';
       var b = el('button', 'btn mini noprint', 'Открыть в конфигураторе');
       b.type = 'button'; b.style.marginTop = '10px';
@@ -3309,7 +3309,7 @@
   function fillKit(selId, list, label) {
     var sel = fresh(selId);
     list.forEach(function (x) {
-      opt(sel, x.id, x.name + ' — ' + fmtRub(toCents(x.price)) + ' ₽');
+      opt(sel, x.id, x.name + ' — ' + fmtMoney(toCents(x.price)) + ' ₽');
     });
     if (state.kit[label] && sel.querySelector('option[value="' + state.kit[label] + '"]')) {
       sel.value = state.kit[label];
@@ -3455,7 +3455,7 @@
     var all = $('stabAll').checked;
     APP.stabilizers.forEach(function (s) {
       if (!all && s.for !== 'fiber') return;
-      opt(sel, s.id, s.name + ' — ' + s.power + ' — ' + fmtRub(toCents(s.price)) + ' ₽');
+      opt(sel, s.id, s.name + ' — ' + s.power + ' — ' + fmtMoney(toCents(s.price)) + ' ₽');
     });
     if (state.kit.stab && sel.querySelector('option[value="' + state.kit.stab + '"]')) {
       sel.value = state.kit.stab;
@@ -3471,16 +3471,16 @@
     box.appendChild(el('div', '', 'Мощность <b>' + esc(s.power) + '</b> · питание ' +
       esc(s.phase) + ' · назначение: ' +
       (s.for === 'fiber' ? 'металлорез' : 'сварочный аппарат')));
-    box.appendChild(el('div', '', 'Цена: <b>' + fmtRub(toCents(s.price)) + ' ₽</b>'));
+    box.appendChild(el('div', '', 'Цена: <b>' + fmtMoney(toCents(s.price)) + ' ₽</b>'));
     if (need) {
       box.appendChild(el('div', '', 'Требование карты готовности под эту конфигурацию: ' +
-        '<b>от ' + fmtRub(toCents(need)).replace(',00', '') + ' Вт</b>' +
+        '<b>от ' + fmtMoney(toCents(need)).replace(',00', '') + ' Вт</b>' +
         ($('fRot').value ? ' (в станке есть труборез)' : '')));
     }
     out.appendChild(box);
     if (need && s.watt < need) {
       out.appendChild(el('div', 'note stop', 'Не проходит по мощности: у модели ' +
-        esc(s.power) + ', а нужно от ' + fmtRub(toCents(need)).replace(',00', '') +
+        esc(s.power) + ', а нужно от ' + fmtMoney(toCents(need)).replace(',00', '') +
         ' Вт. Работа без подходящего стабилизатора снимает гарантию.'));
     } else if (need) {
       out.appendChild(el('div', 'note', 'По мощности проходит. Ресанта — ' +
@@ -3534,9 +3534,9 @@
     st.appendChild(el('div', '', 'За ' + hours + ' ч: <b>' + String(lo).replace('.', ',') +
       '–' + String(hi).replace('.', ',') + ' баллонов</b>'));
     if (price !== null && price > 0) {
-      st.appendChild(el('div', '', 'При цене ' + fmtRub(toCents(price)) +
-        ' ₽ за баллон: <b>' + fmtRub(toCents(lo * price)) + '–' +
-        fmtRub(toCents(hi * price)) + ' ₽ в месяц</b>'));
+      st.appendChild(el('div', '', 'При цене ' + fmtMoney(toCents(price)) +
+        ' ₽ за баллон: <b>' + fmtMoney(toCents(lo * price)) + '–' +
+        fmtMoney(toCents(hi * price)) + ' ₽ в месяц</b>'));
     } else {
       st.appendChild(el('div', '', 'Цена баллона не введена — стоимость не считается. ' +
         'В источнике этой цены нет.'));
@@ -4462,7 +4462,7 @@
     var worked = num(z.worked);
     var salaryPart = divHalfUp(salaryFull * Math.round(worked * 100), normDays * 100);
     lines.push({ label: 'Оклад за ' + worked + ' из ' + normDays + ' раб. дн.',
-      formula: fmtRub(salaryFull) + ' ÷ ' + normDays + ' × ' + worked,
+      formula: fmtMoney(salaryFull) + ' ÷ ' + normDays + ' × ' + worked,
       cents: salaryPart });
     var ot15 = num(z.ot15), ot20 = num(z.ot20);
     add('Сверхурочные: ' + ot15 + ' ч ×1,5 + ' + ot20 + ' ч ×2',
@@ -4532,9 +4532,9 @@
     $('zpPeriod').textContent = ZP_MONTHS[z.month] + ' ' + z.year;
     var hero = fresh('zpHero');
     hero.innerHTML = '<div class="l">На руки за месяц</div><div class="v">' +
-      fmtRub(T.net) + ' ₽</div><div class="split"><div><div class="l">Начислено</div>' +
-      '<div class="s">' + fmtRub(T.accrued) + ' ₽</div></div>' +
-      '<div><div class="l">Удержано</div><div class="s">' + fmtRub(T.deductions) +
+      fmtMoney(T.net) + ' ₽</div><div class="split"><div><div class="l">Начислено</div>' +
+      '<div class="s">' + fmtMoney(T.accrued) + ' ₽</div></div>' +
+      '<div><div class="l">Удержано</div><div class="s">' + fmtMoney(T.deductions) +
       ' ₽</div></div></div>';
     $('zpRateCnt').textContent = 'ставка удержаний ' + pctText(T.effective);
     var body = fresh('zpBody');
@@ -5191,11 +5191,11 @@
       var diff = base && cents ? cents - base : 0;
       var diffTx = diff
         ? '<span class="pd ' + (diff > 0 ? 'up' : 'dn') + '">' +
-          (diff > 0 ? '+' : '−') + fmtRub(Math.abs(diff)) + ' ₽</span>'
+          (diff > 0 ? '+' : '−') + fmtMoney(Math.abs(diff)) + ' ₽</span>'
         : (base && cents ? '<span class="pd same">без изменения</span>' : '');
       row.innerHTML = '<div class="pn"><b>' + nameWithSegs(r) + '</b>' +
         (r.sub ? '<span class="muted">' + esc(r.sub) + '</span>' : '') + '</div>' +
-        '<div class="pp">' + (r.price ? fmtRub(cents) + ' ₽'
+        '<div class="pp">' + (r.price ? fmtMoney(cents) + ' ₽'
           : '<span class="muted">цену уточнить</span>') + diffTx + '</div>';
       // параметры в самом названии: клик по «1.5wc» или «VAC» открывает список
       var segs = row.querySelectorAll('button.seg');
@@ -5263,14 +5263,14 @@
       if (kind === 'fiber') needW = stabNeedWatt();
       var w = (it.stab.meta || {}).watt || 0;
       if (needW && w && w < needW) {
-        out.push(['stop', 'Стабилизатор ' + fmtRub(toCents(w)).replace(',00', '') +
+        out.push(['stop', 'Стабилизатор ' + fmtMoney(toCents(w)).replace(',00', '') +
           ' Вт не проходит: карта готовности требует от ' +
-          fmtRub(toCents(needW)).replace(',00', '') + ' Вт. Работа без подходящего ' +
+          fmtMoney(toCents(needW)).replace(',00', '') + ' Вт. Работа без подходящего ' +
           'стабилизатора снимает гарантию.']);
       } else if (needW && w) {
         out.push(['ok', 'Стабилизатор проходит по мощности: ' +
-          fmtRub(toCents(w)).replace(',00', '') + ' Вт против требуемых ' +
-          fmtRub(toCents(needW)).replace(',00', '') + ' Вт.']);
+          fmtMoney(toCents(w)).replace(',00', '') + ' Вт против требуемых ' +
+          fmtMoney(toCents(needW)).replace(',00', '') + ' Вт.']);
       }
       var mv = (machine.meta || {}).volts;
       var ph = (it.stab.meta || {}).phase;
@@ -5424,8 +5424,8 @@
         body.innerHTML = '<div class="slot-n"><b>' + esc(v.name) + '</b>' +
           (v.sub ? '<span class="muted">' + esc(v.sub) + '</span>' : '') +
           (QTY_SLOTS[id] && q > 1 ? '<span class="muted">' + q + ' шт × ' +
-            fmtRub(toCents(v.price || 0)) + ' ₽</span>' : '') + '</div>' +
-          '<div class="slot-p">' + (v.price ? fmtRub(sumC) + ' ₽'
+            fmtMoney(toCents(v.price || 0)) + ' ₽</span>' : '') + '</div>' +
+          '<div class="slot-p">' + (v.price ? fmtMoney(sumC) + ' ₽'
             : '<span class="muted">цену уточнить</span>') + '</div>';
       } else {
         body.innerHTML = '<div class="slot-n muted">Слот пуст</div><div class="slot-p"></div>';
@@ -5461,7 +5461,7 @@
             if (!pi) return;
             var on = v && v.meta && v.meta.kind === kd.k && v.meta.group === gk2;
             var pb2 = el('button', 'pill sm' + (on ? ' on' : ''),
-              kd.label + ' · ' + fmtRub(toCents(pi.price)) + ' ₽');
+              kd.label + ' · ' + fmtMoney(toCents(pi.price)) + ' ₽');
             pb2.type = 'button';
             pb2.setAttribute('data-pnr', kd.k);
             pb2.addEventListener('click', function () { setSlot('pnr', pi); });
@@ -5528,7 +5528,7 @@
       var tr = d.createElement('tr');
       tr.innerHTML = '<td>' + esc(r.label) + '<br><span class="muted">' +
         esc(r.item.name) + '</span></td><td class="num">' +
-        (r.cents ? fmtRub(r.cents) + ' ₽' : '—') + '</td>';
+        (r.cents ? fmtMoney(r.cents) + ' ₽' : '—') + '</td>';
       body2.appendChild(tr);
     });
     var tot = fresh('buildTotals');
@@ -5538,8 +5538,8 @@
         n.innerHTML = '<span>' + k + '</span><span>' + v + '</span>';
         tot.appendChild(n);
       }
-      line('в т. ч. НДС ' + pctText(T.rate), fmtRub(T.nds) + ' ₽');
-      line('Итого', fmtRub(T.total) + ' ₽', 'big');
+      line('в т. ч. НДС ' + pctText(T.rate), fmtMoney(T.nds) + ' ₽');
+      line('Итого', fmtMoney(T.total) + ' ₽', 'big');
       $('buildOut').value = buildText(T);
     } else {
       $('buildOut').value = '';
@@ -5577,7 +5577,7 @@
       Object.keys(items).forEach(function (k) { sum += toCents(items[k].price || 0); });
       row.innerHTML = '<div class="pn"><b>' + esc(t.title) + '</b>' +
         '<span class="muted">' + esc(t.hint) + '</span></div>' +
-        '<div class="pp">' + fmtRub(sum) + ' ₽</div>';
+        '<div class="pp">' + fmtMoney(sum) + ' ₽</div>';
       var b = el('button', 'btn mini sec', 'В слоты');
       b.type = 'button';
       b.addEventListener('click', function () {
@@ -5671,7 +5671,7 @@
       row.innerHTML = '<div class="pn"><b>' + esc(rec.name) + '</b>' +
         '<span class="muted">' + esc(rec.kindTitle) + ' · ' +
         cnt(n, ['позиция', 'позиции', 'позиций']) + ' · ' + esc(rec.date) + '</span></div>' +
-        '<div class="pp">' + fmtRub(rec.total || 0) + ' ₽</div>';
+        '<div class="pp">' + fmtMoney(rec.total || 0) + ' ₽</div>';
       var b = el('button', 'btn mini sec', 'Открыть');
       b.type = 'button';
       b.addEventListener('click', function () {
@@ -5881,9 +5881,9 @@
     var hero = fresh('cnHero');
     hero.innerHTML = '<div class="l">' +
       (mode === 'out' ? 'Сумма с НДС' : 'В том числе НДС') + '</div><div class="v">' +
-      fmtRub(mode === 'out' ? itog : nalog) + ' ₽</div>' +
+      fmtMoney(mode === 'out' ? itog : nalog) + ' ₽</div>' +
       '<div class="split"><div><div class="l">Без НДС</div><div class="s">' +
-      fmtRub(bez) + ' ₽</div></div><div><div class="l">Ставка</div><div class="s">' +
+      fmtMoney(bez) + ' ₽</div></div><div><div class="l">Ставка</div><div class="s">' +
       pctText(rate) + '</div></div></div>';
     var tb = fresh('cnBody');
     specRow(tb, 'Сумма без НДС', fmt(bez) + ' ₽');
@@ -5932,10 +5932,10 @@
     var T = leaseCalc();
     var hero = fresh('clHero');
     hero.innerHTML = '<div class="l">Платёж в месяц</div><div class="v">' +
-      fmtRub(T.pay) + ' ₽</div><div class="split">' +
-      '<div><div class="l">Аванс сразу</div><div class="s">' + fmtRub(T.advance) +
+      fmtMoney(T.pay) + ' ₽</div><div class="split">' +
+      '<div><div class="l">Аванс сразу</div><div class="s">' + fmtMoney(T.advance) +
       ' ₽</div></div><div><div class="l">Переплата</div><div class="s">' +
-      fmtRub(T.over) + ' ₽</div></div></div>';
+      fmtMoney(T.over) + ' ₽</div></div></div>';
     var tot = fresh('clTotals');
     totLine(tot, 'Цена комплекта', fmt(T.price) + ' ₽');
     totLine(tot, 'Аванс', fmt(T.advance) + ' ₽');
@@ -6016,9 +6016,9 @@
     var hero = fresh('ccHero');
     hero.innerHTML = '<div class="l">Себестоимость часа</div><div class="v">' +
       fmt(T.sum) + ' ₽</div><div class="split"><div><div class="l">За смену 8 ч' +
-      '</div><div class="s">' + fmtRub(T.sum * 8) + ' ₽</div></div>' +
+      '</div><div class="s">' + fmtMoney(T.sum * 8) + ' ₽</div></div>' +
       '<div><div class="l">За месяц 160 ч</div><div class="s">' +
-      fmtRub(T.sum * 160) + ' ₽</div></div></div>';
+      fmtMoney(T.sum * 160) + ' ₽</div></div></div>';
     var tb = fresh('ccBody');
     T.rows.forEach(function (r) {
       if (!r[1]) return;
@@ -6074,9 +6074,9 @@
     hero.innerHTML = '<div class="l">Окупится за</div><div class="v">' +
       (T.months ? T.months + ' ' + plural(T.months, ['месяц', 'месяца', 'месяцев'])
         : '—') + '</div><div class="split"><div><div class="l">Выгода в месяц' +
-      '</div><div class="s">' + fmtRub(T.profit) + ' ₽</div></div>' +
+      '</div><div class="s">' + fmtMoney(T.profit) + ' ₽</div></div>' +
       '<div><div class="l">За год</div><div class="s">' +
-      fmtRub(T.profit * 12) + ' ₽</div></div></div>';
+      fmtMoney(T.profit * 12) + ' ₽</div></div></div>';
     var tot = fresh('crTotals');
     totLine(tot, 'Платите подрядчику', fmt(T.outsource) + ' ₽/мес');
     totLine(tot, 'Своя резка', fmt(T.ownMonth) + ' ₽/мес');
