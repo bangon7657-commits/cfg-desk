@@ -1230,26 +1230,41 @@
     <div class="card mzstep" data-step="1" data-kind="fiber">
       <div class="cardhead">
         <h2>1 · Станок</h2>
-        <div class="seg noprint" id="fbSeries">
-          <button type="button" data-fs="A">Серия A</button>
-          <button type="button" data-fs="S">Серия S</button>
+        <div class="seg noprint" id="fbModes">
+          <button type="button" data-fbmode="ready">Готовая из прайса</button>
+          <button type="button" data-fbmode="custom">Своя конфигурация</button>
         </div>
       </div>
 
       <div class="mhead main">
+        <div class="f"><label for="fbSeriesSel">Серия</label><select id="fbSeriesSel"></select></div>
         <div class="f"><label for="fbFmt">Рабочее поле</label><select id="fbFmt"></select></div>
-        <div class="f"><label for="fbPow">Мощность источника</label><select id="fbPow"></select></div>
         <div class="f"><label for="fbPrice">Цена станка, ₽</label>
-          <input class="num" id="fbPrice" type="number" min="0" step="100"></div>
-        <div class="f"><label for="fbServo">Приводы</label><select id="fbServo"></select></div>
+          <input class="num" id="fbPrice" type="number" min="0" step="100" placeholder="нет в прайсе"></div>
+        <div class="f"><label for="fbDrive">Привод</label>
+          <select id="fbDrive">
+            <option value="yaskawa">Yaskawa</option>
+            <option value="bochu">Bochu S9</option>
+          </select></div>
       </div>
+
+      <div id="fbReady"><div class="rgrid" id="fbReadyList"></div></div>
 
       <div class="tabs noprint" id="fbMTabs"></div>
 
       <div class="pane" id="fbm_src">
+        <div class="mhead spin">
+          <div class="f"><label for="fbPow">Мощность источника</label><select id="fbPow"></select></div>
+          <div class="f"><label for="fbBoost">Усиление приводов</label>
+            <select id="fbBoost">
+              <option value="0">стандарт — 100 м/мин, 1,2 G</option>
+              <option value="1">усиленные — 120 м/мин, 1,5 G</option>
+            </select></div>
+          <div class="f"><label for="fbBoostP">Надбавка, ₽</label>
+            <input class="num" id="fbBoostP" type="number" min="0" step="1000" readonly></div>
+        </div>
         <div id="fbKitCard"></div>
         <div id="fbSeriesCard"></div>
-        <div class="hints" id="fbHints"></div>
       </div>
 
       <div class="pane" id="fbm_opt">
@@ -1261,7 +1276,7 @@
             </select></div>
           <div class="f"><label for="fbRot">Труборез</label><select id="fbRot"></select></div>
         </div>
-        <div id="fbSimilar"></div>
+        <div id="fbOptCard"></div>
       </div>
 
       <div class="pane" id="fbm_cut">
@@ -1275,12 +1290,20 @@
       </div>
 
       <div class="pane" id="fbm_unit">
-        <div class="mhead tbl">
+        <div class="mhead one">
           <div class="f"><label for="fbUnit">Сервисная карточка партии</label>
             <select id="fbUnit"></select></div>
         </div>
         <div id="fbUnitCard"></div>
       </div>
+
+      <details class="matches noprint" id="fbMatchWrap">
+        <summary>Все конфигурации серии в прайсе</summary>
+        <div class="mlist" id="fbMatchList"></div>
+      </details>
+
+      <div class="hints" id="fbHints"></div>
+      <div id="fbSimilar"></div>
     </div>
 
     <!-- ============ ВОЛОКНО: обвязка ============ -->

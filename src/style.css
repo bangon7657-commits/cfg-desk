@@ -588,6 +588,8 @@ table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabul
   .sumdot{padding:8px;left:10px;bottom:10px}}
 @media print{.sumdot{display:none!important}}
 .step.done .step-n{background:var(--ok);color:var(--onok)}
+.tgl.off{opacity:.45}
+.tgl.off span{text-decoration:line-through}
 .step.off{opacity:.5}
 .step.off .step-n{background:var(--line2);color:var(--muted)}
 

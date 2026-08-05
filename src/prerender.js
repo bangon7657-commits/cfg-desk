@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 53', /const CACHE = 'cfg-v53'/.test(swTxt),
+check('кеш: версия поднята до 54', /const CACHE = 'cfg-v54'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -510,9 +510,11 @@ win.document.getElementById('fRot').value = '';
 win.document.getElementById('fRot').dispatchEvent(new win.Event('change'));
 
 // ---- обвязка волокна: компрессор, дымоуловитель, криоцилиндр ----
-check('обвязка: пять компрессоров в списке',
-  doc.querySelectorAll('#kitCompressor option').length === 5,
+check('обвязка: пять компрессоров и вариант «не нужен»',
+  doc.querySelectorAll('#kitCompressor option').length === 6,
   'вариантов ' + doc.querySelectorAll('#kitCompressor option').length);
+win.document.getElementById('kitCompressor').value = 'esc20x';
+win.document.getElementById('kitCompressor').dispatchEvent(new win.Event('change'));
 const compTxt = textOf(doc, '#compressorOut');
 check('обвязка: характеристики компрессора показаны',
   /бар/.test(compTxt) && /л\/мин/.test(compTxt) && /ресивер/.test(compTxt),
@@ -2216,12 +2218,38 @@ check('вкладки: значок сметы жив после перерис�
       doc.querySelector('#p-mill .mzstep.on').getAttribute('data-kind') === 'fiber',
       textOf(doc, '#p-mill .mzhead h1'));
     check('волокно: серия S по умолчанию, у неё пять форматов',
-      doc.querySelector('#fbSeries button.on').getAttribute('data-fs') === 'S' &&
+      doc.getElementById('fbSeriesSel').value === 'S' &&
       doc.getElementById('fbFmt').options.length === 5,
       doc.getElementById('fbFmt').options.length);
     check('волокно: цена подставилась из прайса',
       doc.getElementById('fbPrice').value === '3010400',
       doc.getElementById('fbPrice').value);
+
+    // режим «готовая из прайса» — плитки, вкладки спрятаны
+    check('волокно: по умолчанию режим «готовая из прайса»',
+      doc.querySelector('#fbModes .on').getAttribute('data-fbmode') === 'ready' &&
+      doc.getElementById('fbMTabs').style.display === 'none',
+      doc.querySelector('#fbModes .on').getAttribute('data-fbmode'));
+    var ready = doc.querySelectorAll('#fbReadyList [data-fbcfg]');
+    check('волокно: готовые конфигурации 1530 выложены плитками',
+      ready.length === 24, ready.length);
+    check('волокно: текущая конфигурация подсвечена',
+      !!doc.querySelector('#fbReadyList [data-fbcfg].on'), '');
+    doc.querySelector('#fbReadyList [data-fbcfg="1530:12000:1:6-360"]').click();
+    check('волокно: клик по плитке переносит конфигурацию целиком',
+      doc.getElementById('fbPow').value === '12000' &&
+      doc.getElementById('fbTable').value === '1' &&
+      doc.getElementById('fbRot').value === '6-360' &&
+      doc.getElementById('fbPrice').value === '8958600',
+      doc.getElementById('fbPrice').value);
+    doc.querySelector('#fbReadyList [data-fbcfg="1530:3000:0:"]').click();
+
+    doc.querySelector('#fbModes [data-fbmode="custom"]').click();
+    check('волокно: в своей конфигурации показаны вкладки и список прайса',
+      doc.getElementById('fbMTabs').style.display === '' &&
+      doc.getElementById('fbReady').style.display === 'none' &&
+      doc.querySelectorAll('#fbMatchList [data-fbcfg]').length === 24,
+      doc.querySelectorAll('#fbMatchList [data-fbcfg]').length);
 
     // сменный стол и труборез — это другие строки прайса, а не надбавка
     var tb = doc.getElementById('fbTable');
@@ -2237,15 +2265,22 @@ check('вкладки: значок сметы жив после перерис�
       doc.getElementById('fbPrice').value === '5939900',
       doc.getElementById('fbPrice').value);
 
-    // приводы: второй прайс плюс надбавка за усиление
-    var sv = doc.getElementById('fbServo');
-    sv.value = 'bochu_plus';
-    sv.dispatchEvent(new win.Event('change', { bubbles: true }));
+    // приводы: бренд и усиление — два отдельных поля
+    var dr = doc.getElementById('fbDrive'), bo = doc.getElementById('fbBoost');
+    dr.value = 'bochu';
+    dr.dispatchEvent(new win.Event('change', { bubbles: true }));
+    bo.value = '1';
+    bo.dispatchEvent(new win.Event('change', { bubbles: true }));
     check('волокно: приводы Bochu считаются по второму прайсу с надбавкой',
       doc.getElementById('fbPrice').value === '5750900',
       doc.getElementById('fbPrice').value);
-    sv.value = 'yaskawa_std';
-    sv.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: надбавка за усиление показана отдельным полем',
+      doc.getElementById('fbBoostP').value === '20000',
+      doc.getElementById('fbBoostP').value);
+    bo.value = '0';
+    bo.dispatchEvent(new win.Event('change', { bubbles: true }));
+    dr.value = 'yaskawa';
+    dr.dispatchEvent(new win.Event('change', { bubbles: true }));
 
     check('волокно: показан комплект под мощность источника',
       /FSCUT3000E/.test(textOf(doc, '#fbKitCard')) &&
@@ -2254,14 +2289,20 @@ check('вкладки: значок сметы жив после перерис�
       /FSCUT3000DE-M/.test(textOf(doc, '#fbKitCard')), '');
 
     // серия A: без стола и трубореза, только 3000 Вт
-    doc.querySelector('#fbSeries [data-fs="A"]').click();
+    var ss = doc.getElementById('fbSeriesSel');
+    ss.value = 'A';
+    ss.dispatchEvent(new win.Event('change', { bubbles: true }));
     check('волокно: у серии A нет стола и трубореза',
       doc.getElementById('fbOptsRow').style.display === 'none' &&
       doc.getElementById('fbPow').options.length === 1,
       doc.getElementById('fbPow').options.length);
+    check('волокно: у серии A привод не выбирается',
+      doc.getElementById('fbDrive').disabled &&
+      doc.getElementById('fbBoost').disabled, '');
     check('волокно: у серии A предупреждение про отсутствие опций',
       /нет сменного стола и трубореза/.test(textOf(doc, '#fbHints')), '');
-    doc.querySelector('#fbSeries [data-fs="S"]').click();
+    ss.value = 'S';
+    ss.dispatchEvent(new win.Event('change', { bubbles: true }));
 
     // обвязка и её проверки
     check('волокно: без стабилизатора это ошибка сборки',
@@ -2321,6 +2362,40 @@ check('вкладки: значок сметы жив после перерис�
       textOf(doc, '#fbCryoCard').slice(0, 120));
     gs.value = 'dpl210';
     gs.dispatchEvent(new win.Event('change', { bubbles: true }));
+
+    // ---- варианты «не нужно» и «уже в комплекте» ----
+    doc.querySelector('#fbTabs [data-fbcat="compr"]').click();
+    var cp = doc.getElementById('fbCompr');
+    check('волокно: в компрессорах есть вариант «не нужен»',
+      cp.options.length === 6, cp.options.length);
+    cp.value = 'none';
+    cp.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: «компрессор не нужен» не пускает строку в смету',
+      doc.getElementById('fbComprOn').disabled &&
+      !doc.getElementById('fbComprOn').checked, '');
+    check('волокно: объяснено, что проверить у клиента',
+      /осушител/.test(textOf(doc, '#fbComprHint')),
+      textOf(doc, '#fbComprHint').slice(0, 140));
+    cp.value = 'esc20x';
+    cp.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: с настоящим компрессором галочка снова доступна',
+      !doc.getElementById('fbComprOn').disabled, '');
+
+    doc.querySelector('#fbTabs [data-fbcat="ext"]').click();
+    var ex = doc.getElementById('fbExt');
+    check('волокно: штатная вытяжка есть отдельным вариантом',
+      ex.options.length === 2, ex.options.length);
+    ex.value = 'popula';
+    ex.dispatchEvent(new win.Event('change', { bubbles: true }));
+    check('волокно: штатная вытяжка в смету не идёт',
+      doc.getElementById('fbExtOn').disabled &&
+      /без фильтра|фильтрации нет/.test(textOf(doc, '#fbExtHint') +
+        textOf(doc, '#fbExtCard')), textOf(doc, '#fbExtHint').slice(0, 140));
+    check('волокно: без дымоуловителя это отмечено в ошибках сборки',
+      /только штатная вытяжка/.test(textOf(doc, '#mzIssues')),
+      textOf(doc, '#mzIssues').slice(0, 200));
+    ex.value = 'pa6000ct';
+    ex.dispatchEvent(new win.Event('change', { bubbles: true }));
 
     // ---- шаг 3: ПНР волокна по прайсу ----
     check('волокно: ПНР считается по прайсу, а не руками',

@@ -1289,7 +1289,9 @@ function mzBind() {
 if (!mzS.fb) mzS.fb = {};
 var fbS = mzS.fb;
 if (!fbS.series) fbS.series = 'S';
+if (!fbS.mode) fbS.mode = 'ready';
 var fbCat = 'stab';
+var fbSel = null;
 
 function fbSeries() { return fbS.series === 'A' ? 'A' : 'S'; }
 function fbRows() {
@@ -1305,8 +1307,14 @@ function fbRows() {
       rot: r.rot, tableRot: r.tableRot };
   });
 }
+// Привод и усиление — два отдельных поля, как в прайсе: бренд и уровень осей.
+function fbServoId() {
+  var drive = ($('fbDrive') && $('fbDrive').value) || 'yaskawa';
+  var boost = $('fbBoost') && $('fbBoost').value === '1';
+  return drive + (boost ? '_plus' : '_std');
+}
 function fbServoM() {
-  var id = fbS.servo || APP.servoDefault;
+  var id = fbServoId();
   return APP.servo.filter(function (s) { return s.id === id; })[0] || APP.servo[0];
 }
 function fbRow() {
@@ -1358,12 +1366,19 @@ function fbFillRot() {
   if (keys.indexOf(cur) >= 0) $('fbRot').value = cur;
 }
 function fbFillServo() {
-  var cur = fbS.servo || APP.servoDefault;
-  $('fbServo').innerHTML = APP.servo.map(function (s) {
-    return '<option value="' + s.id + '">' + esc(s.label) + '</option>';
-  }).join('');
-  $('fbServo').value = cur;
-  $('fbServo').disabled = fbSeries() === 'A';
+  var sel = $('fbSeriesSel');
+  if (!sel.options.length) {
+    sel.innerHTML = '<option value="A">Серия A</option>' +
+      '<option value="S">Серия S</option>';
+  }
+  if (fbS.series !== 'A' && fbS.series !== 'S') fbS.series = 'S';
+  if (sel.value !== fbS.series) sel.value = fbS.series;
+  var isA = fbSeries() === 'A';
+  // У серии A привод один — DELTA, выбора нет
+  $('fbDrive').disabled = isA;
+  $('fbBoost').disabled = isA;
+  if (isA) $('fbBoost').value = '0';
+  $('fbBoostP').value = fbServoAdd() || '';
 }
 function fbName() {
   var f = $('fbFmt').value, p = $('fbPow').value;
@@ -1442,6 +1457,98 @@ function fbRenderSimilar() {
     }).join('') + '</div>';
 }
 
+// -------------------------------------- готовые конфигурации из прайса
+// Разворачиваем строки прайса в плоский список: одна плитка — одна цена.
+function fbCatalog() {
+  var out = [];
+  fbRows().forEach(function (r) {
+    if (fbSeries() === 'A') {
+      out.push({ f: r.f, p: r.p, tbl: 0, rot: '', price: r.base });
+      return;
+    }
+    out.push({ f: r.f, p: r.p, tbl: 0, rot: '', price: r.base });
+    if (r.table) out.push({ f: r.f, p: r.p, tbl: 1, rot: '', price: r.table });
+    Object.keys(r.rot || {}).forEach(function (k) {
+      out.push({ f: r.f, p: r.p, tbl: 0, rot: k, price: r.rot[k] });
+    });
+    Object.keys(r.tableRot || {}).forEach(function (k) {
+      out.push({ f: r.f, p: r.p, tbl: 1, rot: k, price: r.tableRot[k] });
+    });
+  });
+  return out;
+}
+function fbCfgKey(c) { return c.f + ':' + c.p + ':' + c.tbl + ':' + c.rot; }
+function fbCfgSpec(c) {
+  var o = [];
+  if (c.tbl) o.push('сменный стол');
+  if (c.rot) o.push('труборез ' + c.rot);
+  return o.length ? o.join(' + ') : 'база';
+}
+function fbCfgName(c) {
+  return 'Wattsan ' + fbSeries() + ' ' + c.f + ' ' + (c.p / 1000) + ' кВт';
+}
+function fbApplyCfg(key) {
+  var c = fbCatalog().filter(function (x) { return fbCfgKey(x) === key; })[0];
+  if (!c) return;
+  var full = c.price + fbServoAdd();
+  if (mzTouched('fbPrice') && mzNum('fbPrice') && mzNum('fbPrice') !== full &&
+      !window.confirm('Цена станка была введена вручную. Заменить на ' +
+        mzRub(full) + '?')) return;
+  $('fbFmt').value = c.f;
+  fbFillPow();
+  $('fbPow').value = String(c.p);
+  fbFillRot();
+  $('fbTable').value = String(c.tbl);
+  $('fbRot').value = c.rot;
+  fbSel = fbCfgKey(c);
+  mzTouch('fbPrice', false);
+  mzUpdate();
+}
+function fbRenderModes() {
+  Array.prototype.forEach.call($('fbModes').children, function (b) {
+    b.classList.toggle('on', b.dataset.fbmode === fbS.mode);
+  });
+  $('fbReady').style.display = fbS.mode === 'ready' ? '' : 'none';
+}
+function fbRenderReady() {
+  var box = $('fbReadyList');
+  if (fbS.mode !== 'ready') { box.innerHTML = ''; return; }
+  var f = $('fbFmt').value;
+  var list = fbCatalog().filter(function (c) { return c.f === f; });
+  list.sort(function (a, b) { return a.price - b.price; });
+  if (!list.length) {
+    box.innerHTML = '<div class="hint warn">Готовых конфигураций для этого поля ' +
+      'в прайсе нет. Соберите свою и введите цену вручную.</div>';
+    return;
+  }
+  var add = fbServoAdd();
+  box.innerHTML = list.map(function (c) {
+    return '<button type="button" class="rcard' +
+      (fbSel === fbCfgKey(c) ? ' on' : '') + '" data-fbcfg="' + fbCfgKey(c) +
+      '"><b>' + esc(fbCfgName(c)) + '</b><div class="rs">' + esc(fbCfgSpec(c)) +
+      '</div><div class="rp">' + mzRub(c.price + add) + '<em>' +
+      esc(fbServoM().brand) + '</em></div></button>';
+  }).join('');
+}
+function fbRenderMatches() {
+  var f = $('fbFmt').value, cur = fbCurKey();
+  var list = fbCatalog().filter(function (c) { return c.f === f; });
+  list.sort(function (a, b) { return a.p - b.p || a.tbl - b.tbl; });
+  var add = fbServoAdd();
+  $('fbMatchList').innerHTML = list.length ? list.map(function (c) {
+    return '<button type="button" class="mrow' +
+      (cur === fbCfgKey(c) ? ' best' : '') + '" data-fbcfg="' + fbCfgKey(c) +
+      '"><span>' + (cur === fbCfgKey(c) ? '▸ ' : '') + esc(fbCfgName(c)) +
+      '<br><span style="color:var(--muted);font-size:11.5px">' +
+      esc(fbCfgSpec(c)) + '</span></span><b>' + mzRub(c.price + add) +
+      '</b></button>';
+  }).join('') : '<div class="hint warn">Конфигураций нет.</div>';
+}
+function fbCurKey() {
+  return $('fbFmt').value + ':' + $('fbPow').value + ':' +
+    ($('fbTable').value === '1' ? 1 : 0) + ':' + $('fbRot').value;
+}
+
 // -------------------------------------------------- шаг 1: вкладки станка
 var FB_MTABS = [
   { k: 'src', n: 'Источник' },
@@ -1451,14 +1558,55 @@ var FB_MTABS = [
 ];
 var fbMTab = 'src';
 function fbRenderMTabs() {
+  var custom = fbS.mode === 'custom';
+  $('fbMTabs').style.display = custom ? '' : 'none';
+  $('fbMatchWrap').style.display = custom ? '' : 'none';
   $('fbMTabs').innerHTML = FB_MTABS.map(function (c) {
     return '<button type="button" class="tab' + (c.k === fbMTab ? ' on' : '') +
       '" data-fbm="' + c.k + '">' + esc(c.n) + '</button>';
   }).join('');
   FB_MTABS.forEach(function (c) {
     var pane = $('fbm_' + c.k);
-    if (pane) pane.classList.toggle('on', c.k === fbMTab);
+    if (pane) pane.classList.toggle('on', custom && c.k === fbMTab);
   });
+}
+
+// ---------------------------------------------------------------- опции
+function fbRenderOpt() {
+  if (fbSeries() === 'A') {
+    mzCard('fbOptCard', 'У серии A опций нет', 'только база',
+      [['Сменный стол', 'нет'], ['Труборез', 'нет']],
+      'Сменный стол и поворотная ось есть только у серии S. Если клиенту нужна ' +
+      'труба — это сразу S, разговор про A закончен.');
+    return;
+  }
+  var r = fbRow();
+  if (!r) { $('fbOptCard').innerHTML = ''; return; }
+  var base = r.base;
+  var rows = [['База', mzRub(base + fbServoAdd())]];
+  if (r.table) {
+    rows.push(['Сменный стол', mzRub(r.table + fbServoAdd()) +
+      ' · +' + mzRub(r.table - base)]);
+  }
+  Object.keys(r.rot || {}).forEach(function (k) {
+    rows.push(['Труборез ' + k, mzRub(r.rot[k] + fbServoAdd()) +
+      ' · +' + mzRub(r.rot[k] - base)]);
+  });
+  var pack = '';
+  if (r.table && r.tableRot && r.tableRot['6-360']) {
+    var apart = (r.table - base) + (r.rot['6-360'] - base);
+    var both = r.tableRot['6-360'] - base;
+    if (apart > both) {
+      pack = 'Пакетом стол и труборез 6-360 дешевле, чем по отдельности, ' +
+        'на ' + mzRub(apart - both) + '. Это довод в разговоре: клиент, ' +
+        'который берёт оба, платит меньше суммы двух опций.';
+    } else {
+      pack = 'Скидки за пару «стол плюс труборез» на этом формате нет: ' +
+        'вместе стоит столько же, сколько по отдельности.';
+    }
+  }
+  mzCard('fbOptCard', 'Опции по прайсу', $('fbFmt').value + ' · ' +
+    $('fbPow').value + ' Вт', rows, esc(pack));
 }
 
 // ------------------------------------------------------- что режет источник
@@ -1562,6 +1710,17 @@ function fbRenderShop() {
     ['Стабилизатор из этого списка — та же позиция, что и во вкладке ' +
       '«Стабилизатор»: там она попадает в смету, здесь просто названа.', 'ok']
   ]);
+}
+
+// Варианты «не нужно» и «уже в комплекте» стоят 0 ₽ и в смету не идут:
+// иначе клиент получит строку на ноль рублей и вопрос «а это что такое».
+function fbFreeLine(model, onId, why) {
+  var box = $(onId);
+  var free = !model || !model.price;
+  if (free && box.checked) box.checked = false;
+  box.disabled = free;
+  box.parentNode.classList.toggle('off', free);
+  return free ? [why, 'ok'] : null;
 }
 
 // ------------------------------------------------------------- ПНР волокна
@@ -1695,6 +1854,9 @@ function fbRenderCompr() {
   }
   h.push(['Воздух нужен и для резки, и для пневматики станка. Расход считайте ' +
     'по таблице газа, запас 20–30 %.', 'ok']);
+  h.push(fbFreeLine(c, 'fbComprOn', 'Компрессор не покупаем — в смету строка ' +
+    'не пойдёт. Проверьте у клиента подачу по таблице расхода газа и наличие ' +
+    'осушителя: сырой воздух сажает защитное стекло и сопло.'));
   mzHints('fbComprHint', h);
 }
 function fbRenderExt() {
@@ -1710,6 +1872,9 @@ function fbRenderExt() {
   if (/истёк/.test(e.kp_valid || '')) {
     h.push(['Срок КП истёк — подтвердите цену у поставщика.', 'bad']);
   }
+  h.push(fbFreeLine(e, 'fbExtOn', 'Штатная вытяжка входит в комплект станка и ' +
+    'отдельной строкой в смету не идёт. Но это вентилятор без фильтрации: ' +
+    'он выбрасывает дым на улицу. Если так нельзя — нужен дымоуловитель.'));
   mzHints('fbExtHint', h);
 }
 function fbRenderCryo() {
@@ -1723,10 +1888,8 @@ function fbRenderCryo() {
     'азотом расход доходит до ' + String(APP.airDemand.max).replace('.', ',') +
     ' м³/мин, поэтому баллоны заканчиваются за смену — криоцилиндр окупается быстро.',
     'ok']];
-  if (!c.price) {
-    h.push(['Баллоны в смету не ставим: их клиент берёт у своего газового ' +
-      'поставщика. Позиция добавится с нулём — уберите галочку «В смету».', 'warn']);
-  }
+  h.push(fbFreeLine(c, 'fbCryoOn', 'Баллоны в смету не ставим: их клиент берёт ' +
+    'у своего газового поставщика.'));
   mzHints('fbCryoHint', h);
 }
 function fbRenderTabs() {
@@ -1795,10 +1958,13 @@ function fbIssues() {
     out.push(['Стабилизатора в спецификации нет. Паспорт металлореза запрещает ' +
       'работу без него — гарантия под вопросом.', 'bad']);
   }
-  if (!$('fbComprOn').checked) {
+  if (!$('fbComprOn').checked && fbComprM() && fbComprM().price) {
     out.push(['Компрессора нет. Воздух нужен и для резки, и для пневматики станка.', 'warn']);
   }
-  if (!$('fbExtOn').checked) {
+  if (fbExtM() && !fbExtM().price) {
+    out.push(['Дымоуловителя нет, в смете только штатная вытяжка. Она без ' +
+      'фильтра: годится, только если дым можно выбросить наружу.', 'warn']);
+  } else if (!$('fbExtOn').checked) {
     out.push(['Дымоуловителя нет. Для металла это вопрос охраны труда, а не удобства.', 'warn']);
   }
   if (!$('fbPnrOn').checked) {
@@ -1822,28 +1988,33 @@ function fbUpdate() {
   fbFillKit();
   var isA = fbSeries() === 'A';
   $('fbOptsRow').style.display = isA ? 'none' : '';
-  Array.prototype.forEach.call($('fbSeries').children, function (b) {
-    b.classList.toggle('on', b.dataset.fs === fbSeries());
-  });
   fbFillCut(); fbFillUnit(); fbFillPnr();
   fbPriceDefaults();
   fbRenderKit(); fbRenderSeries(); fbRenderHints(); fbRenderSimilar();
-  fbRenderCut(); fbRenderUnit(); fbRenderShop();
+  fbRenderOpt(); fbRenderCut(); fbRenderUnit(); fbRenderShop();
   fbRenderStab(); fbRenderCompr(); fbRenderExt(); fbRenderCryo();
   fbRenderPnrHint();
+  fbSel = fbCurKey();
+  fbRenderModes(); fbRenderReady(); fbRenderMatches();
   fbRenderMTabs(); fbRenderTabs();
 }
 
 function fbBind() {
-  ['fbFmt', 'fbPow', 'fbPrice', 'fbServo', 'fbTable', 'fbRot', 'fbStab', 'fbStabP',
+  ['fbFmt', 'fbPow', 'fbPrice', 'fbTable', 'fbRot', 'fbStab', 'fbStabP',
     'fbCompr', 'fbComprP', 'fbExt', 'fbExtP', 'fbCryo', 'fbCryoP', 'fbExtraN',
     'fbExtraP', 'fbCutM', 'fbCutT', 'fbCutL', 'fbUnit', 'fbPnrGroup', 'fbPnrVar',
-    'fbPnrK', 'fbPnrP', 'fbPnrAdd', 'fbPnrAddP'].forEach(function (id) {
+    'fbPnrK', 'fbPnrP', 'fbPnrAdd', 'fbPnrAddP', 'fbSeriesSel', 'fbDrive',
+    'fbBoost'].forEach(function (id) {
     var box = $(id);
     if (!box) return;
     box.addEventListener('change', function () {
       mzTouch(id);
-      if (id === 'fbServo') { fbS.servo = box.value; mzTouch('fbPrice', false); }
+      if (id === 'fbDrive' || id === 'fbBoost') mzTouch('fbPrice', false);
+      if (id === 'fbSeriesSel') {
+        fbS.series = box.value;
+        mzTouch('fbPrice', false);
+        mzTouch('fbPnrGroup', false);
+      }
       if (id === 'fbFmt' || id === 'fbPow' || id === 'fbTable' || id === 'fbRot') {
         mzTouch('fbPrice', false);
       }
@@ -1863,12 +2034,19 @@ function fbBind() {
     'fbPnrAddOn'].forEach(function (id) {
       if ($(id)) $(id).addEventListener('change', mzUpdate);
     });
-  $('fbSeries').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-fs]');
+  $('fbModes').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fbmode]');
     if (!b) return;
-    fbS.series = b.dataset.fs;
-    mzTouch('fbPrice', false);
+    fbS.mode = b.dataset.fbmode;
     mzUpdate();
+  });
+  $('fbReadyList').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fbcfg]');
+    if (b) fbApplyCfg(b.dataset.fbcfg);
+  });
+  $('fbMatchList').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-fbcfg]');
+    if (b) fbApplyCfg(b.dataset.fbcfg);
   });
   $('fbTabs').addEventListener('click', function (e) {
     var b = e.target.closest('[data-fbcat]');

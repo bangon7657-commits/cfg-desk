@@ -215,7 +215,11 @@ for e in data.EXTRACTION:
     print(f'  {e["name"]}: {e["price"]} ₽ · {e["flow"]} м³/ч · {e["kw"]} кВт')
 for c in data.CRYO:
     print(f'  {c["name"]}: {c["price"]} ₽ · {c["flow"]} нм³/ч')
-assert all(c['price'] > 0 for c in data.COMPRESSORS + data.EXTRACTION + data.CRYO)
+# Нулевая цена допустима только у вариантов «не нужно / уже есть»: они нужны,
+# чтобы менеджер мог честно сказать «докупать не надо», а не молчать.
+FREE_KIT_IDS = {'none', 'popula'}
+for c in data.COMPRESSORS + data.EXTRACTION + data.CRYO:
+    assert c['price'] > 0 or c['id'] in FREE_KIT_IDS, c['id']
 
 # ---- Контрольная сумма обвязки: эти цены идут прямо в смету клиенту ----
 kit_sum = (sum(c['price'] for c in data.COMPRESSORS) +
@@ -227,7 +231,7 @@ kit_count = (len(data.COMPRESSORS) + len(data.EXTRACTION) + len(data.CRYO) +
 print()
 print(f'Позиций обвязки: {kit_count}, сумма: {kit_sum}')
 KIT_SUM_EXPECTED = 10294890   # 03.08.2026: АСН-12000/1-ЭМ поднят до 37 590 ₽ по 1С
-KIT_COUNT_EXPECTED = 18
+KIT_COUNT_EXPECTED = 20   # 04.08.2026: добавлены варианты «компрессор не нужен» и штатная вытяжка
 if kit_sum != KIT_SUM_EXPECTED or kit_count != KIT_COUNT_EXPECTED:
     print(f'ВНИМАНИЕ: эталон {KIT_SUM_EXPECTED} / {KIT_COUNT_EXPECTED}')
     sys.exit(1)
