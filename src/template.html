@@ -869,23 +869,6 @@
 </div><!-- /cfgmain -->
 
 <aside class="cfgside">
-  <div class="card mgr-card">
-    <div class="cardhead"><h2>Менеджер сделки</h2>
-      <button class="btn mini sec" type="button" id="mgrReset">По умолчанию</button></div>
-    <div class="row tight">
-      <div><label class="f" for="mgrName">Имя и фамилия</label>
-        <input type="text" id="mgrName" placeholder="__MGR_NAME__"></div>
-      <div><label class="f" for="mgrRole">Должность</label>
-        <input type="text" id="mgrRole" placeholder="__MGR_ROLE__"></div>
-    </div>
-    <div class="row tight">
-      <div><label class="f" for="mgrPhone">Телефон</label>
-        <input type="text" id="mgrPhone" placeholder="__MGR_PHONE__"></div>
-      <div><label class="f" for="mgrEmail">Почта</label>
-        <input type="text" id="mgrEmail" placeholder="__MGR_EMAIL__"></div>
-    </div>
-    <div class="note small" id="mgrOut"></div>
-  </div>
   <div class="card spec-card">
     <div class="cardhead">
       <h2>Спецификация</h2>
@@ -1000,6 +983,15 @@
             <option value="order">Под заказ</option>
             <option value="stock">Из наличия</option>
           </select></div>
+      </div>
+
+      <div class="addbar noprint">
+        <button class="addbtn" type="button" id="mzAddMachine">
+          <span class="ic" aria-hidden="true">+</span>
+          <span class="tx"><b>Добавить станок в смету</b>
+            <small id="mzAddSub">выберите конфигурацию</small></span>
+          <span class="pr" id="mzAddPrice">—</span>
+        </button>
       </div>
 
       <div id="mzReady"><div class="rgrid" id="mzReadyList"></div></div>
@@ -1252,6 +1244,15 @@
           </select></div>
       </div>
 
+      <div class="addbar noprint">
+        <button class="addbtn" type="button" id="fbAddMachine">
+          <span class="ic" aria-hidden="true">+</span>
+          <span class="tx"><b>Добавить станок в смету</b>
+            <small id="fbAddSub">выберите конфигурацию</small></span>
+          <span class="pr" id="fbAddPrice">—</span>
+        </button>
+      </div>
+
       <div id="fbReady">
         <div class="rfilter noprint" id="fbReadyFilter"></div>
         <div id="fbReadyList"></div>
@@ -1283,8 +1284,6 @@
             </select></div>
           <div class="f"><label for="fbRot">Труборез</label><select id="fbRot"></select></div>
         </div>
-        <div id="fbOptCard"></div>
-
         <h3 class="mzsub">Станины из номенклатуры 1С</h3>
         <div class="panehead">
           <div class="f"><label for="fbCabin">Станина защитной кабины</label>
@@ -1301,6 +1300,7 @@
           <label class="tgl"><input type="checkbox" id="fbBedOn"><span>В смету</span></label>
         </div>
         <div class="hints" id="fbBedHint"></div>
+        <div id="fbOptCard"></div>
       </div>
 
       <div class="pane" id="fbm_cut">
@@ -1417,8 +1417,6 @@
       <div class="issues noprint" id="mzIssues"></div>
       <div class="btns noprint">
         <button class="main" type="button" id="mzToSmeta">Перенести в смету</button>
-        <button class="main" type="button" id="mzPrint">Печать</button>
-        <button class="sec" type="button" id="mzCopy">Скопировать текстом</button>
       </div>
       <div class="links noprint">
         <a id="mzReset">Сбросить</a>
@@ -1452,17 +1450,74 @@
        клиенту, и не надо прокручивать страницу вниз. -->
   <div class="cfggrid noprint">
   <div class="cfgmain">
+    <!-- Сначала от кого предложение, потом кому: так менеджер заполняет
+         сверху вниз и не прыгает по странице. -->
     <div class="card">
-      <div class="cardhead"><h2>Скидка и НДС</h2>
+      <div class="cardhead"><h2>От кого и кому</h2>
+        <button class="btn mini sec" type="button" id="mgrReset">Менеджер по умолчанию</button></div>
+      <div class="cardsub">Менеджер сделки — подпись под предложением</div>
+      <div class="row tight">
+        <div style="flex:2 1 220px"><label class="f" for="mgrName">Имя и фамилия</label>
+          <input type="text" id="mgrName" placeholder="__MGR_NAME__"></div>
+        <div><label class="f" for="mgrRole">Должность</label>
+          <input type="text" id="mgrRole" placeholder="__MGR_ROLE__"></div>
+        <div><label class="f" for="mgrPhone">Телефон</label>
+          <input type="text" id="mgrPhone" placeholder="__MGR_PHONE__"></div>
+        <div><label class="f" for="mgrEmail">Почта</label>
+          <input type="text" id="mgrEmail" placeholder="__MGR_EMAIL__"></div>
+      </div>
+      <div class="note small" id="mgrOut"></div>
+
+      <div class="cardsub">Клиент — кому уходит предложение</div>
+      <div class="row tight">
+        <div style="flex:2 1 260px"><label class="f" for="kpClient">Клиент</label>
+          <input type="text" id="kpClient" placeholder="ООО «Ромашка»"></div>
+        <div><label class="f" for="kpInn">ИНН</label>
+          <input type="text" id="kpInn" placeholder="7801234567"></div>
+        <div><label class="f" for="kpNum">Исх. номер</label>
+          <input type="text" id="kpNum" placeholder="1207"></div>
+        <div><label class="f" for="kpDate">Дата</label>
+          <input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
+      </div>
+      <details class="hint-det">
+        <summary>Контакт, примечание, заголовок</summary>
+        <div class="det-b">
+          <div class="row">
+            <div><label class="f" for="kpContact">Контакт</label><input type="text" id="kpContact" placeholder="Иван Петров"></div>
+            <div><label class="f" for="kpPhone">Телефон клиента</label><input type="text" id="kpPhone" placeholder="+7 900 000-00-00"></div>
+            <div><label class="f" for="kpNote">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
+          </div>
+          <div class="row">
+            <div><label class="f" for="kpTitle">Заголовок предложения</label>
+              <input type="text" id="kpTitle" placeholder="подставится первая позиция сметы"></div>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><h2>Позиции</h2>
         <span class="spec-cnt" id="smetaRule"></span></div>
-      <div class="row">
-        <div><label class="f" for="discount">Скидка по умолчанию, %</label><select id="discount"></select></div>
-        <div><label class="f" for="ndsRate">Ставка НДС, %</label>
+      <!-- Скидка и ставка НДС стоят прямо над таблицей: они меняют её цифры,
+           а не живут отдельной жизнью в соседней карточке. -->
+      <div class="tblbar">
+        <div class="tf"><label class="f" for="discount">Скидка по умолчанию</label>
+          <select id="discount"></select></div>
+        <div class="tf"><label class="f" for="ndsRate">Ставка НДС, %</label>
           <select id="ndsRate">
             <option value="220">22</option><option value="200">20</option>
             <option value="100">10</option><option value="50">5</option><option value="0">0</option>
           </select></div>
+        <span class="tbar-hint">цену, количество и скидку по строке правьте в таблице</span>
       </div>
+      <div class="scroll" id="smetaWrap"><table id="smetaTable"><thead><tr>
+        <th style="width:40%">Наименование</th><th>Кол-во</th><th>Цена, ₽</th>
+        <th>Скидка, %</th><th>Со скидкой</th><th>Сумма</th><th class="noprint"></th>
+      </tr></thead><tbody id="smetaBody"></tbody></table></div>
+      <div id="smetaEmpty" class="empty">Смета пуста. Добавьте позиции в конфигураторе.</div>
+      <div id="totals" class="totals"></div>
+      <div id="propis" class="propis"></div>
+      <div id="checkBlock"></div>
       <details class="hint-det" id="smetaHints">
         <summary>Как считается и когда скидка не идёт</summary>
         <div class="det-b">
@@ -1480,42 +1535,8 @@
     </div>
 
     <div class="card">
-      <div class="cardhead"><h2>Позиции</h2>
-        <span class="spec-cnt">цену и количество правьте в строке</span></div>
-      <div class="scroll" id="smetaWrap"><table id="smetaTable"><thead><tr>
-        <th style="width:40%">Наименование</th><th>Кол-во</th><th>Цена, ₽</th>
-        <th>Скидка, %</th><th>Со скидкой</th><th>Сумма</th><th class="noprint"></th>
-      </tr></thead><tbody id="smetaBody"></tbody></table></div>
-      <div id="smetaEmpty" class="empty">Смета пуста. Добавьте позиции в конфигураторе.</div>
-      <div id="totals" class="totals"></div>
-      <div id="propis" class="propis"></div>
-      <div id="checkBlock"></div>
-    </div>
-
-    <div class="card">
-      <div class="cardhead"><h2>Шапка предложения</h2>
-        <span class="spec-cnt">попадёт в первый лист ТКП</span></div>
-      <div class="row">
-        <div style="flex:2 1 260px"><label class="f" for="kpClient">Клиент</label><input type="text" id="kpClient" placeholder="ООО «Ромашка»"></div>
-        <div><label class="f" for="kpInn">ИНН</label><input type="text" id="kpInn" placeholder="7801234567"></div>
-        <div><label class="f" for="kpNum">Исх. номер</label><input type="text" id="kpNum" placeholder="1207"></div>
-        <div><label class="f" for="kpDate">Дата</label><input type="text" id="kpDate" placeholder="дд.мм.гггг"></div>
-      </div>
-      <details class="hint-det">
-        <summary>Контакт, примечание, заголовок</summary>
-        <div class="det-b">
-          <div class="row">
-            <div><label class="f" for="kpContact">Контакт</label><input type="text" id="kpContact" placeholder="Иван Петров"></div>
-            <div><label class="f" for="kpPhone">Телефон клиента</label><input type="text" id="kpPhone" placeholder="+7 900 000-00-00"></div>
-            <div><label class="f" for="kpNote">Примечание</label><input type="text" id="kpNote" placeholder="лизингополучатель"></div>
-          </div>
-          <div class="row">
-            <div><label class="f" for="kpTitle">Заголовок предложения</label>
-              <input type="text" id="kpTitle" placeholder="подставится первая позиция сметы"></div>
-          </div>
-        </div>
-      </details>
-      <div class="cardsub">Вариант, поставщик, срок</div>
+      <div class="cardhead"><h2>Вариант ТКП</h2>
+        <span class="spec-cnt">поставщик, срок, реквизиты</span></div>
       <div class="row">
         <div style="flex:2 1 240px"><label class="f" for="kpMode">Вариант ТКП</label>
           <select id="kpMode"></select></div>

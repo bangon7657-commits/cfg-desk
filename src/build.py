@@ -112,6 +112,7 @@ APP = {
     'compressors': data.COMPRESSORS,
     'compressorAdvice': data.COMPRESSOR_ADVICE,
     'compressorNote': data.COMPRESSOR_NOTE,
+    'compressorWithMachineNote': data.COMPRESSOR_WITH_MACHINE_NOTE,
     # Границы расхода воздуха и объём баллона считаем из таблиц, чтобы текст
     # на экране не расходился с данными при правке прайса.
     'airDemand': {

@@ -792,6 +792,9 @@ function mzIssues() {
   return out;
 }
 function mzRenderSpec() {
+  var _rows = mzSpec();
+  mzAddBtn('mzAddMachine', 'mzAddSub', 'mzAddPrice', _rows);
+  mzAddBtn('fbAddMachine', 'fbAddSub', 'fbAddPrice', _rows);
   var rows = mzSpec(), sum = 0, byType = { eq: 0, opt: 0, srv: 0 };
   rows.forEach(function (r) { sum += r.c * r.q; byType[r.t] += r.c * r.q; });
 
@@ -1239,7 +1242,7 @@ function mzBind() {
   function toSmeta() {
     var rows = mzSpec();
     if (!rows.length) { toast('Спецификация пуста — начните со станка'); return; }
-    rows.forEach(function (r) { addItem(r.n, Math.round(r.c / 100), r.q, r.t); });
+    rows.forEach(function (r) { addItem(r.n, r.c / 100, r.q, r.t); });
     toast('Перенесено в смету: ' + cnt(rows.length, ['позиция', 'позиции', 'позиций']));
     showTab('smeta');
   }
@@ -1248,28 +1251,16 @@ function mzBind() {
   $('mzBarSpec').addEventListener('click', function () {
     $('p-mill').querySelector('.side').scrollIntoView({ behavior: 'smooth' });
   });
-  $('mzCopy').addEventListener('click', function () {
-    var ta = $('mzOut');
-    if (!ta.value) { toast('Спецификация пуста'); return; }
-    ta.classList.add('on');
-    ta.select();
-    var ok = false;
-    try { ok = d.execCommand('copy'); } catch (e) { ok = false; }
-    if (!ok && navigator.clipboard) {
-      navigator.clipboard.writeText(ta.value).then(function () {
-        toast('Конфигурация скопирована');
-      }, function () { toast('Скопируйте текст вручную — поле выделено'); });
-      return;
-    }
-    toast(ok ? 'Конфигурация скопирована' : 'Скопируйте текст вручную — поле выделено');
-  });
-  $('mzPrint').addEventListener('click', function () {
-    var p = $('p-mill');
-    p.classList.add('printme');
-    try { window.print(); } finally {
-      setTimeout(function () { p.classList.remove('printme'); }, 300);
-    }
-  });
+  // Кнопка «Добавить станок в смету»: сразу под выбором, не надо искать
+  // «Перенести в смету» в правой колонке.
+  function addMachineOnly() {
+    var rows = mzSpec().filter(function (r) { return r.t === 'eq'; });
+    if (!rows.length) { toast('Сначала выберите станок и цену'); return; }
+    rows.forEach(function (r) { addItem(r.n, r.c / 100, r.q, 'eq'); });
+    toast('Станок добавлен в смету');
+  }
+  $('mzAddMachine').addEventListener('click', addMachineOnly);
+  $('fbAddMachine').addEventListener('click', addMachineOnly);
   $('mzReset').addEventListener('click', function () {
     if (!window.confirm('Сбросить конфигурацию фрезерного станка?')) return;
     MZ_FIELDS.forEach(function (id) { if ($(id)) mzTouch(id, false); });
@@ -1514,6 +1505,16 @@ function fbApplyCfg(key) {
   mzTouch('fbPrice', false);
   mzUpdate();
 }
+function mzAddBtn(id, subId, prId, rows) {
+  var eq = (rows || []).filter(function (r) { return r.t === 'eq'; });
+  var sum = 0;
+  eq.forEach(function (r) { sum += r.c * r.q; });
+  $(id).disabled = !eq.length;
+  $(subId).textContent = eq.length ? eq[0].n : 'выберите конфигурацию и цену';
+  $(prId).textContent = eq.length ? mzMoney(sum) : '—';
+}
+function mzMoney(cents) { return fmtMoney(cents) + ' ₽'; }
+
 function fbRenderModes() {
   Array.prototype.forEach.call($('fbModes').children, function (b) {
     b.classList.toggle('on', b.dataset.fbmode === fbS.mode);
@@ -1969,6 +1970,9 @@ function fbRenderCompr() {
   }
   h.push(['Воздух нужен и для резки, и для пневматики станка. Расход считайте ' +
     'по таблице газа, запас 20–30 %.', 'ok']);
+  if (c.with_machine) {
+    h.push([esc(APP.compressorWithMachineNote), 'bad']);
+  }
   h.push(fbFreeLine(c, 'fbComprOn', 'Компрессор не покупаем — в смету строка ' +
     'не пойдёт. Проверьте у клиента подачу по таблице расхода газа и наличие ' +
     'осушителя: сырой воздух сажает защитное стекло и сопло.'));

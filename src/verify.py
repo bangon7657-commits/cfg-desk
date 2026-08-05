@@ -244,8 +244,8 @@ kit_count = (len(data.COMPRESSORS) + len(data.EXTRACTION) + len(data.CRYO) +
              len(data.STABILIZERS))
 print()
 print(f'Позиций обвязки: {kit_count}, сумма: {kit_sum}')
-KIT_SUM_EXPECTED = 10294890   # 03.08.2026: АСН-12000/1-ЭМ поднят до 37 590 ₽ по 1С
-KIT_COUNT_EXPECTED = 20   # 04.08.2026: добавлены варианты «компрессор не нужен» и штатная вытяжка
+KIT_SUM_EXPECTED = 11708890   # 05.08.2026: добавлены три китайских компрессора
+KIT_COUNT_EXPECTED = 23   # 05.08.2026: «не нужен», штатная вытяжка и три китайских компрессора
 if kit_sum != KIT_SUM_EXPECTED or kit_count != KIT_COUNT_EXPECTED:
     print(f'ВНИМАНИЕ: эталон {KIT_SUM_EXPECTED} / {KIT_COUNT_EXPECTED}')
     sys.exit(1)

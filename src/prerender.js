@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 55', /const CACHE = 'cfg-v55'/.test(swTxt),
+check('кеш: версия поднята до 55', /const CACHE = 'cfg-v56'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -510,8 +510,8 @@ win.document.getElementById('fRot').value = '';
 win.document.getElementById('fRot').dispatchEvent(new win.Event('change'));
 
 // ---- обвязка волокна: компрессор, дымоуловитель, криоцилиндр ----
-check('обвязка: пять компрессоров и вариант «не нужен»',
-  doc.querySelectorAll('#kitCompressor option').length === 6,
+check('обвязка: пять компрессоров, три китайских и вариант «не нужен»',
+  doc.querySelectorAll('#kitCompressor option').length === 9,
   'вариантов ' + doc.querySelectorAll('#kitCompressor option').length);
 win.document.getElementById('kitCompressor').value = 'esc20x';
 win.document.getElementById('kitCompressor').dispatchEvent(new win.Event('change'));
@@ -1444,8 +1444,23 @@ check('подбор: тумблер включает пояснения',
     const on = doc.getElementById('p-cfg').classList.contains('hints');
     t.checked = false; t.dispatchEvent(new win.Event('change'));
     return on; })(), '');
-check('подбор: менеджер сделки в правой колонке',
-  !!doc.querySelector('#p-cfg .cfgside .mgr-card #mgrName'), '');
+check('смета: менеджер идёт первым, клиент следом',
+  (() => {
+    const c = doc.querySelector('#p-smeta .cfgmain .card');
+    const ids = [...c.querySelectorAll('input')].map(n => n.id);
+    return ids.indexOf('mgrName') === 0 &&
+      ids.indexOf('kpClient') > ids.indexOf('mgrEmail');
+  })(),
+  [...doc.querySelector('#p-smeta .cfgmain .card').querySelectorAll('input')]
+    .map(n => n.id).join(','));
+check('смета: скидка и НДС стоят над таблицей позиций',
+  !!doc.querySelector('#p-smeta .tblbar #discount') &&
+  !!doc.querySelector('#p-smeta .tblbar #ndsRate') &&
+  doc.querySelector('#p-smeta .tblbar').compareDocumentPosition(
+    doc.getElementById('smetaTable')) === 4, '');
+check('смета: отдельной карточки «Скидка и НДС» больше нет',
+  ![...doc.querySelectorAll('#p-smeta h2')].some(h => /Скидка и НДС/.test(h.textContent)),
+  [...doc.querySelectorAll('#p-smeta h2')].map(h => h.textContent).join(' · '));
 check('подбор: длинный лид убран в свёрнутую справку',
   !!doc.getElementById('cfgAbout') && !doc.querySelector('#p-cfg > p.lead'), '');
 check('id в документе не повторяются', (function () {
@@ -2420,11 +2435,30 @@ check('вкладки: значок сметы жив после перерис�
     cb.value = '';
     cb.dispatchEvent(new win.Event('change', { bubbles: true }));
 
+    // ---- кнопка «Добавить станок в смету» ----
+    check('волокно: кнопка добавления станка над плитками',
+      !!doc.getElementById('fbAddMachine') &&
+      /Добавить станок в смету/.test(textOf(doc, '#fbAddMachine')), '');
+    check('волокно: на кнопке видно, что и почём добавится',
+      /Wattsan/.test(textOf(doc, '#fbAddSub')) &&
+      /₽/.test(textOf(doc, '#fbAddPrice')),
+      textOf(doc, '#fbAddSub') + ' / ' + textOf(doc, '#fbAddPrice'));
+    var wasRows = doc.querySelectorAll('#smetaBody tr').length;
+    doc.getElementById('fbAddMachine').click();
+    check('волокно: кнопка кладёт в смету только станок',
+      doc.querySelectorAll('#smetaBody tr').length === wasRows + 1,
+      doc.querySelectorAll('#smetaBody tr').length + ' было ' + wasRows);
+    check('спецификация v2: осталась одна кнопка — переход в смету',
+      doc.querySelectorAll('#p-mill .side .btns button').length === 1 &&
+      !doc.getElementById('mzPrint') && !doc.getElementById('mzCopy'),
+      doc.querySelectorAll('#p-mill .side .btns button').length);
+
     // ---- варианты «не нужно» и «уже в комплекте» ----
     doc.querySelector('#fbTabs [data-fbcat="compr"]').click();
     var cp = doc.getElementById('fbCompr');
-    check('волокно: в компрессорах есть вариант «не нужен»',
-      cp.options.length === 6, cp.options.length);
+    check('волокно: в компрессорах есть «не нужен» и китайские в комплекте',
+      cp.options.length === 9 &&
+      /Китай/.test(cp.textContent), cp.options.length);
     cp.value = 'none';
     cp.dispatchEvent(new win.Event('change', { bubbles: true }));
     check('волокно: «компрессор не нужен» не пускает строку в смету',
@@ -2534,7 +2568,7 @@ check('вкладки: значок сметы жив после перерис�
   // В светлой теме раздел берёт холодную палитру исходного конфигуратора,
   // в тёмной остаётся фирменный оранжевый: синий на тёмном читался хуже.
   check('фрезерный: в светлой теме синий акцент и серый фон',
-    /html\[data-theme="light"\]#p-mill\{[^}]*--or:#1e4f96/
+    /html\[data-theme="light"\]#p-mill\{[^}]*--or:#2c63b4/
       .test(src.replace(/\s+/g, '')) &&
     /html\[data-theme="light"\]body\.millbg\{background:#eef1f5\}/
       .test(src.replace(/\s+/g, '')), '');
