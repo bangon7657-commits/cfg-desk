@@ -80,13 +80,13 @@ check('вкладки по умолчанию идут в порядке мен�
     .map(b => b.getAttribute('data-t')).join(','));
 check('у каждой вкладки есть крестик снятия',
   doc.querySelectorAll('#tabs button[data-t] .tabx').length === 4, '');
-check('панелей 11', doc.querySelectorAll('.panel').length === 11,
+check('панелей 12', doc.querySelectorAll('.panel').length === 12,
   'найдено ' + doc.querySelectorAll('.panel').length);
-check('в кнопке «Разделы» все 9 разделов',
-  doc.querySelectorAll('#menuList button[data-t]').length === 9,
+check('в кнопке «Разделы» все 10 разделов',
+  doc.querySelectorAll('#menuList button[data-t]').length === 10,
   'найдено ' + doc.querySelectorAll('#menuList button[data-t]').length);
 check('в меню у каждого раздела кнопка закрепления',
-  doc.querySelectorAll('#menuList button[data-pin]').length === 9 &&
+  doc.querySelectorAll('#menuList button[data-pin]').length === 10 &&
   [...doc.querySelectorAll('#menuList button[data-pin]')]
     .filter(b => b.getAttribute('aria-pressed') === 'true').length === 4, '');
 check('в меню есть счётчик и сброс вкладок',
@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 55', /const CACHE = 'cfg-v56'/.test(swTxt),
+check('кеш: версия поднята до 57', /const CACHE = 'cfg-v57'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -729,17 +729,48 @@ check('цена: подпись строки итога больше не «по
   /цены правлены вручную/.test(textOf(doc, '#totals')),
   textOf(doc, '#totals').slice(0, 160));
 
-// Менеджер сделки
-win.document.getElementById('mgrName').value = 'Пётр Смирнов';
-win.document.getElementById('mgrName').dispatchEvent(new win.Event('input'));
-win.document.getElementById('mgrPhone').value = '+7 (999) 000-11-22';
-win.document.getElementById('mgrPhone').dispatchEvent(new win.Event('input'));
-check('менеджер: имя из шага 1 попало в лист ТКП',
+// ---- личный кабинет ----
+check('кабинет: раздел есть в ленте и в меню',
+  !!doc.getElementById('p-me') &&
+  [...doc.querySelectorAll('#menuList button[data-t]')].some(b => b.dataset.t === 'me'),
+  '');
+check('кабинет: пока профиль пуст, висит полоса-приглашение',
+  !doc.getElementById('regBar').hidden &&
+  /Профиль не заполнен/.test(textOf(doc, '#meState')),
+  textOf(doc, '#meState'));
+check('кабинет: в смете видно, что подпись по умолчанию',
+  /профиль не заполнен/.test(textOf(doc, '#signRow')),
+  textOf(doc, '#signRow'));
+function meFill(id, v) {
+  const n = win.document.getElementById(id);
+  n.value = v;
+  n.dispatchEvent(new win.Event('input'));
+}
+meFill('mgrName', 'Пётр Смирнов');
+meFill('mgrPhone', '+7 (999) 000-11-22');
+check('менеджер: имя из кабинета попало в лист ТКП',
   /Пётр Смирнов/.test(textOf(doc, '#kpMgrBox')), textOf(doc, '#kpMgrBox'));
-check('менеджер: телефон из шага 1 попал в лист ТКП',
+check('менеджер: телефон из кабинета попал в лист ТКП',
   /\+7 \(999\) 000-11-22/.test(textOf(doc, '#kpMgrBox')), textOf(doc, '#kpMgrBox'));
-win.document.getElementById('mgrReset').click();
-check('менеджер: сброс возвращает менеджера из данных',
+check('кабинет: половина полей — профиль ещё не заполнен',
+  !doc.getElementById('regBar').hidden &&
+  /Не заполнено: должность/.test(textOf(doc, '#meHints')),
+  textOf(doc, '#meHints').slice(0, 120));
+meFill('mgrRole', 'руководитель отдела');
+meFill('mgrEmail', 'petrov@lasercut.ru');
+check('кабинет: все четыре поля — полоса ушла, в шапке инициалы',
+  doc.getElementById('regBar').hidden &&
+  textOf(doc, '#meAva') === 'ПС' &&
+  /Профиль заполнен/.test(textOf(doc, '#meState')),
+  textOf(doc, '#meAva') + ' / ' + textOf(doc, '#meState'));
+check('кабинет: в смете подпись без предупреждения',
+  /Пётр Смирнов/.test(textOf(doc, '#signRow')) &&
+  !/профиль не заполнен/.test(textOf(doc, '#signRow')),
+  textOf(doc, '#signRow'));
+check('кабинет: кнопки «менеджер по умолчанию» больше нет',
+  !doc.getElementById('mgrReset'), '');
+['mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail'].forEach(id => meFill(id, ''));
+check('менеджер: пустой профиль возвращает менеджера из данных',
   /Вениамин Вараксин/.test(textOf(doc, '#kpMgrBox')) &&
   !/Пётр Смирнов/.test(textOf(doc, '#kpMgrBox')), textOf(doc, '#kpMgrBox'));
 
@@ -1444,12 +1475,13 @@ check('подбор: тумблер включает пояснения',
     const on = doc.getElementById('p-cfg').classList.contains('hints');
     t.checked = false; t.dispatchEvent(new win.Event('change'));
     return on; })(), '');
-check('смета: менеджер идёт первым, клиент следом',
+check('смета: подпись менеджера идёт первой, клиент следом',
   (() => {
     const c = doc.querySelector('#p-smeta .cfgmain .card');
     const ids = [...c.querySelectorAll('input')].map(n => n.id);
-    return ids.indexOf('mgrName') === 0 &&
-      ids.indexOf('kpClient') > ids.indexOf('mgrEmail');
+    return !!c.querySelector('#signRow') && ids.indexOf('kpClient') === 0 &&
+      c.querySelector('#signRow').compareDocumentPosition(
+        c.querySelector('#kpClient')) === 4;
   })(),
   [...doc.querySelector('#p-smeta .cfgmain .card').querySelectorAll('input')]
     .map(n => n.id).join(','));
@@ -1471,7 +1503,7 @@ check('id в документе не повторяются', (function () {
   return all.filter((x, i) => all.indexOf(x) !== i).slice(0, 5).join(', ');
 }()));
 check('навигация: остальные разделы живут в кнопке «Разделы»',
-  doc.querySelectorAll('#menuList button[data-t]').length === 9 &&
+  doc.querySelectorAll('#menuList button[data-t]').length === 10 &&
   doc.querySelectorAll('#tabs button[data-t]').length === 4, '');
 
 // ---- v30: калькуляторы НДС, лизинга, часа работы и окупаемости ----
@@ -2072,8 +2104,8 @@ check('вкладки: у незакреплённого раздела звёз
   const rowIds = () => [...doc.querySelectorAll('#menuList .mrow')]
     .map(r => r.getAttribute('data-row')).join(',');
   check('меню: строки можно тащить — есть ручка и draggable',
-    doc.querySelectorAll('#menuList .mrow[draggable="true"]').length === 9 &&
-    doc.querySelectorAll('#menuList .mrow .mgrip').length === 9,
+    doc.querySelectorAll('#menuList .mrow[draggable="true"]').length === 10 &&
+    doc.querySelectorAll('#menuList .mrow .mgrip').length === 10,
     rowIds());
   const before = rowIds();
   const src = doc.querySelector('#menuList .mrow[data-row="zp"]');
@@ -2085,7 +2117,7 @@ check('вкладки: у незакреплённого раздела звёз
   dst.dispatchEvent(ev('dragover'));
   dst.dispatchEvent(ev('drop'));
   check('меню: перетащенный раздел встаёт на новое место',
-    rowIds() === 'zp,home,letters,mill,smeta,cmp,calc,guide,trash',
+    rowIds() === 'zp,home,letters,mill,smeta,me,cmp,calc,guide,trash',
     before + ' → ' + rowIds());
   check('меню: новый порядок подхватила и строка вкладок',
     tabIds() === 'home,letters,mill,smeta,calc,guide', tabIds());
@@ -2094,7 +2126,7 @@ doc.getElementById('menuList').querySelector('.mfoot button').click();
 check('вкладки: «Вернуть по умолчанию» возвращает исходные вкладки и порядок',
   tabIds() === 'home,letters,mill,smeta' &&
   [...doc.querySelectorAll('#menuList .mrow')].map(r => r.getAttribute('data-row'))
-    .join(',') === 'home,letters,zp,mill,smeta,cmp,calc,guide,trash' &&
+    .join(',') === 'home,letters,zp,mill,smeta,me,cmp,calc,guide,trash' &&
   /Закреплено 4 из 6/.test(doc.getElementById('pinsInfo').textContent), tabIds());
 check('вкладки: значок сметы жив после перерисовки строки',
   !!doc.getElementById('smetaBadge'), '');
@@ -2199,6 +2231,9 @@ check('вкладки: значок сметы жив после перерис�
   // Прямых цветов в свойствах быть не должно — иначе тема их не переопределит.
   var mzCss = (src.match(/#p-mill[^{]*\{[^}]*\}/g) || []).join('')
     .replace(/--[\w-]+:[^;}]+;?/g, '');
+  check('фрезерный: раскрывашка объясняет, что откроется',
+    /content:'подробнее'/.test(src) && /content:'свернуть'/.test(src) &&
+    !/content:'\+'/.test(src), '');
   check('фрезерный: ни одного цвета мимо переменных темы',
     !/#[0-9a-f]{3,8}\b/i.test(mzCss) && !/\brgba?\(/i.test(mzCss),
     (mzCss.match(/#[0-9a-f]{3,8}\b/i) || [''])[0]);
@@ -2438,7 +2473,8 @@ check('вкладки: значок сметы жив после перерис�
     // ---- кнопка «Добавить станок в смету» ----
     check('волокно: кнопка добавления станка над плитками',
       !!doc.getElementById('fbAddMachine') &&
-      /Добавить станок в смету/.test(textOf(doc, '#fbAddMachine')), '');
+      /Добавить станок в смету|Добавлено в смету/.test(textOf(doc, '#fbAddMachine')),
+      textOf(doc, '#fbAddMachine').slice(0, 60));
     check('волокно: на кнопке видно, что и почём добавится',
       /Wattsan/.test(textOf(doc, '#fbAddSub')) &&
       /₽/.test(textOf(doc, '#fbAddPrice')),
@@ -2448,6 +2484,12 @@ check('вкладки: значок сметы жив после перерис�
     check('волокно: кнопка кладёт в смету только станок',
       doc.querySelectorAll('#smetaBody tr').length === wasRows + 1,
       doc.querySelectorAll('#smetaBody tr').length + ' было ' + wasRows);
+    check('волокно: после клика кнопка зелёная и с галочкой',
+      doc.getElementById('fbAddMachine').classList.contains('done') &&
+      /Добавлено в смету/.test(textOf(doc, '#fbAddMachine')),
+      textOf(doc, '#fbAddMachine').slice(0, 60));
+    check('волокно: плюс с кнопки убран',
+      !doc.querySelector('#fbAddMachine .ic'), '');
     check('спецификация v2: осталась одна кнопка — переход в смету',
       doc.querySelectorAll('#p-mill .side .btns button').length === 1 &&
       !doc.getElementById('mzPrint') && !doc.getElementById('mzCopy'),
@@ -2868,7 +2910,7 @@ check('пререндер: контент читается без скрипто
   !/class="[^"]*\bjs\b/.test(outSrc.slice(0, outSrc.indexOf('<nav'))),
   'на body остался класс js');
 check('пререндер: заголовки для режима без JS на месте',
-  doc2.querySelectorAll('.nojs-title').length === 11,
+  doc2.querySelectorAll('.nojs-title').length === 12,
   'найдено ' + doc2.querySelectorAll('.nojs-title').length);
 check('пререндер: цены всё ещё в файле', outSrc.indexOf('3 010 400') >= 0);
 check('чистота: сравнение грузится только при заходе в раздел',

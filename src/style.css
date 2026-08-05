@@ -527,6 +527,44 @@ table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabul
   color:var(--muted);cursor:pointer;transition:.12s}
 .pill:hover{border-color:var(--or);color:var(--tx)}
 .pill.on{background:var(--or);border-color:var(--or);color:var(--onor)}
+/* Личный кабинет: кнопка в шапке, полоса-приглашение и сам раздел */
+.mebtn{display:flex;align-items:center;gap:9px;border:1px solid var(--line2);
+  background:var(--bg2);color:var(--tx);border-radius:999px;padding:5px 15px 5px 5px;
+  font:inherit;font-size:17px;cursor:pointer}
+.mebtn:hover{border-color:var(--or)}
+.mebtn .ava{width:32px;height:32px;border-radius:50%;background:var(--or);
+  color:var(--onor);font-weight:700;font-size:16px;line-height:32px;
+  text-align:center;flex:0 0 auto}
+.mebtn.empty .ava{background:var(--bg4);color:var(--muted)}
+.mebtn .mename{max-width:190px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+@media(max-width:760px){.mebtn .mename{display:none}.mebtn{padding:5px}}
+
+.regbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;
+  padding:9px 18px;background:var(--warnbg);color:var(--tx);
+  border-top:1px solid var(--line);font-size:17px}
+.regbar button{border:0;border-radius:8px;background:var(--or);color:var(--onor);
+  font:inherit;font-size:16.5px;font-weight:600;padding:7px 16px;cursor:pointer}
+.regbar button:hover{background:var(--or3)}
+
+.mewrap{display:grid;gap:14px;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+  align-items:start}
+@media(max-width:900px){.mewrap{grid-template-columns:1fr}}
+.mebtns{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0 6px}
+.mecard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;
+  margin:0;font-size:17px}
+.mecard dt{color:var(--muted)}
+.mecard dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.signrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;
+  padding:11px 13px;border:1px solid var(--line);border-radius:9px;
+  background:var(--bg3);margin-bottom:12px;font-size:17.5px}
+.signrow .ava{width:38px;height:38px;border-radius:50%;background:var(--or);
+  color:var(--onor);font-weight:700;line-height:38px;text-align:center;flex:0 0 auto}
+.signrow.empty .ava{background:var(--bg4);color:var(--muted)}
+.signrow b{display:block}
+.signrow small{display:block;color:var(--muted);font-size:15.5px}
+.signrow .warn{color:var(--warn);font-weight:600}
+
 /* Полоса управления над таблицей позиций: скидка и НДС рядом с цифрами,
    на которые они влияют. */
 .tblbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;
@@ -1175,10 +1213,9 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
 #p-mill .addbtn:focus-visible{outline:3px solid var(--or2);outline-offset:3px}
 #p-mill .addbtn:disabled{background:var(--bg4);color:var(--muted);
   box-shadow:none;cursor:not-allowed}
-#p-mill .addbtn .ic{flex:0 0 auto;width:34px;height:34px;border-radius:9px;
-  background:var(--orbg);color:var(--or);font-size:25px;font-weight:700;
-  line-height:32px;text-align:center}
-#p-mill .addbtn:disabled .ic{background:var(--line2)}
+#p-mill .addbtn.done{background:var(--ok);color:var(--onok);
+  box-shadow:0 2px 0 var(--okbg)}
+#p-mill .addbtn.done .tx b::before{content:'✓  ';font-weight:700}
 #p-mill .addbtn .tx{flex:1 1 auto;min-width:0;display:block}
 #p-mill .addbtn .tx b{display:block;font-size:19.5px;line-height:1.25}
 #p-mill .addbtn .tx small{display:block;font-size:15.5px;opacity:.85;
@@ -1286,11 +1323,14 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
   display:flex;align-items:center;gap:9px}
 #p-mill .specbox summary::-webkit-details-marker{display:none}
 /* Раскрывашка: квадратная кнопка со знаком, её видно и по ней понятно, что жать */
-#p-mill .specbox summary::before{content:'+';flex:0 0 auto;width:26px;height:26px;
-  border-radius:7px;background:var(--or);color:var(--onor);font-size:19px;
-  font-weight:700;line-height:24px;text-align:center;
-  transition:background .12s}
-#p-mill .specbox[open] summary::before{content:'−'}
+#p-mill .specbox summary::before{content:'›';flex:0 0 auto;width:27px;height:27px;
+  border-radius:50%;background:var(--orbg);color:var(--or);font-size:21px;
+  font-weight:700;line-height:25px;text-align:center;
+  transform:rotate(90deg);transition:transform .16s, background .12s}
+#p-mill .specbox[open] summary::before{transform:rotate(-90deg)}
+#p-mill .specbox summary::after{content:'подробнее';margin-left:auto;
+  font-size:15px;font-weight:400;color:var(--muted);letter-spacing:0}
+#p-mill .specbox[open] summary::after{content:'свернуть'}
 #p-mill .specbox summary:hover{background:var(--orbg)}
 #p-mill .specbox summary:hover::before{background:var(--or3)}
 #p-mill .specbox summary:focus-visible{outline:3px solid var(--or2);outline-offset:-3px}
@@ -1311,10 +1351,14 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
 #p-mill .matches summary{padding:10px 0;cursor:pointer;font-size:17px;font-weight:600;
   color:var(--tx2);list-style:none;display:flex;align-items:center;gap:9px}
 #p-mill .matches summary::-webkit-details-marker{display:none}
-#p-mill .matches summary::before{content:'+';flex:0 0 auto;width:26px;height:26px;
-  border-radius:7px;background:var(--or);color:var(--onor);font-size:19px;
-  font-weight:700;line-height:24px;text-align:center}
-#p-mill .matches[open] summary::before{content:'−'}
+#p-mill .matches summary::before{content:'›';flex:0 0 auto;width:27px;height:27px;
+  border-radius:50%;background:var(--orbg);color:var(--or);font-size:21px;
+  font-weight:700;line-height:25px;text-align:center;
+  transform:rotate(90deg);transition:transform .16s}
+#p-mill .matches[open] summary::before{transform:rotate(-90deg)}
+#p-mill .matches summary::after{content:'показать список';margin-left:auto;
+  font-size:15px;font-weight:400;color:var(--muted)}
+#p-mill .matches[open] summary::after{content:'свернуть'}
 #p-mill .matches summary:hover{color:var(--or)}
 #p-mill .mlist{max-height:250px;overflow-y:auto;padding-right:3px}
 #p-mill .mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;

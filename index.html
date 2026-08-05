@@ -538,6 +538,44 @@ table.spec td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabul
   color:var(--muted);cursor:pointer;transition:.12s}
 .pill:hover{border-color:var(--or);color:var(--tx)}
 .pill.on{background:var(--or);border-color:var(--or);color:var(--onor)}
+/* Личный кабинет: кнопка в шапке, полоса-приглашение и сам раздел */
+.mebtn{display:flex;align-items:center;gap:9px;border:1px solid var(--line2);
+  background:var(--bg2);color:var(--tx);border-radius:999px;padding:5px 15px 5px 5px;
+  font:inherit;font-size:17px;cursor:pointer}
+.mebtn:hover{border-color:var(--or)}
+.mebtn .ava{width:32px;height:32px;border-radius:50%;background:var(--or);
+  color:var(--onor);font-weight:700;font-size:16px;line-height:32px;
+  text-align:center;flex:0 0 auto}
+.mebtn.empty .ava{background:var(--bg4);color:var(--muted)}
+.mebtn .mename{max-width:190px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+@media(max-width:760px){.mebtn .mename{display:none}.mebtn{padding:5px}}
+
+.regbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;
+  padding:9px 18px;background:var(--warnbg);color:var(--tx);
+  border-top:1px solid var(--line);font-size:17px}
+.regbar button{border:0;border-radius:8px;background:var(--or);color:var(--onor);
+  font:inherit;font-size:16.5px;font-weight:600;padding:7px 16px;cursor:pointer}
+.regbar button:hover{background:var(--or3)}
+
+.mewrap{display:grid;gap:14px;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+  align-items:start}
+@media(max-width:900px){.mewrap{grid-template-columns:1fr}}
+.mebtns{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0 6px}
+.mecard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;
+  margin:0;font-size:17px}
+.mecard dt{color:var(--muted)}
+.mecard dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.signrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;
+  padding:11px 13px;border:1px solid var(--line);border-radius:9px;
+  background:var(--bg3);margin-bottom:12px;font-size:17.5px}
+.signrow .ava{width:38px;height:38px;border-radius:50%;background:var(--or);
+  color:var(--onor);font-weight:700;line-height:38px;text-align:center;flex:0 0 auto}
+.signrow.empty .ava{background:var(--bg4);color:var(--muted)}
+.signrow b{display:block}
+.signrow small{display:block;color:var(--muted);font-size:15.5px}
+.signrow .warn{color:var(--warn);font-weight:600}
+
 /* Полоса управления над таблицей позиций: скидка и НДС рядом с цифрами,
    на которые они влияют. */
 .tblbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;
@@ -1186,10 +1224,9 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
 #p-mill .addbtn:focus-visible{outline:3px solid var(--or2);outline-offset:3px}
 #p-mill .addbtn:disabled{background:var(--bg4);color:var(--muted);
   box-shadow:none;cursor:not-allowed}
-#p-mill .addbtn .ic{flex:0 0 auto;width:34px;height:34px;border-radius:9px;
-  background:var(--orbg);color:var(--or);font-size:25px;font-weight:700;
-  line-height:32px;text-align:center}
-#p-mill .addbtn:disabled .ic{background:var(--line2)}
+#p-mill .addbtn.done{background:var(--ok);color:var(--onok);
+  box-shadow:0 2px 0 var(--okbg)}
+#p-mill .addbtn.done .tx b::before{content:'✓  ';font-weight:700}
 #p-mill .addbtn .tx{flex:1 1 auto;min-width:0;display:block}
 #p-mill .addbtn .tx b{display:block;font-size:19.5px;line-height:1.25}
 #p-mill .addbtn .tx small{display:block;font-size:15.5px;opacity:.85;
@@ -1297,11 +1334,14 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
   display:flex;align-items:center;gap:9px}
 #p-mill .specbox summary::-webkit-details-marker{display:none}
 /* Раскрывашка: квадратная кнопка со знаком, её видно и по ней понятно, что жать */
-#p-mill .specbox summary::before{content:'+';flex:0 0 auto;width:26px;height:26px;
-  border-radius:7px;background:var(--or);color:var(--onor);font-size:19px;
-  font-weight:700;line-height:24px;text-align:center;
-  transition:background .12s}
-#p-mill .specbox[open] summary::before{content:'−'}
+#p-mill .specbox summary::before{content:'›';flex:0 0 auto;width:27px;height:27px;
+  border-radius:50%;background:var(--orbg);color:var(--or);font-size:21px;
+  font-weight:700;line-height:25px;text-align:center;
+  transform:rotate(90deg);transition:transform .16s, background .12s}
+#p-mill .specbox[open] summary::before{transform:rotate(-90deg)}
+#p-mill .specbox summary::after{content:'подробнее';margin-left:auto;
+  font-size:15px;font-weight:400;color:var(--muted);letter-spacing:0}
+#p-mill .specbox[open] summary::after{content:'свернуть'}
 #p-mill .specbox summary:hover{background:var(--orbg)}
 #p-mill .specbox summary:hover::before{background:var(--or3)}
 #p-mill .specbox summary:focus-visible{outline:3px solid var(--or2);outline-offset:-3px}
@@ -1322,10 +1362,14 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
 #p-mill .matches summary{padding:10px 0;cursor:pointer;font-size:17px;font-weight:600;
   color:var(--tx2);list-style:none;display:flex;align-items:center;gap:9px}
 #p-mill .matches summary::-webkit-details-marker{display:none}
-#p-mill .matches summary::before{content:'+';flex:0 0 auto;width:26px;height:26px;
-  border-radius:7px;background:var(--or);color:var(--onor);font-size:19px;
-  font-weight:700;line-height:24px;text-align:center}
-#p-mill .matches[open] summary::before{content:'−'}
+#p-mill .matches summary::before{content:'›';flex:0 0 auto;width:27px;height:27px;
+  border-radius:50%;background:var(--orbg);color:var(--or);font-size:21px;
+  font-weight:700;line-height:25px;text-align:center;
+  transform:rotate(90deg);transition:transform .16s}
+#p-mill .matches[open] summary::before{transform:rotate(-90deg)}
+#p-mill .matches summary::after{content:'показать список';margin-left:auto;
+  font-size:15px;font-weight:400;color:var(--muted)}
+#p-mill .matches[open] summary::after{content:'свернуть'}
 #p-mill .matches summary:hover{color:var(--or)}
 #p-mill .mlist{max-height:250px;overflow-y:auto;padding-right:3px}
 #p-mill .mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;
@@ -1476,9 +1520,20 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
         <small>внутренний инструмент компании</small></span>
     </a>
     <div class="head-right">
+      <button type="button" class="mebtn empty" id="meBtn" title="Личный кабинет">
+        <span class="ava" id="meAva">?</span>
+        <span class="mename" id="meName">Личный кабинет</span>
+      </button>
       <button type="button" class="themebtn" id="themeBtn" aria-pressed="false" title="Светлая или тёмная тема">Светлая тема</button>
       <span class="savedot" id="saveDot"></span>
     </div>
+  </div>
+  <!-- Пока профиль пуст, ТКП уходит с менеджером из данных. Сказать об этом надо
+       один раз и не мешать работать: полоса, а не окно поверх всего. -->
+  <div class="regbar noprint" id="regBar">
+    <span>Заполните личный кабинет — ваши имя, телефон и почта уйдут в подпись ТКП.
+      Пока там менеджер по умолчанию.</span>
+    <button type="button" id="regGo">Заполнить</button>
   </div>
 </header>
 
@@ -1488,7 +1543,7 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
          Строка вкладок — только частые: так на телефоне не нужно листать. -->
     <div class="navmenu">
       <button type="button" class="menubtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">На удаление</button>
-      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Песочница</span><small>карта инструментов и куда идти</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="mill"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="mill" role="menuitem" aria-selected="false"><span>Конфигуратор v2</span><small>сборка станка по узлам, обвязка, 4-я ось, ПНР</small></button><button type="button" class="pinbtn" data-pin="mill" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="false"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="cmp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="cmp" role="menuitem" aria-selected="false"><span>Сравнение Word</span><small>две версии документа рядом: что добавили, убрали, изменили</small></button><button type="button" class="pinbtn" data-pin="cmp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, цех, тренажёр, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="trash"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="trash" role="menuitem" aria-selected="true"><span>На удаление</span><small>старые Конфигуратор и Подбор — забрать нужное и удалить</small></button><button type="button" class="pinbtn" data-pin="trash" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
+      <div class="menulist" id="menuList" role="menu"><div class="mrow" draggable="true" data-row="home"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="home" role="menuitem" aria-selected="false"><span>Песочница</span><small>карта инструментов и куда идти</small></button><button type="button" class="pinbtn" data-pin="home" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="letters"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="letters" role="menuitem" aria-selected="false"><span>Письма</span><small>возврат, платежи, официальные</small></button><button type="button" class="pinbtn" data-pin="letters" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="zp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="zp" role="menuitem" aria-selected="false"><span>Зарплата</span><small>оклад, переработки, налоги</small></button><button type="button" class="pinbtn" data-pin="zp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="mill"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="mill" role="menuitem" aria-selected="false"><span>Конфигуратор v2</span><small>сборка станка по узлам, обвязка, 4-я ось, ПНР</small></button><button type="button" class="pinbtn" data-pin="mill" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="smeta"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="smeta" role="menuitem" aria-selected="false"><span>Смета и ТКП</span><small>позиции, скидки, файл</small></button><button type="button" class="pinbtn" data-pin="smeta" aria-pressed="true" title="Убрать из строки вкладок">★</button></div><div class="mrow" draggable="true" data-row="me"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="me" role="menuitem" aria-selected="false"><span>Личный кабинет</span><small>ваши имя, должность, телефон и почта — уходят в подпись ТКП</small></button><button type="button" class="pinbtn" data-pin="me" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="cmp"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="cmp" role="menuitem" aria-selected="false"><span>Сравнение Word</span><small>две версии документа рядом: что добавили, убрали, изменили</small></button><button type="button" class="pinbtn" data-pin="cmp" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="calc"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="calc" role="menuitem" aria-selected="false"><span>Калькуляторы</span><small>НДС, лизинг, час работы станка, окупаемость</small></button><button type="button" class="pinbtn" data-pin="calc" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="guide"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="guide" role="menuitem" aria-selected="false"><span>Справочник</span><small>подбор, техника, газ, цех, тренажёр, данные</small></button><button type="button" class="pinbtn" data-pin="guide" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mrow" draggable="true" data-row="trash"><span class="mgrip" aria-hidden="true" title="Перетащите, чтобы поменять порядок">⠿</span><button type="button" data-t="trash" role="menuitem" aria-selected="true"><span>На удаление</span><small>старые Конфигуратор и Подбор — забрать нужное и удалить</small></button><button type="button" class="pinbtn" data-pin="trash" aria-pressed="false" title="Закрепить вкладкой">☆</button></div><div class="mfoot"><span id="pinsInfo">Закреплено 4 из 6</span><button type="button">Вернуть по умолчанию</button></div></div>
     </div>
     <!-- Строка вкладок собирается скриптом из закреплённых разделов: до
          четырёх, выбор и снятие — через меню «Разделы» и крестик на вкладке. -->
@@ -2418,7 +2473,6 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
 
       <div class="addbar noprint">
         <button class="addbtn" type="button" id="mzAddMachine">
-          <span class="ic" aria-hidden="true">+</span>
           <span class="tx"><b>Добавить станок в смету</b>
             <small id="mzAddSub">Фрезерный станок с ЧПУ Wattsan M1 1325, 4.5ac, A11 + Leadshine</small></span>
           <span class="pr" id="mzAddPrice">811 650 ₽</span>
@@ -2578,7 +2632,7 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
         <div class="panehead rot">
           <div class="f"><label for="mzRot">Поворотное устройство</label><select id="mzRot" data-touched="0"><option value="wattsan">Встроенная в станок (исполнение RD)</option><option value="d65">Ø63 мм, патрон K01-63</option><option value="d80">Ø80 мм, патрон K11-80</option><option value="d100">Ø100 мм, патрон K11-100</option><option value="d160">Ø160 мм, червячный редуктор</option><option value="d300">Ø200–300 мм, под колонны</option></select></div>
           <div class="f"><label for="mzRotT">Задняя бабка</label>
-            <select id="mzRotT" disabled="" data-touched="0">
+            <select id="mzRotT" data-touched="0" disabled="">
               <option value="0">не нужна или в комплекте</option>
               <option value="1">отдельной позицией, +5 560 ₽</option>
             </select></div>
@@ -2676,9 +2730,8 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
       </div>
 
       <div class="addbar noprint">
-        <button class="addbtn" type="button" id="fbAddMachine">
-          <span class="ic" aria-hidden="true">+</span>
-          <span class="tx"><b>Добавить станок в смету</b>
+        <button class="addbtn done" type="button" id="fbAddMachine">
+          <span class="tx"><b>Добавлено в смету</b>
             <small id="fbAddSub">Фрезерный станок с ЧПУ Wattsan M1 1325, 4.5ac, A11 + Leadshine</small></span>
           <span class="pr" id="fbAddPrice">811 650 ₽</span>
         </button>
@@ -2866,6 +2919,50 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
     <button type="button" id="mzBarSpec">Спецификация</button></span></div>
 
 <!-- ================= СМЕТА И ТКП ================= -->
+<span class="nojs-title">Личный кабинет</span>
+<section class="panel" id="p-me">
+  <div class="bhead noprint">
+    <div>
+      <h1 class="btitle">Личный кабинет</h1>
+      <p class="lead">Кто вы — знает только этот браузер. Данные никуда не уходят,
+        но подставляются в подпись ТКП, в письма и в смету.</p>
+    </div>
+    <span class="pill" id="meState">Профиль не заполнен</span>
+  </div>
+
+  <div class="mewrap">
+    <div class="card">
+      <div class="cardhead"><h2 id="meFormTitle">Знакомимся</h2>
+        <span class="spec-cnt">все четыре поля обязательны</span></div>
+      <div class="row tight">
+        <div style="flex:2 1 240px"><label class="f" for="mgrName">Имя и фамилия</label>
+          <input type="text" id="mgrName" autocomplete="name" placeholder="Вениамин Вараксин"></div>
+        <div style="flex:2 1 200px"><label class="f" for="mgrRole">Должность</label>
+          <input type="text" id="mgrRole" placeholder="менеджер по продажам"></div>
+      </div>
+      <div class="row tight">
+        <div><label class="f" for="mgrPhone">Телефон</label>
+          <input type="text" id="mgrPhone" autocomplete="tel" placeholder="+7 (921) 181-75-86"></div>
+        <div><label class="f" for="mgrEmail">Рабочая почта</label>
+          <input type="text" id="mgrEmail" autocomplete="email" placeholder="15@lasercut.ru"></div>
+      </div>
+      <div class="mebtns">
+        <button class="btn" type="button" id="meSave">Сохранить профиль</button>
+        <button class="btn sec" type="button" id="meClear">Очистить профиль</button>
+      </div>
+      <div class="note small" id="mgrOut">В подписи ТКП: Вениамин Вараксин · менеджер по продажам · +7 (921) 181-75-86 · 15@lasercut.ru — это менеджер по умолчанию из данных</div>
+      <div class="hints" id="meHints"><div class="hint bad">Не заполнено: имя и фамилия, должность, телефон, рабочая почта. Пока профиль пустой, в ТКП уходит менеджер по умолчанию — Вениамин Вараксин.</div><div class="hint">Профиль хранится только в этом браузере и никуда не отправляется. Ни пароля, ни сервера здесь нет: это подпись под документами, а не учётная запись.</div></div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><h2>Куда это попадёт</h2></div>
+      <div class="mecard" id="meCard"><dl><dt>Подпись в ТКП</dt><dd>Вениамин Вараксин · менеджер по продажам</dd><dt>Контакты в ТКП</dt><dd>+7 (921) 181-75-86 · 15@lasercut.ru</dd><dt>Письма и уведомления</dt><dd>подставляются те же имя и контакты</dd><dt>Смета</dt><dd>блок «От кого и кому» берёт данные отсюда</dd></dl></div>
+      <div class="note small">Профиль лежит в этом браузере вместе с черновиком сметы.
+        На другом компьютере его не будет — заполните там заново.</div>
+    </div>
+  </div>
+</section>
+
 <span class="nojs-title">Смета и ТКП</span>
 <section class="panel" id="p-smeta">
   <div class="bhead noprint">
@@ -2884,19 +2981,9 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
          сверху вниз и не прыгает по странице. -->
     <div class="card">
       <div class="cardhead"><h2>От кого и кому</h2>
-        <button class="btn mini sec" type="button" id="mgrReset">Менеджер по умолчанию</button></div>
-      <div class="cardsub">Менеджер сделки — подпись под предложением</div>
-      <div class="row tight">
-        <div style="flex:2 1 220px"><label class="f" for="mgrName">Имя и фамилия</label>
-          <input type="text" id="mgrName" placeholder="Вениамин Вараксин"></div>
-        <div><label class="f" for="mgrRole">Должность</label>
-          <input type="text" id="mgrRole" placeholder="менеджер по продажам"></div>
-        <div><label class="f" for="mgrPhone">Телефон</label>
-          <input type="text" id="mgrPhone" placeholder="+7 (921) 181-75-86"></div>
-        <div><label class="f" for="mgrEmail">Почта</label>
-          <input type="text" id="mgrEmail" placeholder="15@lasercut.ru"></div>
-      </div>
-      <div class="note small" id="mgrOut">В подписи ТКП: Вениамин Вараксин · менеджер по продажам · +7 (921) 181-75-86 · 15@lasercut.ru — это менеджер по умолчанию из данных</div>
+        <button class="btn mini sec" type="button" id="mgrGo">Личный кабинет</button></div>
+      <div class="cardsub">От кого — подпись под предложением</div>
+      <div class="signrow empty" id="signRow"><span class="ava">?</span><span><b>Вениамин Вараксин</b><small>менеджер по продажам · +7 (921) 181-75-86 · 15@lasercut.ru</small></span><span class="warn">профиль не заполнен — подпись по умолчанию</span></div>
 
       <div class="cardsub">Клиент — кому уходит предложение</div>
       <div class="row tight">
@@ -4222,6 +4309,8 @@ var DOCX = (function () {
     { id: 'mill', title: 'Конфигуратор v2',
       hint: 'сборка станка по узлам, обвязка, 4-я ось, ПНР' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
+    { id: 'me', title: 'Личный кабинет',
+      hint: 'ваши имя, должность, телефон и почта — уходят в подпись ТКП' },
     { id: 'cmp', title: 'Сравнение Word',
       hint: 'две версии документа рядом: что добавили, убрали, изменили' },
     { id: 'calc', title: 'Калькуляторы',
@@ -4789,6 +4878,8 @@ var DOCX = (function () {
   // уходит клиенту от конкретного человека. Пустое поле = значение из данных.
   var MGRF = ['mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail'];
   var MGR_MAP = { mgrName: 'name', mgrRole: 'role', mgrPhone: 'phone', mgrEmail: 'email' };
+  var MGR_TITLE = { mgrName: 'имя и фамилия', mgrRole: 'должность',
+    mgrPhone: 'телефон', mgrEmail: 'рабочая почта' };
   function mgr() {
     var out = {};
     ['name', 'role', 'phone', 'email', 'sites'].forEach(function (k) {
@@ -4805,17 +4896,81 @@ var DOCX = (function () {
     MGRF.forEach(function (id) { if ((state.mgr[id] || '').trim()) own = true; });
     return own;
   }
+  // Профиль считается заполненным, только если заполнены все четыре поля:
+  // подпись без телефона или почты клиенту бесполезна.
+  function mgrFull() {
+    return MGRF.every(function (id) { return (state.mgr[id] || '').trim(); });
+  }
+  function mgrInitials(name) {
+    var p = String(name || '').trim().split(/\s+/);
+    return ((p[0] || '?').charAt(0) + (p[1] || '').charAt(0)).toUpperCase();
+  }
   function renderMgr() {
-    var m = mgr(), n = $('mgrOut');
+    var m = mgr(), full = mgrFull(), own = mgrOwn();
+    var n = $('mgrOut');
     if (n) {
       n.textContent = 'В подписи ТКП: ' + m.name + ' · ' + m.role + ' · ' +
         m.phone + ' · ' + m.email +
-        (mgrOwn() ? '' : ' — это менеджер по умолчанию из данных');
+        (own ? '' : ' — это менеджер по умолчанию из данных');
     }
     var nm = $('kpMgrName'), rl = $('kpMgrRole'), ln = $('kpMgrLine');
     if (nm) nm.textContent = m.name;
     if (rl) rl.textContent = ' · ' + m.role;
     if (ln) ln.textContent = m.phone + ' · ' + m.email + ' · ' + m.sites;
+
+    var btn = $('meBtn');
+    if (btn) {
+      btn.classList.toggle('empty', !full);
+      $('meAva').textContent = full ? mgrInitials(m.name) : '?';
+      $('meName').textContent = full ? m.name : 'Личный кабинет';
+    }
+    var bar = $('regBar');
+    if (bar) bar.hidden = full;
+
+    var st = $('meState');
+    if (st) {
+      st.textContent = full ? 'Профиль заполнен' : 'Профиль не заполнен';
+      st.classList.toggle('on', full);
+    }
+    var ft = $('meFormTitle');
+    if (ft) ft.textContent = full ? 'Ваш профиль' : 'Знакомимся';
+    var mc = $('meCard');
+    if (mc) {
+      mc.innerHTML = '<dl>' +
+        [['Подпись в ТКП', m.name + ' · ' + m.role],
+          ['Контакты в ТКП', m.phone + ' · ' + m.email],
+          ['Письма и уведомления', 'подставляются те же имя и контакты'],
+          ['Смета', 'блок «От кого и кому» берёт данные отсюда']]
+          .map(function (r) {
+            return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>';
+          }).join('') + '</dl>';
+    }
+    var hints = $('meHints');
+    if (hints) {
+      var rows = [];
+      if (!full) {
+        var miss = MGRF.filter(function (id) { return !(state.mgr[id] || '').trim(); })
+          .map(function (id) { return MGR_TITLE[id]; });
+        rows.push('<div class="hint bad">Не заполнено: ' + esc(miss.join(', ')) +
+          '. Пока профиль пустой, в ТКП уходит менеджер по умолчанию — ' +
+          esc(APP.manager.name) + '.</div>');
+      } else {
+        rows.push('<div class="hint ok">Готово. Эти данные подставляются в подпись ' +
+          'ТКП, в письма и в смету.</div>');
+      }
+      rows.push('<div class="hint">Профиль хранится только в этом браузере и никуда ' +
+        'не отправляется. Ни пароля, ни сервера здесь нет: это подпись под ' +
+        'документами, а не учётная запись.</div>');
+      hints.innerHTML = rows.join('');
+    }
+    var sign = $('signRow');
+    if (sign) {
+      sign.classList.toggle('empty', !full);
+      sign.innerHTML = '<span class="ava">' + esc(full ? mgrInitials(m.name) : '?') +
+        '</span><span><b>' + esc(m.name) + '</b><small>' + esc(m.role) + ' · ' +
+        esc(m.phone) + ' · ' + esc(m.email) + '</small></span>' +
+        (full ? '' : '<span class="warn">профиль не заполнен — подпись по умолчанию</span>');
+    }
   }
   MGRF.forEach(function (id) {
     if (state.mgr[id]) $(id).value = state.mgr[id];
@@ -4823,12 +4978,27 @@ var DOCX = (function () {
       state.mgr[id] = this.value; save(); renderMgr();
     });
   });
-  $('mgrReset').addEventListener('click', function () {
+  $('meSave').addEventListener('click', function () {
+    if (!mgrFull()) {
+      var miss = MGRF.filter(function (id) { return !(state.mgr[id] || '').trim(); });
+      $(miss[0]).focus();
+      toast('Заполните все четыре поля — не хватает: ' + MGR_TITLE[miss[0]], true);
+      renderMgr();
+      return;
+    }
+    save(); renderMgr();
+    toast('Профиль сохранён: ' + mgr().name);
+  });
+  $('meClear').addEventListener('click', function () {
+    if (!window.confirm('Очистить профиль? В ТКП вернётся менеджер по умолчанию.')) return;
     state.mgr = {};
     MGRF.forEach(function (id) { $(id).value = ''; });
     save(); renderMgr();
-    toast('Менеджер снова по умолчанию: ' + APP.manager.name);
+    toast('Профиль очищен');
   });
+  $('meBtn').addEventListener('click', function () { showTab('me'); });
+  $('regGo').addEventListener('click', function () { showTab('me'); });
+  $('mgrGo').addEventListener('click', function () { showTab('me'); });
 
   // ------------------------------------------------- карточка характеристик
   // Пары «параметр — значение» как в присланном конфигураторе: слева подпись,
@@ -11739,11 +11909,12 @@ function mzBind() {
   });
   // Кнопка «Добавить станок в смету»: сразу под выбором, не надо искать
   // «Перенести в смету» в правой колонке.
-  function addMachineOnly() {
+  function addMachineOnly(e) {
     var rows = mzSpec().filter(function (r) { return r.t === 'eq'; });
     if (!rows.length) { toast('Сначала выберите станок и цену'); return; }
     rows.forEach(function (r) { addItem(r.n, r.c / 100, r.q, 'eq'); });
     toast('Станок добавлен в смету');
+    mzAddDone(e && e.currentTarget);
   }
   $('mzAddMachine').addEventListener('click', addMachineOnly);
   $('fbAddMachine').addEventListener('click', addMachineOnly);
@@ -11991,11 +12162,27 @@ function fbApplyCfg(key) {
   mzTouch('fbPrice', false);
   mzUpdate();
 }
+// После клика кнопка коротко становится зелёной с галочкой: видно, что нажатие
+// прошло, и не надо искать позицию глазами в правой колонке.
+var mzAddTimer = null;
+function mzAddDone(btn) {
+  if (!btn) return;
+  btn.classList.add('done');
+  btn.querySelector('.tx b').textContent = 'Добавлено в смету';
+  if (mzAddTimer) clearTimeout(mzAddTimer);
+  mzAddTimer = setTimeout(function () {
+    btn.classList.remove('done');
+    btn.querySelector('.tx b').textContent = 'Добавить станок в смету';
+  }, 1800);
+}
 function mzAddBtn(id, subId, prId, rows) {
   var eq = (rows || []).filter(function (r) { return r.t === 'eq'; });
   var sum = 0;
   eq.forEach(function (r) { sum += r.c * r.q; });
   $(id).disabled = !eq.length;
+  if (!$(id).classList.contains('done')) {
+    $(id).querySelector('.tx b').textContent = 'Добавить станок в смету';
+  }
   $(subId).textContent = eq.length ? eq[0].n : 'выберите конфигурацию и цену';
   $(prId).textContent = eq.length ? mzMoney(sum) : '—';
 }

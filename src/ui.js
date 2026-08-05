@@ -189,6 +189,8 @@
     { id: 'mill', title: 'Конфигуратор v2',
       hint: 'сборка станка по узлам, обвязка, 4-я ось, ПНР' },
     { id: 'smeta', title: 'Смета и ТКП', hint: 'позиции, скидки, файл' },
+    { id: 'me', title: 'Личный кабинет',
+      hint: 'ваши имя, должность, телефон и почта — уходят в подпись ТКП' },
     { id: 'cmp', title: 'Сравнение Word',
       hint: 'две версии документа рядом: что добавили, убрали, изменили' },
     { id: 'calc', title: 'Калькуляторы',
@@ -756,6 +758,8 @@
   // уходит клиенту от конкретного человека. Пустое поле = значение из данных.
   var MGRF = ['mgrName', 'mgrRole', 'mgrPhone', 'mgrEmail'];
   var MGR_MAP = { mgrName: 'name', mgrRole: 'role', mgrPhone: 'phone', mgrEmail: 'email' };
+  var MGR_TITLE = { mgrName: 'имя и фамилия', mgrRole: 'должность',
+    mgrPhone: 'телефон', mgrEmail: 'рабочая почта' };
   function mgr() {
     var out = {};
     ['name', 'role', 'phone', 'email', 'sites'].forEach(function (k) {
@@ -772,17 +776,81 @@
     MGRF.forEach(function (id) { if ((state.mgr[id] || '').trim()) own = true; });
     return own;
   }
+  // Профиль считается заполненным, только если заполнены все четыре поля:
+  // подпись без телефона или почты клиенту бесполезна.
+  function mgrFull() {
+    return MGRF.every(function (id) { return (state.mgr[id] || '').trim(); });
+  }
+  function mgrInitials(name) {
+    var p = String(name || '').trim().split(/\s+/);
+    return ((p[0] || '?').charAt(0) + (p[1] || '').charAt(0)).toUpperCase();
+  }
   function renderMgr() {
-    var m = mgr(), n = $('mgrOut');
+    var m = mgr(), full = mgrFull(), own = mgrOwn();
+    var n = $('mgrOut');
     if (n) {
       n.textContent = 'В подписи ТКП: ' + m.name + ' · ' + m.role + ' · ' +
         m.phone + ' · ' + m.email +
-        (mgrOwn() ? '' : ' — это менеджер по умолчанию из данных');
+        (own ? '' : ' — это менеджер по умолчанию из данных');
     }
     var nm = $('kpMgrName'), rl = $('kpMgrRole'), ln = $('kpMgrLine');
     if (nm) nm.textContent = m.name;
     if (rl) rl.textContent = ' · ' + m.role;
     if (ln) ln.textContent = m.phone + ' · ' + m.email + ' · ' + m.sites;
+
+    var btn = $('meBtn');
+    if (btn) {
+      btn.classList.toggle('empty', !full);
+      $('meAva').textContent = full ? mgrInitials(m.name) : '?';
+      $('meName').textContent = full ? m.name : 'Личный кабинет';
+    }
+    var bar = $('regBar');
+    if (bar) bar.hidden = full;
+
+    var st = $('meState');
+    if (st) {
+      st.textContent = full ? 'Профиль заполнен' : 'Профиль не заполнен';
+      st.classList.toggle('on', full);
+    }
+    var ft = $('meFormTitle');
+    if (ft) ft.textContent = full ? 'Ваш профиль' : 'Знакомимся';
+    var mc = $('meCard');
+    if (mc) {
+      mc.innerHTML = '<dl>' +
+        [['Подпись в ТКП', m.name + ' · ' + m.role],
+          ['Контакты в ТКП', m.phone + ' · ' + m.email],
+          ['Письма и уведомления', 'подставляются те же имя и контакты'],
+          ['Смета', 'блок «От кого и кому» берёт данные отсюда']]
+          .map(function (r) {
+            return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>';
+          }).join('') + '</dl>';
+    }
+    var hints = $('meHints');
+    if (hints) {
+      var rows = [];
+      if (!full) {
+        var miss = MGRF.filter(function (id) { return !(state.mgr[id] || '').trim(); })
+          .map(function (id) { return MGR_TITLE[id]; });
+        rows.push('<div class="hint bad">Не заполнено: ' + esc(miss.join(', ')) +
+          '. Пока профиль пустой, в ТКП уходит менеджер по умолчанию — ' +
+          esc(APP.manager.name) + '.</div>');
+      } else {
+        rows.push('<div class="hint ok">Готово. Эти данные подставляются в подпись ' +
+          'ТКП, в письма и в смету.</div>');
+      }
+      rows.push('<div class="hint">Профиль хранится только в этом браузере и никуда ' +
+        'не отправляется. Ни пароля, ни сервера здесь нет: это подпись под ' +
+        'документами, а не учётная запись.</div>');
+      hints.innerHTML = rows.join('');
+    }
+    var sign = $('signRow');
+    if (sign) {
+      sign.classList.toggle('empty', !full);
+      sign.innerHTML = '<span class="ava">' + esc(full ? mgrInitials(m.name) : '?') +
+        '</span><span><b>' + esc(m.name) + '</b><small>' + esc(m.role) + ' · ' +
+        esc(m.phone) + ' · ' + esc(m.email) + '</small></span>' +
+        (full ? '' : '<span class="warn">профиль не заполнен — подпись по умолчанию</span>');
+    }
   }
   MGRF.forEach(function (id) {
     if (state.mgr[id]) $(id).value = state.mgr[id];
@@ -790,12 +858,27 @@
       state.mgr[id] = this.value; save(); renderMgr();
     });
   });
-  $('mgrReset').addEventListener('click', function () {
+  $('meSave').addEventListener('click', function () {
+    if (!mgrFull()) {
+      var miss = MGRF.filter(function (id) { return !(state.mgr[id] || '').trim(); });
+      $(miss[0]).focus();
+      toast('Заполните все четыре поля — не хватает: ' + MGR_TITLE[miss[0]], true);
+      renderMgr();
+      return;
+    }
+    save(); renderMgr();
+    toast('Профиль сохранён: ' + mgr().name);
+  });
+  $('meClear').addEventListener('click', function () {
+    if (!window.confirm('Очистить профиль? В ТКП вернётся менеджер по умолчанию.')) return;
     state.mgr = {};
     MGRF.forEach(function (id) { $(id).value = ''; });
     save(); renderMgr();
-    toast('Менеджер снова по умолчанию: ' + APP.manager.name);
+    toast('Профиль очищен');
   });
+  $('meBtn').addEventListener('click', function () { showTab('me'); });
+  $('regGo').addEventListener('click', function () { showTab('me'); });
+  $('mgrGo').addEventListener('click', function () { showTab('me'); });
 
   // ------------------------------------------------- карточка характеристик
   // Пары «параметр — значение» как в присланном конфигураторе: слева подпись,

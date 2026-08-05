@@ -37,10 +37,21 @@
         <small>внутренний инструмент компании</small></span>
     </a>
     <div class="head-right">
+      <button type="button" class="mebtn" id="meBtn" title="Личный кабинет">
+        <span class="ava" id="meAva">?</span>
+        <span class="mename" id="meName">Личный кабинет</span>
+      </button>
       <button type="button" class="themebtn" id="themeBtn" aria-pressed="false"
         title="Светлая или тёмная тема">Светлая тема</button>
       <span class="savedot" id="saveDot"></span>
     </div>
+  </div>
+  <!-- Пока профиль пуст, ТКП уходит с менеджером из данных. Сказать об этом надо
+       один раз и не мешать работать: полоса, а не окно поверх всего. -->
+  <div class="regbar noprint" id="regBar" hidden>
+    <span>Заполните личный кабинет — ваши имя, телефон и почта уйдут в подпись ТКП.
+      Пока там менеджер по умолчанию.</span>
+    <button type="button" id="regGo">Заполнить</button>
   </div>
 </header>
 
@@ -987,7 +998,6 @@
 
       <div class="addbar noprint">
         <button class="addbtn" type="button" id="mzAddMachine">
-          <span class="ic" aria-hidden="true">+</span>
           <span class="tx"><b>Добавить станок в смету</b>
             <small id="mzAddSub">выберите конфигурацию</small></span>
           <span class="pr" id="mzAddPrice">—</span>
@@ -1246,7 +1256,6 @@
 
       <div class="addbar noprint">
         <button class="addbtn" type="button" id="fbAddMachine">
-          <span class="ic" aria-hidden="true">+</span>
           <span class="tx"><b>Добавить станок в смету</b>
             <small id="fbAddSub">выберите конфигурацию</small></span>
           <span class="pr" id="fbAddPrice">—</span>
@@ -1436,6 +1445,50 @@
     <button type="button" id="mzBarSpec">Спецификация</button></span></div>
 
 <!-- ================= СМЕТА И ТКП ================= -->
+<span class="nojs-title">Личный кабинет</span>
+<section class="panel" id="p-me">
+  <div class="bhead noprint">
+    <div>
+      <h1 class="btitle">Личный кабинет</h1>
+      <p class="lead">Кто вы — знает только этот браузер. Данные никуда не уходят,
+        но подставляются в подпись ТКП, в письма и в смету.</p>
+    </div>
+    <span class="pill" id="meState"></span>
+  </div>
+
+  <div class="mewrap">
+    <div class="card">
+      <div class="cardhead"><h2 id="meFormTitle">Знакомимся</h2>
+        <span class="spec-cnt">все четыре поля обязательны</span></div>
+      <div class="row tight">
+        <div style="flex:2 1 240px"><label class="f" for="mgrName">Имя и фамилия</label>
+          <input type="text" id="mgrName" autocomplete="name" placeholder="__MGR_NAME__"></div>
+        <div style="flex:2 1 200px"><label class="f" for="mgrRole">Должность</label>
+          <input type="text" id="mgrRole" placeholder="__MGR_ROLE__"></div>
+      </div>
+      <div class="row tight">
+        <div><label class="f" for="mgrPhone">Телефон</label>
+          <input type="text" id="mgrPhone" autocomplete="tel" placeholder="__MGR_PHONE__"></div>
+        <div><label class="f" for="mgrEmail">Рабочая почта</label>
+          <input type="text" id="mgrEmail" autocomplete="email" placeholder="__MGR_EMAIL__"></div>
+      </div>
+      <div class="mebtns">
+        <button class="btn" type="button" id="meSave">Сохранить профиль</button>
+        <button class="btn sec" type="button" id="meClear">Очистить профиль</button>
+      </div>
+      <div class="note small" id="mgrOut"></div>
+      <div class="hints" id="meHints"></div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead"><h2>Куда это попадёт</h2></div>
+      <div class="mecard" id="meCard"></div>
+      <div class="note small">Профиль лежит в этом браузере вместе с черновиком сметы.
+        На другом компьютере его не будет — заполните там заново.</div>
+    </div>
+  </div>
+</section>
+
 <span class="nojs-title">Смета и ТКП</span>
 <section class="panel" id="p-smeta">
   <div class="bhead noprint">
@@ -1454,19 +1507,9 @@
          сверху вниз и не прыгает по странице. -->
     <div class="card">
       <div class="cardhead"><h2>От кого и кому</h2>
-        <button class="btn mini sec" type="button" id="mgrReset">Менеджер по умолчанию</button></div>
-      <div class="cardsub">Менеджер сделки — подпись под предложением</div>
-      <div class="row tight">
-        <div style="flex:2 1 220px"><label class="f" for="mgrName">Имя и фамилия</label>
-          <input type="text" id="mgrName" placeholder="__MGR_NAME__"></div>
-        <div><label class="f" for="mgrRole">Должность</label>
-          <input type="text" id="mgrRole" placeholder="__MGR_ROLE__"></div>
-        <div><label class="f" for="mgrPhone">Телефон</label>
-          <input type="text" id="mgrPhone" placeholder="__MGR_PHONE__"></div>
-        <div><label class="f" for="mgrEmail">Почта</label>
-          <input type="text" id="mgrEmail" placeholder="__MGR_EMAIL__"></div>
-      </div>
-      <div class="note small" id="mgrOut"></div>
+        <button class="btn mini sec" type="button" id="mgrGo">Личный кабинет</button></div>
+      <div class="cardsub">От кого — подпись под предложением</div>
+      <div class="signrow" id="signRow"></div>
 
       <div class="cardsub">Клиент — кому уходит предложение</div>
       <div class="row tight">

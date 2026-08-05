@@ -1253,11 +1253,12 @@ function mzBind() {
   });
   // Кнопка «Добавить станок в смету»: сразу под выбором, не надо искать
   // «Перенести в смету» в правой колонке.
-  function addMachineOnly() {
+  function addMachineOnly(e) {
     var rows = mzSpec().filter(function (r) { return r.t === 'eq'; });
     if (!rows.length) { toast('Сначала выберите станок и цену'); return; }
     rows.forEach(function (r) { addItem(r.n, r.c / 100, r.q, 'eq'); });
     toast('Станок добавлен в смету');
+    mzAddDone(e && e.currentTarget);
   }
   $('mzAddMachine').addEventListener('click', addMachineOnly);
   $('fbAddMachine').addEventListener('click', addMachineOnly);
@@ -1505,11 +1506,27 @@ function fbApplyCfg(key) {
   mzTouch('fbPrice', false);
   mzUpdate();
 }
+// После клика кнопка коротко становится зелёной с галочкой: видно, что нажатие
+// прошло, и не надо искать позицию глазами в правой колонке.
+var mzAddTimer = null;
+function mzAddDone(btn) {
+  if (!btn) return;
+  btn.classList.add('done');
+  btn.querySelector('.tx b').textContent = 'Добавлено в смету';
+  if (mzAddTimer) clearTimeout(mzAddTimer);
+  mzAddTimer = setTimeout(function () {
+    btn.classList.remove('done');
+    btn.querySelector('.tx b').textContent = 'Добавить станок в смету';
+  }, 1800);
+}
 function mzAddBtn(id, subId, prId, rows) {
   var eq = (rows || []).filter(function (r) { return r.t === 'eq'; });
   var sum = 0;
   eq.forEach(function (r) { sum += r.c * r.q; });
   $(id).disabled = !eq.length;
+  if (!$(id).classList.contains('done')) {
+    $(id).querySelector('.tx b').textContent = 'Добавить станок в смету';
+  }
   $(subId).textContent = eq.length ? eq[0].n : 'выберите конфигурацию и цену';
   $(prId).textContent = eq.length ? mzMoney(sum) : '—';
 }
