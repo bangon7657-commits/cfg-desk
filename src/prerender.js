@@ -2245,6 +2245,9 @@ check('вкладки: значок сметы жив после перерис�
     doc.querySelector('#fbReadyList [data-fbcfg="1530:3000:0:"]').click();
 
     // фильтры: без них 24 плитки — стена текста
+    check('волокно: в шапке счёт конфигураций, а не строк прайса',
+      /122 конфигурации в прайсе/.test(textOf(doc, '#mzCfgCnt')),
+      textOf(doc, '#mzCfgCnt'));
     check('волокно: над плитками есть фильтры мощности и комплектации',
       doc.querySelectorAll('#fbReadyFilter [data-fbf^="pow:"]').length === 4 &&
       doc.querySelectorAll('#fbReadyFilter [data-fbf^="opt:"]').length === 5,

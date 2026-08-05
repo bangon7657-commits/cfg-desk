@@ -1176,7 +1176,7 @@ html[data-theme="light"] body.millbg{background:#eef1f5}
   font-weight:600}
 #p-mill .chip .n{opacity:.7;margin-left:5px;font-size:14px}
 #p-mill .chip.on .n{opacity:.85}
-#p-mill .rgh{font-size:14.5px;text-transform:uppercase;letter-spacing:.5px;
+#p-mill .rgh{font-size:16px;letter-spacing:.2px;
   color:var(--muted);font-weight:700;margin:4px 0 7px}
 #p-mill .rgh:not(:first-child){margin-top:14px}
 #p-mill .rempty{padding:10px 0}
@@ -11437,7 +11437,9 @@ function mzUpdate() {
     mzRenderKinds();
     mzRenderSpec();
     mzShowStep(mzS.step || 1);
-    $('mzCfgCnt').textContent = ' · ' + cnt(APP.fiberA.length + APP.fiberS.length,
+    // Считаем именно конфигурации, а не строки прайса: у каждой строки серии S
+    // восемь исполнений — база, стол, три оси и три пары «стол плюс ось».
+    $('mzCfgCnt').textContent = ' · ' + cnt(fbCfgTotal(),
       ['конфигурация', 'конфигурации', 'конфигураций']) + ' в прайсе';
     mzSave();
     mzBusy = false;
@@ -11895,6 +11897,14 @@ function fbCatalog() {
   return out;
 }
 function fbCfgKey(c) { return c.f + ':' + c.p + ':' + c.tbl + ':' + c.rot; }
+function fbCfgTotal() {
+  var n = APP.fiberA.length;
+  APP.fiberS.forEach(function (r) {
+    n += 1 + (r.table ? 1 : 0) + Object.keys(r.rot || {}).length +
+      Object.keys(r.tableRot || {}).length;
+  });
+  return n;
+}
 function fbCfgSpec(c) {
   var o = [];
   if (c.tbl) o.push('сменный стол');

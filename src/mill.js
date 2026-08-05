@@ -1020,7 +1020,9 @@ function mzUpdate() {
     mzRenderKinds();
     mzRenderSpec();
     mzShowStep(mzS.step || 1);
-    $('mzCfgCnt').textContent = ' · ' + cnt(APP.fiberA.length + APP.fiberS.length,
+    // Считаем именно конфигурации, а не строки прайса: у каждой строки серии S
+    // восемь исполнений — база, стол, три оси и три пары «стол плюс ось».
+    $('mzCfgCnt').textContent = ' · ' + cnt(fbCfgTotal(),
       ['конфигурация', 'конфигурации', 'конфигураций']) + ' в прайсе';
     mzSave();
     mzBusy = false;
@@ -1478,6 +1480,14 @@ function fbCatalog() {
   return out;
 }
 function fbCfgKey(c) { return c.f + ':' + c.p + ':' + c.tbl + ':' + c.rot; }
+function fbCfgTotal() {
+  var n = APP.fiberA.length;
+  APP.fiberS.forEach(function (r) {
+    n += 1 + (r.table ? 1 : 0) + Object.keys(r.rot || {}).length +
+      Object.keys(r.tableRot || {}).length;
+  });
+  return n;
+}
 function fbCfgSpec(c) {
   var o = [];
   if (c.tbl) o.push('сменный стол');
