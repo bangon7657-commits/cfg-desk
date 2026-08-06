@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 57', /const CACHE = 'cfg-v57'/.test(swTxt),
+check('кеш: версия поднята до 58', /const CACHE = 'cfg-v58'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -290,10 +290,70 @@ win.document.getElementById('kpTerm').dispatchEvent(new win.Event('change'));
 
 // ---- два варианта ТКП ----
 const kpModeSelNode = doc.getElementById('kpMode');
-check('ТКП: два варианта в списке',
-  !!kpModeSelNode && kpModeSelNode.options.length === 2,
-  kpModeSelNode ? 'вариантов ' + kpModeSelNode.options.length : 'селектор не найден');
+check('ТКП: три варианта — краткое, полное, презентация',
+  !!kpModeSelNode && kpModeSelNode.options.length === 3 &&
+  [...kpModeSelNode.options].map(o => o.value).join(',') === 'short,full,deck',
+  kpModeSelNode ? [...kpModeSelNode.options].map(o => o.value).join(',') : 'нет');
 check('ТКП: по умолчанию краткое', kpModeSelNode.value === 'short', kpModeSelNode.value);
+
+// ---- презентация по смете: пакет .pptx собирается прямо в браузере ----
+// Проверяем не «кнопка есть», а что файл получился: ZIP читается, все части
+// на месте, XML разбирается и цифры сметы внутри.
+check('презентация: кнопка выгрузки на месте',
+  !!doc.getElementById('btnDeck') &&
+  /Скачать презентацию/.test(textOf(doc, '#btnDeck')), '');
+(function () {
+  const deck = win.PPTX.build({ title: 'проверка', slides: win.__deckSlides__() });
+  check('презентация: собрался непустой пакет',
+    deck && deck.length > 8000, 'байт ' + (deck ? deck.length : 0));
+  // ZIP без сжатия читается вручную: сигнатура, имена частей, данные
+  const parts = {};
+  let ok = true;
+  const dv = new DataView(deck.buffer, deck.byteOffset, deck.length);
+  let p = 0;
+  while (p + 4 <= deck.length && dv.getUint32(p, true) === 0x04034b50) {
+    const nlen = dv.getUint16(p + 26, true), elen = dv.getUint16(p + 28, true);
+    const size = dv.getUint32(p + 18, true);
+    const name = new TextDecoder().decode(deck.subarray(p + 30, p + 30 + nlen));
+    const body = deck.subarray(p + 30 + nlen + elen, p + 30 + nlen + elen + size);
+    parts[name] = new TextDecoder().decode(body);
+    p += 30 + nlen + elen + size;
+  }
+  check('презентация: ZIP разбирается, частей больше двадцати',
+    Object.keys(parts).length > 20, 'частей ' + Object.keys(parts).length);
+  ['[Content_Types].xml', '_rels/.rels', 'ppt/presentation.xml',
+    'ppt/_rels/presentation.xml.rels', 'ppt/theme/theme1.xml',
+    'ppt/slideMasters/slideMaster1.xml', 'ppt/slideLayouts/slideLayout1.xml',
+    'ppt/slides/slide1.xml', 'ppt/slides/_rels/slide1.xml.rels'
+  ].forEach(function (n) { if (!parts[n]) ok = false; });
+  check('презентация: обязательные части пакета на месте', ok,
+    Object.keys(parts).slice(0, 6).join(', '));
+  check('презентация: шесть слайдов', !!parts['ppt/slides/slide6.xml'] &&
+    !parts['ppt/slides/slide7.xml'], '');
+  // каждый XML должен разбираться без ошибок
+  const dp = new win.DOMParser();
+  let bad = '';
+  Object.keys(parts).forEach(function (n) {
+    if (!/\.xml$|\.rels$/.test(n)) return;
+    const x = dp.parseFromString(parts[n], 'text/xml');
+    if (x.getElementsByTagName('parsererror').length) bad = n;
+  });
+  check('презентация: весь XML пакета разбирается', !bad, bad);
+  check('презентация: размер листа A1 книжный',
+    /cx="21240000" cy="30240000"/.test(parts['ppt/presentation.xml'] || ''), '');
+  const all = Object.keys(parts).filter(n => /slides\/slide\d+\.xml$/.test(n))
+    .map(n => parts[n]).join('');
+  check('презентация: смета попала в слайды',
+    /Технико-коммерческое предложение/.test(all) && /ИТОГО/.test(all) &&
+    /Wattsan/.test(all), '');
+  check('презентация: итоговая сумма совпадает со сметой',
+    all.indexOf(win.__deckTotal__()) >= 0, win.__deckTotal__());
+  check('презентация: помечена как тестовая',
+    /Режим тестовый/.test(all), '');
+  check('презентация: ставка НДС печатается процентами, а не десятыми',
+    /НДС 22 %/.test(all) && !/НДС 220 %/.test(all),
+    (all.match(/НДС [\d,]+ %/) || [''])[0]);
+}());
 check('ТКП: подсказка объясняет, когда какой брать',
   /Когда клиент уже всё знает/.test(textOf(doc, '#kpModeHint')),
   (textOf(doc, '#kpModeHint') || '').slice(0, 90));

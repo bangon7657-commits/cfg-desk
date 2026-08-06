@@ -269,6 +269,6 @@ var DOCX = (function () {
 
   return {
     build: build, p: p, run: run, tc: tc, tr: tr, tbl: tbl, image: image,
-    esc: xesc, crc32: crc32, utf8: utf8
+    esc: xesc, crc32: crc32, utf8: utf8, zip: zip
   };
 }());

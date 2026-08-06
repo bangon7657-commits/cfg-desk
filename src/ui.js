@@ -3030,6 +3030,130 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 8000);
   }
 
+  // ------------------------------------------------------- презентация
+  // Слайды собираются по той же смете, что и ТКП. Структура — из образца
+  // KP-v2.pptx: титул, лист предложения со сметой, комплектация,
+  // характеристики, условия, следующий шаг. Тестовый режим: без фотографий.
+  function ndsLabel(rate10) {
+    var v = (rate10 || 0) / 10;
+    return String(v).replace('.', ',');
+  }
+  function deckValidUntil() {
+    var s = (state.kp.kpDate || '').trim();
+    var m = s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (!m) return 'в течение ' + APP.kpValidDays + ' дней с даты';
+    var dt = new Date(+m[3], +m[2] - 1, +m[1]);
+    dt.setDate(dt.getDate() + APP.kpValidDays);
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    return pad(dt.getDate()) + '.' + pad(dt.getMonth() + 1) + '.' + dt.getFullYear();
+  }
+  function deckSlides() {
+    var t = totals(), k = state.kp, m = mgr(), sup = supNow();
+    var mach = machineInSmeta();
+    var money = function (c) { return fmtMoney(c) + ' ₽'; };
+    var term = k.kpTerm === 'stock' ? APP.deliveryTerms.stock : APP.deliveryTerms.order;
+    var first = state.items.length ? (state.items[0].short || state.items[0].name) : '';
+
+    var s1 = [
+      { t: 'bar', text: 'LASERCUT', sub: 'оборудование с ЧПУ · торговая марка Wattsan' },
+      { t: 'text', text: 'Технико-коммерческое предложение', size: 34, bold: true,
+        color: PPTX.C.dark },
+      { t: 'text', text: k.kpTitle || first || 'Оборудование с ЧПУ', size: 22 },
+      { t: 'kv', rows: [
+        ['Кому', k.kpClient || '—'],
+        ['От', m.name + ', LASERCUT'],
+        ['Дата', k.kpDate || '—'],
+        ['Действительно до', deckValidUntil()]
+      ] },
+      { t: 'note', text: APP.company.phone + ' · ' + APP.company.email +
+        ' · ' + APP.company.site }
+    ];
+
+    var rows = t.lines.map(function (l, i) {
+      var nm = l.item.name + (l.item.sub ? '\n' + l.item.sub : '');
+      return [String(i + 1), nm, l.item.qty + ' шт.', money(l.line)];
+    });
+    var itog = ['', 'ИТОГО', '', money(t.total)];
+    itog.strong = true;
+    rows.push(itog);
+    var s2 = [
+      { t: 'bar', text: 'Предложение и смета',
+        sub: (k.kpClient || '') + (k.kpNum ? ' · исх. № ' + k.kpNum : '') },
+      { t: 'text', text: (k.kpContact ? k.kpContact + ', благодарим за обращение. ' :
+        'Благодарим за обращение. ') + 'Под вашу задачу предлагаем ' +
+        (first || 'оборудование с ЧПУ') + '.', size: 19 },
+      { t: 'table', head: ['№', 'Наименование', 'Кол-во', 'Сумма'],
+        w: [0.07, 0.58, 0.13, 0.22], rows: rows },
+      { t: 'text', text: 'В том числе НДС ' + ndsLabel(t.rate) + ' % — ' + money(t.nds) +
+        '\nСрок поставки: ' + term, size: 19, bold: true, fill: PPTX.C.soft },
+      { t: 'note', text: '* Цены указаны с учётом НДС. Наличие на складе ' +
+        'подтверждается менеджером перед выставлением счёта.\n' +
+        '* Поставщик: ' + sup.name + (sup.inn ? ', ИНН ' + sup.inn : '') +
+        (sup.unp ? ', УНП ' + sup.unp : '') }
+    ];
+
+    var incl = kindIncluded(mach);
+    var s3 = [
+      { t: 'bar', text: 'Что входит в стоимость',
+        sub: mach ? mach.name : 'по выбранной конфигурации' },
+      { t: 'kv', rows: incl.list.map(function (x, i) { return [String(i + 1), x]; }) },
+      { t: 'note', text: incl.note }
+    ];
+
+    var s4 = [
+      { t: 'bar', text: 'Технические характеристики' },
+      { t: 'kv', rows: kindTechRows(mach).map(function (r) { return [r[0], r[1]]; }) },
+      { t: 'note', text: 'Серийные параметры по карточке производителя. Точные ' +
+        'характеристики исполнения подтверждаются паспортом завода при отгрузке.' }
+    ];
+
+    var s5 = [
+      { t: 'bar', text: 'Условия поставки и гарантия' },
+      { t: 'kv', rows: [['Срок поставки', term]].concat(
+        APP.kpAdvantages.slice(0, 5).map(function (r) { return [r[0], r[1]]; })) }
+    ];
+
+    var s6 = [
+      { t: 'bar', text: 'Следующий шаг' },
+      { t: 'text', text: 'Готовы выставить счёт и согласовать дату отгрузки. ' +
+        'Счёт держит цену ' + APP.invoiceValidDays + ' дней.', size: 21 },
+      { t: 'kv', rows: [
+        ['Менеджер', m.name + ', ' + m.role],
+        ['Телефон', m.phone],
+        ['Почта', m.email],
+        ['Сайты', m.sites]
+      ] },
+      { t: 'note', text: APP.deckNote }
+    ];
+    return [s1, s2, s3, s4, s5, s6];
+  }
+
+  // Ход наружу для проверок сборки: иначе колоду не собрать из prerender.
+  window.__deckSlides__ = deckSlides;
+  window.__deckTotal__ = function () { return fmtMoney(totals().total) + ' ₽'; };
+
+  var PPTX_MIME =
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+
+  function deckBlob() {
+    var bytes = PPTX.build({
+      title: 'ТКП ' + (state.kp.kpClient || ''),
+      slides: deckSlides()
+    });
+    return new Blob([bytes], { type: PPTX_MIME });
+  }
+
+  $('btnDeck').addEventListener('click', function () {
+    if (!state.items.length &&
+        !confirm('Смета пуста. Всё равно собрать презентацию?')) return;
+    try {
+      downloadBlob(deckBlob(), kpFileName('pptx'));
+      toast('Презентация .pptx скачана — тестовый режим');
+    } catch (e) {
+      toast('Не удалось собрать презентацию: ' + (e && e.message ? e.message : 'ошибка'));
+    }
+  });
+
   $('btnWord').addEventListener('click', function () {
     if (!state.items.length && !confirm('Смета пуста. Всё равно скачать файл?')) return;
     try {

@@ -90,6 +90,8 @@ APP = {
     'fiberKitRotaryCtrl': data.FIBER_KIT_ROTARY_CTRL,
     'kpModes': data.KP_MODES,
     'kpModeDefault': data.KP_MODE_DEFAULT,
+    'deckNote': data.DECK_NOTE,
+    'deckSlideNames': data.DECK_SLIDE_NAMES,
     'kpLaunch': data.KP_LAUNCH,
     'kpAdvantages': data.KP_ADVANTAGES,
     'kpIncluded': data.KP_INCLUDED,
@@ -706,6 +708,8 @@ with open(os.path.join(HERE, 'money.js'), encoding='utf-8') as f:
     MONEY_JS = f.read()
 with open(os.path.join(HERE, 'docx.js'), encoding='utf-8') as f:
     DOCX_JS = f.read()
+with open(os.path.join(HERE, 'pptx.js'), encoding='utf-8') as f:
+    PPTX_JS = f.read()
 with open(os.path.join(HERE, 'ui.js'), encoding='utf-8') as f:
     UI_JS = f.read()
 # Логика вкладки «Фрезерный» лежит отдельным файлом, но живёт в области
@@ -807,6 +811,7 @@ repl = {
     '__SUPPLIER_FORM__': SUPPLIER_FORM,
     '__SUPPLIER_NOTE__': esc(data.SUPPLIER_NOTE),
     '__DOCX_JS__': DOCX_JS,
+    '__PPTX_JS__': PPTX_JS,
     '__KP_LEGAL__': KP_LEGAL,
     '__DELIVERY_ORDER__': esc(data.DELIVERY_ORDER_LABEL),
     '__DELIVERY_ORDER_FULL__': esc(data.DELIVERY_TERMS['order']),
