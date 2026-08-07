@@ -3108,15 +3108,13 @@
     ];
 
     var s5 = [
-      { t: 'bar', text: 'Условия поставки и гарантия' },
+      { t: 'bar', text: 'Условия поставки и гарантия',
+        sub: 'и что происходит после согласования' },
       { t: 'kv', rows: [['Срок поставки', term]].concat(
-        APP.kpAdvantages.slice(0, 5).map(function (r) { return [r[0], r[1]]; })) }
-    ];
-
-    var s6 = [
-      { t: 'bar', text: 'Следующий шаг' },
+        APP.kpAdvantages.slice(0, 5).map(function (r) { return [r[0], r[1]]; })) },
       { t: 'text', text: 'Готовы выставить счёт и согласовать дату отгрузки. ' +
-        'Счёт держит цену ' + APP.invoiceValidDays + ' дней.', size: 21 },
+        'Счёт держит цену ' + APP.invoiceValidDays + ' дней.', size: 20,
+        bold: true, fill: PPTX.C.soft },
       { t: 'kv', rows: [
         ['Менеджер', m.name + ', ' + m.role],
         ['Телефон', m.phone],
@@ -3125,7 +3123,7 @@
       ] },
       { t: 'note', text: APP.deckNote }
     ];
-    return [s1, s2, s3, s4, s5, s6];
+    return [s1, s2, s3, s4, s5];
   }
 
   // Ход наружу для проверок сборки: иначе колоду не собрать из prerender.
@@ -3138,6 +3136,7 @@
   function deckBlob() {
     var bytes = PPTX.build({
       title: 'ТКП ' + (state.kp.kpClient || ''),
+      foot: 'LASERCUT · ' + APP.company.phone + ' · ' + APP.company.site,
       slides: deckSlides()
     });
     return new Blob([bytes], { type: PPTX_MIME });

@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 58', /const CACHE = 'cfg-v58'/.test(swTxt),
+check('кеш: версия поднята до 59', /const CACHE = 'cfg-v59'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -303,7 +303,9 @@ check('презентация: кнопка выгрузки на месте',
   !!doc.getElementById('btnDeck') &&
   /Скачать презентацию/.test(textOf(doc, '#btnDeck')), '');
 (function () {
-  const deck = win.PPTX.build({ title: 'проверка', slides: win.__deckSlides__() });
+  const FOOT = 'LASERCUT · проверка';
+  const deck = win.PPTX.build({ title: 'проверка', foot: FOOT,
+    slides: win.__deckSlides__() });
   check('презентация: собрался непустой пакет',
     deck && deck.length > 8000, 'байт ' + (deck ? deck.length : 0));
   // ZIP без сжатия читается вручную: сигнатура, имена частей, данные
@@ -328,8 +330,9 @@ check('презентация: кнопка выгрузки на месте',
   ].forEach(function (n) { if (!parts[n]) ok = false; });
   check('презентация: обязательные части пакета на месте', ok,
     Object.keys(parts).slice(0, 6).join(', '));
-  check('презентация: шесть слайдов', !!parts['ppt/slides/slide6.xml'] &&
-    !parts['ppt/slides/slide7.xml'], '');
+  // число листов плавает: длинная смета переносится на следующий лист
+  const nsl = Object.keys(parts).filter(n => /slides\/slide\d+\.xml$/.test(n)).length;
+  check('презентация: листов не меньше пяти', nsl >= 5, String(nsl));
   // каждый XML должен разбираться без ошибок
   const dp = new win.DOMParser();
   let bad = '';
@@ -339,8 +342,51 @@ check('презентация: кнопка выгрузки на месте',
     if (x.getElementsByTagName('parsererror').length) bad = n;
   });
   check('презентация: весь XML пакета разбирается', !bad, bad);
-  check('презентация: размер листа A1 книжный',
-    /cx="21240000" cy="30240000"/.test(parts['ppt/presentation.xml'] || ''), '');
+  check('презентация: размер листа A4 книжный',
+    /cx="7560000" cy="10692000"/.test(parts['ppt/presentation.xml'] || ''), '');
+  // Раньше лист был A1, а кегль остался обычным: текст занимал верхнюю треть,
+  // остальное уходило в пустоту. Проверяем и низ, и верх — чтобы блоки
+  // заполняли лист, но не сваливались за его край.
+  const SLIDE_H = 10692000;
+  const fill = [];
+  Object.keys(parts).filter(n => /slides\/slide\d+\.xml$/.test(n)).sort()
+    .forEach(function (n) {
+      const re = /<a:off x="\d+" y="(\d+)"\/><a:ext cx="\d+" cy="(\d+)"\/>/g;
+      let m, bot = 0;
+      // подвал стоит у нижнего края на каждом листе — в плотность не считаем
+      while ((m = re.exec(parts[n]))) {
+        if (+m[1] > SLIDE_H - 1000000) continue;
+        bot = Math.max(bot, +m[1] + +m[2]);
+      }
+      fill.push({ n: n, bot: bot, part: bot / SLIDE_H });
+    });
+  const over = fill.filter(f => f.part > 1);
+  check('презентация: ни один блок не выходит за нижний край листа',
+    over.length === 0, over.map(f => f.n + ' ' + Math.round(f.part * 100) + '%').join(', '));
+  const thin = fill.filter(f => f.part < 0.5);
+  check('презентация: слайды заполнены не меньше чем наполовину',
+    thin.length === 0, thin.map(f => f.n + ' ' + Math.round(f.part * 100) + '%').join(', '));
+  const noFoot = Object.keys(parts).filter(n => /slides\/slide\d+\.xml$/.test(n))
+    .filter(n => parts[n].indexOf(FOOT) < 0);
+  check('презентация: подвал стоит на каждом листе', noFoot.length === 0,
+    noFoot.join(', '));
+  // длинная смета не должна обрываться: лишние строки уезжают на следующий лист
+  (function () {
+    const many = win.__deckSlides__();
+    const tb = many[1].filter(b => b.t === 'table')[0];
+    let added = 0;
+    while (tb.rows.length < 30) {
+      tb.rows.splice(1, 0, [String(tb.rows.length), 'строка переноса', '1 шт.', '1,00 ₽']);
+      added++;
+    }
+    const big = win.PPTX.build({ title: 'много', foot: FOOT, slides: many });
+    const txt = new TextDecoder('utf-8').decode(big);
+    const pages = (txt.match(/<p:sld xmlns/g) || []).length;
+    const kept = (txt.match(/строка переноса/g) || []).length;
+    check('презентация: длинная смета разъезжается по листам',
+      pages > 5 && kept === added,
+      'листов ' + pages + ', строк перенесено ' + kept + ' из ' + added);
+  }());
   const all = Object.keys(parts).filter(n => /slides\/slide\d+\.xml$/.test(n))
     .map(n => parts[n]).join('');
   check('презентация: смета попала в слайды',
