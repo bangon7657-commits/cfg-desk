@@ -1485,6 +1485,17 @@
       <div class="mecard" id="meCard"></div>
       <div class="note small">Профиль лежит в этом браузере вместе с черновиком сметы.
         На другом компьютере его не будет — заполните там заново.</div>
+
+      <div class="cardsub">Шаблон презентации</div>
+      <div class="note small">Загрузите готовое КП в .pptx — приложение возьмёт его
+        оформление и подставит туда вашу смету. Лист со сметой шаблон узнаёт
+        по словам «Кому:» и «ИТОГО». Файл остаётся в этом браузере.</div>
+      <div class="tplbox" id="tplBox"></div>
+      <div class="btns">
+        <label class="btn mini sec" for="tplFile">Загрузить шаблон .pptx</label>
+        <input type="file" id="tplFile" accept=".pptx" hidden>
+        <button type="button" class="btn mini danger" id="tplDrop" hidden>Убрать шаблон</button>
+      </div>
     </div>
   </div>
 </section>
@@ -1619,6 +1630,7 @@
       <div class="btns">
         <button type="button" class="btn mini" id="btnWord">Скачать для Word</button>
         <button type="button" class="btn mini" id="btnDeck">Скачать презентацию</button>
+        <button type="button" class="btn mini" id="btnDeckTpl" hidden>Скачать по шаблону</button>
         <button type="button" class="btn mini" id="btnPrint">Печать или PDF</button>
         <button type="button" class="btn mini sec" id="btnSend">Отправить файлом</button>
       </div>
@@ -2260,6 +2272,7 @@
 <script>__MONEY_JS__</script>
 <script>__DOCX_JS__</script>
 <script>__PPTX_JS__</script>
+<script>__TPL_JS__</script>
 <script>var APP = __DATA__;</script>
 <script>__UI_JS__</script>
 </body>

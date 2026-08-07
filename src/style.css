@@ -1484,3 +1484,10 @@ body.cmpmax .cmpbox{border-radius:0;border-left:0;border-right:0;border-bottom:0
   .navinner{padding:7px 12px}
   .wrap{padding:0 12px 80px}
 }
+
+/* Карточка загруженного шаблона КП в личном кабинете */
+.tplbox{display:flex;flex-direction:column;gap:2px;padding:10px 12px;margin:6px 0 8px;
+  border:1px dashed var(--line);border-radius:10px;background:var(--card2)}
+.tplbox.on{border-style:solid;border-color:var(--ok);background:var(--okbg)}
+.tplbox b{font-size:14px}
+.tplmeta{font-size:12px;color:var(--dim)}

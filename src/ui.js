@@ -3142,6 +3142,140 @@
     return new Blob([bytes], { type: PPTX_MIME });
   }
 
+  // ---------------------------------------------------------------- шаблон КП
+  // Готовое КП менеджера лежит в этом браузере: файл на 20 мегабайт в само
+  // приложение не встроить, а IndexedDB держит его без ограничений localStorage.
+  var TPLDB = (function () {
+    var NAME = 'cfg-tpl', STORE = 'files';
+    function open() {
+      return new Promise(function (res, rej) {
+        if (!window.indexedDB) { rej(new Error('браузер без хранилища файлов')); return; }
+        var r = indexedDB.open(NAME, 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore(STORE); };
+        r.onsuccess = function () { res(r.result); };
+        r.onerror = function () { rej(r.error || new Error('хранилище не открылось')); };
+      });
+    }
+    function tx(mode, run) {
+      return open().then(function (db) {
+        return new Promise(function (res, rej) {
+          var t = db.transaction(STORE, mode), req = run(t.objectStore(STORE));
+          req.onsuccess = function () { res(req.result); };
+          req.onerror = function () { rej(req.error); };
+        });
+      });
+    }
+    return {
+      put: function (k, v) { return tx('readwrite', function (s) { return s.put(v, k); }); },
+      get: function (k) { return tx('readonly', function (s) { return s.get(k); }); },
+      del: function (k) { return tx('readwrite', function (s) { return s.delete(k); }); }
+    };
+  }());
+
+  var tplInfo = null;   // {name, size, saved} — сам файл лежит в базе
+
+  function tplSize(n) {
+    return n > 1048576 ? (n / 1048576).toFixed(1) + ' МБ'
+      : Math.round(n / 1024) + ' КБ';
+  }
+  function renderTpl() {
+    var box = $('tplBox'), drop = $('tplDrop'), btn = $('btnDeckTpl');
+    if (box) {
+      box.innerHTML = tplInfo
+        ? '<b>' + esc(tplInfo.name) + '</b><span class="tplmeta">' +
+          tplSize(tplInfo.size) + ' · листов ' + tplInfo.slides +
+          ' · загружен ' + esc(tplInfo.saved) + '</span>'
+        : '<span class="tplmeta">шаблон не загружен — презентация собирается ' +
+          'обычной вёрсткой на A4</span>';
+      box.classList.toggle('on', !!tplInfo);
+    }
+    if (drop) drop.hidden = !tplInfo;
+    if (btn) btn.hidden = !tplInfo;
+  }
+  function tplLoadInfo() {
+    if (!window.indexedDB) { renderTpl(); return; }
+    TPLDB.get('info').then(function (v) {
+      tplInfo = v || null; renderTpl();
+    }).catch(function () { renderTpl(); });
+  }
+
+  function tplSave(file) {
+    if (!TPL.supported()) {
+      toast('Браузер не умеет распаковывать .pptx — обновите Chrome или Edge');
+      return;
+    }
+    toast('Читаем шаблон…');
+    file.arrayBuffer().then(function (buf) {
+      var bytes = new Uint8Array(buf);
+      return TPL.unzip(bytes).then(function (parts) {
+        var slide = TPL.findSmetaSlide(parts);
+        if (!slide) {
+          throw new Error('в шаблоне нет листа со сметой: нужны слова «Кому:» и «ИТОГО»');
+        }
+        var count = Object.keys(parts).filter(function (n) {
+          return /^ppt\/slides\/slide\d+\.xml$/.test(n);
+        }).length;
+        var info = { name: file.name, size: bytes.length, slides: count,
+          saved: new Date().toLocaleDateString('ru-RU') };
+        return TPLDB.put('file', buf).then(function () {
+          return TPLDB.put('info', info);
+        }).then(function () {
+          tplInfo = info; renderTpl();
+          toast('Шаблон сохранён: листов ' + count + ', смета на листе ' +
+            slide.replace(/\D+/g, ''));
+        });
+      });
+    }).catch(function (e) {
+      toast('Шаблон не принят: ' + (e && e.message ? e.message : 'ошибка'));
+    });
+  }
+
+  // Данные сделки для подстановки в шаблон.
+  function tplData() {
+    var t = totals(), k = state.kp, m = mgr(), sup = supNow();
+    var mach = machineInSmeta();
+    var money = function (c) { return fmtMoney(c) + ' ₽'; };
+    var term = k.kpTerm === 'stock' ? APP.deliveryTerms.stock : APP.deliveryTerms.order;
+    var first = state.items.length ? (state.items[0].short || state.items[0].name) : '';
+    var hello = (k.kpContact ? k.kpContact + ', благодарим за обращение. '
+      : 'Благодарим за обращение. ') + 'Под вашу задачу предлагаем ' +
+      (first || 'оборудование с ЧПУ') + '.';
+    return {
+      client: k.kpClient || '—',
+      manager: m.name + ', LASERCUT',
+      date: k.kpDate || '—',
+      validUntil: deckValidUntil(),
+      intro: hello,
+      ndsRate: ndsLabel(t.rate),
+      total: money(t.total),
+      nds: money(t.nds),
+      title: 'Коммерческое предложение — ' + (mach ? mach.name : 'LASERCUT'),
+      rows: t.lines.map(function (l) {
+        return { name: l.item.name, sub: l.item.sub || '',
+          qty: l.item.qty + ' шт.', price: money(l.unit), sum: money(l.line) };
+      }),
+      extras: [
+        { find: /^Под заказ — срок поставки/, text: 'Срок поставки: ' + term },
+        { find: /^Доставка до /, text: 'Доставка — рассчитывается отдельно' },
+        { find: /^Поставщик:/, text: 'Поставщик: ' + sup.name +
+          (sup.inn ? ', ИНН ' + sup.inn : '') },
+        { find: /^Честно о цвете/, text: k.kpNote ||
+          'Состав собран под вашу задачу. Готовы скорректировать его до счёта.' }
+      ]
+    };
+  }
+
+  function tplBuild() {
+    return TPLDB.get('file').then(function (buf) {
+      if (!buf) throw new Error('шаблон не найден — загрузите его в личном кабинете');
+      return TPL.unzip(new Uint8Array(buf));
+    }).then(function (parts) {
+      return TPL.zip(TPL.build(parts, tplData()));
+    }).then(function (bytes) {
+      return new Blob([bytes], { type: PPTX_MIME });
+    });
+  }
+
   $('btnDeck').addEventListener('click', function () {
     if (!state.items.length &&
         !confirm('Смета пуста. Всё равно собрать презентацию?')) return;
@@ -3152,6 +3286,38 @@
       toast('Не удалось собрать презентацию: ' + (e && e.message ? e.message : 'ошибка'));
     }
   });
+
+  if ($('tplFile')) {
+    $('tplFile').addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (f) tplSave(f);
+      e.target.value = '';
+    });
+  }
+  if ($('tplDrop')) {
+    $('tplDrop').addEventListener('click', function () {
+      if (!confirm('Убрать шаблон из этого браузера?')) return;
+      Promise.all([TPLDB.del('file'), TPLDB.del('info')]).then(function () {
+        tplInfo = null; renderTpl(); toast('Шаблон убран');
+      });
+    });
+  }
+  if ($('btnDeckTpl')) {
+    $('btnDeckTpl').addEventListener('click', function () {
+      if (!state.items.length &&
+          !confirm('Смета пуста. Всё равно собрать файл по шаблону?')) return;
+      var btn = $('btnDeckTpl');
+      btn.disabled = true;
+      toast('Собираем по шаблону…');
+      tplBuild().then(function (blob) {
+        downloadBlob(blob, kpFileName('pptx'));
+        toast('Готово: файл собран по вашему шаблону');
+      }).catch(function (e) {
+        toast('По шаблону не собралось: ' + (e && e.message ? e.message : 'ошибка'));
+      }).then(function () { btn.disabled = false; });
+    });
+  }
+  tplLoadInfo();
 
   $('btnWord').addEventListener('click', function () {
     if (!state.items.length && !confirm('Смета пуста. Всё равно скачать файл?')) return;

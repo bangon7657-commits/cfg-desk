@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 59', /const CACHE = 'cfg-v59'/.test(swTxt),
+check('кеш: версия поднята до 60', /const CACHE = 'cfg-v60'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -2748,10 +2748,14 @@ check('вкладки: значок сметы жив после перерис�
   const cmpPath = path.join(DIST, 'compare.html');
   check('сравнение: страница собрана отдельным файлом', fs36.existsSync(cmpPath), cmpPath);
   const cmp = fs36.existsSync(cmpPath) ? fs36.readFileSync(cmpPath, 'utf8') : '';
+  // Маркер берём из разметки самой страницы: DecompressionStream теперь есть
+  // и в index.html — им пользуется загрузчик шаблона КП.
+  const CMP_MARK = 'Поменять документы местами';
   check('сравнение: страница не влилась в index.html',
-    src.indexOf('DecompressionStream') < 0, 'найдено в index.html');
-  check('сравнение: страница цела', cmp.indexOf('DecompressionStream') > 0 &&
-    cmp.length > 50000, cmp.length + ' байт');
+    src.indexOf(CMP_MARK) < 0, 'найдено в index.html');
+  check('сравнение: страница цела', cmp.indexOf(CMP_MARK) > 0 &&
+    cmp.indexOf('DecompressionStream') > 0 && cmp.length > 50000,
+    cmp.length + ' байт');
   check('сравнение: у страницы нет внешних зависимостей',
     !/<script[^>]+src=/i.test(cmp) && !/<link[^>]+stylesheet/i.test(cmp), '');
   check('сравнение: страница в списке предварительного кеша',
@@ -3084,6 +3088,102 @@ check('чистота: тема тёмная по умолчанию',
 check('чистота: реквизиты в форме не затёрты пустыми',
   doc2.getElementById('kpLegal').textContent.indexOf('7811692637') >= 0,
   'в подвале листа нет ИНН СТАНКОПРОМ');
+
+// ---- шаблон КП: подстановка сделки в чужой .pptx ----
+// Собираем игрушечный лист по образу настоящего шаблона: шапка «Кому:», строка
+// «ИТОГО» и таблица позиций текстовыми боксами. Проверяем, что подстановка
+// множит строки, двигает низ листа и не трогает оформление.
+(function () {
+  const winT = STAGE === 2 ? second.dom.window : first.dom.window;
+  const TPLm = winT.TPL;
+  check('шаблон: модуль загружен', !!TPLm && typeof TPLm.build === 'function', '');
+  if (!TPLm) return;
+  const A = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+  const box = (x, y, w, runs) =>
+    '<p:sp><p:nvSpPr><p:cNvPr id="9" name="t"/><p:cNvSpPr txBox="1"/><p:nvPr/>' +
+    '</p:nvSpPr><p:spPr><a:xfrm><a:off x="' + x + '" y="' + y + '"/>' +
+    '<a:ext cx="' + w + '" cy="300000"/></a:xfrm></p:spPr><p:txBody>' +
+    '<a:bodyPr/><a:lstStyle/>' + runs.map(t =>
+      '<a:p><a:r><a:rPr lang="ru-RU" sz="1400"/><a:t>' + t + '</a:t></a:r></a:p>'
+    ).join('') + '</p:txBody></p:sp>';
+  const row = (y, n) => box(200000, y, 300000, [String(n)]) +
+    box(900000, y + 50000, 3000000, ['Позиция ' + n, 'пояснение']) +
+    box(4200000, y, 700000, ['1 шт.']) +
+    box(5100000, y, 900000, ['1 000 ₽']) +
+    box(6200000, y, 800000, ['1 000 ₽']);
+  const slide =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<p:sld xmlns:a="' + A + '" xmlns:r="http://schemas.openxmlformats.org/' +
+    'officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/' +
+    'presentationml/2006/main"><p:cSld><p:spTree>' +
+    '<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>' +
+    '<p:grpSpPr/>' +
+    box(200000, 500000, 6800000, ['Кому:  ', 'Лотов А. А.']) +
+    box(200000, 900000, 6800000, ['От:  ', 'Иванов', '  Дата:  ', '01.01.2026',
+      '  Предложение действительно до:  ', '15.01.2026']) +
+    box(200000, 1300000, 6800000, ['Пётр, благодарим за обращение. Текст образца.']) +
+    box(200000, 1700000, 6800000, ['Честно о цвете: текст прошлой сделки']) +
+    box(200000, 2200000, 300000, ['№']) + box(900000, 2200000, 3000000, ['Наименование']) +
+    box(4200000, 2200000, 700000, ['Кол-во']) + box(5100000, 2200000, 900000, ['Цена под заказ']) +
+    box(6200000, 2200000, 800000, ['Цена из наличия']) +
+    row(2700000, 1) + row(4200000, 2) + row(5700000, 3) +
+    box(900000, 7200000, 3000000, ['ИТОГО', 'в том числе НДС 22 %']) +
+    box(5100000, 7200000, 900000, ['1 ₽', '1 ₽']) +
+    box(6200000, 7200000, 800000, ['3 000 ₽', '541 ₽']) +
+    box(200000, 7700000, 6800000, ['Под заказ — срок поставки около 60 дней.']) +
+    box(200000, 8100000, 6800000, ['Доставка до Екатеринбурга — отдельно']) +
+    '</p:spTree></p:cSld></p:sld>';
+  const enc = new winT.TextEncoder();
+  const dec = new winT.TextDecoder('utf-8');
+  const parts = { 'ppt/slides/slide1.xml': enc.encode(slide),
+    'docProps/core.xml': enc.encode('<x><dc:title>старое</dc:title></x>') };
+  check('шаблон: лист со сметой найден по содержимому',
+    TPLm.findSmetaSlide(parts) === 'ppt/slides/slide1.xml', '');
+
+  const data = {
+    client: 'ООО «Проверка»', manager: 'Егор Винчестер, LASERCUT',
+    date: '07.08.2026', validUntil: '21.08.2026',
+    intro: 'Антон, благодарим за обращение. Предлагаем маркер.',
+    ndsRate: '22', total: '9 876 543 ₽', nds: '1 780 999,00 ₽',
+    title: 'КП — проверка',
+    rows: [1, 2, 3, 4, 5, 6].map(i => ({ name: 'Строка ' + i, sub: 'подпись ' + i,
+      qty: i + ' шт.', price: '100 ₽', sum: (i * 100) + ' ₽' })),
+    extras: [
+      { find: /^Под заказ — срок поставки/, text: 'Срок поставки: до 10 рабочих дней' },
+      { find: /^Доставка до /, text: 'Доставка — отдельно' },
+      { find: /^Честно о цвете/, text: 'Состав собран под вашу задачу.' }
+    ]
+  };
+  let out = null, err = '';
+  try { out = TPLm.build(parts, data); } catch (e) { err = e.message; }
+  check('шаблон: подстановка отработала', !!out, err);
+  if (!out) return;
+  const xml = dec.decode(out['ppt/slides/slide1.xml']);
+  check('шаблон: клиент и менеджер подставились',
+    xml.indexOf('ООО «Проверка»') > 0 && xml.indexOf('Егор Винчестер') > 0, '');
+  check('шаблон: данные прошлой сделки не остались',
+    xml.indexOf('Лотов') < 0 && xml.indexOf('Екатеринбург') < 0 &&
+    xml.indexOf('текст прошлой сделки') < 0, '');
+  check('шаблон: строк стало ровно шесть',
+    (xml.match(/Строка \d/g) || []).length === 6, '');
+  check('шаблон: заголовки денежных колонок переписаны',
+    xml.indexOf('Цена за шт.') > 0 && xml.indexOf('Сумма') > 0 &&
+    xml.indexOf('Цена под заказ') < 0, '');
+  check('шаблон: итог и НДС на месте',
+    xml.indexOf('9 876 543 ₽') > 0 && xml.indexOf('1 780 999,00 ₽') > 0, '');
+  // низ листа должен уехать ровно на три шага строки
+  const docT = new winT.DOMParser().parseFromString(xml, 'application/xml');
+  const nodes = TPLm.shapes(TPLm.treeOf(docT));
+  const itog = TPLm.findByText(nodes, /ИТОГО/);
+  const yItog = +itog.getElementsByTagNameNS(A, 'off')[0].getAttribute('y');
+  check('шаблон: низ листа сдвинулся под новое число строк',
+    yItog === 7200000 + 3 * 1500000, 'y = ' + yItog);
+  check('шаблон: заголовок файла обновился',
+    dec.decode(out['docProps/core.xml']).indexOf('КП — проверка') > 0, '');
+  check('шаблон: кнопка выгрузки и загрузчик на месте',
+    !!(STAGE === 2 ? doc2 : doc).getElementById('btnDeckTpl') &&
+    !!(STAGE === 2 ? doc2 : doc).getElementById('tplFile'), '');
+}());
 
 // ---- вывод ----
 let bad = 0;
