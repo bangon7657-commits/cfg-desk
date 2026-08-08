@@ -134,7 +134,7 @@ check('кеш: страница берётся сначала из сети',
   swTxt.indexOf('isPage') >= 0 ? 'isPage есть' : 'isPage нет');
 check('кеш: остальные файлы сначала из кеша',
   /caches\.match\(e\.request\)\.then\(hit => hit \|\| fetch\(e\.request\)/.test(swTxt), '');
-check('кеш: версия поднята до 60', /const CACHE = 'cfg-v60'/.test(swTxt),
+check('кеш: версия поднята до 61', /const CACHE = 'cfg-v61'/.test(swTxt),
   (swTxt.match(/cfg-v\d+/) || [''])[0]);
 check('кеш: чужие домены не перехватываются',
   /url\.origin !== self\.location\.origin/.test(swTxt), '');
@@ -3132,11 +3132,34 @@ check('чистота: реквизиты в форме не затёрты пу
     box(6200000, 7200000, 800000, ['3 000 ₽', '541 ₽']) +
     box(200000, 7700000, 6800000, ['Под заказ — срок поставки около 60 дней.']) +
     box(200000, 8100000, 6800000, ['Доставка до Екатеринбурга — отдельно']) +
+    box(200000, 8600000, 6800000, ['*  Сноска первая', '*  Сноска вторая',
+      'Поставщик: ООО «СТАНКОПРОМ», ИНН 7811692637']) +
     '</p:spTree></p:cSld></p:sld>';
   const enc = new winT.TextEncoder();
   const dec = new winT.TextDecoder('utf-8');
-  const parts = { 'ppt/slides/slide1.xml': enc.encode(slide),
-    'docProps/core.xml': enc.encode('<x><dc:title>старое</dc:title></x>') };
+  // Полный пакет: без него не проверить, что лист-продолжение реально
+  // добавляется в презентацию, а не только рисуется.
+  const parts = {
+    'ppt/slides/slide1.xml': enc.encode(slide),
+    'ppt/slides/_rels/slide1.xml.rels': enc.encode('<?xml version="1.0"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/' +
+      'relationships"><Relationship Id="rId1" Type="http://schemas.' +
+      'openxmlformats.org/officeDocument/2006/relationships/slideLayout" ' +
+      'Target="../slideLayouts/slideLayout1.xml"/></Relationships>'),
+    '[Content_Types].xml': enc.encode('<?xml version="1.0"?><Types xmlns=' +
+      '"http://schemas.openxmlformats.org/package/2006/content-types"></Types>'),
+    'ppt/_rels/presentation.xml.rels': enc.encode('<?xml version="1.0"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/' +
+      'relationships"><Relationship Id="rId1" Type="http://schemas.' +
+      'openxmlformats.org/officeDocument/2006/relationships/slide" ' +
+      'Target="slides/slide1.xml"/></Relationships>'),
+    'ppt/presentation.xml': enc.encode('<?xml version="1.0"?><p:presentation ' +
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/' +
+      'relationships" xmlns:p="http://schemas.openxmlformats.org/' +
+      'presentationml/2006/main"><p:sldIdLst><p:sldId id="256" r:id="rId1"/>' +
+      '</p:sldIdLst><p:sldSz cx="7560000" cy="10692000"/></p:presentation>'),
+    'docProps/core.xml': enc.encode('<x><dc:title>старое</dc:title></x>')
+  };
   check('шаблон: лист со сметой найден по содержимому',
     TPLm.findSmetaSlide(parts) === 'ppt/slides/slide1.xml', '');
 
@@ -3148,36 +3171,68 @@ check('чистота: реквизиты в форме не затёрты пу
     title: 'КП — проверка',
     rows: [1, 2, 3, 4, 5, 6].map(i => ({ name: 'Строка ' + i, sub: 'подпись ' + i,
       qty: i + ' шт.', price: '100 ₽', sum: (i * 100) + ' ₽' })),
+    introPart: 'Смета, продолжение.',
     extras: [
       { find: /^Под заказ — срок поставки/, text: 'Срок поставки: до 10 рабочих дней' },
       { find: /^Доставка до /, text: 'Доставка — отдельно' },
-      { find: /^Честно о цвете/, text: 'Состав собран под вашу задачу.' }
+      { find: /Поставщик:/, run: /^Поставщик:/,
+        text: 'Поставщик: ООО «ИНФО-СЕРВИС», ИНН 7810123456' },
+      { find: /^Честно о цвете/, once: true, text: 'Состав собран под вашу задачу.' }
     ]
   };
   let out = null, err = '';
   try { out = TPLm.build(parts, data); } catch (e) { err = e.message; }
   check('шаблон: подстановка отработала', !!out, err);
   if (!out) return;
+  const slideNames = Object.keys(out).filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n));
+  const allXml = slideNames.map(n => dec.decode(out[n])).join('');
   const xml = dec.decode(out['ppt/slides/slide1.xml']);
   check('шаблон: клиент и менеджер подставились',
-    xml.indexOf('ООО «Проверка»') > 0 && xml.indexOf('Егор Винчестер') > 0, '');
+    allXml.indexOf('ООО «Проверка»') > 0 && allXml.indexOf('Егор Винчестер') > 0, '');
+  // шесть позиций на лист с итогом не влезают — должен появиться лист-продолжение
+  check('шаблон: длинная смета разложилась на листы',
+    slideNames.length > 1 && (out.__pages || []).length === slideNames.length,
+    'листов ' + slideNames.length + ', раскладка ' + JSON.stringify(out.__pages));
+  check('шаблон: продолжение попало в порядок показа и в связи',
+    dec.decode(out['ppt/presentation.xml']).match(/<p:sldId /g).length ===
+      slideNames.length &&
+    dec.decode(out['ppt/_rels/presentation.xml.rels']).match(/relationships\/slide"/g)
+      .length === slideNames.length &&
+    dec.decode(out['[Content_Types].xml']).indexOf('presentationml.slide+xml') > 0, '');
+  check('шаблон: итог стоит только на последнем листе',
+    slideNames.filter(n => dec.decode(out[n]).indexOf('ИТОГО') > 0).length === 1, '');
+  check('шаблон: поставщик заменён внутри блока сносок',
+    allXml.indexOf('ИНФО-СЕРВИС') > 0 && allXml.indexOf('СТАНКОПРОМ') < 0 &&
+    allXml.indexOf('Сноска первая') > 0, 'сноски затёрлись или поставщик не заменён');
   check('шаблон: данные прошлой сделки не остались',
-    xml.indexOf('Лотов') < 0 && xml.indexOf('Екатеринбург') < 0 &&
-    xml.indexOf('текст прошлой сделки') < 0, '');
+    allXml.indexOf('Лотов') < 0 && allXml.indexOf('Екатеринбург') < 0 &&
+    allXml.indexOf('текст прошлой сделки') < 0, '');
   check('шаблон: строк стало ровно шесть',
-    (xml.match(/Строка \d/g) || []).length === 6, '');
+    (allXml.match(/Строка \d/g) || []).length === 6, '');
+  check('шаблон: нумерация позиций сквозная через листы',
+    [1, 2, 3, 4, 5, 6].every(i => allXml.indexOf('Строка ' + i) > 0), '');
   check('шаблон: заголовки денежных колонок переписаны',
-    xml.indexOf('Цена за шт.') > 0 && xml.indexOf('Сумма') > 0 &&
-    xml.indexOf('Цена под заказ') < 0, '');
+    allXml.indexOf('Цена за шт.') > 0 && allXml.indexOf('Сумма') > 0 &&
+    allXml.indexOf('Цена под заказ') < 0, '');
   check('шаблон: итог и НДС на месте',
-    xml.indexOf('9 876 543 ₽') > 0 && xml.indexOf('1 780 999,00 ₽') > 0, '');
+    allXml.indexOf('9 876 543 ₽') > 0 && allXml.indexOf('1 780 999,00 ₽') > 0, '');
+  check('шаблон: раскладка по листам делится ровно',
+    TPLm.planPages(20, 14, 3).reduce((s, v) => s + v, 0) === 20 &&
+    TPLm.planPages(4, 14, 3).join(',') === '2,2',
+    JSON.stringify(TPLm.planPages(20, 14, 3)));
   // низ листа должен уехать ровно на три шага строки
-  const docT = new winT.DOMParser().parseFromString(xml, 'application/xml');
+  const lastName = slideNames.filter(n => dec.decode(out[n]).indexOf('ИТОГО') > 0)[0];
+  const docT = new winT.DOMParser().parseFromString(dec.decode(out[lastName]),
+    'application/xml');
   const nodes = TPLm.shapes(TPLm.treeOf(docT));
-  const itog = TPLm.findByText(nodes, /ИТОГО/);
-  const yItog = +itog.getElementsByTagNameNS(A, 'off')[0].getAttribute('y');
-  check('шаблон: низ листа сдвинулся под новое число строк',
-    yItog === 7200000 + 3 * 1500000, 'y = ' + yItog);
+  let low = 0;
+  nodes.forEach(function (n) {
+    const o = TPLm.txtOf(n).length ? n.getElementsByTagNameNS(A, 'off')[0] : null;
+    const e = n.getElementsByTagNameNS(A, 'ext')[0];
+    if (o && e) low = Math.max(low, +o.getAttribute('y') + +e.getAttribute('cy'));
+  });
+  check('шаблон: содержимое не выходит за нижний край листа',
+    low <= 10692000, 'низ ' + low + ' при высоте 10692000');
   check('шаблон: заголовок файла обновился',
     dec.decode(out['docProps/core.xml']).indexOf('КП — проверка') > 0, '');
   check('шаблон: кнопка выгрузки и загрузчик на месте',

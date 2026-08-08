@@ -3250,19 +3250,37 @@
       total: money(t.total),
       nds: money(t.nds),
       title: 'Коммерческое предложение — ' + (mach ? mach.name : 'LASERCUT'),
+      introPart: 'Смета, продолжение — начало на предыдущем листе.',
       rows: t.lines.map(function (l) {
         return { name: l.item.name, sub: l.item.sub || '',
           qty: l.item.qty + ' шт.', price: money(l.unit), sum: money(l.line) };
       }),
+      // Строка поставщика лежит третьим раном внутри блока сносок — правим
+      // именно её, иначе затрёшь сами сноски.
       extras: [
         { find: /^Под заказ — срок поставки/, text: 'Срок поставки: ' + term },
         { find: /^Доставка до /, text: 'Доставка — рассчитывается отдельно' },
-        { find: /^Поставщик:/, text: 'Поставщик: ' + sup.name +
-          (sup.inn ? ', ИНН ' + sup.inn : '') },
-        { find: /^Честно о цвете/, text: k.kpNote ||
+        { find: /Поставщик:/, run: /^Поставщик:/, text: 'Поставщик: ' + sup.name +
+          (sup.inn ? ', ИНН ' + sup.inn : '') + (sup.unp ? ', УНП ' + sup.unp : '') },
+        { find: /^Честно о цвете/, once: true, text: k.kpNote ||
           'Состав собран под вашу задачу. Готовы скорректировать его до счёта.' }
       ]
     };
+  }
+
+  // Шаблон делался под конкретный станок: фотографии и лист характеристик
+  // в нём не меняются. Если в смете другая машина — предупреждаем до сборки.
+  function tplMachineMismatch(parts) {
+    var mach = machineInSmeta();
+    if (!mach) return '';
+    var key = String(mach.name).replace(/[«»]/g, ' ')
+      .split(/[\s,(]+/).filter(function (w) { return w.length > 3; })[0];
+    if (!key) return '';
+    var found = Object.keys(parts).some(function (n) {
+      return /^ppt\/slides\/slide\d+\.xml$/.test(n) &&
+        new TextDecoder('utf-8').decode(parts[n]).indexOf(key) >= 0;
+    });
+    return found ? '' : mach.name;
   }
 
   function tplBuild() {
@@ -3270,9 +3288,18 @@
       if (!buf) throw new Error('шаблон не найден — загрузите его в личном кабинете');
       return TPL.unzip(new Uint8Array(buf));
     }).then(function (parts) {
-      return TPL.zip(TPL.build(parts, tplData()));
-    }).then(function (bytes) {
-      return new Blob([bytes], { type: PPTX_MIME });
+      var alien = tplMachineMismatch(parts);
+      if (alien && !confirm('В шаблоне не нашлось упоминания «' + alien +
+          '». Фотографии и лист характеристик останутся из шаблона — они про ' +
+          'другой станок. Всё равно собрать файл?')) {
+        throw new Error('отменено: шаблон под другой станок');
+      }
+      var filled = TPL.build(parts, tplData());
+      var pages = filled.__pages || [];
+      delete filled.__pages;
+      return TPL.zip(filled).then(function (bytes) {
+        return { blob: new Blob([bytes], { type: PPTX_MIME }), pages: pages };
+      });
     });
   }
 
@@ -3309,9 +3336,11 @@
       var btn = $('btnDeckTpl');
       btn.disabled = true;
       toast('Собираем по шаблону…');
-      tplBuild().then(function (blob) {
-        downloadBlob(blob, kpFileName('pptx'));
-        toast('Готово: файл собран по вашему шаблону');
+      tplBuild().then(function (res) {
+        downloadBlob(res.blob, kpFileName('pptx'));
+        toast(res.pages.length > 1
+          ? 'Готово: смета заняла листов — ' + res.pages.length
+          : 'Готово: файл собран по вашему шаблону');
       }).catch(function (e) {
         toast('По шаблону не собралось: ' + (e && e.message ? e.message : 'ошибка'));
       }).then(function () { btn.disabled = false; });

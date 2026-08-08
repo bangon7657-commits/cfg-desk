@@ -130,48 +130,61 @@ var TPL = (function () {
   }
 
   // ---------------------------------------------------------------- разбор листа
-  function txtOf(node) {
-    var ts = node.getElementsByTagNameNS(A, 't'), out = [];
-    for (var i = 0; i < ts.length; i++) out.push(ts[i].textContent);
-    return out;
+  function txtOf(n) {
+    var ts = n.getElementsByTagNameNS(A, 't'), o = [];
+    for (var i = 0; i < ts.length; i++) o.push(ts[i].textContent);
+    return o;
   }
-  function runsOf(node) {
-    var ts = node.getElementsByTagNameNS(A, 't'), out = [];
-    for (var i = 0; i < ts.length; i++) out.push(ts[i]);
-    return out;
+  function runsOf(n) {
+    var ts = n.getElementsByTagNameNS(A, 't'), o = [];
+    for (var i = 0; i < ts.length; i++) o.push(ts[i]);
+    return o;
   }
-  function offOf(node) {
-    var o = node.getElementsByTagNameNS(A, 'off')[0];
+  function offOf(n) {
+    var o = n.getElementsByTagNameNS(A, 'off')[0];
     return o ? { x: +o.getAttribute('x'), y: +o.getAttribute('y') } : null;
   }
-  function moveY(node, dy) {
-    var o = node.getElementsByTagNameNS(A, 'off')[0];
+  function extOf(n) {
+    var e = n.getElementsByTagNameNS(A, 'ext')[0];
+    return e ? { w: +e.getAttribute('cx'), h: +e.getAttribute('cy') } : null;
+  }
+  function moveY(n, dy) {
+    var o = n.getElementsByTagNameNS(A, 'off')[0];
     if (o) o.setAttribute('y', String(+o.getAttribute('y') + dy));
   }
-  function boxOf(node) {
-    var e = node.getElementsByTagNameNS(A, 'ext')[0];
-    var o = node.getElementsByTagNameNS(A, 'off')[0];
+  function boxOf(n) {
+    var e = n.getElementsByTagNameNS(A, 'ext')[0];
+    var o = n.getElementsByTagNameNS(A, 'off')[0];
     if (!e || !o) return null;
     return { x: +o.getAttribute('x'), w: +e.getAttribute('cx'), off: o, ext: e };
   }
-  function setBox(node, x, w) {
-    var b = boxOf(node);
+  function setBox(n, x, w) {
+    var b = boxOf(n);
     if (!b) return;
     b.off.setAttribute('x', String(Math.round(x)));
     b.ext.setAttribute('cx', String(Math.round(w)));
   }
   // Лишние раны гасим, но не удаляем: так остаются шрифт, цвет и кегль шаблона.
-  function setRuns(node, values) {
-    var rs = runsOf(node);
+  function setRuns(n, values) {
+    var rs = runsOf(n);
     for (var i = 0; i < rs.length; i++) {
       rs[i].textContent = i < values.length ? String(values[i]) : '';
     }
   }
-  function setFirst(node, value) {
-    var rs = runsOf(node);
+  function setFirst(n, value) {
+    var rs = runsOf(n);
     if (!rs.length) return;
     rs[0].textContent = String(value);
     for (var i = 1; i < rs.length; i++) rs[i].textContent = '';
+  }
+  // Иногда нужный текст лежит не первым раном, а третьим — например, строка
+  // поставщика внутри блока сносок. Меняем именно её, остальное не трогаем.
+  function setRunStarting(n, re, value) {
+    var rs = runsOf(n);
+    for (var i = 0; i < rs.length; i++) {
+      if (re.test(rs[i].textContent)) { rs[i].textContent = String(value); return true; }
+    }
+    return false;
   }
   function shapes(tree) {
     var out = [];
@@ -193,7 +206,9 @@ var TPL = (function () {
       doc.getElementsByTagName('spTree')[0];
   }
 
-  // Строки таблицы позиций: между шапкой «№» и строкой «ИТОГО».
+  // Строки таблицы: всё между шапкой «№» и строкой «ИТОГО». Границу строки
+  // берём от самого большого разрыва по вертикали — так разбор не зависит от
+  // того, какого формата лист в шаблоне.
   function readTable(list) {
     var head = findByText(list, /^№$/);
     var itog = findByText(list, /ИТОГО/);
@@ -205,16 +220,20 @@ var TPL = (function () {
     });
     if (!inside.length) return null;
     inside.sort(function (a, b) { return offOf(a).y - offOf(b).y; });
+    var ys = inside.map(function (n) { return offOf(n).y; });
+    var maxGap = 0;
+    for (var i = 1; i < ys.length; i++) maxGap = Math.max(maxGap, ys[i] - ys[i - 1]);
+    var edge = Math.max(maxGap * 0.5, 1000);
     var base = [], groups = [];
     inside.forEach(function (n) {
       var y = offOf(n).y;
-      if (!groups.length || y - base[base.length - 1] > 900000) {
+      if (!groups.length || y - base[base.length - 1] > edge) {
         groups.push([n]); base.push(y);
       } else groups[groups.length - 1].push(n);
     });
     var step = groups.length > 1 ? base[1] - base[0] : yItog - base[0];
     return { head: head, itog: itog, groups: groups, base: base, step: step,
-      yItog: yItog };
+      yHead: yHead, yItog: yItog };
   }
   function rowSlots(group) {
     var withText = group.filter(function (n) {
@@ -239,7 +258,48 @@ var TPL = (function () {
     if (nm) setBox(cells[1], nm.x, right - wSum - wPrice - wQty - nm.x - total * 0.02);
   }
 
-  function fillSmeta(doc, data) {
+  // Сколько строк влезает на лист: с итогом и всем низом — и без них.
+  function capacity(doc, slideH) {
+    var list = shapes(treeOf(doc));
+    var t = readTable(list);
+    if (!t) return null;
+    var yFirst = t.base[0], bottom = 0;
+    list.forEach(function (n) {
+      var o = offOf(n), e = extOf(n);
+      if (o && e) bottom = Math.max(bottom, o.y + e.h);
+    });
+    var tailH = bottom - t.yItog;              // ИТОГО и всё, что ниже него
+    var gap = Math.round(slideH * 0.012);
+    return {
+      withTail: Math.max(1, Math.floor((slideH - yFirst - tailH - gap) / t.step)),
+      only: Math.max(1, Math.floor((slideH - yFirst - gap) / t.step)),
+      step: t.step, yItog: t.yItog, bottom: bottom
+    };
+  }
+
+  // Раскладка позиций по листам: итог и низ живут на последнем листе,
+  // предыдущие несут только продолжение таблицы.
+  function planPages(n, only, withTail) {
+    if (n <= withTail) return [n];
+    var sheets = Math.ceil((n - withTail) / only);
+    var last = Math.min(withTail, Math.ceil(n / (sheets + 1)));
+    var rest = n - last, pages = [], done = 0;
+    // делим поровну: иначе один лист набит под завязку, а соседний почти пустой
+    for (var i = 0; i < sheets; i++) {
+      var take = Math.ceil((rest - done) / (sheets - i));
+      pages.push(take); done += take;
+    }
+    pages.push(last);
+    return pages;
+  }
+
+  // opts: rows — строки этого листа, from — номер первой позиции,
+  // tail — нести ли итог и низ, part — лист-продолжение.
+  function fillSmeta(doc, data, opts) {
+    opts = opts || {};
+    var rows = opts.rows || data.rows;
+    var from = opts.from || 0;
+    var tail = opts.tail !== false;
     var tree = treeOf(doc);
     if (!tree) throw new Error('в листе нет дерева фигур');
     var list = shapes(tree);
@@ -254,11 +314,14 @@ var TPL = (function () {
         '     Предложение действительно до:  ', data.validUntil]);
     }
     var intro = findByText(list, /благодарим за обращение/);
-    if (intro) setFirst(intro, data.intro);
+    if (intro) {
+      setFirst(intro, opts.part ? (data.introPart || 'Смета, продолжение.')
+        : data.intro);
+    }
 
     var headRow = list.filter(function (n) {
       var o = offOf(n);
-      return o && Math.abs(o.y - offOf(t.head).y) < 200000 &&
+      return o && o.y >= t.yHead - 1000 && o.y < t.base[0] - 1000 &&
         txtOf(n).join('').trim() !== '';
     }).sort(function (a, b) { return offOf(a).x - offOf(b).x; });
     if (headRow.length >= 5) {
@@ -267,16 +330,18 @@ var TPL = (function () {
       widen(headRow);
     }
 
-    var proto = t.groups[0], n = data.rows.length;
+    var proto = t.groups[0], n = rows.length;
+    if (rowSlots(proto).length < 5) {
+      throw new Error('строка таблицы в шаблоне не похожа на «№ · наименование · ' +
+        'кол-во · цена · сумма» — подставлять некуда');
+    }
     for (var g = 1; g < t.groups.length; g++) {
       t.groups[g].forEach(function (node) { tree.removeChild(node); });
     }
     var anchor = proto[proto.length - 1].nextSibling;
     for (var i = 0; i < n; i++) {
-      var row = data.rows[i];
-      var nodes = i === 0 ? proto : proto.map(function (x) {
-        return x.cloneNode(true);
-      });
+      var row = rows[i];
+      var nodes = i === 0 ? proto : proto.map(function (x) { return x.cloneNode(true); });
       if (i > 0) {
         nodes.forEach(function (node) {
           moveY(node, t.step * i);
@@ -284,54 +349,67 @@ var TPL = (function () {
         });
       }
       var cells = rowSlots(nodes);
-      if (cells.length >= 5) {
-        widen(cells);
-        setFirst(cells[0], String(i + 1));
-        setRuns(cells[1], row.sub ? [row.name, row.sub] : [row.name]);
-        setFirst(cells[2], row.qty);
-        setFirst(cells[3], row.price);
-        setFirst(cells[4], row.sum);
-      }
+      widen(cells);
+      setFirst(cells[0], String(from + i + 1));
+      setRuns(cells[1], row.sub ? [row.name, row.sub] : [row.name]);
+      setFirst(cells[2], row.qty);
+      setFirst(cells[3], row.price);
+      setFirst(cells[4], row.sum);
     }
 
-    var dy = (n - t.groups.length) * t.step;
-    if (dy !== 0) {
-      list.forEach(function (node) {
-        var o = offOf(node);
-        if (o && o.y >= t.yItog - 1000) moveY(node, dy);
-      });
-    }
-
-    // Тексты, оставшиеся от прошлой сделки. Пустое значение — убрать фигуру.
+    // Тексты прошлой сделки чистим на каждом листе. Правило с флагом once
+    // остаётся только на первом листе, на продолжениях фигура убирается.
     (data.extras || []).forEach(function (rule) {
       var node = findByText(list, rule.find);
       if (!node) return;
-      if (rule.text === '') {
+      if (rule.text === '' || (rule.once && opts.part)) {
         if (node.parentNode) node.parentNode.removeChild(node);
         return;
       }
+      if (rule.run) { setRunStarting(node, rule.run, rule.text); return; }
       setFirst(node, rule.text);
     });
 
-    setRuns(t.itog, ['ИТОГО', 'в том числе НДС ' + data.ndsRate + ' %']);
-    var itogRow = list.filter(function (node) {
+    var below = list.filter(function (node) {
       var o = offOf(node);
-      return o && Math.abs(o.y - (t.yItog + dy)) < 200000 &&
+      return o && o.y >= t.yItog - 1000;
+    });
+    if (!tail) {
+      below.forEach(function (node) {
+        if (node.parentNode) node.parentNode.removeChild(node);
+      });
+      return doc;
+    }
+    var dy = (n - t.groups.length) * t.step;
+    if (dy !== 0) below.forEach(function (node) { moveY(node, dy); });
+
+    setRuns(t.itog, ['ИТОГО', 'в том числе НДС ' + data.ndsRate + ' %']);
+    var yItogNow = t.yItog + dy;
+    var itogRow = below.filter(function (node) {
+      var o = offOf(node);
+      return o && o.y >= yItogNow - 1000 && o.y < yItogNow + t.step * 0.9 &&
         txtOf(node).join('').trim() !== '';
     }).sort(function (a, b) { return offOf(a).x - offOf(b).x; });
     if (itogRow.length >= 3) {
       var lastCells = itogRow.slice(-2);
       var ref = rowSlots(t.groups[0]);
-      if (ref.length >= 5) {
-        var b4 = boxOf(ref[3]), b5 = boxOf(ref[4]);
-        if (b4) setBox(lastCells[0], b4.x, b4.w);
-        if (b5) setBox(lastCells[1], b5.x, b5.w);
-      }
+      var b4 = boxOf(ref[3]), b5 = boxOf(ref[4]);
+      if (b4) setBox(lastCells[0], b4.x, b4.w);
+      if (b5) setBox(lastCells[1], b5.x, b5.w);
       setRuns(lastCells[0], ['', '']);
       setRuns(lastCells[1], [data.total, data.nds]);
     }
     return doc;
   }
+
+  // ---------------------------------------------------------------- пакет
+  var SLIDE_CT =
+    'application/vnd.openxmlformats-officedocument.presentationml.slide+xml';
+  var SLIDE_REL =
+    'http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide';
+
+  function dec(b) { return new TextDecoder('utf-8').decode(b); }
+  function enc(s) { return new TextEncoder().encode(s); }
 
   // Лист сметы узнаём по содержимому, а не по номеру: в разных шаблонах
   // порядок листов свой.
@@ -340,36 +418,107 @@ var TPL = (function () {
       return /^ppt\/slides\/slide\d+\.xml$/.test(n);
     });
     for (var i = 0; i < names.length; i++) {
-      var s = new TextDecoder('utf-8').decode(parts[names[i]]);
+      var s = dec(parts[names[i]]);
       if (s.indexOf('ИТОГО') >= 0 && s.indexOf('Кому:') >= 0) return names[i];
     }
     return null;
   }
+  function slideHeight(parts) {
+    var p = parts['ppt/presentation.xml'];
+    if (!p) return 0;
+    var m = dec(p).match(/<p:sldSz[^>]*cy="(\d+)"/);
+    return m ? +m[1] : 0;
+  }
+
+  // Новый лист в пакете: сам файл, свои связи, тип части, связь презентации
+  // и место в порядке показа — прямо перед листом-образцом.
+  function addSlideBefore(parts, srcName, xmlText) {
+    var nums = Object.keys(parts).filter(function (n) {
+      return /^ppt\/slides\/slide\d+\.xml$/.test(n);
+    }).map(function (n) { return +n.match(/slide(\d+)\.xml/)[1]; });
+    var num = Math.max.apply(null, nums) + 1;
+    var name = 'ppt/slides/slide' + num + '.xml';
+    parts[name] = enc(xmlText);
+
+    var srcRels = 'ppt/slides/_rels/' + srcName.split('/').pop() + '.rels';
+    if (parts[srcRels]) {
+      // заметки не копируем: две страницы на одну заметку PowerPoint не любит
+      parts['ppt/slides/_rels/slide' + num + '.xml.rels'] =
+        enc(dec(parts[srcRels]).replace(/<Relationship[^>]*notesSlide[^>]*\/>/g, ''));
+    }
+    var ct = dec(parts['[Content_Types].xml']);
+    if (ct.indexOf('PartName="/' + name + '"') < 0) {
+      parts['[Content_Types].xml'] = enc(ct.replace('</Types>',
+        '<Override PartName="/' + name + '" ContentType="' + SLIDE_CT + '"/></Types>'));
+    }
+    var pr = dec(parts['ppt/_rels/presentation.xml.rels']);
+    var maxRid = 0;
+    (pr.match(/Id="rId(\d+)"/g) || []).forEach(function (s) {
+      maxRid = Math.max(maxRid, +s.match(/\d+/)[0]);
+    });
+    var rid = 'rId' + (maxRid + 1);
+    var srcTarget = 'slides/' + srcName.split('/').pop();
+    var mm = pr.match(new RegExp('<Relationship Id="(rId\\d+)"[^>]*Target="' +
+      srcTarget.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"'));
+    var srcRid = mm ? mm[1] : null;
+    parts['ppt/_rels/presentation.xml.rels'] = enc(pr.replace('</Relationships>',
+      '<Relationship Id="' + rid + '" Type="' + SLIDE_REL +
+      '" Target="slides/slide' + num + '.xml"/></Relationships>'));
+
+    var pres = dec(parts['ppt/presentation.xml']);
+    var maxId = 255;
+    (pres.match(/<p:sldId id="(\d+)"/g) || []).forEach(function (s) {
+      maxId = Math.max(maxId, +s.match(/\d+/)[0]);
+    });
+    var tag = '<p:sldId id="' + (maxId + 1) + '" r:id="' + rid + '"/>';
+    if (srcRid) {
+      pres = pres.replace(new RegExp('<p:sldId id="\\d+" r:id="' + srcRid + '"\\s*/>'),
+        tag + '$&');
+    } else {
+      pres = pres.replace('</p:sldIdLst>', tag + '</p:sldIdLst>');
+    }
+    parts['ppt/presentation.xml'] = enc(pres);
+    return name;
+  }
 
   function build(parts, data) {
-    var slide = findSmetaSlide(parts);
-    if (!slide) throw new Error('в шаблоне нет листа со сметой: нужны «Кому:» и «ИТОГО»');
-    var xml = new TextDecoder('utf-8').decode(parts[slide]);
-    var doc = new DOMParser().parseFromString(xml, 'application/xml');
-    if (doc.getElementsByTagName('parsererror').length) {
+    var src = findSmetaSlide(parts);
+    if (!src) throw new Error('в шаблоне нет листа со сметой: нужны «Кому:» и «ИТОГО»');
+    var H = slideHeight(parts);
+    if (!H) throw new Error('в шаблоне не читается размер листа');
+    var xml = dec(parts[src]);
+    var probe = new DOMParser().parseFromString(xml, 'application/xml');
+    if (probe.getElementsByTagName('parsererror').length) {
       throw new Error('лист сметы не читается как XML');
     }
-    fillSmeta(doc, data);
+    var cap = capacity(probe, H);
+    if (!cap) throw new Error('на листе сметы не нашлась таблица позиций');
+    var pages = planPages(data.rows.length, cap.only, cap.withTail);
+
     var out = {};
     Object.keys(parts).forEach(function (k) { out[k] = parts[k]; });
-    out[slide] = new TextEncoder().encode(
-      new XMLSerializer().serializeToString(doc));
-    if (out['docProps/core.xml'] && data.title) {
-      var core = new TextDecoder('utf-8').decode(out['docProps/core.xml'])
-        .replace(/<dc:title>[^<]*<\/dc:title>/, '<dc:title>' +
-          String(data.title).replace(/[<>&]/g, ' ') + '</dc:title>');
-      out['docProps/core.xml'] = new TextEncoder().encode(core);
+    var from = 0;
+    for (var i = 0; i < pages.length; i++) {
+      var last = i === pages.length - 1;
+      var doc = new DOMParser().parseFromString(xml, 'application/xml');
+      fillSmeta(doc, data, { rows: data.rows.slice(from, from + pages[i]),
+        from: from, tail: last, part: i > 0 });
+      var text = new XMLSerializer().serializeToString(doc);
+      if (last) out[src] = enc(text);
+      else addSlideBefore(out, src, text);
+      from += pages[i];
     }
+    if (out['docProps/core.xml'] && data.title) {
+      out['docProps/core.xml'] = enc(dec(out['docProps/core.xml'])
+        .replace(/<dc:title>[^<]*<\/dc:title>/, '<dc:title>' +
+          String(data.title).replace(/[<>&]/g, ' ') + '</dc:title>'));
+    }
+    out.__pages = pages;
     return out;
   }
 
   return { unzip: unzip, zip: zip, build: build, fillSmeta: fillSmeta,
-    findSmetaSlide: findSmetaSlide, readTable: readTable, shapes: shapes,
-    treeOf: treeOf, findByText: findByText, txtOf: txtOf,
-    supported: supported };
+    findSmetaSlide: findSmetaSlide, slideHeight: slideHeight, capacity: capacity,
+    planPages: planPages, readTable: readTable, shapes: shapes, treeOf: treeOf,
+    findByText: findByText, txtOf: txtOf, supported: supported };
 }());
